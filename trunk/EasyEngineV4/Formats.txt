@@ -1,0 +1,27 @@
+ase : format de max standard pour un mesh
+
+asme : Fichier exporté à partir de max script et qui contient les infos d'un mesh idem à l'ase avec les poids des vertex en plus
+
+
+ahmo : fichier contenant les infos d'un mesh possédant une hiérarchie mais avec des poids de vertex qui valent toujours 1 (pas de skinning)
+
+
+
+
+
+
+
+TODO (vertex shader) :
+
+
+asmo : asme optimisé avec les vertex et les faces triés dans l'ordre en fonction de leur poids
+
+
+bme : fichier binaire contenant toutesles infos des meshes y compris les poids des vertex
+Structure d'un fichier bme :
+nombre de vertex(4) 
+liste des vertex (4*VertexCount) 
+liste des normales (4*VertexCount) 
+nombre de bones affectant le vertex0 
+id du premier bone 
+poids du premier bone ... pour tous les bones de tous les vertex

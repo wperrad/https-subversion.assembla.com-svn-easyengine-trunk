@@ -1,0 +1,24 @@
+Remplacer la classe CEasyFile par un parser 
+
+changer la direction de l'éclairage du spot (prendre le négatif)
+
+Remplacer les types utilisés à l'extérieur d'une DLL par des ID et ne rien exporter à part le manager
+
+Virer le maximum de trucs dans core et les déléguer à d'autres modules. A terme, ça ne doit être qu'une interface
+
+Faire en sorte qu'on ne soit plus obligé de mettre le shader de l'objet qu'on veut rendre en software à "direct", mais seulement spécifier le renderer software
+
+Remplacer les CChunk par les IRessourceInfos
+
+Instancier toutes les méthods qui peuvent l'être au niveau des interfaces (possibilité d'instancier une méthode virtuelle pure)
+
+. Normaliser le quaternion après l'avoir calculé dans l'exporter max
+
+
+BUGS:
+
+Optimisations possibles :
+
+. Remplacer toutes les matrices des clés d'animation par des quaternions, pour éviter de refaire à chaque fois la conversion
+. Implémenter le frustrum culling
+. Dans une géométrie skinnée, faire en sorte qu'un vertex ne puisse être influencé que par 3 bones minimum

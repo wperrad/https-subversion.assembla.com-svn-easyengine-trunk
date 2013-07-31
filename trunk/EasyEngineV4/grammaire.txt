@@ -1,0 +1,8 @@
+Instruction := Call + PTVirg
+Call := Command + Vector
+Vector := LPar + List + RPar
+List := Val Virg Val | Expression Virg Expression | List Virg Expression | Expression Virg Val
+Expression := Val Op Val | LPar Expression RPar | Expression Op Val
+Val := Var | Float | Int | String
+Op := Add | Sub | Mult | Div
+

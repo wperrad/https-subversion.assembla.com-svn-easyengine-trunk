@@ -1,0 +1,103 @@
+#ifndef MATRIX_H_
+#define MATRIX_H_
+
+
+
+#include "math.h"
+#include "Vector.h"
+#include "Utils/IStorage.h"
+
+// stl
+#include <vector>
+
+using namespace std;
+class CQuaternion;
+
+class  CMatrix : public IPersistantObject
+{	
+	
+public:	
+	float				m_00,m_01,m_02,m_03;	
+	float				m_10,m_11,m_12,m_13;	
+	float				m_20,m_21,m_22,m_23;	
+	float				m_30,m_31,m_32,m_33;	
+
+
+	
+						CMatrix();
+						CMatrix(	float a00, float a01, float a02, float a03,
+									float a10, float a11, float a12, float a13,
+									float a20, float a21, float a22, float a23, 
+									float a30, float a31, float a32, float a33  );
+						CMatrix(const float* params);
+						CMatrix(const CVector& v0,const CVector& v1,
+								const CVector& v2,const CVector& v3);		
+						CMatrix(float dVal[][4]);
+						CMatrix( float fDiag );
+	virtual				~CMatrix();
+
+	void				Fill(	float a00, float a01, float a02, float a03, float a10, float a11, float a12, float a13,
+								float a20, float a21, float a22, float a23, float a30, float a31, float a32, float a33 );
+
+	const CMatrix&		operator=(const CMatrix& mat);
+	void				operator=(const float* fValues);
+	CMatrix				operator+(const CMatrix& mat) const;
+	CMatrix				operator -(const CMatrix& mat) const;
+	CVector				operator*(const CVector& v) const;
+	CMatrix				operator*(const CMatrix& mat) const;
+	CMatrix				operator*( float f );
+	void				operator+=(const CMatrix& mat);
+	void				operator*=(const CMatrix& mat);
+	CMatrix				operator/(float d);
+		
+	void				Get( float* arr ) const;
+	void				Get( std::vector< float >& vData ) const;
+	void				Set( const float* arr );
+	void				Set( const vector< float >& vData );
+	void				GetAffinePart( CVector& v );
+	void				GetInf(float& nInfx,float& nInfy,float& nInfz) const;
+	void				GetSup(float& nSupx,float& nSupy,float& nSupz) const;
+	CMatrix				GetTranspose() const;
+	void				GetInverse( CMatrix& oMat ) const;
+	CMatrix				GetRotation();
+	CVector				GetPosition();
+	CMatrix				GetxRotation();
+	CMatrix				GetyRotation();
+	CMatrix				GetzRotation();
+	CMatrix				GetTranslation();
+	float				GetDeterminant()const;
+	void				GetQuaternion( CQuaternion& quat ) const;
+	//void				GetQuaternion2( CQuaternion& quat ) const;
+
+	void				SetIdentity();
+	void				SetPosition( float x, float y, float z );
+	void				SetAffinePart( const CMatrix& mat );
+	void				SetAffinePart( float x, float y, float z );
+	void				SetAffinePart( const CVector& v );
+	void				AddTranslation( const CVector& v );
+	void				AddTranslation( float x, float y, float z );
+
+	static CMatrix		GetxRotation(float Angle);
+	static CMatrix		GetyRotation(float Angle);
+	static CMatrix		GetzRotation(float Angle);
+	static CMatrix		GetTranslation(const CVector& vTranslation);
+	static CMatrix		GetTranslation(float x,float y,float z);
+	static void			Slerp( const CMatrix& oInitial, const CMatrix& oFinal, float t, CMatrix& oResult );
+	static void			LerpAffinePart( const CMatrix& oInitial, const CMatrix& oFinal, float t, CMatrix& oResult );
+	static void			GetPassage( const CMatrix& mInitial, const CMatrix& mFinal, CMatrix& mPassage );
+	static void			GetAxeAngleRotation( CVector vAxis, float fAngle, CMatrix& mOut );
+	void				GetAxeAngleRotation( float ux, float uy, float uz, float fAngle, CMatrix& mOut );
+	static void			GetInterpolationMatrix( const CMatrix& oLast, const CMatrix& oNext, CMatrix& oResult, float t );
+	//static void		  SlerpInvariantAxis( const CMatrix& oInitial, const CMatrix& oFinal, float t, CMatrix& oResult );
+
+	void Store( CBinaryFileStorage& store ) const;
+	void Load( CBinaryFileStorage& store );
+	void Store( CAsciiFileStorage& store ) const;
+	void Load( CAsciiFileStorage& store );
+	void Store( CStringStorage& store ) const;
+	void Load( CStringStorage& store );
+	void Afficher() const;
+};	
+
+
+#endif //MATRIX_H_
