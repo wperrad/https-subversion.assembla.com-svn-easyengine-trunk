@@ -1,0 +1,20 @@
+#include "IGeometry.h"
+
+class IBox;
+
+class CGeometryManager : public IGeometryManager
+{
+	map< int, IBox* >		m_mBox;
+	map< int, ISphere* >	m_mSphere;
+public:
+	CGeometryManager( CPlugin::Desc& oDesc );
+	IWeightTable*	CreateWeightTable() const;
+	IBox*			CreateBox();
+	IBox*			CreateBox( const IBox& oBox );
+	int				GetLastCreateBoxID();
+	IBox*			GetBox( int nID ) const;
+	ISphere*		CreateSphere();
+	ISphere*		CreateSphere( CVector& oCenter, float fRadius );
+};
+
+extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc );

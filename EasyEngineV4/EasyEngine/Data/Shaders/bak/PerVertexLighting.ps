@@ -1,0 +1,12 @@
+uniform sampler2D baseMap;
+uniform int ValueTexture0;
+
+varying vec2 Texcoord;
+
+void main()
+{
+	if ( ValueTexture0 == 0 )
+		gl_FragColor = gl_Color;
+	else
+		gl_FragColor = texture2D( baseMap, Texcoord ) * gl_Color;
+}

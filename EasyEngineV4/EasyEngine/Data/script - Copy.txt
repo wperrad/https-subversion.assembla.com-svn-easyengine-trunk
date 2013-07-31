@@ -1,0 +1,4 @@
+MessageBox("prout", "pre", 0);
+MessageBox( "Coucou !", "prout", 1 );
+Operation( (700 + 2 ) * 3 / ( 6 -2 ), 2500, 300 );
+Operation3( (700 + 2 * (4 +9)) * 3 / ( 6 -2 ), 2500, 300 );
