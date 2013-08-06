@@ -43,6 +43,7 @@ class CMaxExporter : public SceneExport
 
 protected:
 	vector< string >	m_vNonTCBBoneNames;
+	bool				g_bInterruptExport;
 
 	static bool			IsBone( Object* pObject );
 	static bool			IsBone( INode* pNode );

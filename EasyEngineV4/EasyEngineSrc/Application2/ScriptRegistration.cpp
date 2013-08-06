@@ -95,6 +95,36 @@ IEntity* LoadEntity( string sName )
 	return pEntity;
 }
 
+void DisplayFov( IScriptState* pState )
+{
+	m_pConsole->Print( "Fonction pas encore implémentée" );
+}
+
+void SetFov( IScriptState* pState )
+{
+	CScriptFuncArgFloat* pFov = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 0 ) );
+	m_pRenderer->SetFov( pFov->m_fValue );
+}
+
+void SetEntityName( IScriptState* pState )
+{
+	CScriptFuncArgInt* pEntityID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
+	CScriptFuncArgString* pEntityName = static_cast< CScriptFuncArgString* >( pState->GetArg( 1 ) );
+	IEntity* pEntity = m_pEntityManager->GetEntity( pEntityID->m_nValue );
+	pEntity->SetEntityName( pEntityName->m_sValue );
+	pEntity->SetName( "test" );
+}
+
+void Goto( IScriptState* pState )
+{
+	CScriptFuncArgInt* pEntityID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
+	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
+	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
+	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 3 ) );
+	IEntity* pEntity = m_pEntityManager->GetEntity( pEntityID->m_nValue );
+	pEntity->Goto( CVector(px->m_fValue, py->m_fValue, pz->m_fValue), 10.f );
+}
+
 void DisplayAnimationBBox( IScriptState* pState )
 {
 	CScriptFuncArgInt* pEntityID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
@@ -130,8 +160,21 @@ void CreateSphere( IScriptState* pState )
 	m_pConsole->Print( oss.str() );
 }
 
+void CreateRepere( IScriptState* pState )
+{
+	IEntity* pRepere = m_pEntityManager->CreateRepere( *m_pRenderer );
+	ostringstream oss;
+	oss << "Le repère a été créé avec l'identifiant " << m_pEntityManager->GetEntityID( pRepere )  << ".";
+	m_pConsole->Print( oss.str() );
+}
+
 void Test( IScriptState* pState )
 {
+	string s = "\tBonjour";
+	m_pConsole->Print( s );
+	s = "\t\tBonjour";
+	m_pConsole->Print( s );
+	return;
 	CScriptFuncArgInt* pBox1 = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	CScriptFuncArgInt* pBox2 = static_cast< CScriptFuncArgInt* >( pState->GetArg( 1 ) );
 	IEntity* pBox1Entity = m_pEntityManager->GetEntity( pBox1->m_nValue );
@@ -771,17 +814,23 @@ void SelectBone( IScriptState* pState )
 	IEntity* pEntity = m_pEntityManager->GetEntity( pIDEntity->m_nValue );
 	if( pEntity )
 	{
-		m_pSelectedNode = pEntity->GetSkeletonRoot()->GetChildBoneByID( pIDBone->m_nValue );
-		if( m_pSelectedNode )
+		IBone* pSkeleton = pEntity->GetSkeletonRoot();
+		if( pSkeleton )
 		{
-			m_eSelectionType = eBone;
-			string sBoneName;
-			m_pSelectedNode->GetName( sBoneName );
-			string sMessage = string( "Bone \"" ) + sBoneName + "\" sélectionné";
-			m_pConsole->Print( sMessage );
+			m_pSelectedNode = pSkeleton->GetChildBoneByID( pIDBone->m_nValue );
+			if( m_pSelectedNode )
+			{
+				m_eSelectionType = eBone;
+				string sBoneName;
+				m_pSelectedNode->GetName( sBoneName );
+				string sMessage = string( "Bone \"" ) + sBoneName + "\" sélectionné";
+				m_pConsole->Print( sMessage );
+			}
+			else
+				m_pConsole->Print( "Identifiant de bone incorrect" );
 		}
 		else
-			m_pConsole->Print( "Identifiant de bone incorrect" );
+			m_pConsole->Print( "Erreur : L'entité sélectionné n'a pas de squelette" );
 	}
 	else
 		m_pConsole->Print( "Identifiant d'entité incorrect" );
@@ -2118,8 +2167,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetPreferedKeyBBox", SetPreferedKeyBBox, vType );
 
 	vType.clear();
-	vType.push_back( eInt );
-	vType.push_back( eInt );
 	m_pScriptManager->RegisterFunction( "Test", Test, vType );
 
 	vType.clear();
@@ -2142,4 +2189,26 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back( eInt );
 	vType.push_back( eInt );
 	m_pScriptManager->RegisterFunction( "DisplayAnimationBBox", DisplayAnimationBBox, vType );
+
+	vType.clear();
+	vType.push_back( eInt );
+	vType.push_back( eFloat );
+	vType.push_back( eFloat );
+	vType.push_back( eFloat );
+	m_pScriptManager->RegisterFunction( "Goto", Goto, vType );
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction( "CreateRepere", CreateRepere, vType );
+
+	vType.clear();
+	vType.push_back( eInt );
+	vType.push_back( eString );
+	m_pScriptManager->RegisterFunction( "SetEntityName", SetEntityName, vType );
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction( "DisplayFov", DisplayFov, vType );
+
+	vType.clear();
+	vType.push_back( eFloat );
+	m_pScriptManager->RegisterFunction( "SetFov", SetFov, vType );
 }

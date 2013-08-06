@@ -229,7 +229,7 @@ IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oD
 		oDesc.m_nParentBoneID = mi.m_nParentBoneID;
 		oDesc.m_sName = mi.m_sName;
 		oDesc.m_sFileName = mi.m_sFileName;
-		oDesc.m_oOrgWorldTM = mi.m_oWorldTM;
+		oDesc.m_oOrgMaxPosition = mi.m_oOrgMaxPosition;
 		
 		CMesh* pMesh = new CMesh( oDesc );
 		pAMesh->AddMesh( pMesh );

@@ -48,7 +48,7 @@ void CGUIWidget::SetRect( IRessource* pMesh )
 	m_pMesh = static_cast< IMesh* >( pMesh );
 }
 
-void CGUIWidget::Display( IRessourceManager& oRessourceManager )
+void CGUIWidget::Display()
 {
 	float fWidgetLogicalPosx, fWidgetLogicalPosy;
 	GetLogicalPosition( fWidgetLogicalPosx, fWidgetLogicalPosy, s_nScreenResWidth, s_nScreenResHeight );
@@ -81,6 +81,12 @@ void CGUIWidget::GetLogicalPosition( float& x, float& y, int nResWidth, int nRes
 {
 	x = 2.f*(float)_Position.GetX() / nResWidth;
 	y = - 2.f*(float)_Position.GetY() / nResHeight;
+}
+
+void CGUIWidget::GetLogicalDimension( float& x, float& y, int nResWidth, int nResHeight ) const
+{
+	x = 2.f*(float)_Dimension.GetWidth() / nResWidth;
+	y = 2.f*(float)_Dimension.GetHeight() / nResHeight;
 }
 
 CDimension CGUIWidget::GetDimension() const

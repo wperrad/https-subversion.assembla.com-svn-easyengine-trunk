@@ -5,6 +5,12 @@ IAnimatableMesh( oDesc )
 {
 }
 
+CAnimatableMesh::~CAnimatableMesh()
+{
+	for( int i = 0; i < GetMeshCount(); i++ )
+		delete GetMesh( i );
+}
+
 void CAnimatableMesh::Update()
 {
 }

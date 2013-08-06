@@ -80,7 +80,8 @@ public:
 		IBox*											m_pBoundingBox;
 		string											m_sShaderName;
 		int												m_nParentBoneID;
-		CMatrix											m_oWorldTM;
+		//CMatrix											m_oOrgMaxMatrix;
+		CVector											m_oOrgMaxPosition;
 		map< string, map< int, IBox* > >				m_oKeyBoundingBoxes;
 		map< string, int >								m_oPreferedKeyBBox;
 		CMeshInfos() : 

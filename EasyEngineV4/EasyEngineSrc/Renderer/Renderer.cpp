@@ -15,6 +15,7 @@
 #include "IWindow.h"
 #include "Shader.h"
 #include "IFileSystem.h"
+#include "RenderUtils.h"
 
 #pragma pack(push, 1)
 
@@ -33,7 +34,9 @@ m_oWindow( oDesc.m_oWindow ),
 m_nCurrentBufferID( -1 ),
 m_oFileSystem( oDesc.m_oFileSystem ),
 m_nCurrentBufferOffset( 0 ),
-m_eCurrentRenderType( eFill )
+m_eCurrentRenderType( eFill ),
+m_bMustChangeFov( false ),
+m_fFov( 40.f )
 {
 	m_mDrawStyle[ T_LINES ] = GL_LINES;
 	m_mDrawStyle[ T_POINTS ] = GL_POINTS;
@@ -165,6 +168,11 @@ void CRenderer::BeginRender()
 	glLoadIdentity();
 	for ( unsigned int i = 0; i < m_vRenderEventCallback.size(); i++ )
 		m_vRenderEventCallback[ i ]( this );
+	if( m_bMustChangeFov )
+	{
+		ApplySetFov();
+		m_bMustChangeFov = false;
+	}
 }
 
 void CRenderer::DestroyContext()
@@ -181,7 +189,13 @@ void CRenderer::DestroyContext()
 
 void CRenderer::SetFov( float fov )
 {
-	CalculProjectionMatrix( m_oProjectionMatrix, fov );	
+	m_bMustChangeFov = true;
+	m_fFov = fov;
+}
+
+void CRenderer::ApplySetFov()
+{
+	CalculProjectionMatrix( m_oProjectionMatrix, m_fFov );	
 	SetProjectionMatrix( m_oProjectionMatrix );	
 }
 
@@ -243,54 +257,32 @@ void CRenderer::EndRender()
 	SwapBuffers(m_hDC);
 }
 
-
-void CRenderer::CreateNonIndexedVertexArray( const vector< UINT >& vIndexArray, const vector< float >& vVertexArray, int nComposantCount, vector< float >& vOutVertexArray )
-{
-	vOutVertexArray.clear();
-	for ( unsigned int i = 0; i < vIndexArray.size() ; i++ )
-	{
-		int nIndex = vIndexArray[ i ];
-		for ( int j = 0; j < nComposantCount; j++ )
-			vOutVertexArray.push_back( vVertexArray[ nIndex * nComposantCount + j ] );
-	}
-}
-
 IBuffer* CRenderer::CreateGeometry( const vector< float >&	vVertexArray, const vector< unsigned int >& vIndexArray, 
 									const vector< float >& vUVVertexArray, const vector< unsigned int >& vUVIndexArray, 
 									const vector< float >& vNormalFaceArray, const vector< float >& vNormalVertexArray )
 {
 	vector< float > vNewVertexArray;
-	//for ( unsigned int i = 0; i < vIndexArray.size() ; i++ )
-	//{
-	//	int nIndex = vIndexArray[ i ];
-	//	vNewVertexArray.push_back( vVertexArray[ nIndex * 3 ] );
-	//	vNewVertexArray.push_back( vVertexArray[ nIndex * 3 + 1 ] );
-	//	vNewVertexArray.push_back( vVertexArray[ nIndex * 3 + 2 ] );
-	//}
-	CreateNonIndexedVertexArray( vIndexArray, vVertexArray, 3, vNewVertexArray );
+	CRenderUtils::CreateNonIndexedVertexArray( vIndexArray, vVertexArray, 3, vNewVertexArray );
 	int nVertexBufferSize = ( int ) ( vNewVertexArray.size() * sizeof( float ) );
 
+	vector< float > vNonIndexedNormal;
+	CRenderUtils::CreateNonIndexedVertexArray( vIndexArray, vNormalVertexArray, 3, vNonIndexedNormal );
+
 	vector< float > vNewUVVertexArray;
-	for ( unsigned int i = 0; i < vUVIndexArray.size(); i++ )
-	{
-		int nIndex = vUVIndexArray[i];
-		vNewUVVertexArray.push_back( vUVVertexArray[ nIndex * 2 ] );
-		vNewUVVertexArray.push_back( vUVVertexArray[ nIndex * 2 + 1 ] );
-	}
+	CRenderUtils::CreateNonIndexedVertexArray( vUVIndexArray, vUVVertexArray, 2, vNewUVVertexArray );
 
 	int nUVVertexBufferSize = (int)( vNewUVVertexArray.size() * sizeof( float ) );
 	
 	glEnableClientState ( GL_VERTEX_ARRAY );	
     glEnableClientState ( GL_NORMAL_ARRAY );
 	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-	//int uVertexWeightAttributeID = -1, int uWeightedVertexIDAttributeID = -1, uVertexIndexID = -1;
 
     unsigned int nVertexBufferID;
 	glGenBuffers( 1, &nVertexBufferID );
 	glBindBuffer( GL_ARRAY_BUFFER_ARB, nVertexBufferID );
 	glBufferData( GL_ARRAY_BUFFER_ARB, nVertexBufferSize*2 + nUVVertexBufferSize , NULL , GL_STATIC_DRAW_ARB );
 	glBufferSubData( GL_ARRAY_BUFFER_ARB, 0, nVertexBufferSize, &vNewVertexArray[ 0 ] );
-	glBufferSubData( GL_ARRAY_BUFFER_ARB, nVertexBufferSize, nVertexBufferSize, &vNormalVertexArray[ 0 ] );
+	glBufferSubData( GL_ARRAY_BUFFER_ARB, nVertexBufferSize, nVertexBufferSize, &vNonIndexedNormal[ 0 ] );
 	if ( vNewUVVertexArray.size() > 0 )
 		glBufferSubData( GL_ARRAY_BUFFER_ARB, nVertexBufferSize * 2, nUVVertexBufferSize, &vNewUVVertexArray[ 0 ] );
 
@@ -302,35 +294,64 @@ IBuffer* CRenderer::CreateGeometry( const vector< float >&	vVertexArray, const v
     return pBuffer;
 }
 
-
-IBuffer* CRenderer::CreateIndexedGeometry( const vector< float >&	vVertexArray, const vector< unsigned int >& vIndexArray, 
-										const vector< float >& vUVVertexArray, const vector< float >& vOldNormalVertexArray )
+void CRenderer::GenUVVertexArray( vector< unsigned int >& vIndexArray, vector< float >& vVertexArray, const vector< unsigned int >& vUVIndexArray, const vector< float >& vUVVertexArray, vector< float >& vNewUVVertexArray )
 {
-	// temporaire
-	vector< float > vNormalVertexArray;
-	vNormalVertexArray.resize( vVertexArray.size() );
-	for ( unsigned int i = 0; i < vIndexArray.size(); i++ )
+	vector< float > nNonIndexedUVVertexArray;
+	CRenderUtils::CreateNonIndexedVertexArray( vUVIndexArray, vUVVertexArray, 2, nNonIndexedUVVertexArray );
+	map< int, CVector > mUVVertexArray;
+	for( int i = 0; i < vIndexArray.size(); i++ )
 	{
 		int nIndex = vIndexArray[ i ];
-		for ( int j = 0; j < 3; j++ )
-			vNormalVertexArray[ 3 * nIndex + j ] = vOldNormalVertexArray[ 3 * i + j ];
+		int nUVIndex = vUVIndexArray[ i ];
+		CVector oUVVertex = CVector( vUVVertexArray[ 2 * nUVIndex ], vUVVertexArray[ 2 * nUVIndex + 1 ], 0 );
+		map< int, CVector >::iterator itUVIndex = mUVVertexArray.find( nIndex );
+		if( itUVIndex == mUVVertexArray.end() )
+			mUVVertexArray[ nIndex ] = oUVVertex;
+		else
+		{
+			CVector& vTemp = mUVVertexArray[ nIndex ];
+			if( vTemp != oUVVertex )
+			{
+				int nNewVertexIndex = vVertexArray.size() / 3;
+				for( int j = 0; j < 3; j++ )
+					vVertexArray.push_back( vVertexArray[ 3 * nIndex + j ] );
+				vIndexArray[ i ] = nNewVertexIndex;
+				mUVVertexArray[ nNewVertexIndex ] = oUVVertex;
+			}
+		}
 	}
-	// fin temporaire
+	for( map< int, CVector >::iterator itVec = mUVVertexArray.begin(); itVec != mUVVertexArray.end(); itVec++ )
+	{
+		vNewUVVertexArray.push_back( itVec->second.m_x );
+		vNewUVVertexArray.push_back( itVec->second.m_y );
+	}
+}
+
+IBuffer* CRenderer::CreateIndexedGeometry( const vector< float >&	vVertexArray, const vector< unsigned int >& vIndexArray, 
+										const vector< float >& vUVVertexArray, const vector< unsigned int >& vUVIndexArray, 
+										const vector< float >& vNormalVertexArray )
+{
+	//// temporaire
+	//vector< float > vNormalVertexArray;
+	//vNormalVertexArray.resize( vVertexArray.size() );
+	//for ( unsigned int i = 0; i < vIndexArray.size(); i++ )
+	//{
+	//	int nIndex = vIndexArray[ i ];
+	//	for ( int j = 0; j < 3; j++ )
+	//		vNormalVertexArray[ 3 * nIndex + j ] = vOldNormalVertexArray[ 3 * i + j ];
+	//}
+	//// fin temporaire
 
 	CIndexedGeometryBuffer* pBuffer = new CIndexedGeometryBuffer;
 	pBuffer->m_nVertexBufferSize = ( int ) ( vVertexArray.size() * sizeof( float ) );
 
 	if ( vUVVertexArray.size() > 0 )
 	{
-		vector< float > vUVVertexArrayTest;
-		for ( unsigned int i = 0; i < vUVVertexArray.size(); i++ )
-			vUVVertexArrayTest.push_back( vUVVertexArray[ i ] );
-		pBuffer->m_nUVVertexBufferSize = ( int )( vUVVertexArrayTest.size() * sizeof( float ) );
-
+		pBuffer->m_nUVVertexBufferSize = ( int )( vUVVertexArray.size() * sizeof( float ) );
 		glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 		glGenBuffers( 1, &pBuffer->m_nUVVertexBufferID );
 		glBindBuffer( GL_ARRAY_BUFFER, pBuffer->m_nUVVertexBufferID );
-		glBufferData( GL_ARRAY_BUFFER, pBuffer->m_nUVVertexBufferSize, &vUVVertexArrayTest[ 0 ], GL_STATIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, pBuffer->m_nUVVertexBufferSize, &vUVVertexArray[ 0 ], GL_STATIC_DRAW );
 	}
 	
 	glEnableClientState( GL_VERTEX_ARRAY );

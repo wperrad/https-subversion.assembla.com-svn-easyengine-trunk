@@ -1,6 +1,7 @@
 #include "SoftRenderer.h"
 #include "MeshBuffer.h"
-#include "../Utils2/DebugTool.h"
+#include "DebugTool.h"
+#include "RenderUtils.h"
 
 // gl
 #include <gl/gl.h>
@@ -42,7 +43,7 @@ IBuffer* CSoftRenderer::CreateGeometry(	const vector< float >&	vVertexArray, con
 {
 
 	vector< float > vNewVertexArray;
-	CreateNonIndexedVertexArray( vIndexArray, vVertexArray, 3, vNewVertexArray );
+	CRenderUtils::CreateNonIndexedVertexArray( vIndexArray, vVertexArray, 3, vNewVertexArray );
 	int nBufferID = CreateBuffer( static_cast< int >( vNewVertexArray.size() ) );
 	FillBuffer( vNewVertexArray, nBufferID );
 	CGeometryBuffer* pBuffer = new CGeometryBuffer( ( unsigned int )vIndexArray.size(), ( unsigned int )vUVIndexArray.size(), nBufferID );

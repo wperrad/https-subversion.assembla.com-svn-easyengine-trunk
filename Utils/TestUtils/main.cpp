@@ -438,13 +438,33 @@ void TestQuaternion()
 
 #include "CsvReader.h"
 
+class CParent1
+{
+public:
+	virtual void f() = 0;
+};
 
+class CParent2
+{
+public:
+	virtual void f() = 0;
+};
+
+class CEnfant : public CParent1, public CParent2
+{
+public:
+	void f()
+	{
+		MessageBoxA( NULL, "coucou", "", MB_OK );
+	}
+};
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hPrevInstance,
                                                   LPSTR lpCmdLine, int nCmdShow)
 {
 
-	CMatrix m;
+	CEnfant e;
+	e.f();
 	
 	return TRUE;
 }

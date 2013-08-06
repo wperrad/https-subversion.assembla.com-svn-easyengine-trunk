@@ -1,6 +1,7 @@
 #include "BinaryMeshMaxExporter.h"
 #include "IFileSystem.h"
 #include "EEPlugin.h"
+#include "RenderUtils.h"
 
 // stl
 #include <algorithm>
@@ -107,6 +108,9 @@ INT_PTR CALLBACK CBinaryMeshMaxExporter::ExportDlgProc(HWND hWnd, UINT msg, WPAR
 
 int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Interface *pInterface, BOOL suppressPrompts, DWORD options )
 {
+	IGeometryManager::Desc oGMDesc( NULL, "" );
+	m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGMDesc, "Geometry.dll", "CreateGeometryManager" ) );
+
 	string sFileName = pName;
 	int nDotPos = (int)sFileName.find_last_of( "." );
 	string sExtension = sFileName.substr( nDotPos + 1, sFileName.size() - nDotPos - 1 );
@@ -131,11 +135,14 @@ int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Inter
 			ILoader::CAnimatableMeshData mi;
 			StoreSkeletonToSkeletonMap( mBoneByID, mi );
 			GetGeometry( pInterface, mi.m_vMeshes, pInterface->GetRootNode() );
-			mi.m_mBonesBoundingBoxes = m_mBoneBox;
-			if( DumpModels( pName, mi ) )
-				MessageBox( NULL, "Export terminé", "Export", MB_OK );
-			if( m_pLogFile )
-				fclose( m_pLogFile );
+			if( !g_bInterruptExport )
+			{
+				mi.m_mBonesBoundingBoxes = m_mBoneBox;
+				if( DumpModels( pName, mi ) )
+					MessageBox( NULL, "Export terminé", "Export", MB_OK );
+				if( m_pLogFile )
+					fclose( m_pLogFile );
+			}
 		}
 	}	
 	catch( exception& e )
@@ -228,62 +235,6 @@ void CBinaryMeshMaxExporter::WriteLog( string sMessage )
 		fwrite( sMessage.c_str(), sizeof( char ), sMessage.size(), m_pLogFile );
 }
 
-/*
-void CBinaryMeshMaxExporter::GetBoundingBoxAtKey( Interface *pInterface, const vector< float >& vVertexArray, const vector< unsigned int >& vIndexArray, const IWeightTable& wt, map< int, CBox >& mBox )
-{
-	map< string, INode* > mBones;
-	map< string, int > mBoneIDByName;
-	map< int, INode* > mBoneByID;
-
-	GetSkeleton( pInterface->GetRootNode(), mBones );
-	GetBonesIDByName( pInterface->GetRootNode(), mBoneIDByName );
-	GetBoneByID( mBones, mBoneIDByName, mBoneByID );
-
-	map< int, vector < CKey > > mBoneKeys;
-	GetAnimation( pInterface, mBoneByID, mBoneKeys );
-
-	map< int, int > mKeys;
-	for( map< int, vector < CKey > >::iterator itBone = mBoneKeys.begin(); itBone != mBoneKeys.end(); itBone++ )
-	{
-		vector< CKey >& vKey = itBone->second;
-		for( int i = 0; i < vKey.size(); i++ )
-			mKeys[ vKey[ i ].m_nTimeValue ] = i;
-	}
-
-	for( map< int, int >::iterator itKey = mKeys.begin(); itKey != mKeys.end(); itKey++ )
-	{
-		CBox oBox;
-		for( int i = 0; i < vIndexArray.size(); i++ )
-		{
-			int iIndex = vIndexArray[ i ];
-			CVector v = CVector( vVertexArray[ 3 * iIndex ], vVertexArray[ 3 * iIndex + 1 ], vVertexArray[ 3 * iIndex + 2 ] );
-			map< int, float > mWeight;
-			wt.Get( iIndex, mWeight );
-			CMatrix oBoneMatrixInit, oBoneMatrixFinal, oBoneMatrixInitInv;
-			for( map< int, float >::iterator itBone = mWeight.begin(); itBone != mWeight.end(); itBone++ )
-			{
-				oBoneMatrixInit = oBoneMatrixInit * mBoneKeys[ itBone->first ][ 0 ].m_oWorldTM * itBone->second;
-				int nKeyIndex = 0;
-				for( int iKey = 0; iKey < mBoneKeys[ itBone->first ].size(); iKey++ )
-				{
-					if( mBoneKeys[ itBone->first ][ iKey ].m_nTimeValue == itKey->first )
-					{
-						nKeyIndex = iKey;
-						break;
-					}
-				}
-				oBoneMatrixFinal = oBoneMatrixFinal * mBoneKeys[ itBone->first ][ nKeyIndex ].m_oWorldTM * itBone->second;
-			}
-			oBoneMatrixInit.GetInverse( oBoneMatrixInitInv );
-			CMatrix oBoneMatrixPassage = oBoneMatrixFinal * oBoneMatrixInitInv;
-			CVector vTransform = oBoneMatrixPassage * v;
-			oBox.AddPoint( vTransform );
-		}
-		mBox[ itKey->first ] = oBox;
-	}
-}
-*/
-
 void CBinaryMeshMaxExporter::GetGeometry( Interface* pInterface, vector< ILoader::CMeshInfos >& vMeshInfos, INode* pRoot )
 {
 	for ( int iNode = 0; iNode < pRoot->NumberOfChildren(); iNode++ )
@@ -300,6 +251,8 @@ void CBinaryMeshMaxExporter::GetGeometry( Interface* pInterface, vector< ILoader
 		{
 			ILoader::CMeshInfos mi;
 			StoreMeshToMeshInfos( pInterface, pNode, mi );
+			if( g_bInterruptExport )
+				break;
 			vMeshInfos.push_back( mi );
 		}
 	}
@@ -325,7 +278,7 @@ void CBinaryMeshMaxExporter::GetMeshesIntoHierarchy( Interface* pInterface, INod
 
 }
 
-void CBinaryMeshMaxExporter::GetBonesBoundingBoxes( const Mesh& oMesh, const IWeightTable& oWeightTable, const Matrix3& oModelTM, map< int, CBox >& mBoneBox )
+void CBinaryMeshMaxExporter::GetBonesBoundingBoxes( const Mesh& oMesh, const IWeightTable& oWeightTable, const Matrix3& oModelTM, map< int, IBox* >& mBoneBox )
 {
 	for ( int iVertex = 0; iVertex < oMesh.getNumVerts(); iVertex ++ )
 	{
@@ -337,7 +290,13 @@ void CBinaryMeshMaxExporter::GetBonesBoundingBoxes( const Mesh& oMesh, const IWe
 			if( itBone->second > 0.5f )
 			{
 				CVector v( oVertex.x, oVertex.y, oVertex.z );
-				mBoneBox[ itBone->first ].AddPoint( v );
+				map< int, IBox* >::iterator itBox = mBoneBox.find( itBone->first );
+				if( itBox == mBoneBox.end() )
+				{
+					IBox* pBox = m_pGeometryManager->CreateBox();
+					mBoneBox[ itBone->first ] = pBox;
+				}
+				mBoneBox[ itBone->first ]->AddPoint( v );
 			}
 		}
 	}
@@ -363,9 +322,7 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	IWeightTable* pWeightTable = NULL;
 	if( m_bExportSkinning )
 	{
-		IGeometryManager::Desc oGMDesc( NULL, "" );
-		IGeometryManager* pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGMDesc, "Geometry.dll", "CreateGeometryManager" ) );
-		pWeightTable =  pGeometryManager->CreateWeightTable();
+		pWeightTable =  m_pGeometryManager->CreateWeightTable();
 		GetWeightTable( *pWeightTable, m_mBoneIDByName, mi.m_sName );
 		pWeightTable->GetArrays( mi.m_vWeightVertex, mi.m_vWeigtedVertexID );
 	}
@@ -373,7 +330,7 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 
 	if( m_bExportBoundingBox && pWeightTable->GetVertexCount() > 0 )
 		GetBonesBoundingBoxes( oMesh, *pWeightTable, oTM, m_mBoneBox );
-	MaxMatrixToEngineMatrix( oTM, mi.m_oWorldTM );
+
 	oMesh.buildNormals();
 	mi.m_nParentBoneID = -1;
 	INode* pParent = pMesh->GetParentNode();
@@ -401,31 +358,15 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	else
 		mi.m_oMaterialInfos.m_bExists = false;
 
-	float xMin = 0, xMax = 0, yMin = 0, yMax = 0, zMin = 0, zMax = 0;
 	CMatrix mTransform( -1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1 );
 	
 	for ( int iVertex = 0; iVertex < oMesh.getNumVerts(); iVertex ++ )
 	{
 		Point3& oVertex = oTM * oMesh.verts[ iVertex ];
-		if( m_bOpenglCoord )
-		{
-			CVector v( oVertex.x, oVertex.y, oVertex.z );
-			CVector v2 = mTransform * v;
-			oVertex.x = v2.m_x;
-			oVertex.y = v2.m_y;
-			oVertex.z = v2.m_z;
-		}
 		mi.m_vVertex.push_back( oVertex.x );
 		mi.m_vVertex.push_back( oVertex.y );
 		mi.m_vVertex.push_back( oVertex.z );
-		if( oVertex.x > xMax )xMax = oVertex.x;
-		if( oVertex.x < xMin )xMin = oVertex.x;
-		if( oVertex.y > yMax )yMax = oVertex.y;
-		if( oVertex.y < yMin )yMin = oVertex.y;
-		if( oVertex.z > zMax )zMax = oVertex.z;
-		if( oVertex.z < zMin )zMin = oVertex.z;
 	}
-	mi.m_oBoundingBox.Set( CVector( xMin, yMin, zMin ), CVector( xMax - xMin, yMax - yMin, zMax - zMin ) );
 
 	for ( int iFace = 0; iFace < oMesh.getNumFaces(); iFace++ )
 	{
@@ -438,18 +379,13 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 		else
 		{
 			for ( int iIndex = 0; iIndex < 3; iIndex++ )
-			{
-				if( m_bOpenglCoord )
-					mi.m_vIndex.push_back( oMesh.faces[ iFace ].v[ 2 - iIndex ] );
-				else
-					mi.m_vIndex.push_back( oMesh.faces[ iFace ].v[ iIndex ] );
-			}
+				mi.m_vIndex.push_back( oMesh.faces[ iFace ].v[ iIndex ] );
 		}
 	}
 	if( m_bExportBBoxAtKey && pWeightTable && pWeightTable->GetVertexCount() > 0 )
 		//GetBoundingBoxAtKey( pInterface, mi.m_vVertex, mi.m_vIndex, *pWeightTable, mi.m_oKeyBoundingBoxes );
 	{
-		CEException e( "L'export des bounding box par clé d'animation n'est pas gérée parl'exporteur max, vous pouvez utiliser cette fonctionnalité dans EasyEngine." );
+		CEException e( "L'export des bounding box par clé d'animation n'est pas gérée par l'exporteur max, vous pouvez utiliser cette fonctionnalité dans EasyEngine." );
 		throw e;
 	}
 	GetFacesMtlArray( oMesh, mi.m_vFaceMaterialID );
@@ -466,8 +402,91 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 			for ( int iTIndex = 0; iTIndex < 3; iTIndex++ )
 				mi.m_vUVIndex.push_back( oMesh.tvFace[ iTFace ].t[ iTIndex ] );
 	}
+
+	vector< float > vIndexedNormal;
+	bool bIsolatedVertex = true;
+	CRenderUtils::IndexGeometry( mi.m_vIndex, mi.m_vVertex, mi.m_vUVIndex, mi.m_vUVVertex, mi.m_vNormalVertex, 
+								vIndexedNormal, mi.m_vWeightVertex, mi.m_vWeigtedVertexID, bIsolatedVertex );
+	if( bIsolatedVertex )
+	{
+		ostringstream oss;
+		oss << "Le modèle \"" << mi.m_sName << "\" contient des vertex isolés, voulez-vous continuer l'export ?";
+		if( MessageBoxA( NULL, oss.str().c_str(), "Avertissement", MB_ICONWARNING ) == IDCANCEL )
+		{
+			g_bInterruptExport = true;
+			return;
+		}
+	}
+
+	mi.m_vNormalVertex.clear();
+	mi.m_vNormalVertex.resize( vIndexedNormal.size() );
+	copy( vIndexedNormal.begin(), vIndexedNormal.end(), mi.m_vNormalVertex.begin() );
+
+	mi.m_pBoundingBox = m_pGeometryManager->CreateBox();
+	if( m_bOpenglCoord )
+	{
+		CMatrix mTransform( -1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1 );
+
+		// Vertex
+		for( int i = 0; i < mi.m_vVertex.size() / 3; i++ )
+		{
+			CVector v( mi.m_vVertex[ 3 * i ], mi.m_vVertex[ 3 * i + 1 ], mi.m_vVertex[ 3 * i + 2 ] );
+			CVector v2 = mTransform * v;
+			mi.m_vVertex[ 3 * i ] = v2.m_x;
+			mi.m_vVertex[ 3 * i + 1 ] = v2.m_y;
+			mi.m_vVertex[ 3 * i + 2 ] = v2.m_z;
+			mi.m_pBoundingBox->AddPoint( v2 );
+		}
+	}
+	else
+	{
+		for( int i = 0; i < mi.m_vVertex.size() / 3; i++ )
+		{
+			CVector v( mi.m_vVertex[ 3 * i ], mi.m_vVertex[ 3 * i + 1 ], mi.m_vVertex[ 3 * i + 2 ] );
+			mi.m_pBoundingBox->AddPoint( v );
+		}
+	}
+
+	CVector oBBoxCenter;
+	mi.m_pBoundingBox->GetCenter( oBBoxCenter );
+	mi.m_oOrgMaxPosition = oBBoxCenter;
+
+	CMatrix oObjLocalTM, oObjLocalTMInv;
+	oObjLocalTM.SetPosition( oBBoxCenter.m_x, oBBoxCenter.m_y, oBBoxCenter.m_z );
+	oObjLocalTM.GetInverse( oObjLocalTMInv );
+
+	for( int iVertex = 0; iVertex < mi.m_vVertex.size() / 3; iVertex++ )
+	{
+		CVector vOrg = CVector( mi.m_vVertex[ 3 * iVertex ], mi.m_vVertex[ 3 * iVertex + 1 ], mi.m_vVertex[ 3 * iVertex + 2 ] );
+		CVector v = oObjLocalTMInv * vOrg;
+		mi.m_vVertex[ 3 * iVertex ] = v.m_x;
+		mi.m_vVertex[ 3 * iVertex + 1 ] = v.m_y;
+		mi.m_vVertex[ 3 * iVertex + 2 ] = v.m_z;
+	}
+
+	if( m_bOpenglCoord )
+	{
+		// index
+		for( int i = 0; i < mi.m_vIndex.size() / 3; i++ )
+		{
+			unsigned int nTemp = mi.m_vIndex[ 3 * i ];
+			mi.m_vIndex[ 3 * i ] = mi.m_vIndex[ 3 * i + 2 ];
+			mi.m_vIndex[ 3 * i + 2 ] = nTemp;
+		}
+
+		// Normals
+		for( int i = 0; i < mi.m_vNormalVertex.size() / 3; i++ )
+		{
+			CVector n( mi.m_vNormalVertex[ 3 * i ], mi.m_vNormalVertex[ 3 * i + 1 ], mi.m_vNormalVertex[ 3 * i + 2 ] );
+			CVector n2 = mTransform * n;
+			mi.m_vNormalVertex[ 3 * i ] = n2.m_x;
+			mi.m_vNormalVertex[ 3 * i + 1 ] = n2.m_y;
+			mi.m_vNormalVertex[ 3 * i + 2 ] = n2.m_z;
+		}
+
+	}
 	
-	mi.m_bCanBeIndexed = (int)( ( !m_bMultipleSmGroup ) && ( !bIsTextured ) && ( m_nMaterialCount <= 1 ) );
+	mi.m_bCanBeIndexed = m_nMaterialCount <= 1;
 	m_nMaterialCount = 0;
 	m_bMultipleSmGroup = false;
 	WriteLog( "\nCBinaryMeshMaxExporter::StoreMeshToChunk() : fin" );
@@ -504,14 +523,6 @@ void CBinaryMeshMaxExporter::GetNormals( Mesh& oMesh, std::vector< float >& vFac
 	for ( int iFaceNormal = 0; iFaceNormal < oMesh.getNumFaces(); iFaceNormal++ )
 	{
 		Point3& oNormal = oMesh.getFaceNormal( iFaceNormal );
-		if( m_bOpenglCoord )
-		{
-			CVector n( oNormal.x, oNormal.y, oNormal.z );
-			CVector n2 = mTransform * n;
-			oNormal.x = n2.m_x;
-			oNormal.y = n2.m_y;
-			oNormal.z = n2.m_z;
-		}
 		vFaceNormal.push_back( fNormalFactor * oNormal.x );
 		vFaceNormal.push_back( fNormalFactor * oNormal.y );
 		vFaceNormal.push_back( fNormalFactor * oNormal.z );
@@ -519,14 +530,6 @@ void CBinaryMeshMaxExporter::GetNormals( Mesh& oMesh, std::vector< float >& vFac
 		for ( int vx = 0; vx < 3; vx++ )
 		{
 			Point3& oVertexNormal = GetVertexNormal( oMesh, iFaceNormal, oMesh.getRVertPtr( f.getVert( vIndex[ vx ] ) ) );
-			if( m_bOpenglCoord )
-			{
-				CVector n( oVertexNormal.x, oVertexNormal.y, oVertexNormal.z );
-				CVector n2 = mTransform * n;
-				oVertexNormal.x = n2.m_x;
-				oVertexNormal.y = n2.m_y;
-				oVertexNormal.z = n2.m_z;
-			}
 			vVertexNormal.push_back( fNormalFactor * oVertexNormal.x );
 			vVertexNormal.push_back( fNormalFactor * oVertexNormal.y );
 			vVertexNormal.push_back( fNormalFactor * oVertexNormal.z );
@@ -577,7 +580,7 @@ bool CBinaryMeshMaxExporter::DumpModels( const string& sFilePath, ILoader::CAnim
 
 	IFileSystem::Desc oFSDesc( NULL, "" );
 	IFileSystem* pFileSystem = static_cast< IFileSystem* >( CPlugin::Create( oFSDesc, "FileUtils.dll", "CreateFileSystem" ) );
-	ILoaderManager::Desc oLDesc( *pFileSystem );
+	ILoaderManager::Desc oLDesc( *pFileSystem, *m_pGeometryManager );
 	ILoaderManager* pLoaderManager = static_cast< ILoaderManager* >(  CPlugin::Create( oLDesc, "Loader2.dll", "CreateLoaderManager" ) );
 	pLoaderManager->Export( sFilePath, ami );
 	return bRet;

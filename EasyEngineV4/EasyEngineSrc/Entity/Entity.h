@@ -10,12 +10,16 @@ class IRenderer;
 class IRessource;
 class IAnimation;
 class IGeometryManager;
+class CScene;
 
 typedef std::map< std::string, std::map< int, const CNode* > > AnimationBonesMap;
 
 class CEntity : public IEntity
 {
 protected:
+
+	typedef void (*TCollisionCallback)( IEntity*);
+
 	IRessource*								m_pRessource;
 	IRenderer&								m_oRenderer;
 	IRessourceManager&						m_oRessourceManager;
@@ -41,12 +45,15 @@ protected:
 	IEntity*								m_pBoundingSphere;
 	map< int, IEntity* >					m_mBonesBoundingSphere;
 	bool									m_bDrawAnimationBoundingBox;
+	TCollisionCallback						m_pfnCollisionCallback;
+	string									m_sEntityName;
+	CScene*									m_pScene;
+
 
 	void				SetNewBonesMatrixArray( std::vector< CMatrix >& vMatBones );
 	void				GetBonesMatrix( CNode* pInitRoot, CNode* pCurrentRoot, std::vector< CMatrix >& vMatrix );
 	void				UpdateGroundCollision();
 	IEntity*			GetEntityCollision();
-	//void				ComputeBoundingSphereRadius();
 	static void			OnAnimationCallback( IAnimation::TEvent e, void* );
 
 public:
@@ -88,7 +95,9 @@ public:
 	void				DrawAnimationBoundingBox( bool bDraw );
 	float				GetBoundingSphereRadius() const;
 	void                Link( CNode* pNode );
-	//void				SetCurrentAnimationBoundingBox( string sAnimationName );
+	void				Goto( const CVector& oPosition, float fSpeed );
+	void				SetEntityName( string sName );
+	void				GetEntityName( string& sName );
 };
 
 #endif // ENTITY_H

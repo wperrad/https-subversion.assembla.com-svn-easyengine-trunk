@@ -97,7 +97,7 @@ void CBMELoader::LoadMesh( CBinaryFileStorage& fs, CMeshInfos& mi )
 {
 	fs >> mi.m_nParentBoneID ;	
 	fs >> mi.m_sName;
-	fs >> mi.m_oWorldTM;
+	fs >> mi.m_oOrgMaxPosition;
 	LoadMaterial( fs, mi.m_oMaterialInfos );
 	if( mi.m_oMaterialInfos.m_nID == -1 )
 		mi.m_oMaterialInfos.m_nID = 0;
@@ -503,7 +503,7 @@ void CBMELoader::ExportMeshInfos( const CMeshInfos& mi, CAsciiFileStorage& fs )
 	try
 	{
 		fs.SetWidth( 0 );
-		fs << "\n\n\nMesh name = " << mi.m_sName << "\n\nWorldTM = \n" <<mi.m_oWorldTM;
+		fs << "\n\n\nMesh name = " << mi.m_sName << "\n\nWorldTM = \n" <<mi.m_oOrgMaxPosition;
 		fs << "\nParent bone id = " << mi.m_nParentBoneID;
 		ExportMaterialInfos( mi.m_oMaterialInfos, fs );
 
@@ -570,7 +570,7 @@ void CBMELoader::ExportMeshInfos( const ILoader::CMeshInfos& mi, CBinaryFileStor
 	try
 	{
 		fs << mi.m_nParentBoneID;
-		fs << mi.m_sName << mi.m_oWorldTM;
+		fs << mi.m_sName << mi.m_oOrgMaxPosition;
 		ExportMaterialInfos( mi.m_oMaterialInfos, fs );
 		fs << mi.m_vVertex << mi.m_vIndex;
 

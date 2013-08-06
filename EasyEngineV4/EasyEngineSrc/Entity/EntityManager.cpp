@@ -19,6 +19,7 @@ m_oCollisionManager( oDesc.m_oCollisionManager ),
 m_oGeometryManager( oDesc.m_oGeometryManager )
 {
 	m_itCurrentParsedEntity = m_mCollideEntities.end();
+	m_itCurrentFighter = m_mFighterEntities.end();
 }
 
 void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
@@ -30,6 +31,9 @@ void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
 	m_mEntitiesID[ pEntity ] = m_nLastEntityID;
 	m_mNameEntities[ sName ] = pEntity;
 	m_mEntitiesName[ pEntity ] = sName;
+	IFighter* pFighter = dynamic_cast< IFighter* >( pEntity );
+	if( pFighter )
+		m_mFighterEntities[ pFighter ] = 1;
 }
 
 IEntity* CEntityManager::CreateEntity( std::string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate )
@@ -67,6 +71,22 @@ IEntity* CEntityManager::GetEntity( string sEntityName )
 	map< string, IEntity* >::iterator itEntity = m_mNameEntities.find( sEntityName );
 	if( itEntity != m_mNameEntities.end() )
 		return itEntity->second;
+	return NULL;
+}
+
+IFighter* CEntityManager::GetFirstFighter()
+{
+	m_itCurrentFighter = m_mFighterEntities.begin();
+	if( m_itCurrentFighter != m_mFighterEntities.end() )
+		return m_itCurrentFighter->first;
+	return NULL;
+}
+
+IFighter* CEntityManager::GetNextFighter()
+{
+	m_itCurrentFighter++;
+	if( m_itCurrentFighter != m_mFighterEntities.end() )
+		return m_itCurrentFighter->first;
 	return NULL;
 }
 
@@ -206,7 +226,10 @@ void CEntityManager::SetZCollisionError( float e )
 
 void CEntityManager::SetPerso( IEntity* pPerso )
 {
-	m_pPerso = pPerso;
+	if( m_pPerso )
+		m_pPerso->SetCurrentPerso( false );
+	m_pPerso = static_cast< CHuman* >( pPerso );
+	m_pPerso->SetCurrentPerso( true );
 }
 
 IEntity* CEntityManager::GetPerso()

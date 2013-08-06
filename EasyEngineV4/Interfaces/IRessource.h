@@ -104,6 +104,7 @@ public:
 	virtual int			GetAnimationTime() = 0;
 	virtual void		AddCallback( TCallback pCallback, void* pData ) = 0;
 	virtual void		RemoveCallback( TCallback pCallback ) = 0;
+	virtual void		RemoveAllCallback() = 0;
 	virtual int			GetStartAnimationTime() = 0;
 	virtual int			GetEndAnimationTime() = 0;
 	virtual void		GetBoneKeysMap( map< int, vector< CKey > >& mBoneKeys ) = 0;
@@ -118,17 +119,19 @@ public:
 	virtual void			DrawBoundingBox( bool bDraw ) = 0;
 	virtual IBox*			GetBBox() = 0;
 	virtual int				GetParentBoneID()const = 0;
-	virtual void			GetOrgWorldTM( CMatrix& m ) = 0;
+	virtual void			GetOrgWorldPosition( CVector& v ) = 0;
 	virtual void			SetRenderingType( IRenderer::TRenderType t ) = 0;
 	virtual IBox*			GetAnimationBBox( string sAnimation ) = 0;
 	virtual void			DrawAnimationBoundingBox( bool bDraw ) = 0;
 	virtual void			SetCurrentAnimationBoundingBox( string AnimationName ) = 0;
+	virtual CVector&		GetOrgMaxPosition() = 0;
 };
 
 class IAnimatableMesh : public IRessource
 {
 public:
 	IAnimatableMesh( const IRessource::Desc& oDesc ) : IRessource( oDesc ){}
+	virtual ~IAnimatableMesh() = 0{}
 	virtual IMesh*			GetMesh( int nIndex ) = 0;
 	virtual IBone*			GetSkeleton() = 0;
 	virtual unsigned int	GetMeshCount() = 0;

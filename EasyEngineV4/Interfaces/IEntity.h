@@ -22,6 +22,7 @@ class IRessource;
 class ICollisionManager;
 class IGeometryManager;
 class ISphere;
+class IFighter;
 
 using namespace std;
 
@@ -69,7 +70,6 @@ public:
 	virtual void			Update() = 0;
 	virtual void			DrawBoundingBox( bool bDraw ) = 0;
 	virtual void			SetShader( IShader* pShader ) = 0;
-	//virtual void			GetBbox( IBox& bbox ) = 0;
 	virtual IBox*			GetBBox() = 0;
 	virtual IRessource*		GetRessource() = 0;
 	virtual void			SetWeight( float fWeight ) = 0;
@@ -93,6 +93,8 @@ public:
 	virtual void			DrawBoneBoundingSphere( int nID, bool bDraw ) = 0;
 	virtual void			DrawAnimationBoundingBox( bool bDraw ) = 0;
 	virtual float			GetBoundingSphereRadius() const = 0;
+	virtual void			Goto( const CVector& oPosition, float fSpeed ) = 0;
+	virtual void			SetEntityName( string sName ) = 0;
 };
 
 class IEntityManager : public CPlugin
@@ -140,8 +142,9 @@ public:
 	virtual IEntity*			GetFirstCollideEntity() = 0;
 	virtual IEntity*			GetNextCollideEntity() = 0;
 	virtual int					GetCollideEntityID( IEntity* pEntity ) = 0;
-
 	virtual void				SetZCollisionError( float e ) = 0;
+	virtual IFighter*			GetFirstFighter() = 0;
+	virtual IFighter*			GetNextFighter() = 0;
 };
 
 class ISceneManager : public CPlugin

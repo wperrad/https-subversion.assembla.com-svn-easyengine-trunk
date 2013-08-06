@@ -15,7 +15,6 @@
 #include "../Utils2/Dimension.h"
 #include "../Utils2/Position.h"
 #include "../Utils2/Rectangle.h"
-#include "ILoader.h"
 
 class CMaterial;
 using namespace std;
@@ -78,7 +77,7 @@ void CGUIManager::InitFontMap()
 	CDimension dim = rect.m_oDim;
 	CreateFontBitmap( "Arial", dim.GetWidth(), vData, vCharSize );
 	IShader* pShader = m_oRenderer.GetShader( "gui");	
-	ITexture* pTextureFont = m_oRessourceManager.CreateTexture2D( m_oRenderer, pShader, 3, vData, dim.GetWidth(), dim.GetHeight(), IRenderer::T_RGBA );	
+	ITexture* pFontTexture = m_oRessourceManager.CreateTexture2D( m_oRenderer, pShader, 3, vData, dim.GetWidth(), dim.GetHeight(), IRenderer::T_RGBA );	
 	
 	CRectangle char0( 0, 12 * (float)rect.m_oDim.GetHeight() / 16.f, vCharSize[ 48 ].m_x, vCharSize[  48 ].m_y );
 
@@ -88,7 +87,8 @@ void CGUIManager::InitFontMap()
 		{
 			char c = (char) ( i * 16 + j );
 			CRectangle charRect( j * 16, 16 * i, vCharSize[ i * 16 + j ].m_x, vCharSize[ i * 16 + j ].m_y );
-			m_mWidgetFont[ c ] = CreateImageFromTexture( pTextureFont, charRect );
+			m_mWidgetFont[ c ] = CreateImageFromTexture( pFontTexture, charRect );
+			m_mWidgetFontInfos[ c ] = m_oLastWidgetInfosCreated;
 		}
 	}
 }
@@ -187,7 +187,6 @@ CGUIWidget* CGUIManager::CreateImageFromTexture( ITexture* pTexture, const CRect
 	pTexture->SetShader( pShader );
 
 	ILoader::CMeshInfos mi;
-
 	
 	CRectangle oScreenRect;
 	int nResWidth, nResHeight;
@@ -226,14 +225,14 @@ CGUIWidget* CGUIManager::CreateImageFromTexture( ITexture* pTexture, const CRect
 		mi.m_vNormalVertex.push_back( 0.f );
 
 	mi.m_bCanBeIndexed = false;
-	//mi.m_oMaterialInfos.m_sMaterialName = sShaderName;
 	mi.m_oMaterialInfos.m_sShaderName = sShaderName;
 	mi.m_sShaderName = sShaderName;
 
 	ILoader::CAnimatableMeshData oData;
 	oData.m_vMeshes.push_back( mi );
-	IRessource* pMaterial = m_oRessourceManager.CreateMaterial( mi.m_oMaterialInfos, m_oRenderer, pTexture );
-	IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh( oData, m_oRenderer, pMaterial );
+	m_oLastWidgetInfosCreated = mi;
+	m_pFontMaterial = m_oRessourceManager.CreateMaterial( mi.m_oMaterialInfos, m_oRenderer, pTexture );
+	IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh( oData, m_oRenderer, m_pFontMaterial );
 	IMesh* pRect = pARect->GetMesh( 0 );
 	CGUIWidget* pWidget = new CGUIWidget( oFinalSkin.m_oDim.GetWidth(), oFinalSkin.m_oDim.GetHeight() );
 	pWidget->SetRect( pRect );
@@ -442,7 +441,7 @@ void CGUIManager::OnRender()
 			for ( unsigned int i = 0; i < nWidgetCount; i++ )
 			{
 				CGUIWidget* pWidget = m_pCurrentWindow->GetWidget( i );
-				pWidget->Display( m_oRessourceManager );
+				pWidget->Display();
 			}
 			IInputManager::TMouseButtonState eButtonState = m_oInputManager.GetMouseButtonState( IInputManager::eMouseButtonLeft );
 			for (size_t i=0 ; i<nWidgetCount ; i++)
@@ -559,6 +558,102 @@ void CGUIManager::Print( char c, int x, int y )
 	Print( s, x, y );
 }
 
+int CGUIManager::CreateStaticText( vector< string >& vText, int nPosX, int nPosY )
+{
+	ILoader::CAnimatableMeshData ami;
+	ILoader::CMeshInfos mi;
+	mi.m_bCanBeIndexed = false;
+	mi.m_bMultiMaterial = false;
+	ILoader::CMeshInfos& miA = m_mWidgetFontInfos[ 'a' ];
+	mi.m_oMaterialInfos = miA.m_oMaterialInfos;
+	mi.m_sShaderName = "gui";
+	int nNumChar = 0;
+	float fOffsetY = 0.f;
+	float fLogicalFontHeight;
+	CGUIWidget oTestWidget = *m_mWidgetFont[ 'a' ];
+	int nScreenWidth, nScreenHeight;
+	m_oRenderer.GetResolution( nScreenWidth, nScreenHeight );
+	float fFontDimX, fFontDimY;
+	oTestWidget.GetLogicalDimension( fFontDimX, fFontDimY, nScreenWidth, nScreenHeight );
+	oTestWidget.SetPosition( nPosX, nPosY );
+	float fPosX, fPosY;
+	oTestWidget.GetLogicalPosition( fPosX, fPosY, nScreenWidth, nScreenHeight );
+	CGUIWidget oSpaceWidget = *m_mWidgetFont[ ' ' ];
+	float fSpaceWidgetWidth, fSpaceWidgetHeight;
+	oSpaceWidget.GetLogicalDimension( fSpaceWidgetWidth, fSpaceWidgetHeight, nScreenWidth, nScreenHeight );
+	float fTabWidth = fSpaceWidgetWidth * 4;
+
+	for( int iLine = 0; iLine < vText.size(); iLine++ )
+	{
+		float fOffsetX = 0;
+		for( int iChar = 0; iChar < vText[ iLine ].size(); iChar++, nNumChar++ )
+		{
+			char c = vText[ iLine ][ iChar ];
+			ILoader::CMeshInfos& miTemp = m_mWidgetFontInfos[ c ];
+
+			if( iChar > 0 )
+			{
+				CGUIWidget oTempWidget = *m_mWidgetFont[ vText[ iLine ][ iChar - 1 ] ];
+				oTempWidget.SetPosition( oTempWidget.GetDimension().GetWidth() + m_nCharspace, 0 );
+				float x, y;
+				oTempWidget.GetLogicalPosition( x, y, nScreenWidth, nScreenHeight );
+				fOffsetX += x;
+			}
+			for( int iVertex = 0; iVertex < miTemp.m_vVertex.size(); iVertex++ )
+			{
+				float ox = 0.f, oy = 0.f;
+				if( ( iVertex % 3 ) == 0 )
+					ox = fOffsetX + fPosX;
+				if( ( ( iVertex - 1 ) % 3  ) == 0 )
+					oy = fOffsetY + fPosY;
+				mi.m_vVertex.push_back( miTemp.m_vVertex[ iVertex ] + ox + oy );
+			}
+
+			for( int iIndex = 0; iIndex < miTemp.m_vIndex.size(); iIndex++ )
+				mi.m_vIndex.push_back( miTemp.m_vIndex[ iIndex ] + nNumChar * 4 );
+			for( int iUVIndex = 0; iUVIndex < miTemp.m_vUVIndex.size(); iUVIndex++ )
+				mi.m_vUVIndex.push_back( miTemp.m_vUVIndex[ iUVIndex ] + nNumChar * 4 );
+			mi.m_vUVVertex.insert( mi.m_vUVVertex.begin() + mi.m_vUVVertex.size(), miTemp.m_vUVVertex.begin(), miTemp.m_vUVVertex.end() );
+			mi.m_vNormalFace.insert( mi.m_vNormalFace.begin() + mi.m_vNormalFace.size(), miTemp.m_vNormalFace.begin(), miTemp.m_vNormalFace.end() );
+			mi.m_vNormalVertex.insert( mi.m_vNormalVertex.begin() + mi.m_vNormalVertex.size(), miTemp.m_vNormalVertex.begin(), miTemp.m_vNormalVertex.end() );			
+		}
+		fOffsetY -= fFontDimY;
+	}
+	if( mi.m_vVertex.size() > 0 )
+	{
+		ami.m_vMeshes.push_back( mi );
+		IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh( ami, m_oRenderer, m_pFontMaterial );
+		int nID = m_mStaticText.size();
+		m_mStaticText[ nID ] = pARect;
+		return nID;
+	}
+	return -1;
+}
+
+void CGUIManager::DestroyStaticTest( int nID )
+{
+	if( nID != -1 )
+	{
+		IAnimatableMesh* pAmi = m_mStaticText[ nID ];
+		delete pAmi;
+		m_mStaticText.erase( nID );
+		m_mStaticTextToRender.erase( nID );
+	}
+}
+
+void CGUIManager::PrintStaticText( int nTextID )
+{
+	if( nTextID != -1 )
+		m_mStaticTextToRender[ nTextID ] = true;
+}
+
+void CGUIManager::EnableStaticText( int nTextID, bool bEnable )
+{
+	map< int, bool >::iterator itText = m_mStaticTextToRender.find( nTextID );
+	if( itText != m_mStaticTextToRender.end() )
+		itText->second = bEnable;
+}
+
 //-----------------------------------------------------------------------------------------------------
 //										EndRenderText
 //-----------------------------------------------------------------------------------------------------
@@ -581,7 +676,20 @@ void CGUIManager::RenderText()
 			if( j > 0 )
 				nCursorPosX += oLine.m_vWidget[ j - 1 ].GetDimension().GetWidth() + m_nCharspace;
 			oWidget.SetPosition( nCursorPosX, nCursorPosY );
-			oWidget.Display( m_oRessourceManager );
+			oWidget.Display();
+		}
+	}
+
+	for( map< int, bool >::iterator itTextID = m_mStaticTextToRender.begin(); itTextID != m_mStaticTextToRender.end(); itTextID++ )
+	{
+		map< int, IAnimatableMesh* >::iterator itText = m_mStaticText.find( itTextID->first );
+		if( itText != m_mStaticText.end() && itTextID->second )
+		{
+			vector< float > vPos;
+			vPos.push_back( 0.f );
+			vPos.push_back( 0.f );
+			m_pShader->SendUniformVec2Array( "vImagePosition", vPos );
+			itText->second->GetMesh( 0 )->Update();
 		}
 	}
 	m_vText.clear();

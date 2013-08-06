@@ -44,10 +44,11 @@ public:
 	bool					operator==( const CGUIWidget& w );
 
 	void					SetRect( IRessource* pMesh );
-	void					Display( IRessourceManager& oRessourceManager );
+	void					Display();
 	
 	CPosition				GetPosition()const;
 	void					GetLogicalPosition( float& x, float& y, int nResWidth, int nResHeight ) const;
+	void					GetLogicalDimension( float& x, float& y, int nResWidth, int nResHeight ) const;
 	CDimension				GetDimension() const;
 	unsigned int			GetWidgetCount()const;
 

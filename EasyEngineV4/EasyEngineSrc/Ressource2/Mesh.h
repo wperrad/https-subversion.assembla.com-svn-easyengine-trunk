@@ -50,7 +50,8 @@ private:
 	IBox*								m_pCurrentAnimationBoundingBox;
 	IShader*							m_pShader;
 	int									m_nParentBoneID;
-	CMatrix								m_oOrgWorldTM;
+	//CMatrix								m_oOrgWorldTM;
+	CVector								m_oOrgMaxPosition;
 	IRenderer::TRenderType				m_eRenderType;
 	map< string, IBox* >				m_mAnimationKeyBox;
 	
@@ -75,7 +76,7 @@ public:
 		IDrawTool*						m_pDrawTool;
 		IBox*							m_pBbox;
 		int								m_nParentBoneID;
-		CMatrix							m_oOrgWorldTM;
+		CVector							m_oOrgMaxPosition;
 		map< string, IBox* >			m_mAnimationKeyBox;
 
 		Desc(  std::vector< float >& vVertexArray, std::vector<  unsigned int  >& vIndexArray,
@@ -95,9 +96,10 @@ public:
 	IBox*				GetBBox();
 	IShader*			GetCurrentShader() const{ return m_pShader; }
 	int					GetParentBoneID()const;
-	void				GetOrgWorldTM( CMatrix& m );
+	void				GetOrgWorldPosition( CVector& v );
 	void				SetRenderingType( IRenderer::TRenderType t );
 	IBox*				GetAnimationBBox( string sAnimation );
+	CVector&			GetOrgMaxPosition();
 
 	static void SetShaderName( std::string sShaderName );
 };

@@ -49,7 +49,7 @@ m_pBbox( oDesc.m_pBbox ),
 m_bDrawBoundingBox( false ),
 m_pShader( oDesc.m_pShader ),
 m_nParentBoneID( oDesc.m_nParentBoneID ),
-m_oOrgWorldTM( oDesc.m_oOrgWorldTM ),
+m_oOrgMaxPosition( oDesc.m_oOrgMaxPosition ),
 m_eRenderType( IRenderer::eFill ),
 m_mAnimationKeyBox( oDesc.m_mAnimationKeyBox ),
 m_bDrawAnimationBoundingBox( false ),
@@ -68,15 +68,16 @@ m_pCurrentAnimationBoundingBox( NULL )
 			GetRenderer().FillBuffer( oDesc.m_vWeightedVertexID, m_nWeightedVertexIDBufferID );
 			m_bSkinned = true;
 		}
-		m_pBuffer = GetRenderer().CreateIndexedGeometry( oDesc.m_vVertexArray, oDesc.m_vIndexArray, oDesc.m_vUVVertexArray, oDesc.m_vNormalVertexArray );
+		m_pBuffer = GetRenderer().CreateIndexedGeometry( oDesc.m_vVertexArray, oDesc.m_vIndexArray, oDesc.m_vUVVertexArray, 
+			oDesc.m_vUVIndexArray, oDesc.m_vNormalVertexArray );
 	}
 	else
 	{
 		if ( oDesc.m_vVertexWeight.size() > 0 )
 		{
 			vector< float > vVertexWeight, vWeightedVertexID;
-			GetRenderer().CreateNonIndexedVertexArray( oDesc.m_vIndexArray, oDesc.m_vVertexWeight, 4, vVertexWeight );
-			GetRenderer().CreateNonIndexedVertexArray( oDesc.m_vIndexArray, oDesc.m_vWeightedVertexID, 4, vWeightedVertexID );
+			CRenderUtils::CreateNonIndexedVertexArray( oDesc.m_vIndexArray, oDesc.m_vVertexWeight, 4, vVertexWeight );
+			CRenderUtils::CreateNonIndexedVertexArray( oDesc.m_vIndexArray, oDesc.m_vWeightedVertexID, 4, vWeightedVertexID );
 
 			m_nVertexWeightBufferID = GetRenderer().CreateBuffer( (int)vVertexWeight.size() );
 			GetRenderer().FillBuffer( vVertexWeight, m_nVertexWeightBufferID );
@@ -117,16 +118,15 @@ m_pCurrentAnimationBoundingBox( NULL )
 
 CMesh::~CMesh(void)
 {
-	//return;
 	GetRenderer().DeleteBuffer( m_pBuffer );
 	GetRenderer().DeleteBuffer( m_nVertexWeightBufferID );
 	GetRenderer().DeleteBuffer( m_nWeightedVertexIDBufferID );
 	GetRenderer().DeleteBuffer( m_nFaceMaterialBufferID );
 }
 
-void CMesh::GetOrgWorldTM( CMatrix& m )
+void CMesh::GetOrgWorldPosition( CVector& v )
 {
-	m = m_oOrgWorldTM;
+	v = m_oOrgMaxPosition;
 }
 
 void CMesh::DrawBoundingBox( bool bDraw )
@@ -224,7 +224,7 @@ void CMesh::Update()
 
 	if( m_bDrawBoundingBox )
 		CRenderUtils::DrawBox( m_pBbox->GetMinPoint(), m_pBbox->GetDimension(), GetRenderer() );	
-	if( m_bDrawAnimationBoundingBox )
+	if( m_bDrawAnimationBoundingBox && m_pCurrentAnimationBoundingBox )
 		CRenderUtils::DrawBox( m_pCurrentAnimationBoundingBox->GetMinPoint(), m_pCurrentAnimationBoundingBox->GetDimension(), GetRenderer() );
 	GetRenderer().SetRenderType( IRenderer::eFill );
 }
@@ -295,4 +295,9 @@ void CMesh::SetCurrentAnimationBoundingBox( string AnimationName )
 	map< string, IBox* >::const_iterator itBox = m_mAnimationKeyBox.find( AnimationName );
 	if( itBox != m_mAnimationKeyBox.end() )
 		m_pCurrentAnimationBoundingBox = itBox->second;
+}
+
+CVector& CMesh::GetOrgMaxPosition()
+{
+	return m_oOrgMaxPosition;
 }

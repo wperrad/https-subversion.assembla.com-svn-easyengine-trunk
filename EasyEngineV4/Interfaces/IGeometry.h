@@ -41,6 +41,7 @@ public:
 	virtual void				Set( const CVector& oMinPoint, const CVector& oDimension ) = 0;
 	virtual void				SetWorldMatrix( CMatrix& oMatrix ) = 0;
 	virtual void				GetPoints( vector< CVector >& vPoints ) = 0;
+	virtual void				GetCenter( CVector& oCenter ) const = 0;
 };
 
 class IGeometryManager : public CPlugin

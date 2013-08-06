@@ -28,12 +28,11 @@ Link(18, -1, 12, 27, "preserve");
 Link(19, -1, 12, 7, "preserve");
 Link(20, -1, 12, 25, "preserve");
 
-
 SetCameraType("link");
 
 RollEntity(2, 180);
 PitchEntity(2, 80);
-LocalTranslate(2, 0, 150, 500);
+LocalTranslate(2, 0, 150, 300);
 
 CreateHuman("testExport14");
 Stand(27);
@@ -43,9 +42,23 @@ CreateHuman("testExport14");
 Stand(34);
 SetEntityPos(34, 2000, 0, 0);
 
-cls();
 DisplayAnimationBBox(12, 1);
 DisplayAnimationBBox(27, 1);
 
+CreateRepere();
+Link(35, -1, 12, -1, "settoparent");
+CreateSphere(50);
+SetEntityPos(36, -50, 800, 50);
+
+CreateSphere(50);
+SetEntityPos(37, -2000, 500, 2000);
+SetEntityName(12, "Entity12");
+SetEntityName(27, "Entity27");
+SetEntityName(34, "Entity34");
+SetFov(60);
+LoadEntity("maison");
+SetEntityPos(38, 2000, 5000, 2000);
+SetEntityWeight(38, 1);
 
 
+SetCameraType("free");

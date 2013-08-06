@@ -47,7 +47,8 @@ TCHAR *GetString(int id)
 	return NULL;
 }
 
-CMaxExporter::CMaxExporter()
+CMaxExporter::CMaxExporter():
+g_bInterruptExport( false )
 {
 }
 
