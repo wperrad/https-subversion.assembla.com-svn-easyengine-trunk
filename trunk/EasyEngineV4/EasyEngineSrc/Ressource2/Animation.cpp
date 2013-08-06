@@ -179,6 +179,11 @@ void CAnimation::RemoveCallback( TCallback pCallback )
 	}
 }
 
+void CAnimation::RemoveAllCallback()
+{
+	m_vCallback.clear();
+}
+
 int CAnimation::GetStartAnimationTime()
 {
 	return m_nStartAnimationTime;

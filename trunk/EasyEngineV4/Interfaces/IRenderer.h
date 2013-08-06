@@ -100,9 +100,10 @@ public:
 	virtual void			BindVertexBuffer( int nBufferID ) = 0;
 	virtual void			DeleteBuffer( unsigned int nBufferID ) = 0;
 	virtual void			DeleteBuffer( IBuffer* pBuffer ) = 0;
-	virtual void			CreateNonIndexedVertexArray( const std::vector< UINT >& vIndexArray, const std::vector< float >& vVertexArray, int nComposantCount, std::vector< float >& vOutVertexArray ) = 0;
+	//virtual void			CreateNonIndexedVertexArray( const std::vector< UINT >& vIndexArray, const std::vector< float >& vVertexArray, int nComposantCount, std::vector< float >& vOutVertexArray ) = 0;
 	virtual IBuffer*		CreateIndexedGeometry( const std::vector< float >& vVertexArray, const std::vector< unsigned int >& vIndexArray,
-												const std::vector< float >& vUVVertexArray, const std::vector< float >& vNormalVertexArray ) = 0;
+												const std::vector< float >& vUVVertexArray, const vector< unsigned int >& vUVIndexArray, 
+												const std::vector< float >& vNormalVertexArray ) = 0;
 
 	virtual IBuffer*		CreateGeometry( const std::vector< float >&	vVertexArray, const std::vector< unsigned int >& vIndexArray, 
 											const std::vector< float >& vUVVertexArray, const std::vector< unsigned int >& vUVIndexArray, 

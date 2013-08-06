@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="math.lib Utils2.lib Utils.lib"
+				AdditionalDependencies="math.lib Utils.lib"
 				OutputFile="../../EasyEngine/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\Utils\$(ConfigurationName)&quot;;&quot;../../EasyEngine/Lib/$(ConfigurationName)/&quot;"

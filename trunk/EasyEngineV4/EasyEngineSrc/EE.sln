@@ -1,34 +1,46 @@
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUI2", "GUI2\GUI2.vcxproj", "{470145FC-AF5E-4140-865E-DBA00BCCDE2E}"
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUI2", "GUI2\GUI2.vcproj", "{470145FC-AF5E-4140-865E-DBA00BCCDE2E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ressource2", "Ressource2\Ressource2.vcxproj", "{C60A84D2-3512-4BD4-8529-A38FFE7D7EE4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ressource2", "Ressource2\Ressource2.vcproj", "{C60A84D2-3512-4BD4-8529-A38FFE7D7EE4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Loader2", "Loader2\Loader2.vcxproj", "{F773C847-EB00-402B-A476-92AD6DA299FE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Loader2", "Loader2\Loader2.vcproj", "{F773C847-EB00-402B-A476-92AD6DA299FE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IO", "IO\IO.vcxproj", "{7A4940A9-C040-4663-8CBD-13E705308361}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IO", "IO\IO.vcproj", "{7A4940A9-C040-4663-8CBD-13E705308361}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core2", "Core2\Core2.vcxproj", "{A5C1E9B1-CBB0-4A87-A880-2111AC60DE35}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core2", "Core2\Core2.vcproj", "{A5C1E9B1-CBB0-4A87-A880-2111AC60DE35}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Script", "Script\Script.vcxproj", "{7BED422F-85B9-439B-8BF8-D6D1A0ACB31A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Script", "Script\Script.vcproj", "{7BED422F-85B9-439B-8BF8-D6D1A0ACB31A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application2", "Application2\Application2.vcxproj", "{CC7818A8-F62F-459B-8A03-100C7A05A6FB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application2", "Application2\Application2.vcproj", "{CC7818A8-F62F-459B-8A03-100C7A05A6FB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{876D6982-86C6-4620-9A40-8FCAD06D92C6} = {876D6982-86C6-4620-9A40-8FCAD06D92C6}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileUtils", "FileUtils\FileUtils.vcxproj", "{D7555D7F-C3F6-459E-9F8D-7EC01DD47658}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileUtils", "FileUtils\FileUtils.vcproj", "{D7555D7F-C3F6-459E-9F8D-7EC01DD47658}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsGUI", "WindowsGUI\WindowsGUI.vcxproj", "{3174E6EE-D264-4E32-A7DC-E64C647EFFC2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsGUI", "WindowsGUI\WindowsGUI.vcproj", "{3174E6EE-D264-4E32-A7DC-E64C647EFFC2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Entity", "Entity\Entity.vcxproj", "{32E0AFE8-A315-462B-BE5C-8F33567E8ED9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Entity", "Entity\Entity.vcproj", "{32E0AFE8-A315-462B-BE5C-8F33567E8ED9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Renderer", "Renderer\Renderer.vcxproj", "{F1525D82-BA8C-4051-8814-E228FEFF86F8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Renderer", "Renderer\Renderer.vcproj", "{F1525D82-BA8C-4051-8814-E228FEFF86F8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{876D6982-86C6-4620-9A40-8FCAD06D92C6} = {876D6982-86C6-4620-9A40-8FCAD06D92C6}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utils2", "Utils2\Utils2.vcxproj", "{876D6982-86C6-4620-9A40-8FCAD06D92C6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utils2", "Utils2\Utils2.vcproj", "{876D6982-86C6-4620-9A40-8FCAD06D92C6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Collision", "Collision\Collision.vcxproj", "{E0A50D82-9221-4F3E-BD3A-30A1B05286A8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Collision", "Collision\Collision.vcproj", "{E0A50D82-9221-4F3E-BD3A-30A1B05286A8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{876D6982-86C6-4620-9A40-8FCAD06D92C6} = {876D6982-86C6-4620-9A40-8FCAD06D92C6}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Systems", "Systems\Systems.vcxproj", "{11FA21FD-F944-4D11-8208-4F999E90EF60}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Systems", "Systems\Systems.vcproj", "{11FA21FD-F944-4D11-8208-4F999E90EF60}"
+	ProjectSection(ProjectDependencies) = postProject
+		{876D6982-86C6-4620-9A40-8FCAD06D92C6} = {876D6982-86C6-4620-9A40-8FCAD06D92C6}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Geometry", "Geometry\Geometry.vcxproj", "{CE8A8AE4-D071-4FA3-9A54-9285C51D758F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Geometry", "Geometry\Geometry.vcproj", "{CE8A8AE4-D071-4FA3-9A54-9285C51D758F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

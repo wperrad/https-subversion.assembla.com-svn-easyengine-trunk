@@ -13,6 +13,7 @@
 // Engine
 #include "Listener.h"
 #include "IGUIManager.h"
+#include "ILoader.h"
  
 class CGUIWindow;
 class CGUIWidget;
@@ -23,6 +24,7 @@ class CPosition;
 class IShader;
 class ITexture;
 class IRessource;
+class IAnimatableMesh;
 
 
 
@@ -59,12 +61,15 @@ class CGUIManager : public IGUIManager
 
 	vector< CLine >							m_vText;
 	map< unsigned char, CGUIWidget* >		m_mWidgetFont;
+	map< unsigned char, ILoader::CMeshInfos >		m_mWidgetFontInfos;
+	ILoader::CMeshInfos						m_oLastWidgetInfosCreated;
 	IRenderer&								m_oRenderer;
 	IRessourceManager&						m_oRessourceManager;
 	IXMLParser&								m_oXMLParser;
 	IInputManager&							m_oInputManager;
 
-	ITexture*								m_pFontTexture;
+	IRessource*								m_pFontMaterial;
+	map< int, IAnimatableMesh* >			m_mStaticText;
 
 	std::map< int, CGUIWidget* >			m_mWidget;
 	std::map< int, CListener* >				m_mListener;
@@ -80,6 +85,7 @@ class CGUIManager : public IGUIManager
 	void									FlipBitmap( const unsigned char* data, int w, int h, int depth, vector< unsigned char >& vData );
 	IShader*								m_pShader;
 	int										m_nCharspace;
+	map< int, bool >						m_mStaticTextToRender;
 
 	void									RenderText();
 	
@@ -109,6 +115,10 @@ public:
 	unsigned int	GetCurrentFontHeight() const;
 	unsigned int	GetCurrentFontWidth( char c ) const;
 	unsigned int	GetCharSpace();
+	int				CreateStaticText( vector< string >& vText, int nPosX = 0, int nPosY = 0 );
+	void			DestroyStaticTest( int nID );
+	void			PrintStaticText( int nTextID );
+	void			EnableStaticText( int nTextID, bool bEnable );
 };
 
 extern "C" _declspec(dllexport) IGUIManager* CreateGUIManager( const IGUIManager::Desc& );

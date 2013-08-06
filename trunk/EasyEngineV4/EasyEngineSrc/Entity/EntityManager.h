@@ -6,6 +6,8 @@
 
 class IRenderer;
 class IGeometryManager;
+class CHuman;
+class IFighter;
 
 class CEntityManager : public IEntityManager
 {
@@ -18,11 +20,13 @@ class CEntityManager : public IEntityManager
 	map< string, IEntity* >	m_mNameEntities;
 	map< IEntity*, string >	m_mEntitiesName;
 	int						m_nLastEntityID;
-	IEntity*				m_pPerso;
+	CHuman*					m_pPerso;
 	IFileSystem&			m_oFileSystem;
 	ICollisionManager&		m_oCollisionManager;
 	void					CreateEntity( IEntity* pEntity, string sName = "noname" );
 	map< IEntity*, int >	m_mCollideEntities;
+	map< IFighter*, int >	m_mFighterEntities;
+	map< IFighter*, int >::iterator	m_itCurrentFighter;
 
 public:
 	CEntityManager( const Desc& oDesc );
@@ -53,6 +57,8 @@ public:
 	IEntity*			GetFirstCollideEntity();
 	IEntity*			GetNextCollideEntity();
 	int					GetCollideEntityID( IEntity* pEntity );
+	IFighter*			GetFirstFighter();
+	IFighter*			GetNextFighter();
 };
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& );

@@ -138,7 +138,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib Math.lib glu32.lib Utils2.lib Utils.lib"
+				AdditionalDependencies="opengl32.lib Math.lib glu32.lib Utils.lib"
 				OutputFile="../../EasyEngine/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;../../../Utils/$(ConfigurationName)&quot;;&quot;../../EasyEngine/lib/$(ConfigurationName)&quot;"

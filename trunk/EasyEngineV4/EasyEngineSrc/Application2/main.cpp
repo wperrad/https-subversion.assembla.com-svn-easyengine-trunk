@@ -366,7 +366,7 @@ void InitPlugins( string sCmdLine )
 	IConsole::Desc oConsoleDesc( *m_pInputManager, *m_pGUIManager, *m_pScriptManager );
 	oConsoleDesc.xPos = 50;
 	oConsoleDesc.yPos = 100;
-	oConsoleDesc.m_nHeight = 100000;
+	oConsoleDesc.m_nHeight = 800;
 	m_pConsole = static_cast< IConsole* >( CPlugin::Create( oConsoleDesc, sDirectoryName + "IO.dll", "CreateConsole" ) );
 
 	ICore::Desc oCoreDesc( *m_pRenderer, *m_pFileSystem, *m_pInputManager, *m_pWindow, *m_pEventDispatcher, *m_pRessourceManager, *m_pCameraManager, *m_pSceneManager, *m_pActionManager );

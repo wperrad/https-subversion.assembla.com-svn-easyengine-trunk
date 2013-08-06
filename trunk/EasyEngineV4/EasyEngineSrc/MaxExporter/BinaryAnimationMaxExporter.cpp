@@ -158,6 +158,7 @@ void CBinaryAnimationMaxExporter::GetBoneByID( const map< string, INode* >& mBon
 
 void CBinaryAnimationMaxExporter::DumpAnimation( string sFilePath, const map< int, vector< CKey > >& mBones )
 {
+#pragma message ("Exporter de la même maniere que les mesh et gérer les versions de fichiers")
 	int iStartTime = m_nExportAnimationStart * g_nTickPerFrame;
 	int iEndTime = m_nExportAnimationEnd * g_nTickPerFrame;
 

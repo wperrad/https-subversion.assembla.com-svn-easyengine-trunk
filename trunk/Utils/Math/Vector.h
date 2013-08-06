@@ -31,6 +31,7 @@ public:
 	CVector	operator^( const CVector& v );
 	float& operator[]( int i );
 	bool operator==( const CVector& v ) const;
+	bool operator!=( const CVector& v ) const;
 	CVector operator-() const;
 
 	float	Norm();

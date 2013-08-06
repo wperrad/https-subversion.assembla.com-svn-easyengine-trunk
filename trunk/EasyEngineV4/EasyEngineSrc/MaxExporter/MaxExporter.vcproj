@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Autodesk\3ds Max 2010 SDK\maxsdk\include&quot;;&quot;C:\Program Files\Autodesk\3ds Max 2010 SDK\maxsdk\include\IGame&quot;;..\..\..\Utils;..\..\Interfaces"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Autodesk\3ds Max 2010 SDK\maxsdk\include&quot;;&quot;C:\Program Files\Autodesk\3ds Max 2010 SDK\maxsdk\include\IGame&quot;;..\..\..\Utils;..\..\Interfaces;../Utils2"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;TESTINTERFACEPLUGIN_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -93,7 +93,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;..\$(ConfigurationName)\$(ProjectName).dle&quot; &quot;C:\Program Files\Autodesk\3ds Max 2010\stdplugs\EasyEngineBinaryExporter.dle&quot;&#x0D;&#x0A;copy &quot;..\..\EasyEngine\$(ConfigurationName)\FileUtils.dll&quot; &quot;$(windir)\System32\FileUtils.dll&quot;&#x0D;&#x0A;copy &quot;..\..\EasyEngine\$(ConfigurationName)\Loader2.dll&quot; &quot;$(windir)\System32\Loader2.dll&quot;&#x0D;&#x0A;copy &quot;..\..\EasyEngine\$(ConfigurationName)\Geometry.dll&quot; &quot;$(windir)\System32\Geometry.dll&quot;"
+				CommandLine="copy &quot;..\$(ConfigurationName)\$(ProjectName).dle&quot; &quot;C:\Program Files\Autodesk\3ds Max 2010\stdplugs\EasyEngineBinaryExporter.dle&quot;&#x0D;&#x0A;copy &quot;..\..\EasyEngine\$(ConfigurationName)\FileUtils.dll&quot; &quot;$(windir)\System32\FileUtils.dll&quot;&#x0D;&#x0A;copy &quot;..\..\EasyEngine\$(ConfigurationName)\Loader2.dll&quot; &quot;$(windir)\System32\Loader2.dll&quot;&#x0D;&#x0A;copy &quot;..\..\EasyEngine\$(ConfigurationName)\Geometry.dll&quot; &quot;$(windir)\System32\Geometry.dll&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration

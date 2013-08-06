@@ -13,7 +13,7 @@
 
 using namespace std;
 
-
+class IRenderer;
 
 class CBinaryMeshMaxExporterClassDesc : public CMaxExporterClassDesc
 {
@@ -37,7 +37,8 @@ class CBinaryMeshMaxExporter : public CMaxExporter
 	bool								m_bExportBoundingBox;
 	bool								m_bExportBBoxAtKey;
 	FILE*								m_pLogFile;
-	map< int, CBox >					m_mBoneBox;
+	map< int, IBox* >					m_mBoneBox;
+	IGeometryManager*					m_pGeometryManager;
 
 	static CBinaryMeshMaxExporter*		s_pCurrentInstance;
 
@@ -51,7 +52,7 @@ class CBinaryMeshMaxExporter : public CMaxExporter
 	void			GetBoneByID( const std::map< std::string, INode* >& mBoneByName, const std::map< std::string, int >& mBoneIDByName, std::map< int, INode* >& mBoneByID );
 	void			GetWeightTable( IWeightTable& oWeightTable, const std::map< std::string, int >& mBoneID, string sObjectName );
 	void			GetGeometry( Interface* pInterface, vector< ILoader::CMeshInfos >& vMeshInfos, INode* pRoot );
-	void			GetBonesBoundingBoxes( const Mesh& oMesh, const IWeightTable& oWeightTable, const Matrix3& oModelTM, map< int, CBox >& mBoneBox );
+	void			GetBonesBoundingBoxes( const Mesh& oMesh, const IWeightTable& oWeightTable, const Matrix3& oModelTM, map< int, IBox* >& mBoneBox );
 	void			StoreMeshToMeshInfos( Interface* pInterface, INode* pMesh, ILoader::CMeshInfos& mi );
 	void			StoreMaxMaterialToMaterialInfos( Mtl* pMaterial, ILoader::CMaterialInfos& mi );
 	void			StoreSkinningToMeshInfos( const IWeightTable& wt, ILoader::CMeshInfos& mi );
@@ -61,7 +62,6 @@ class CBinaryMeshMaxExporter : public CMaxExporter
 	bool			DumpModels( const std::string& sFilePath, ILoader::CAnimatableMeshData& ami );
 	void			UpdateVersionFile( string sVersion );
 	Point3			GetVertexNormal( Mesh& oMesh, int faceNo, RVertex* rv );
-	void			GetBoundingBoxAtKey( Interface *pInterface, const vector< float >& vVertexArray, const vector< unsigned int >& vIndexArray, const IWeightTable& wt, map< int, CBox >& oBox );
 	void			WriteLog( string sMessage );
 
 	static INT_PTR CALLBACK ExportDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

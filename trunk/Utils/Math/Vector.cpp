@@ -125,6 +125,11 @@ bool CVector::operator==( const CVector& v ) const
 	return( m_x == v.m_x && m_y == v.m_y && m_z == v.m_z );
 }
 
+bool CVector::operator!=( const CVector& v ) const
+{
+	return !( *this == v );
+}
+
 float CVector::Norm()
 {
 	return sqrt(m_x * m_x + m_y * m_y + m_z * m_z);

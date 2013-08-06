@@ -47,7 +47,7 @@ void CScriptManager::ExecuteCommand( std::string sCommand )
 	m_pSemanticAnalyser->GetFunctionAddress( mFuncAddr );
 	
 	m_pCodeGenerator->GenAssembler( oTree, vAssembler, mFuncAddr, m_pSemanticAnalyser->GetVarMap() );
-	m_pCodeGenerator->CreateAssemblerListing( vAssembler, "test.asm" );
+	//m_pCodeGenerator->CreateAssemblerListing( vAssembler, "test.asm" );
 	vector< unsigned char > vBin;
 	m_pBinGenerator->GenBinary( vAssembler, vBin );
 	m_pProc->Execute( vBin, CBinGenerator::s_vInstrSize );

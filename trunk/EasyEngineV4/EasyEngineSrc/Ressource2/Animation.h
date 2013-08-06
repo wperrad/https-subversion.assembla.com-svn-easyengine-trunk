@@ -68,6 +68,7 @@ public:
 	int				GetAnimationTime();
 	void			AddCallback( TCallback pCallback, void* pData );
 	void			RemoveCallback( TCallback pCallback );
+	void			RemoveAllCallback();
 	int				GetStartAnimationTime();
 	int				GetEndAnimationTime();
 	void			GetBoneKeysMap( map< int, vector< CKey > >& mBoneKeys );

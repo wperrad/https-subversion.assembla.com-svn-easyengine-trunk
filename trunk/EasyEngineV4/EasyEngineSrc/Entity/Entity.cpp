@@ -33,7 +33,8 @@ m_fBoundingSphereRadius( -1 ),
 m_pBBox( NULL ),
 m_oGeometryManager( oGeometryManager ),
 m_bDrawAnimationBoundingBox( false ),
-m_oCollisionManager( oCollisionManager )
+m_oCollisionManager( oCollisionManager ),
+m_pfnCollisionCallback( NULL )
 {
 }
 
@@ -53,7 +54,8 @@ m_fBoundingSphereRadius( -1 ),
 m_pBBox( NULL ),
 m_oGeometryManager( oGeometryManager ),
 m_bDrawAnimationBoundingBox( false ),
-m_oCollisionManager( oCollisionManager )
+m_oCollisionManager( oCollisionManager ),
+m_pfnCollisionCallback( NULL )
 {
 	if( sFileName.size() > 0 )
 	{
@@ -98,28 +100,31 @@ void CEntity::SetRessource( string sFileName, IRessourceManager& oRessourceManag
 	IAnimatableMesh* pAMesh = dynamic_cast< IAnimatableMesh* >( oRessourceManager.GetRessource( sFileName, oRenderer, bDuplicate ) );
 	if( pAMesh )
 	{
-		m_pRessource = pAMesh->GetMesh( 0 );
-		m_pRessource->GetName( m_sName );
-		m_pOrgSkeletonRoot = pAMesh->GetSkeleton();
-		if( m_pOrgSkeletonRoot )
-			m_pSkeletonRoot = static_cast< IBone* >( m_pOrgSkeletonRoot->DuplicateHierarchy() );
-
-		for( unsigned int iMesh = 1; iMesh < pAMesh->GetMeshCount(); iMesh++ )
+		if( pAMesh->GetMeshCount() > 0 )
 		{
-			IMesh* pMesh = pAMesh->GetMesh( iMesh );
-			if( pMesh->GetParentBoneID() != -1 )
+			m_pRessource = pAMesh->GetMesh( 0 );
+			m_pRessource->GetName( m_sName );
+			m_pOrgSkeletonRoot = pAMesh->GetSkeleton();
+			if( m_pOrgSkeletonRoot )
+				m_pSkeletonRoot = static_cast< IBone* >( m_pOrgSkeletonRoot->DuplicateHierarchy() );
+
+			for( unsigned int iMesh = 0; iMesh < pAMesh->GetMeshCount(); iMesh++ )
 			{
-				IBone* pParentBone = static_cast< IBone* >( m_pSkeletonRoot->GetChildBoneByID( pMesh->GetParentBoneID() ) );
-				string sName;
-				pMesh->GetName( sName );
-				CEntity* pEntity = static_cast< CEntity* >( m_pEntityManager->CreateEntity( sName ) );
-				pEntity->SetMesh( pMesh );
-				
-				pEntity->SetName( sName );
-				LinkEntityToBone( pEntity, pParentBone );
+				IMesh* pMesh = pAMesh->GetMesh( iMesh );
+				if( pMesh->GetParentBoneID() != -1 )
+				{
+					IBone* pParentBone = static_cast< IBone* >( m_pSkeletonRoot->GetChildBoneByID( pMesh->GetParentBoneID() ) );
+					string sName;
+					pMesh->GetName( sName );
+					CEntity* pEntity = static_cast< CEntity* >( m_pEntityManager->CreateEntity( sName ) );
+					pEntity->SetMesh( pMesh );
+					
+					pEntity->SetName( sName );
+					LinkEntityToBone( pEntity, pParentBone );
+				}
 			}
+			m_pBBox = GetBBox();
 		}
-		m_pBBox = GetBBox();
 	}
 	else
 	{
@@ -133,8 +138,7 @@ void CEntity::UpdateGroundCollision()
 	m_oBody.Update();
 	if( m_oBody.m_fWeight > 0.f )
 	{
-		CScene* pScene = dynamic_cast< CScene* >( m_pParent );
-		if( pScene )
+		if( m_pScene )
 		{
 			CVector oTransformedBoxPosition = m_oLocalMatrix.GetRotation() * m_oScaleMatrix * m_pBBox->GetMinPoint();
 			float x = 0.f;
@@ -154,7 +158,7 @@ void CEntity::UpdateGroundCollision()
 				x = oComposedMatrix.m_03;
 				z = oComposedMatrix.m_23;
 			}
-			float fHeight = pScene->GetHeight( x, z ) + CBody::GetZCollisionError();
+			float fHeight = m_pScene->GetHeight( x, z ) + CBody::GetZCollisionError();
 			float fEntityZ = m_oLocalMatrix.m_13 + oTransformedBoxPosition.m_y;
 			if( fEntityZ > fHeight + CBody::GetEpsilonError() )
 			{
@@ -195,17 +199,31 @@ IEntity* CEntity::GetEntityCollision()
 		{
 			IMesh* pCurrentMesh = static_cast< IMesh* >( m_pRessource );
 			IMesh* pOtherMesh = static_cast< IMesh* >( pEntity->GetRessource() );
+			IBox* pCurrentBox = NULL, *pOtherBox = NULL;
 			string sAnimationName;
-			m_pCurrentAnimation->GetName( sAnimationName );
-			IBox* pCurrentBox = m_oGeometryManager.CreateBox( *pCurrentMesh->GetAnimationBBox( sAnimationName ) );
-			pEntity->GetCurrentAnimation()->GetName( sAnimationName );
-			IBox* pOtherBox = m_oGeometryManager.CreateBox( *pOtherMesh->GetAnimationBBox( sAnimationName ) );
+			if( m_pCurrentAnimation )
+			{
+				m_pCurrentAnimation->GetName( sAnimationName );
+				pCurrentBox = m_oGeometryManager.CreateBox( *pCurrentMesh->GetAnimationBBox( sAnimationName ) );
+			}
+			else
+				pCurrentBox = m_oGeometryManager.CreateBox( *pCurrentMesh->GetBBox() );
+
+			if( pEntity->GetCurrentAnimation() )
+			{
+				pEntity->GetCurrentAnimation()->GetName( sAnimationName );
+				pOtherBox = m_oGeometryManager.CreateBox( *pOtherMesh->GetAnimationBBox( sAnimationName ) );
+			}
+			else
+				pOtherBox = m_oGeometryManager.CreateBox( *pOtherMesh->GetBBox() );
+
 			pCurrentBox->SetWorldMatrix( m_oWorldMatrix );
 			CMatrix oOtherWorldMatrix;
 			pEntity->GetWorldMatrix( oOtherWorldMatrix );
 			pOtherBox->SetWorldMatrix( oOtherWorldMatrix );
 			if( m_oCollisionManager.IsIntersection( *pCurrentBox, *pOtherBox ) )
 				return pEntity;
+			
 		}
 		pEntity = m_pEntityManager->GetNextCollideEntity();
 	}
@@ -261,6 +279,7 @@ void CEntity::LocalTranslate(float dx , float dy , float dz)
 		int nID = m_pEntityManager->GetCollideEntityID( this );
 		if( ( nID != -1 ) && ( m_fBoundingSphereRadius > 0 ) )
 		{
+			bool bCollision = false;
 			IEntity* pEntity = GetEntityCollision();
 			if( pEntity )
 			{
@@ -275,7 +294,10 @@ void CEntity::LocalTranslate(float dx , float dy , float dz)
 				pEntity->GetWorldPosition( oEntityPos );
 				float fNextDistance = ( oThisPos - oEntityPos ).Norm();
 				if( fNextDistance < fCurrentDistance )
+				{
 					m_oLocalMatrix = oTemp;
+					bCollision = true;
+				}
 			}
 			else
 			{
@@ -283,8 +305,13 @@ void CEntity::LocalTranslate(float dx , float dy , float dz)
 				CNode::LocalTranslate( dx, dy, dz );
 				CNode::UpdateWithoutChildren();
 				if( GetEntityCollision() )
+				{
 					m_oLocalMatrix = oTemp;
+					bCollision = true;
+				}
 			}
+			if( bCollision && m_pfnCollisionCallback )
+				m_pfnCollisionCallback( this );
 		}
 		else
 			CNode::LocalTranslate( dx, dy, dz );
@@ -316,15 +343,17 @@ void CEntity::LinkEntityToBone( IEntity* pChild, IBone* pParentBone, IEntity::TL
 	pChild->Link( pParentBone );
 	CEntity* pChildEntity = static_cast< CEntity* >( pChild );
 	pChildEntity->SetEntityRoot( this );
+	IMesh* pMesh = dynamic_cast< IMesh* >( pChild->GetRessource() );
+	pChild->LocalTranslate( pMesh->GetOrgMaxPosition() );
 }
 
 void CEntity::Link( CNode* pParent )
 {
 	CNode::Link( pParent );
-	CScene* pScene = dynamic_cast< CScene* >( pParent );
+	m_pScene = dynamic_cast< CScene* >( pParent );
 	if( m_pEntityManager )
 	{
-		if( pScene && m_fBoundingSphereRadius > 0.f )
+		if( m_pScene && m_fBoundingSphereRadius > 0.f )
 			m_pEntityManager->AddCollideEntity( this );
 		else
 			m_pEntityManager->RemoveCollideEntity( this );
@@ -539,4 +568,19 @@ void CEntity::DrawAnimationBoundingBox( bool bDraw )
 		GetCurrentAnimation()->GetName( sAnimationName );
 		pMesh->SetCurrentAnimationBoundingBox( sAnimationName );
 	}
+}
+
+void CEntity::Goto( const CVector& oPosition, float fSpeed )
+{
+	throw 1;
+}
+
+void CEntity::SetEntityName( string sName )
+{
+	m_sEntityName = sName;
+}
+
+void CEntity::GetEntityName( string& sName )
+{
+	sName = m_sEntityName;
 }

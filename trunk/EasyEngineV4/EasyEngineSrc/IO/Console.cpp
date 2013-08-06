@@ -36,7 +36,8 @@ m_nCursorBlinkRate( 500 ),
 m_bCursorBlinkState( true ),
 m_nLastMillisecondCursorStateChanged( 0 ),
 m_nLastTickCount( 0 ),
-m_bBlink( false )
+m_bBlink( false ),
+m_nStaticTextID( -1 )
 {
 
 	//m_pActionManager = oDesc.m_pActionManager;
@@ -114,6 +115,28 @@ void CConsole::Open( bool bOpen )
 {
 	m_bIsOpen = bOpen;
 	m_oInputManager.SetEditionMode( bOpen );
+	m_oGUIManager.EnableStaticText( m_nStaticTextID, bOpen );
+}
+
+void CConsole::UpdateBlink( int nFontHeight )
+{
+	int nTickCount = GetTickCount();
+	if( !m_bBlink )
+		m_nLastTickCount = nTickCount;
+	m_nLastMillisecondCursorStateChanged += ( nTickCount - m_nLastTickCount );
+	m_nLastTickCount = nTickCount;
+	if( m_nLastMillisecondCursorStateChanged > m_nCursorBlinkRate )
+	{
+		m_nLastMillisecondCursorStateChanged = 0;
+		m_bCursorBlinkState = !m_bCursorBlinkState;
+	}
+
+	if( m_bCursorBlinkState )
+	{
+		int nLastIndice = m_vLines.size() - 1;
+		unsigned int PixelCursorPos = ComputePixelCursorPos() - 1;
+		m_oGUIManager.Print( '|', m_xPos + PixelCursorPos, m_yPos + nLastIndice * nFontHeight );
+	}
 }
 
 void CConsole::Update()
@@ -121,29 +144,13 @@ void CConsole::Update()
 	if ( m_bIsOpen )
 	{
 		int nFontHeight = m_oGUIManager.GetCurrentFontHeight();
-		for ( unsigned int i = 0; i < m_vLines.size(); i++ )
-		{
-			string sLine = m_sLinePrefix + m_vLines[ i ];
-			m_oGUIManager.Print( sLine, m_xPos, m_yPos + i * nFontHeight );
-		}
-		int nTickCount = GetTickCount();
-		if( !m_bBlink )
-			m_nLastTickCount = nTickCount;
-		m_nLastMillisecondCursorStateChanged += ( nTickCount - m_nLastTickCount );
-		m_nLastTickCount = nTickCount;
-		if( m_nLastMillisecondCursorStateChanged > m_nCursorBlinkRate )
-		{
-			m_nLastMillisecondCursorStateChanged = 0;
-			m_bCursorBlinkState = !m_bCursorBlinkState;
-		}
-
-		if( m_bCursorBlinkState )
-		{
-			int nLastIndice = m_vLines.size() - 1;
-			unsigned int PixelCursorPos = ComputePixelCursorPos() - 1;
-			m_oGUIManager.Print( '|', m_xPos + PixelCursorPos, m_yPos + nLastIndice * nFontHeight );
-		}
+		if( m_nStaticTextID == -1 )
+			m_nStaticTextID = m_oGUIManager.CreateStaticText( m_vLines, m_xPos, m_yPos );
+		m_oGUIManager.PrintStaticText( m_nStaticTextID );
+		string sLine = m_sLinePrefix + m_vLines[ m_vLines.size() - 1 ];
+		m_oGUIManager.Print( sLine, m_xPos, m_yPos + ( m_vLines.size() - 1 ) * nFontHeight );
 		
+		UpdateBlink( nFontHeight );
 	}
 }
 
@@ -175,46 +182,54 @@ void CConsole::OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::K
 	}
 }
 
+void CConsole::OnPressEnter()
+{
+	string sCommand = m_vLines.back();
+	m_vLines.back() = m_sLinePrefix + m_vLines.back();
+	m_vLines.resize( m_vLines.size() + 1 );
+	m_nCursorPos = 0;
+	try
+	{
+		if( sCommand.size() > 0 )
+		{
+			m_vLastCommand.push_back( sCommand );
+			m_nCurrentCommandOffset = m_vLastCommand.size();
+			m_oScriptManager.ExecuteCommand( sCommand );
+		}
+	}
+	catch( CCompilationErrorException& e )
+	{
+		ostringstream ossMessage;
+		string sErrorType;
+		string sMessage;
+		e.GetErrorMessage( sMessage );
+		Print( sMessage );
+	}
+	catch( CScriptException& e )
+	{
+		AddString( "Erreur : " );
+		AddString( e.what() );
+	}
+
+	if( m_nStaticTextID != -1 )
+		m_oGUIManager.DestroyStaticTest( m_nStaticTextID );
+	m_nStaticTextID = m_oGUIManager.CreateStaticText( m_vLines, m_xPos, m_yPos );
+}
+
 void CConsole::OnKeyPress( unsigned char key )
 {
 	SetBlink( false );
 	string& sLine = m_vLines[ m_vLines.size() - 1 ];
 	if ( key == VK_BACK )
 	{
-		if ( sLine.size() > 0 )
+		if ( sLine.size() > 0 && m_nCursorPos > 0 )
 		{
 			sLine.erase( sLine.begin() + m_nCursorPos - 1 );
 			m_nCursorPos--;
 		}
 	}
 	else if ( key == VK_RETURN )
-	{
-		m_vLines.resize( m_vLines.size() + 1 );
-		m_nCursorPos = 0;
-		try
-		{
-			string sCommand = m_vLines[ m_vLines.size() - 2 ];
-			if( sCommand.size() > 0 )
-			{
-				m_vLastCommand.push_back( sCommand );
-				m_nCurrentCommandOffset = m_vLastCommand.size();
-				m_oScriptManager.ExecuteCommand( sCommand );
-			}
-		}
-		catch( CCompilationErrorException& e )
-		{
-			ostringstream ossMessage;
-			string sErrorType;
-			string sMessage;
-			e.GetErrorMessage( sMessage );
-			Print( sMessage );
-		}
-		catch( CScriptException& e )
-		{
-			AddString( "Erreur : " );
-			AddString( e.what() );
-		}
-	}
+		OnPressEnter();
 	else if( key == VK_ESCAPE )
 	{
 		m_nCursorPos = 0;
@@ -276,39 +291,7 @@ void CConsole::OnKeyPress( unsigned char key )
 		else if( LCtrlPressed == IInputManager::JUST_PRESSED || LCtrlPressed == IInputManager::PRESSED )
 		{
 			if( m_oInputManager.GetKeyState( VK_SPACE ) == IInputManager::JUST_PRESSED )
-			{
-				/*vector< string > vFuncNames;
-				m_oScriptManager.GetRegisteredFunctions( vFuncNames );
-				string sBegin = m_vLines[ m_vLines.size() - 1 ];
-				string sBeginLow = sBegin;
-				transform( sBegin.begin(), sBegin.end(), sBeginLow.begin(), tolower );
-				bool bFind = false;
-				int nIndiceFind = -1;
-				for( int i = 0; i < vFuncNames.size(); i++ )
-				{
-					string sFuncNameLow = vFuncNames[ i ];
-					transform( vFuncNames[ i ].begin(), vFuncNames[ i ].end(), sFuncNameLow.begin(), tolower );
-					if( sFuncNameLow.find( sBeginLow ) != -1 )
-					{
-						if( bFind )
-						{
-							bFind = false;
-							break;
-						}
-						else
-						{
-							bFind = true;
-							nIndiceFind = i;
-						}
-					}
-				}
-				if( bFind )
-				{
-					m_vLines[ m_vLines.size() - 1 ] = vFuncNames[ nIndiceFind ];
-					m_nCursorPos = m_vLines[ m_vLines.size() - 1 ].size();
-				}*/
 				ManageAutoCompletion();
-			}
 		}
 		else
 		{
@@ -376,8 +359,8 @@ void CConsole::ReplaceString( string s , int nLine )
 
 void CConsole::Close()
 {
-	m_vLines[ m_vLines.size() - 1 ] = "";
-	m_bIsOpen = false;
+	//m_vLines[ m_vLines.size() - 1 ] = "";
+	m_oGUIManager.EnableStaticText( m_nStaticTextID, false );
 }
 
 void CConsole::AddString( string s )
@@ -390,8 +373,12 @@ void CConsole::AddString( string s )
 	{
 		sTemp = s.substr( 0, nEndlnIndex );
 		m_vLines.back().insert( m_vLines.back().end(), sTemp.begin(), sTemp.end() );
-		NewLine();
-		AddString( s.substr( nEndlnIndex + 1 ) );
+		string sQueue = s.substr( nEndlnIndex + 1 );
+		if( sQueue.size() > 0 )
+		{
+			NewLine();
+			AddString( sQueue );
+		}
 	}
 	else
 		m_vLines.back().insert( m_vLines.back().end(), s.begin(), s.end() );
@@ -419,6 +406,7 @@ void CConsole::Cls()
 {
 	m_vLines.clear();
 	m_vLines.push_back("");
+	m_oGUIManager.DestroyStaticTest( m_nStaticTextID );
 }
 
 void CConsole::Print( string s )

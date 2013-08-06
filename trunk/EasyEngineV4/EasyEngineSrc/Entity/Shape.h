@@ -47,6 +47,8 @@ public:
 	void			DrawBoneBoundingSphere( int nID, bool bDraw ){}
 	void			DrawAnimationBoundingBox( bool bDraw ){}
 	float			GetBoundingSphereRadius() const{ return 0.f; }
+	void			Goto( const CVector& oPosition, float fSpeed ){ throw 1; }
+	void			SetEntityName( string sName ){ throw 1; }
 };
 
 #endif // SHAPE_H

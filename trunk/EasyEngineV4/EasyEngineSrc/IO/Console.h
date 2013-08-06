@@ -42,6 +42,7 @@ class CConsole : public IConsole
 	int												m_nLastMillisecondCursorStateChanged;
 	int												m_nLastTickCount;
 	bool											m_bBlink;
+	int												m_nStaticTextID;
 
 	void											OnKeyPress( unsigned char key );
 	void											OnKeyRelease( unsigned char key );
@@ -50,7 +51,8 @@ class CConsole : public IConsole
 	void											ReplaceString( string s, int nLine = -1 );
 	unsigned int									ComputePixelCursorPos();
 	void											ManageAutoCompletion();
-	
+	void											UpdateBlink( int nFontHeight );
+	void											OnPressEnter();	
 	
 	static void										OnKeyAction( CPlugin*, unsigned int key, IInputManager::KEY_STATE );	
 

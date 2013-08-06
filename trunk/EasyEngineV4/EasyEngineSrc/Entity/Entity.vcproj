@@ -282,6 +282,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FightSystem.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FreeCamera.cpp"
 				>
 			</File>
@@ -345,6 +349,10 @@
 			</File>
 			<File
 				RelativePath=".\EntityManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FightSystem.h"
 				>
 			</File>
 			<File

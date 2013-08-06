@@ -24,7 +24,7 @@ public:
 	CBox( CVector& oMinPoint, CVector& oDimension );
 	CBox( const CBox& oBox );
 	void			Set( const CVector& oMinPoint, const CVector& oDimension );
-	void			GetCenter( CVector& oCenter );
+	void			GetCenter( CVector& oCenter ) const;
 	void			AddPoint( const CVector& p );
 	float			GetBoundingSphereRadius() const;
 	float			ComputeBoundingSphereRadius()const;

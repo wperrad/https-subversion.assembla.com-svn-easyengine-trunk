@@ -11,6 +11,8 @@ class IInputManager;
 
 class ILoaderManager;
 
+using namespace std;
+
 class IGUIManager : public CPlugin
 {
 protected:
@@ -61,6 +63,10 @@ public:
 	virtual unsigned int	GetCurrentFontHeight() const = 0;
 	virtual unsigned int	GetCurrentFontWidth( char c ) const = 0;
 	virtual unsigned int	GetCharSpace() = 0;
+	virtual int				CreateStaticText( vector< string >& vText, int nPosX = 0, int nPosY = 0 ) = 0;
+	virtual void			DestroyStaticTest( int nID ) = 0;
+	virtual void			PrintStaticText( int nTextID ) = 0;
+	virtual void			EnableStaticText( int nTextID, bool bEnable ) = 0;
 };
 
 #endif // IGUIManager_H

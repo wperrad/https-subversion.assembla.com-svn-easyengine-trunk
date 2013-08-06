@@ -70,6 +70,8 @@ protected:
 	CMatrix									m_oCameraMatrixInv;
 	CMatrix									m_oCurrentObjectMatrix;
 	TRenderType								m_eCurrentRenderType;
+	bool									m_bMustChangeFov;
+	float									m_fFov;
 
 	void						LoadMatrix( const CMatrix& m );
 	void						MultMatrix( const CMatrix& m );
@@ -78,6 +80,7 @@ protected:
 	void						InitGLExtensions();
 	void						LoadShaderDirectory( const std::string& sShaderDirectory, IFileSystem& oFileSystem );
 	void						TurnOffAllLight();
+	void						ApplySetFov();
 	CVector						m_vBackgroundColor;
 
 public:	
@@ -96,13 +99,18 @@ public:
 	void						GetProjectionMatrix( CMatrix& oMatrix );
 	void						SetFov( float fov );
 
-	void						CreateNonIndexedVertexArray( const std::vector< UINT >& vIndexArray, const std::vector< float >& vVertexArray, int nComposantCount, std::vector< float >& vOutVertexArray );
+	
 	IBuffer*					CreateGeometry( const std::vector< float >&	vVertexArray, const std::vector< unsigned int >& vIndexArray, 
 												const std::vector< float >& vUVVertexArray, const std::vector< unsigned int >& vUVIndexArray, 
 												const std::vector< float >& vNormalFaceArray, const std::vector< float >& vNormalVertexArray );
 
 	IBuffer*					CreateIndexedGeometry( const std::vector< float >&	vVertexArray, const std::vector< unsigned int >& vIndexArray, 
-												const std::vector< float >& vUVVertexArray, const std::vector< float >& vNormalVertexArray );
+												const vector< float >& vUVVertexArray, const vector< unsigned int >& vUVIndexArray, const  const std::vector< float >& vNormalVertexArray );
+
+	void						GenUVVertexArray( vector< unsigned int >& vIndexArray, vector< float >& vVertexArray, 
+									const vector< unsigned int >& vUVIndexArray, const vector< float >& vUVVertexArray, vector< float >& vNewUVVertexArray  );
+
+	
 	
 	void						BindTexture( int nTextureID, int nUnitTextureID, TTextureDimension texDim );
 	void						DrawGeometry( const IBuffer* pBuffer );
@@ -209,7 +217,7 @@ public:
 	void						Test(  int nShader  );
 };
 
-extern "C" _declspec(dllexport) IRenderer*	CreateRenderer( const IRenderer::Desc& );
+extern "C" _declspec(dllexport) IRenderer* CreateRenderer( const IRenderer::Desc& );
 
 
 
