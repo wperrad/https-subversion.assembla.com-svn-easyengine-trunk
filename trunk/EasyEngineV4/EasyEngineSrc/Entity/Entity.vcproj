@@ -294,6 +294,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IAEntity.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\IEntity.cpp"
 				>
 			</File>
@@ -303,6 +307,10 @@
 			</File>
 			<File
 				RelativePath=".\LinkedCamera.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PathFinder.cpp"
 				>
 			</File>
 			<File
@@ -364,11 +372,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IAEntity.h"
+				>
+			</File>
+			<File
 				RelativePath=".\LightEntity.h"
 				>
 			</File>
 			<File
 				RelativePath=".\LinkedCamera.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PathFinder.h"
 				>
 			</File>
 			<File

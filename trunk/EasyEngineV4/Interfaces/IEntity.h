@@ -22,7 +22,7 @@ class IRessource;
 class ICollisionManager;
 class IGeometryManager;
 class ISphere;
-class IFighter;
+class IAEntity;
 
 using namespace std;
 
@@ -143,8 +143,8 @@ public:
 	virtual IEntity*			GetNextCollideEntity() = 0;
 	virtual int					GetCollideEntityID( IEntity* pEntity ) = 0;
 	virtual void				SetZCollisionError( float e ) = 0;
-	virtual IFighter*			GetFirstFighter() = 0;
-	virtual IFighter*			GetNextFighter() = 0;
+	virtual IAEntity*			GetFirstIAEntity() = 0;
+	virtual IAEntity*			GetNextIAEntity() = 0;
 };
 
 class ISceneManager : public CPlugin

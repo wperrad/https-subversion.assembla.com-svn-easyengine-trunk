@@ -213,15 +213,13 @@ void UpdatePerso()
 		if( pPerso )
 		{
 			IInputManager::KEY_STATE eStateWalk = m_pActionManager->GetKeyActionState( "AvancerPerso");
-			if( eStateWalk == IInputManager::JUST_PRESSED  )
+			if( eStateWalk == IInputManager::JUST_PRESSED || eStateWalk == IInputManager::PRESSED )
 			{
-				//pPerso->Run();
 				pPerso->RunAction( "run", true );
 				m_pActionManager->ForceActionState( "AvancerPerso", IInputManager::PRESSED );
 			}
 			else if( eStateWalk == IInputManager::JUST_RELEASED )
 			{
-				//pPerso->Stand();
 				pPerso->RunAction( "stand", true );
 				m_pActionManager->ForceActionState( "AvancerPerso", IInputManager::RELEASED );
 			}

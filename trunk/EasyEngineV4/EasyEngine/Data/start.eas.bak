@@ -28,6 +28,7 @@ Link(18, -1, 12, 27, "preserve");
 Link(19, -1, 12, 7, "preserve");
 Link(20, -1, 12, 25, "preserve");
 
+
 SetCameraType("link");
 
 RollEntity(2, 180);
@@ -59,3 +60,36 @@ SetFov(60);
 LoadEntity("maison");
 SetEntityPos(38, 2000, 5000, 2000);
 SetEntityWeight(38, 1);
+
+
+AddLightw("omni", 4000);
+SetEntityPos(4, 0, 10000, 55000);
+
+AddLightw("omni", 75000);
+SetEntityPos(5, 0, 75000, -260000);
+
+
+//////////////////////////////////////
+
+LoadEntity("cube");
+AddLightw("omni", 100);
+SetEntityPos(5, 0, 0, 10000);
+AddLightw("omni", 10);
+SetEntityPos(6, 0, 0, -3000);
+
+AddLightw("omni", 10);
+SetEntityPos(7, 3000, 0, 0);
+
+AddLightw("omni", 10);
+SetEntityPos(8, -3000, 0, 0);
+
+AddLightw("omni", 10);
+SetEntityPos(9, 0, 3000, 0);
+
+AddLightw("omni", 10);
+SetEntityPos(10, 0, -3000, 0);
+
+//////////////////////////////////////
+
+ComputeKeysBoundingBoxes( "testexport14", "perso", "testexport14_stand" );
+SetPreferedKeyBBox("testexport14", "perso", "testexport14_stand", 160);

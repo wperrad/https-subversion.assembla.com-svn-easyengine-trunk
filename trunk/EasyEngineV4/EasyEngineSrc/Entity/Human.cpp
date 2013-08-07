@@ -41,7 +41,8 @@ m_bHitEnemy( false )
 		s_mAnimationStringToType[ "HitLeftFoot" ] = eHitLeftFoot;
 		s_mOrgAnimationSpeedByType[ eWalk ] = -1.6f;
 		s_mOrgAnimationSpeedByType[ eStand ] = 0.f;
-		s_mOrgAnimationSpeedByType[ eRun ] = -3.5f;
+		//s_mOrgAnimationSpeedByType[ eRun ] = -250.f;
+		s_mOrgAnimationSpeedByType[ eRun ] = -4.6f;
 		s_mOrgAnimationSpeedByType[ eHitLeftFoot ] = 0.f;
 		s_mOrgAnimationSpeedByType[ eHitReceived ] = 0.f;		
 
@@ -172,7 +173,7 @@ void CHuman::OnWalkAnimationCallback( IAnimation::TEvent e, void* pData )
 	}
 }
 
-void CHuman::ReceiveHit( IFighter* pEnemy )
+void CHuman::ReceiveHit( IAEntity* pEnemy )
 {	
 	RunAction( "HitReceived", false );
 	if( m_bPerso )
@@ -206,7 +207,7 @@ void CHuman::HitReceived( CHuman* pHuman, bool bLoop )
 	pHuman->HitReceived( bLoop );
 }
 
-void CHuman::Attack( IFighter* pEnemy )
+void CHuman::Attack( IAEntity* pEnemy )
 {
 	HitLeftFoot( false );
 }
@@ -319,7 +320,7 @@ void CHuman::Goto( IEntity* pEntity, float fSpeed )
 	Goto( oPosition, fSpeed );
 }
 
-void CHuman::Goto( IFighter* pFighter, float fSpeed )
+void CHuman::Goto( IAEntity* pFighter, float fSpeed )
 {
 	CVector oPosition;
 	pFighter->GetPosition( oPosition );
