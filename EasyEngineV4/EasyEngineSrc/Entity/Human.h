@@ -1,8 +1,8 @@
 #include "Entity.h"
-#include "FightSystem.h"
+#include "IAEntity.h"
 
 
-class CHuman : public CEntity, public IFighter
+class CHuman : public CEntity, public IAEntity
 {
 
 	typedef void (*TAction)( CHuman*, bool );
@@ -41,7 +41,7 @@ class CHuman : public CEntity, public IFighter
 	void		HitLeftFoot( bool bLoop );
 	void		HitReceived( bool bLoop );
 	
-	void		ReceiveHit( IFighter* pEnemy );
+	
 	void		TurnEyesH( float fValue );
 	void		TurnNeckH( float f );
 	void		LookAt( float alpha );
@@ -49,19 +49,20 @@ class CHuman : public CEntity, public IFighter
 	float		GetDestinationAngleRemaining();
 	IBone*		GetPreloadedBone( string sName );
 	
-	// IFighter implementation
+	// IA implementation
 	float				GetDistanceTo2dPoint( const CVector& oPosition );
 	void				UpdateFight();
 	int					GetLife();
 	void				SetLife( int nLife );
 	void				IncreaseLife( int nLife );
 	void				TurnH( float fAngle ){Roll( fAngle );}
-	void				Goto( IFighter* pFighter, float fSpeed );
+	void				Goto( IAEntity* pFighter, float fSpeed );
 	void				Run(){ Run( true ); }
 	void				Stand(){ Stand( true ); }
 	void				GetPosition( CVector& oPosition ){ GetWorldPosition( oPosition ); }
 	void				TurnFaceToDestination(){ Roll( GetDestinationAngleRemaining() ); }
-	void				Attack( IFighter* pEnemy );
+	void				Attack( IAEntity* pEnemy );
+	void				ReceiveHit( IAEntity* pEnemy );
 	CMatrix&			GetWorldTM(){ return m_oWorldMatrix; }
 	float				GetBoundingSphereRadius(){ return m_fBoundingSphereRadius; }
 	IMesh*				GetMesh(){ return dynamic_cast< IMesh* >( m_pRessource ); }

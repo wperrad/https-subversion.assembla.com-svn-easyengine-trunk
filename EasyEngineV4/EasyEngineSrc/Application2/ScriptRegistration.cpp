@@ -245,7 +245,9 @@ void SetPreferedKeyBBox( IScriptState* pState )
 	{
 		ILoader::CMeshInfos& mi = ami.m_vMeshes[ i ];
 		string sAnimationNameWithoutExt = sAnimationName.substr( 0, sAnimationName.size() - 4 );
-		mi.m_oPreferedKeyBBox[ sAnimationNameWithoutExt ] = pKey->m_nValue;
+		string sAnimationNameWithoutExtLow = sAnimationNameWithoutExt;
+		std::transform( sAnimationNameWithoutExt.begin(), sAnimationNameWithoutExt.end(), sAnimationNameWithoutExtLow.begin(), tolower );
+		mi.m_oPreferedKeyBBox[ sAnimationNameWithoutExtLow ] = pKey->m_nValue;
 		m_pLoaderManager->Export( sFileName, ami );
 	}
 	else

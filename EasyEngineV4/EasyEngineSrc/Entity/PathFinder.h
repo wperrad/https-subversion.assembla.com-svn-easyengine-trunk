@@ -1,0 +1,8 @@
+
+
+
+class CPathFinder
+{
+public:
+
+};
