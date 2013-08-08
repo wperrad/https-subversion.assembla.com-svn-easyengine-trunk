@@ -1,0 +1,13 @@
+Correction du bug HM :
+
+. Desactiver la gravitation
+
+. Si le probleme persiste, verifier que l'interpolation est correte :
+	. Creer une map simplifiee et regarder si les points intermediaires sont bons
+	. Repeter les tests dans des pentes differentes, pour verifier qu'il n'y a pas une erreur de signe dans certaines directions
+
+Si le probleme persiste :
+. Modifier l'algo de deplacement pour faire avancer le perso non plus par translation horizontale mais en le faisant suivre la pente directement
+
+Si le probleme persiste :
+. Essayer de generer une heightmao plus precise (se servir eventuellement d'un logiciel specialise, ou creer un terrain avec peu de differences d'altitude )
