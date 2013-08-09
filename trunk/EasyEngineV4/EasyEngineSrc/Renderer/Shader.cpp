@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glu.h>
-#include "glext.h"
+#include "gl/glext.h"
 #include "IFileSystem.h"
 #include "Renderer.h"
 #include "Math/Matrix.h"
