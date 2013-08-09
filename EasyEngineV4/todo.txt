@@ -1,13 +1,24 @@
 Correction du bug HM :
 
-. Desactiver la gravitation
+. Desactiver la gravitation et conatrindre le personnage a rester tout le temps sur le sol (pas de deplacement horizontal predefini)
 
 . Si le probleme persiste, verifier que l'interpolation est correte :
-	. Creer une map simplifiee et regarder si les points intermediaires sont bons
+	. Creer une map simplifiee et regarder si les points intermediaires sont bons (capturer les points et les tracer sous Excel)
 	. Repeter les tests dans des pentes differentes, pour verifier qu'il n'y a pas une erreur de signe dans certaines directions
 
 Si le probleme persiste :
 . Modifier l'algo de deplacement pour faire avancer le perso non plus par translation horizontale mais en le faisant suivre la pente directement
 
 Si le probleme persiste :
-. Essayer de generer une heightmao plus precise (se servir eventuellement d'un logiciel specialise, ou creer un terrain avec peu de differences d'altitude )
+. Essayer de generer une heightmap plus precise (se servir eventuellement d'un logiciel specialise, ou creer un terrain avec peu de differences d'altitude )
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Optimisations possibles :
+
+. Eclairage par vertex quand la composante speculaire d'un objet est nulle
+. N'afficher que les objets visibles
+. Utiliser des textures compressees
+. Utiliser des mipmap
+. Implementer un LOD
+. 
