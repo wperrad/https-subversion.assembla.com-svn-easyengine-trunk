@@ -5,7 +5,9 @@
 IAEntity::IAEntity():
 m_nRecuperationTime( 1500 ),
 m_bHitEnemy( false ),
-m_eFightState( eNoFight )
+m_eFightState( eNoFight ),
+m_fAngleRemaining( 0.f ),
+m_bArriveAtDestination( true )
 {
 }
 
@@ -116,4 +118,91 @@ void IAEntity::OnEndHitAnimation()
 	if( m_eFightState == IAEntity::eLaunchingAttack )
 		m_eFightState = IAEntity::eEndLaunchAttack;
 	Stand();
+}
+
+void IAEntity::Goto( const CVector& oPosition, float fSpeed )
+{
+	m_oDestination = oPosition;
+	m_fAngleRemaining = GetDestinationAngleRemaining();
+	//LookAt( m_fAngleRemaining );
+	Run();
+	m_bArriveAtDestination = false;
+}
+
+
+void IAEntity::UpdateGoto()
+{
+	if( !m_bArriveAtDestination )
+	{
+		float fDistance = GetDistanceTo2dPoint( m_oDestination );
+		if( fDistance > 200 )
+		{
+			const float fRotateSpeed = 2.f;
+			if( m_fAngleRemaining > fRotateSpeed || m_fAngleRemaining < -fRotateSpeed )
+			{
+				float fDelta = m_fAngleRemaining > 0 ? -fRotateSpeed : fRotateSpeed;
+				m_fAngleRemaining = m_fAngleRemaining + fDelta;
+				Turn( -fDelta );
+			}
+			else
+				m_fAngleRemaining = GetDestinationAngleRemaining();
+		}
+		else
+			Turn( GetDestinationAngleRemaining() );
+		
+		if( fDistance < 100.f )
+		{
+			m_bArriveAtDestination = true;
+			//if( m_eCurrentAnimationType == eRun )
+			Stand();
+		}
+	}
+}
+
+void IAEntity::Update()
+{
+	UpdateGoto();
+	UpdateFightState();
+}
+
+void IAEntity::SetDestination( const CVector& oDestination )
+{
+	m_oDestination = oDestination;
+	m_bArriveAtDestination = false;
+}
+
+float IAEntity::GetDestinationAngleRemaining()
+{
+	CVector v( 0, -1, 0, 1 ), oThisPosition, oTempPosition( m_oDestination.m_x, 0, m_oDestination.m_z );
+	CVector oBefore = GetWorldTM().GetRotation() * v;
+	
+	GetPosition( oThisPosition );
+	oThisPosition = CVector( oThisPosition.m_x, 0, oThisPosition.m_z );
+	CVector oDirection = oTempPosition - oThisPosition;
+	float n = ( oBefore.Norm() * oDirection.Norm() );
+	float cosAlpha = 1.f;
+	if( n != 0 )
+		cosAlpha  = ( oBefore * oDirection ) / n;
+	if( cosAlpha > 1.f ) cosAlpha = 1.f;
+	else if( cosAlpha < -1.f ) cosAlpha = -1.f;
+
+	
+	float alpha = acosf( cosAlpha ) * 180.f / 3.1415927f;
+	CVector up = ( oBefore ^ oDirection ) / n;
+	if( up.m_y < 0 )
+		alpha = -alpha;
+	return alpha;
+}
+
+void IAEntity::OnCollision( IAEntity* pEntity )
+{
+	IAEntity* pHuman = static_cast< IAEntity* >( pEntity );
+	pHuman->m_bArriveAtDestination = true;
+	//if( pHuman->m_eCurrentAnimationType != eStand )
+	pHuman->Stand();
+}
+
+void IAEntity::TurnFaceToDestination()
+{ 
+	Turn( GetDestinationAngleRemaining() ); 
 }

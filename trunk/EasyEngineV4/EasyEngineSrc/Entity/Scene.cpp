@@ -32,7 +32,6 @@ m_oCameraManager( oDesc.m_oCameraManager ),
 m_oLoaderManager( oDesc.m_oLoaderManager ),
 m_oCollisionManager( oDesc.m_oCollisionManager ),
 m_nHeightMapID( -1 )
-//,m_oFightSystem( *oDesc.m_pEntityManager )
 {
 	SetName( "Scene" );
 	m_pRessource = NULL;
@@ -93,7 +92,6 @@ void CScene::Update()
 	m_oRenderer.SetObjectMatrix( m_oWorldMatrix );
 	if ( m_pRessource )
 		m_pRessource->Update();
-	//m_oFightSystem.Update();
 }
 
 void CScene::GetSkeletonEntities( CNode* pRoot, vector< IEntity* >& vEntity, string sFileFilter )
@@ -323,8 +321,3 @@ float CScene::GetHeight( float x, float z )
 		return m_oCollisionManager.GetMapHeight( m_nHeightMapID, x, z );
 	return -1000000.f;
 }
-
-//CFightSystem& CScene::GetFightSystem()
-//{
-//	return m_oFightSystem;
-//}

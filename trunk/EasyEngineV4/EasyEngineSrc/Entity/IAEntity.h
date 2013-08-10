@@ -30,31 +30,39 @@ private:
 	};
 
 	TFightState					m_eFightState;
-
 	int							m_nRecuperationTime;
 	int							m_nBeginWaitTimeBeforeNextAttack;
 	int							m_nCurrentWaitTimeBeforeNextAttack;
 	bool						m_bHitEnemy;
 	map< string, IBone* >		m_mPreloadedBones;
 	string						m_sCurrentHitBoneName;
+	CVector						m_oDestination;
+	float						m_fAngleRemaining;
+	bool						m_bArriveAtDestination;
+	IFighterEntity*				m_pCurrentEnemy;
 
-	
+	void						UpdateGoto();
+	void						UpdateFightState();
+	float						GetDestinationAngleRemaining();
+	void						TurnFaceToDestination();
+	void						OnReceiveHit( IFighterEntity* pAgressor );
+	void						OnEndHitAnimation();
+	virtual void				SetDestination( const CVector& oDestination );
+	virtual void				Turn( float fAngle ) = 0;
+	virtual void				Attack( IFighterEntity* pFighter ) = 0;
+	virtual IAnimation*			GetCurrentAnimation() = 0;
+	virtual float				GetDistanceTo2dPoint( const CVector& oPosition ) = 0;
+	virtual void				Run() = 0;
+
 	static void					OnHitReceivedCallback( IAnimation::TEvent e, void* pData );
 
 protected:
-	IFighterEntity*				m_pCurrentEnemy;
-	void						UpdateFightState();
+
+	static void 				OnCollision( IAEntity* pEntity );
 
 public:
 	IAEntity();
-	virtual void				Goto( IAEntity* pEntityDestination, float fSpeed ) = 0;
-	virtual void				Goto( const CVector& oPosition, float fSpeed ) = 0;
-	virtual float				GetDistanceTo2dPoint( const CVector& oPosition ) = 0;
-	virtual void				SetDestination( const CVector& oDestination ) = 0;
-	virtual void				TurnFaceToDestination() = 0;
-	virtual void				Run() = 0;
-	virtual void				Attack( IFighterEntity* pFighter ) = 0;
-	virtual IAnimation*			GetCurrentAnimation() = 0;
-	void						OnReceiveHit( IFighterEntity* pAgressor );
-	void						OnEndHitAnimation();
+	virtual void				Goto( const CVector& oPosition, float fSpeed );
+
+	void						Update();
 };

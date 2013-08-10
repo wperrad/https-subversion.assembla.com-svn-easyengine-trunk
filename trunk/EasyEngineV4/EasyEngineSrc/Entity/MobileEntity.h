@@ -26,9 +26,6 @@ protected:
 	const float					m_fMaxEyeRotationV;
 	const float					m_fMaxNeckRotationH;
 	const float					m_fMaxNeckRotationV;
-	float						m_fAngleRemaining;
-	CVector						m_oDestination;
-	bool						m_bArriveAtDestination;
 	bool						m_bPerso;
 	int							m_nLife;
 	map< TAnimation, float >	m_mAnimationSpeedByType;
@@ -50,7 +47,6 @@ protected:
 	void				ReceiveHit( IFighterEntity* pEnemy );
 	void				TurnEyesH( float fValue );
 	void				TurnNeckH( float f );
-	float				GetDestinationAngleRemaining();
 	IBone*				GetPreloadedBone( string sName );
 	int					GetLife();
 	void				SetLife( int nLife );
@@ -68,7 +64,6 @@ protected:
 	CMatrix&			GetWorldTM();
 
 	static void			OnWalkAnimationCallback( IAnimation::TEvent e, void* pEntity );
-	static void 		OnCollision( IEntity* pEntity );
 	static void 		Walk( CMobileEntity*, bool bLoop );
 	static void 		Stand( CMobileEntity*, bool bLoop );
 	static void 		Run( CMobileEntity*, bool bLoop );

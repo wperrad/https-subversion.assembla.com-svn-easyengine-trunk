@@ -24,13 +24,9 @@ m_fEyesRotH( 0 ),
 m_fEyesRotV( 0 ),
 m_fNeckRotH( 0 ),
 m_fNeckRotV( 0 ),
-m_fAngleRemaining( 0.f ),
-m_bArriveAtDestination( true ),
 m_bPerso( false ),
 m_nLife( 1000 )
 {
-	if( !m_pfnCollisionCallback )
-		m_pfnCollisionCallback = OnCollision;
 	m_sTypeName = "Human";
 	if( s_mAnimationStringToType.size() == 0 )
 	{
@@ -84,14 +80,6 @@ m_nLife( 1000 )
 void CMobileEntity::SetCurrentPerso( bool bPerso )
 {
 	m_bPerso = bPerso;
-}
-
-void CMobileEntity::OnCollision( IEntity* pEntity )
-{
-	CMobileEntity* pHuman = static_cast< CMobileEntity* >( pEntity );
-	pHuman->m_bArriveAtDestination = true;
-	if( pHuman->m_eCurrentAnimationType != eStand )
-		pHuman->Stand( true );
 }
 
 void CMobileEntity::RunAction( string sAction, bool bLoop )
