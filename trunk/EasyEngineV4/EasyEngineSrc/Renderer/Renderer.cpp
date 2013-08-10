@@ -7,7 +7,7 @@
 #include "Renderer.h"
 #include "Exception.h"
 #include <gl/gl.h>
-#include "gl/glext.h"
+#include "glext.h"
 #include <gl/gl.h >
 #include <gl/glu.h>
 #include "GLExtension.h"
@@ -1222,6 +1222,10 @@ bool CRenderer::IsDisplayDebugInfos() const
 	return m_bDisplayDebugInfos;
 }
 
+//void CRenderer::SetCurrentObjectWorldTM( CMatrix& m )
+//{
+//	IRenderer::SetCurrentObjectWorldTM( m );
+//}
 
 void CRenderer::SetCurrentObjectLocalTM( CMatrix& m )
 {

@@ -8,7 +8,6 @@
 #include "Math/Matrix.h"
 #include "EEPlugin.h"
 #include "Entity.h"
-#include "FightSystem.h"
 
 class CNode;
 class IRessourceManager;
@@ -27,7 +26,7 @@ class CScene : public CEntity
 	ILoaderManager&				m_oLoaderManager;
 	ICollisionManager&			m_oCollisionManager;
 	int							m_nHeightMapID;
-	CFightSystem				m_oFightSystem;
+	//CFightSystem				m_oFightSystem;
 
 	void						GetInfos( ILoader::CSceneInfos& si );
 	void						Load( const ILoader::CSceneInfos& si );
@@ -63,7 +62,7 @@ public:
 	void					Clear();
 	float					GetHeight( float x, float z );
 	void					SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false );
-	CFightSystem&			GetFightSystem();
+	//CFightSystem&			GetFightSystem();
 };
 
 #endif // SCENE_NODE_H

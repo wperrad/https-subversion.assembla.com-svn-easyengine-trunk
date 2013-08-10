@@ -373,8 +373,6 @@ void CEntity::GetBonesMatrix( CNode* pInitRoot, CNode* pCurrentRoot, vector< CMa
 	CMatrix m0, m1, mPassage, m0i;
 	pInitRoot->GetWorldMatrix( m0 );
 	pCurrentRoot->GetWorldMatrix( m1 );
-	//m0.GetInverse( m0i );
-	//mPassage = m1 * m0i;
 	CMatrix::GetPassage( m0, m1, mPassage );
 	vMatrix.push_back( mPassage );
 	for ( unsigned int i = 0; i < pInitRoot->GetChildCount(); i++ )

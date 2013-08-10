@@ -6,34 +6,40 @@
 
 class IRenderer;
 class IGeometryManager;
-class CHuman;
+class CMobileEntity;
 class IAEntity;
 
 class CEntityManager : public IEntityManager
 {
 	map< IEntity*, int >::const_iterator	m_itCurrentParsedEntity;
-	IRessourceManager&		m_oRessourceManager;
-	IGeometryManager&		m_oGeometryManager;
-	IRenderer&				m_oRenderer;
-	map< int, IEntity* >	m_mIDEntities;	
-	map< IEntity*, int >	m_mEntitiesID;
-	map< string, IEntity* >	m_mNameEntities;
-	map< IEntity*, string >	m_mEntitiesName;
-	int						m_nLastEntityID;
-	CHuman*					m_pPerso;
-	IFileSystem&			m_oFileSystem;
-	ICollisionManager&		m_oCollisionManager;
-	void					CreateEntity( IEntity* pEntity, string sName = "noname" );
-	map< IEntity*, int >	m_mCollideEntities;
-	map< IAEntity*, int >	m_mIAEntities;
-	map< IAEntity*, int >::iterator	m_itCurrentIAEntity;
+	IRessourceManager&						m_oRessourceManager;
+	IGeometryManager&						m_oGeometryManager;
+	IRenderer&								m_oRenderer;
+	map< int, IEntity* >					m_mIDEntities;	
+	map< IEntity*, int >					m_mEntitiesID;
+	map< string, IEntity* >					m_mNameEntities;
+	map< IEntity*, string >					m_mEntitiesName;
+	int										m_nLastEntityID;
+	CMobileEntity*							m_pPerso;
+	IFileSystem&							m_oFileSystem;
+	ICollisionManager&						m_oCollisionManager;
+	void									CreateEntity( IEntity* pEntity, string sName = "noname" );
+	map< IEntity*, int >					m_mCollideEntities;
+	map< IAEntity*, int >					m_mIAEntities;
+	map< IAEntity*, int >::iterator			m_itCurrentIAEntity;
+	map< IEntity*, int >					m_mMobileEntity;
+	map< IEntity*, int >::iterator			m_itCurrentMobileEntity;
+	map< IFighterEntity*, int >				m_mFighterEntities;
+	map< IFighterEntity*, int >::iterator	m_itCurrentFighterEntity;
 
 public:
 	CEntityManager( const Desc& oDesc );
 	IEntity*			CreateEntity( string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate = false );
 	IEntity*			CreateEntity( string sName = "noname" );
 	IEntity*			CreateRepere( IRenderer& oRenderer );
-	IEntity*			CreateHuman( string sFileNamee, IFileSystem* pFileSystem );
+	IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem );
+	IEntity*			CreateMobileEntity( string sFileNamee, IFileSystem* pFileSystem );
+	IEntity*			CreateFighterEntity( string sFileNamee, IFileSystem* pFileSystem );
 	IEntity*			GetEntity( int nEntityID );
 	IEntity*			GetEntity( string sEntityName );
 	int					GetEntityID( IEntity* pEntity );
@@ -59,6 +65,11 @@ public:
 	int					GetCollideEntityID( IEntity* pEntity );
 	IAEntity*			GetFirstIAEntity();
 	IAEntity*			GetNextIAEntity();
+	IFighterEntity*		GetFirstFighterEntity();
+	IFighterEntity*		GetNextFighterEntity();
+	IEntity*			GetFirstMobileEntity();
+	IEntity*			GetNextMobileEntity();
+	
 };
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& );

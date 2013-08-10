@@ -282,15 +282,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FightSystem.cpp"
+				RelativePath=".\FighterEntity.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\FreeCamera.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Human.cpp"
 				>
 			</File>
 			<File
@@ -307,6 +303,14 @@
 			</File>
 			<File
 				RelativePath=".\LinkedCamera.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MobileEntity.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NPCEntity.cpp"
 				>
 			</File>
 			<File
@@ -360,15 +364,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FightSystem.h"
+				RelativePath=".\FighterEntity.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FreeCamera.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Human.h"
 				>
 			</File>
 			<File
@@ -381,6 +381,14 @@
 			</File>
 			<File
 				RelativePath=".\LinkedCamera.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MobileEntity.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NPCEntity.h"
 				>
 			</File>
 			<File

@@ -23,6 +23,7 @@ class ICollisionManager;
 class IGeometryManager;
 class ISphere;
 class IAEntity;
+class IFighterEntity;
 
 using namespace std;
 
@@ -119,7 +120,8 @@ public:
 	virtual IEntity*			CreateEntity( std::string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate = false ) = 0;
 	virtual IEntity*			CreateEntity( string sFileName = "noname" ) = 0;
 	virtual IEntity*			CreateRepere( IRenderer& oRenderer ) = 0;
-	virtual IEntity*			CreateHuman( string sFileName, IFileSystem* pFileSystem ) = 0;
+	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem ) = 0;
+	virtual IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem ) = 0;
 	virtual IEntity*			GetEntity( int nEntityID ) = 0;
 	virtual IEntity*			GetEntity( string sEntityName ) = 0;
 	virtual int					GetEntityID( IEntity* pEntity ) = 0;
@@ -145,6 +147,10 @@ public:
 	virtual void				SetZCollisionError( float e ) = 0;
 	virtual IAEntity*			GetFirstIAEntity() = 0;
 	virtual IAEntity*			GetNextIAEntity() = 0;
+	virtual IFighterEntity*		GetFirstFighterEntity() = 0;
+	virtual IFighterEntity*		GetNextFighterEntity() = 0;
+	virtual IEntity*			GetFirstMobileEntity() = 0;
+	virtual IEntity*			GetNextMobileEntity() = 0;
 };
 
 class ISceneManager : public CPlugin
