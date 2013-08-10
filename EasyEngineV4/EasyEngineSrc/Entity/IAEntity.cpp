@@ -3,9 +3,9 @@
 
 
 IAEntity::IAEntity():
-m_eFightState( eNoFight ),
 m_nRecuperationTime( 1500 ),
-m_bHitEnemy( false )
+m_bHitEnemy( false ),
+m_eFightState( eNoFight )
 {
 }
 
@@ -31,7 +31,8 @@ void IAEntity::UpdateFightState()
 		m_eFightState = eBeginWaitForNextAttack;
 		break;
 	case eBeginGoToEnemy:
-		Goto( m_pCurrentEnemy, -1.f );
+		m_pCurrentEnemy->GetPosition( oEnemyPos );
+		Goto( oEnemyPos, -1.f );
 		m_eFightState = eGoingToEnemy;
 		break;
 	case eGoingToEnemy:
@@ -83,4 +84,36 @@ void IAEntity::UpdateFightState()
 	default:
 		throw 1;
 	}
+}
+
+void IAEntity::OnReceiveHit( IFighterEntity* pAgressor )
+{
+	m_pCurrentEnemy = pAgressor;
+	if( m_eFightState == IAEntity::eNoFight )
+		m_eFightState = IAEntity::eBeginHitReceived;
+	else if( m_eFightState == IAEntity::eLaunchingAttack )
+		m_eFightState = IAEntity::eEndLaunchAttack;
+	GetCurrentAnimation()->AddCallback( OnHitReceivedCallback, this );
+}
+
+void IAEntity::OnHitReceivedCallback( IAnimation::TEvent e, void* pData )
+{
+	IAEntity* pThisFighter = reinterpret_cast< IAEntity* >( pData );
+	switch( e )
+	{
+	case IAnimation::eBeginRewind:
+		pThisFighter->GetCurrentAnimation()->RemoveCallback( OnHitReceivedCallback );
+		if( pThisFighter->m_eFightState == IAEntity::eReceivingHit )
+			pThisFighter->m_eFightState = IAEntity::eEndReceivingHit;
+		else
+			pThisFighter->Stand();
+		break;
+	}
+}
+
+void IAEntity::OnEndHitAnimation()
+{
+	if( m_eFightState == IAEntity::eLaunchingAttack )
+		m_eFightState = IAEntity::eEndLaunchAttack;
+	Stand();
 }

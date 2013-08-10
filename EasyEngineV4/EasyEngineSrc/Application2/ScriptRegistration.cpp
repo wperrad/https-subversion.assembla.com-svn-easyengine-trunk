@@ -578,7 +578,7 @@ void SetScale( IScriptState* pState )
 	}
 }
 
-void CreateHuman( IScriptState* pState )
+void CreateMobileEntity( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
 	string sName = pName->m_sValue;
@@ -589,7 +589,50 @@ void CreateHuman( IScriptState* pState )
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateHuman( sName, m_pFileSystem );
+		IEntity* pEntity = m_pEntityManager->CreateMobileEntity( sName, m_pFileSystem );
+		pEntity->Link( m_pScene );
+		ostringstream oss;
+		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
+		m_pConsole->Print( oss.str() );
+	}
+	catch( CFileNotFoundException& e )
+	{		
+		ostringstream oss;
+		oss <<"Erreur : fichier \"" << e.m_sFileName << "\" manquant, l'entité \"" << pName->m_sValue << "\" ne peut pas être chargée." ;
+		m_pConsole->Print( oss.str() );
+	}
+	catch( CRessourceException& e )
+	{
+		string s;
+		e.GetErrorMessage( s );
+		m_pConsole->Print( s );
+	}
+	catch( CBadFileFormat& e )
+	{
+		string sMessage;
+		e.GetErrorMessage( sMessage );
+		m_pConsole->Print( sMessage );
+	}
+	catch( CEException )
+	{
+		string sMessage = string( "\"" ) + sName + "\" introuvable";
+		m_pConsole->Print( sMessage );
+	}
+	m_pRessourceManager->EnableCatchingException( bak );
+}
+
+void CreateNPC( IScriptState* pState )
+{
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
+	string sName = pName->m_sValue;
+	if( sName.find( ".bme" ) == -1 )
+		sName += ".bme";
+	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
+	m_pRessourceManager->EnableCatchingException( false );
+
+	try
+	{
+		IEntity* pEntity = m_pEntityManager->CreateNPC( sName, m_pFileSystem );
 		pEntity->Link( m_pScene );
 		ostringstream oss;
 		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
@@ -2080,7 +2123,11 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eString );
-	m_pScriptManager->RegisterFunction( "CreateHuman", CreateHuman, vType );
+	m_pScriptManager->RegisterFunction( "CreateMobileEntity", CreateMobileEntity, vType );
+
+	vType.clear();
+	vType.push_back( eString );
+	m_pScriptManager->RegisterFunction( "CreateNPC", CreateNPC, vType );
 
 	vType.clear();
 	vType.push_back( eInt );

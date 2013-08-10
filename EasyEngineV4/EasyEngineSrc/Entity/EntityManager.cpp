@@ -4,9 +4,9 @@
 #include "BoxEntity.h"
 #include "LightEntity.h"
 #include "Exception.h"
-#include "Human.h"
 #include "SphereEntity.h"
 #include "IGeometry.h"
+#include "NPCEntity.h"
 
 CEntityManager::CEntityManager( const Desc& oDesc ):
 IEntityManager( oDesc ),
@@ -34,6 +34,9 @@ void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
 	IAEntity* pIAEntity = dynamic_cast< IAEntity* >( pEntity );
 	if( pIAEntity )
 		m_mIAEntities[ pIAEntity ] = 1;
+	IFighterEntity* pFighterEntity = dynamic_cast< IFighterEntity* >( pEntity );
+	if( pFighterEntity )
+		m_mFighterEntities[ pFighterEntity ] = 1;
 }
 
 IEntity* CEntityManager::CreateEntity( std::string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate )
@@ -42,7 +45,7 @@ IEntity* CEntityManager::CreateEntity( std::string sFileName, string sTypeName, 
 	if( sTypeName.size() == 0 )
 		pEntity = new CEntity( sFileName, m_oRessourceManager, oRenderer, this, m_oGeometryManager, m_oCollisionManager, bDuplicate );
 	else if( sTypeName == "Human" )
-		pEntity = new CHuman( sFileName, m_oRessourceManager, oRenderer, this, &m_oFileSystem, m_oCollisionManager, m_oGeometryManager );
+		pEntity = new CMobileEntity( sFileName, m_oRessourceManager, oRenderer, this, &m_oFileSystem, m_oCollisionManager, m_oGeometryManager );
 	string sName;
 	pEntity->GetName( sName );
 	CreateEntity( pEntity, sName );
@@ -90,6 +93,22 @@ IAEntity* CEntityManager::GetNextIAEntity()
 	return NULL;
 }
 
+IEntity* CEntityManager::GetFirstMobileEntity()
+{
+	m_itCurrentMobileEntity = m_mMobileEntity.begin();
+	if( m_itCurrentMobileEntity != m_mMobileEntity.end() )
+		return m_itCurrentMobileEntity->first;
+	return NULL;
+}
+
+IEntity* CEntityManager::GetNextMobileEntity()
+{
+	m_itCurrentMobileEntity++;
+	if( m_itCurrentMobileEntity != m_mMobileEntity.end() )
+		return m_itCurrentMobileEntity->first;
+	return NULL;
+}
+
 IEntity* CEntityManager::CreateRepere( IRenderer& oRenderer )
 {
 	IEntity* pEntity = new CRepere( oRenderer );
@@ -125,9 +144,16 @@ IBox& CEntityManager::GetBox( IEntity* pEntity )
 	return pBoxEntity->GetBox();
 }
 
-IEntity* CEntityManager::CreateHuman( string sFileName, IFileSystem* pFileSystem )
+IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFileSystem )
 {
-	IEntity* pEntity = new CHuman( sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager );
+	IEntity* pEntity = new CMobileEntity( sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager );
+	CreateEntity( pEntity );
+	return pEntity;
+}
+
+IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem )
+{
+	IEntity* pEntity = new CNPCEntity( sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager );
 	CreateEntity( pEntity );
 	return pEntity;
 }
@@ -228,7 +254,7 @@ void CEntityManager::SetPerso( IEntity* pPerso )
 {
 	if( m_pPerso )
 		m_pPerso->SetCurrentPerso( false );
-	m_pPerso = static_cast< CHuman* >( pPerso );
+	m_pPerso = static_cast< CMobileEntity* >( pPerso );
 	m_pPerso->SetCurrentPerso( true );
 }
 
@@ -278,6 +304,22 @@ int CEntityManager::GetCollideEntityID( IEntity* pEntity )
 	if( itEntityID != m_mCollideEntities.end() )
 		return itEntityID->second;
 	return -1;
+}
+
+IFighterEntity* CEntityManager::GetFirstFighterEntity()
+{
+	m_itCurrentFighterEntity = m_mFighterEntities.begin();
+	if( m_itCurrentFighterEntity != m_mFighterEntities.end() )
+		return m_itCurrentFighterEntity->first;
+	return NULL;
+}
+
+IFighterEntity* CEntityManager::GetNextFighterEntity()
+{
+	m_itCurrentFighterEntity++;
+	if( m_itCurrentFighterEntity != m_mFighterEntities.end() )
+		return m_itCurrentFighterEntity->first;
+	return NULL;
 }
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& oDesc )

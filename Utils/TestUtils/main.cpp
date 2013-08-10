@@ -438,33 +438,51 @@ void TestQuaternion()
 
 #include "CsvReader.h"
 
-class CParent1
+class IFighter
 {
 public:
 	virtual void f() = 0;
 };
 
-class CParent2
+class CMobile : public virtual IFighter
 {
 public:
-	virtual void f() = 0;
+	void f(){ MessageBoxA( NULL, "f()", "", MB_OK ); }
 };
 
-class CEnfant : public CParent1, public CParent2
+class IAEntity : public virtual IFighter
+{
+public:
+	virtual void g() = 0;
+};
+
+class CNPC : public CMobile, public IAEntity
 {
 public:
 	void f()
+	{ 
+		CMobile::f();
+	}
+
+	void g()
 	{
-		MessageBoxA( NULL, "coucou", "", MB_OK );
+		MessageBox( NULL, "g()", "", MB_OK );
 	}
 };
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hPrevInstance,
                                                   LPSTR lpCmdLine, int nCmdShow)
 {
+	CNPC* pNPC = new CNPC;
+	IFighter* pFighter = dynamic_cast< IFighter* >( pNPC );
+	pFighter->f();
 
-	CEnfant e;
-	e.f();
+	/*
+	IBase* pBase = pDerived;
+	IBase1* pBase1 = dynamic_cast< IBase* >( pBase );
+	d.f();
+	d.g();
+*/
 	
 	return TRUE;
 }

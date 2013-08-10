@@ -1,4 +1,4 @@
-#include "Human.h"
+#include "MobileEntity.h"
 #include "IFileSystem.h"
 #include "ISystems.h"
 #include <algorithm>
@@ -7,13 +7,13 @@
 #include "TimeManager.h"
 #include "Scene.h"
 
-map< string, IEntity::TAnimation >			CHuman::s_mAnimationStringToType;
-map< IEntity::TAnimation, IAnimation* >		CHuman::s_mAnimationTypeToAnimation;
-map< IEntity::TAnimation, float > 			CHuman::s_mOrgAnimationSpeedByType;
-map< string, CHuman::TAction >				CHuman::s_mActions;
-vector< CHuman* >							CHuman::s_vHumans;
+map< string, IEntity::TAnimation >			CMobileEntity::s_mAnimationStringToType;
+map< IEntity::TAnimation, IAnimation* >		CMobileEntity::s_mAnimationTypeToAnimation;
+map< IEntity::TAnimation, float > 			CMobileEntity::s_mOrgAnimationSpeedByType;
+map< string, CMobileEntity::TAction >				CMobileEntity::s_mActions;
+vector< CMobileEntity* >							CMobileEntity::s_vHumans;
 
-CHuman::CHuman( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager , IFileSystem* pFileSystem, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager ):
+CMobileEntity::CMobileEntity( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager , IFileSystem* pFileSystem, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager ):
 CEntity( sFileName, oRessourceManager, oRenderer, pEntityManager, oGeometryManager, oCollisionManager ),
 m_bInitSkeletonOffset( false ),
 m_fMaxEyeRotationH( 15 ),
@@ -27,8 +27,7 @@ m_fNeckRotV( 0 ),
 m_fAngleRemaining( 0.f ),
 m_bArriveAtDestination( true ),
 m_bPerso( false ),
-m_nLife( 1000 ),
-m_bHitEnemy( false )
+m_nLife( 1000 )
 {
 	if( !m_pfnCollisionCallback )
 		m_pfnCollisionCallback = OnCollision;
@@ -50,7 +49,7 @@ m_bHitEnemy( false )
 		s_mActions[ "run" ] = Run;
 		s_mActions[ "stand" ] = Stand;
 		s_mActions[ "HitLeftFoot" ] = HitLeftFoot;
-		s_mActions[ "HitReceived" ] = HitReceived;
+		s_mActions[ "PlayReceiveHit" ] = PlayReceiveHit;
 	}
 	for( int i = 0; i < eAnimationCount; i++ )
 		m_mAnimationSpeedByType[ (TAnimation)i ] = s_mOrgAnimationSpeedByType[ (TAnimation)i ];
@@ -82,25 +81,25 @@ m_bHitEnemy( false )
 	m_pNeck = m_pSkeletonRoot->GetChildBoneByName( "Cou" );
 }
 
-void CHuman::SetCurrentPerso( bool bPerso )
+void CMobileEntity::SetCurrentPerso( bool bPerso )
 {
 	m_bPerso = bPerso;
 }
 
-void CHuman::OnCollision( IEntity* pEntity )
+void CMobileEntity::OnCollision( IEntity* pEntity )
 {
-	CHuman* pHuman = static_cast< CHuman* >( pEntity );
+	CMobileEntity* pHuman = static_cast< CMobileEntity* >( pEntity );
 	pHuman->m_bArriveAtDestination = true;
 	if( pHuman->m_eCurrentAnimationType != eStand )
 		pHuman->Stand( true );
 }
 
-void CHuman::RunAction( string sAction, bool bLoop )
+void CMobileEntity::RunAction( string sAction, bool bLoop )
 {
 	s_mActions[ sAction ]( this, bLoop );
 }
 
-void CHuman::SetPredefinedAnimation( string s, bool bLoop )
+void CMobileEntity::SetPredefinedAnimation( string s, bool bLoop )
 {
 	IMesh* pMesh = static_cast< IMesh* >( m_pRessource );
 	string sAnimationName = m_sFileNameWithoutExt + "_" + s + ".bke";
@@ -118,7 +117,7 @@ void CHuman::SetPredefinedAnimation( string s, bool bLoop )
 	m_eCurrentAnimationType = s_mAnimationStringToType[ s ];
 }
 
-void CHuman::Walk( bool bLoop )
+void CMobileEntity::Walk( bool bLoop )
 {
 	SetPredefinedAnimation( "walk", bLoop );
 	if( !m_bUsePositionKeys )
@@ -133,14 +132,14 @@ void CHuman::Walk( bool bLoop )
 	}
 }
 
-void CHuman::Stand( bool bLoop )
+void CMobileEntity::Stand( bool bLoop )
 {
 	SetPredefinedAnimation( "stand", bLoop );
 	if( !m_bUsePositionKeys )
 		ConstantLocalTranslate( CVector( 0.f, m_mAnimationSpeedByType[ eStand ], 0.f ) );
 }
 
-void CHuman::Run( bool bLoop )
+void CMobileEntity::Run( bool bLoop )
 {
 	if( m_eCurrentAnimationType != eRun )
 	{
@@ -150,91 +149,83 @@ void CHuman::Run( bool bLoop )
 	}
 }
 
-void CHuman::HitLeftFoot( bool bLoop )
+void CMobileEntity::HitLeftFoot( bool bLoop )
 {
 	SetPredefinedAnimation( "HitLeftFoot", bLoop );
-	m_pScene->GetFightSystem().OnHit( this, "OrteilsG" );
+	m_sCurrentHitBoneName = "OrteilsG";
+	OnHit( this );
 }
 
-void CHuman::HitReceived( bool bLoop )
+void CMobileEntity::PlayReceiveHit( bool bLoop )
 {
 	SetPredefinedAnimation( "HitReceived", bLoop );
 	if( !m_bUsePositionKeys )
 		ConstantLocalTranslate( CVector( 0.f, m_mAnimationSpeedByType[ eStand ], 0.f ) );
 }
 
+void CMobileEntity::PlayReceiveHit( CMobileEntity* pEntity, bool bLoop )
+{
+	pEntity->PlayReceiveHit( bLoop );
+}
 
-void CHuman::OnWalkAnimationCallback( IAnimation::TEvent e, void* pData )
+void CMobileEntity::ReceiveHit( IFighterEntity* pEnemy )
+{	
+	RunAction( "PlayReceiveHit", false );
+	m_nLife -= 20;
+}
+
+void CMobileEntity::OnWalkAnimationCallback( IAnimation::TEvent e, void* pData )
 {
 	if( e == IAnimation::eBeginRewind )
 	{
-		CHuman* pHuman = reinterpret_cast< CHuman* >( pData );
+		CMobileEntity* pHuman = reinterpret_cast< CMobileEntity* >( pData );
 		pHuman->LocalTranslate( 0, -pHuman->m_oSkeletonOffset.m_23, 0 );
 	}
 }
 
-void CHuman::ReceiveHit( IAEntity* pEnemy )
-{	
-	RunAction( "HitReceived", false );
-	if( m_bPerso )
-		m_nLife -= 20;
-	else
-		m_pScene->GetFightSystem().OnReceiveHit( this, pEnemy );
-}
-
-void CHuman::Walk( CHuman* pHuman, bool bLoop  )
+void CMobileEntity::Walk( CMobileEntity* pHuman, bool bLoop  )
 {
 	pHuman->Walk( bLoop );
 }
 
-void CHuman::Stand( CHuman* pHuman, bool bLoop  )
+void CMobileEntity::Stand( CMobileEntity* pHuman, bool bLoop  )
 {
 	pHuman->Stand( bLoop );
 }
 
-void CHuman::Run( CHuman* pHuman, bool bLoop  )
+void CMobileEntity::Run( CMobileEntity* pHuman, bool bLoop  )
 {
 	pHuman->Run( bLoop );
 }
 
-void CHuman::HitLeftFoot( CHuman* pHuman, bool bLoop  )
+void CMobileEntity::HitLeftFoot( CMobileEntity* pHuman, bool bLoop  )
 {
 	pHuman->HitLeftFoot( bLoop );
 }
 
-void CHuman::HitReceived( CHuman* pHuman, bool bLoop )
-{
-	pHuman->HitReceived( bLoop );
-}
-
-void CHuman::Attack( IAEntity* pEnemy )
-{
-	HitLeftFoot( false );
-}
-
-void CHuman::SetAnimationSpeed( IEntity::TAnimation eAnimationType, float fSpeed )
+void CMobileEntity::SetAnimationSpeed( IEntity::TAnimation eAnimationType, float fSpeed )
 {
 	s_mAnimationTypeToAnimation[ eAnimationType ]->SetSpeed( fSpeed );
 	m_mAnimationSpeedByType[ eAnimationType ] = s_mOrgAnimationSpeedByType[ eAnimationType ] * fSpeed;
 }
 
-IEntity::TAnimation CHuman::GetCurrentAnimationType() const
+IEntity::TAnimation CMobileEntity::GetCurrentAnimationType() const
 {
 	return m_eCurrentAnimationType;
 }
 
-void CHuman::TurnEyesH( float fValue )
+void CMobileEntity::TurnEyesH( float fValue )
 {
 	m_pRightEye->Roll( fValue );
 	m_pLeftEye->Roll( fValue );
 }
 
-void CHuman::TurnNeckH( float fNeckRotH )
+void CMobileEntity::TurnNeckH( float fNeckRotH )
 {
 	m_pNeck->Pitch( fNeckRotH );
 }
 
-ISphere* CHuman::GetBoneSphere( string sBoneName )
+ISphere* CMobileEntity::GetBoneSphere( string sBoneName )
 {
 	IBone* pBone = GetPreloadedBone ( sBoneName );
 	float fBoneRadius = pBone->GetBoundingBox()->GetBoundingSphereRadius();
@@ -244,7 +235,7 @@ ISphere* CHuman::GetBoneSphere( string sBoneName )
 	return m_oGeometryManager.CreateSphere( oBoneWorldPosition, fBoneRadius / 2.f );
 }
 
-IBone* CHuman::GetPreloadedBone( string sName )
+IBone* CMobileEntity::GetPreloadedBone( string sName )
 {
 	IBone* pBone = m_mPreloadedBones[ sName ];
 	if( pBone )
@@ -253,141 +244,80 @@ IBone* CHuman::GetPreloadedBone( string sName )
 	return m_mPreloadedBones[ sName ];
 }
 
-void CHuman::LookAt( float alpha )
-{
-	float fMustEyeRotH = 0.f;
-	float fMustNeckRotH = 0.f;
-	//	const float fEyeRotMult = 3.6f;
-	const float fEyeRotMult = 4.3f;
-	if( ( alpha < m_fMaxEyeRotationH * fEyeRotMult ) && ( alpha > -m_fMaxEyeRotationH * fEyeRotMult  ) )
-	{
-		fMustEyeRotH = alpha / fEyeRotMult - m_fEyesRotH;
-		m_fEyesRotH += fMustEyeRotH;
-	}
-	else
-	{
-		fMustEyeRotH = m_fMaxEyeRotationH - m_fEyesRotH;
-		if( alpha < 0 )
-			fMustEyeRotH = -fMustEyeRotH;
-		m_fEyesRotH += fMustEyeRotH;
-		alpha -= m_fEyesRotH * fEyeRotMult;
-		if( alpha < m_fMaxNeckRotationH - m_fNeckRotH )
-			fMustNeckRotH = alpha - m_fNeckRotH;
-		else
-			fMustNeckRotH = m_fMaxNeckRotationH - m_fNeckRotH;
-	}
-	m_fNeckRotH += fMustNeckRotH;
-	TurnEyesH( fMustEyeRotH );
-	TurnNeckH( fMustNeckRotH );
-}
-
-float CHuman::GetDestinationAngleRemaining()
-{
-	CVector v( 0, -1, 0, 1 ), oThisPosition, oTempPosition( m_oDestination.m_x, 0, m_oDestination.m_z );	
-	CVector oBefore = m_oWorldMatrix.GetRotation() * v;
-	
-	GetWorldPosition( oThisPosition );
-	oThisPosition = CVector( oThisPosition.m_x, 0, oThisPosition.m_z );
-	CVector oDirection = oTempPosition - oThisPosition;
-	float n = ( oBefore.Norm() * oDirection.Norm() );
-	float cosAlpha = 1.f;
-	if( n != 0 )
-		cosAlpha  = ( oBefore * oDirection ) / n;
-	if( cosAlpha > 1.f ) cosAlpha = 1.f;
-	else if( cosAlpha < -1.f ) cosAlpha = -1.f;
-
-	
-	float alpha = acosf( cosAlpha ) * 180.f / 3.1415927f;
-	CVector up = ( oBefore ^ oDirection ) / n;
-	if( up.m_y < 0 )
-		alpha = -alpha;
-	return alpha;
-}
-
-void CHuman::Goto( const CVector& oPosition, float fSpeed )
-{
-	m_oDestination = oPosition;
-	m_fAngleRemaining = GetDestinationAngleRemaining();
-	//LookAt( m_fAngleRemaining );
-	Run( true );
-	m_bArriveAtDestination = false;
-}
-
-void CHuman::Goto( IEntity* pEntity, float fSpeed )
-{
-	CVector oPosition;
-	pEntity->GetWorldPosition( oPosition );
-	Goto( oPosition, fSpeed );
-}
-
-void CHuman::Goto( IAEntity* pFighter, float fSpeed )
-{
-	CVector oPosition;
-	pFighter->GetPosition( oPosition );
-	Goto( oPosition, fSpeed );
-}
-
-float CHuman::GetDistanceTo2dPoint( const CVector& oPosition )
-{
-	CVector oThisPosition;
-	GetWorldPosition( oThisPosition );
-	CVector o2DThisPosition = CVector( oThisPosition.m_x, 0, oThisPosition.m_z );
-	CVector o2DPosition = CVector( oPosition.m_x, 0, oPosition.m_z );
-	return ( o2DPosition - o2DThisPosition ).Norm();
-}
-
-void CHuman::UpdateGoto()
-{
-	if( !m_bArriveAtDestination )
-	{
-		float fDistance = GetDistanceTo2dPoint( m_oDestination );
-		if( fDistance > 200 )
-		{
-			const float fRotateSpeed = 2.f;
-			if( m_fAngleRemaining > fRotateSpeed || m_fAngleRemaining < -fRotateSpeed )
-			{
-				float fDelta = m_fAngleRemaining > 0 ? -fRotateSpeed : fRotateSpeed;
-				m_fAngleRemaining = m_fAngleRemaining + fDelta;
-				Roll( -fDelta );
-			}
-			else
-				m_fAngleRemaining = GetDestinationAngleRemaining();
-		}
-		else
-			Roll( GetDestinationAngleRemaining() );
-		
-		if( fDistance < 100.f )
-		{
-			m_bArriveAtDestination = true;
-			if( m_eCurrentAnimationType == eRun )
-				Stand( true );
-		}
-	}
-}
-
-void CHuman::SetDestination( const CVector& oDestination )
-{
-	m_oDestination = oDestination;
-	m_bArriveAtDestination = false;
-}
-
-int CHuman::GetLife()
+int CMobileEntity::GetLife()
 {
 	return m_nLife;
 }
 
-void CHuman::SetLife( int nLife )
+void CMobileEntity::SetLife( int nLife )
 {
 	m_nLife = nLife;
 }
 
-void CHuman::IncreaseLife( int nLife )
+void CMobileEntity::IncreaseLife( int nLife )
 {
 	m_nLife += nLife;
 }
 
-void CHuman::Update()
+bool CMobileEntity::IsHitIntersectEnemySphere( IFighterEntity* pEnemy )
 {
-	CEntity::Update();
-	UpdateGoto();
+	CMobileEntity* pEnemyMobileEntity = dynamic_cast< CMobileEntity* >( pEnemy );
+	ISphere* pBoneSphere = GetBoneSphere( m_sCurrentHitBoneName ); 
+	CVector oEnemyWorldPosition;
+	pEnemy->GetPosition( oEnemyWorldPosition );
+	float fBoneDistance = ( pBoneSphere->GetCenter() - oEnemyWorldPosition ).Norm();
+	return fBoneDistance < ( pBoneSphere->GetRadius() / 2.f + pEnemyMobileEntity->GetBoundingSphereRadius() / 2.f );
+}
+
+bool CMobileEntity::IsHitIntersectEnemyBox( IFighterEntity* pEnemy )
+{
+	CMobileEntity* pEnemyMobileEntity = dynamic_cast< CMobileEntity* >( pEnemy );
+	IMesh* pMesh = pEnemyMobileEntity->GetMesh();
+	string sAnimationName;
+	pEnemyMobileEntity->GetCurrentAnimation()->GetName( sAnimationName );
+	IBox* pEnemyBox = pMesh->GetAnimationBBox( sAnimationName );
+	pEnemyBox->SetWorldMatrix( pEnemy->GetWorldTM() );
+	ISphere* pBoneSphere = GetBoneSphere( m_sCurrentHitBoneName );
+	return m_oCollisionManager.IsIntersection( *pEnemyBox, *pBoneSphere );
+}
+
+void CMobileEntity::GetPosition( CVector& oPosition )
+{ 
+	GetWorldPosition( oPosition ); 
+}
+
+IMesh* CMobileEntity::GetMesh()
+{ 
+	return dynamic_cast< IMesh* >( m_pRessource ); 
+}
+
+IAnimation*	CMobileEntity::GetCurrentAnimation()
+{ 
+	return m_pCurrentAnimation; 
+}
+
+IFighterEntity* CMobileEntity::GetFirstEnemy()
+{
+	IFighterEntity* pEntity = m_pEntityManager->GetFirstFighterEntity();
+	if( pEntity == this )
+		pEntity = m_pEntityManager->GetNextFighterEntity();
+	return pEntity;
+}
+
+IFighterEntity* CMobileEntity::GetNextEnemy()
+{
+	IFighterEntity* pEntity = static_cast< IFighterEntity* >( m_pEntityManager->GetNextFighterEntity() );
+	if( pEntity == this )
+		pEntity = static_cast< IFighterEntity* >( m_pEntityManager->GetNextFighterEntity() );
+	return pEntity;
+}
+
+void CMobileEntity::Stand()
+{ 
+	Stand( true ); 
+}
+
+CMatrix& CMobileEntity::GetWorldTM()
+{ 
+	return m_oWorldMatrix; 
 }
