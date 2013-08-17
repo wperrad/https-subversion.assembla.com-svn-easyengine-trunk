@@ -4,6 +4,7 @@
 #include "ILoader.h"
 #include "HeightMap.h"
 #include "IGeometry.h"
+#include "RenderUtils.h"
 
 IMesh* CCollisionManager::s_pMesh = NULL;
 
@@ -284,6 +285,21 @@ bool CCollisionManager::IsIntersection( const IBox& b1, const IBox& b2 )
 	if( TestBoxesCollisionIntoFirstBoxBase( b1, b2 ) )
 		return TestBoxesCollisionIntoFirstBoxBase( b2, b1 );
 	return false;
+}
+
+bool CCollisionManager::IsIntersection( const ISegment& s, const IBox& b2 )
+{
+	return true;
+}
+
+bool CCollisionManager::IsIntersection( const ISegment& s, const CVector& oCircleCenter, float fCircleRadius )
+{
+	CVector H;
+	s.ComputeProjectedPointOnLine( oCircleCenter, H );
+
+	return false;
+	
+
 }
 
 extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc )

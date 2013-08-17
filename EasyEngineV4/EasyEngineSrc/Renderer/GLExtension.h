@@ -9,7 +9,7 @@
 
 #include <windows.h>
 #include <gl/gl.h>
-#include "glExt.h"
+#include "gl/glExt.h"
 
 
 

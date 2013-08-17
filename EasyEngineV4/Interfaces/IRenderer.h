@@ -111,6 +111,7 @@ public:
 
 	virtual void 			DrawGeometry( const IBuffer* pBuffer ) = 0;
 	virtual void			DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style = T_TRIANGLES ) = 0;
+	virtual void			DrawLine( const CVector& p1, const CVector& p2, const CVector& color ) = 0;
 	virtual void			DrawBase( const CMatrix& mBase, float fSize ) = 0;
 	virtual void			DrawBox( const CVector& oMinPoint, const CVector& oDimension ) = 0;
 	virtual void			DrawSphere(double dRadius, unsigned int nSliceCount, unsigned int nStackCount) = 0;

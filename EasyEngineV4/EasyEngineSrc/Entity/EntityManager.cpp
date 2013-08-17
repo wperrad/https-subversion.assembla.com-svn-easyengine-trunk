@@ -7,6 +7,8 @@
 #include "SphereEntity.h"
 #include "IGeometry.h"
 #include "NPCEntity.h"
+#include "LineEntity.h"
+#include "CylinderEntity.h"
 
 CEntityManager::CEntityManager( const Desc& oDesc ):
 IEntityManager( oDesc ),
@@ -123,13 +125,6 @@ IEntity* CEntityManager::CreateBox( IRenderer& oRenderer, const CVector& oDimens
 	CBoxEntity* pBoxEntity = new CBoxEntity( oRenderer, *pBox );	
 	CreateEntity( pBoxEntity );
 	return pBoxEntity;
-}
-
-IEntity* CEntityManager::CreateSphere( IRenderer& oRenderer, ISphere& oSphere )
-{
-	CSphereEntity* pSphere = new CSphereEntity( oRenderer, oSphere );
-	CreateEntity( pSphere );
-	return pSphere;
 }
 
 ISphere& CEntityManager::GetSphere( IEntity* pEntity )
@@ -266,12 +261,13 @@ IEntity* CEntityManager::GetPerso()
 IEntity* CEntityManager::CreateSphere( float fSize )
 {
 	IEntity* pSphere = CreateEntity( "sphere.bme", "", m_oRenderer );
+	CreateEntity( pSphere, "Sphere" );
 	return pSphere;
 }
 
 void CEntityManager::AddCollideEntity( IEntity* pEntity )
 {
-	int nID = m_mCollideEntities.size();
+	int nID = (int)m_mCollideEntities.size();
 	m_mCollideEntities[ pEntity ] = nID;
 }
 
@@ -320,6 +316,16 @@ IFighterEntity* CEntityManager::GetNextFighterEntity()
 	if( m_itCurrentFighterEntity != m_mFighterEntities.end() )
 		return m_itCurrentFighterEntity->first;
 	return NULL;
+}
+
+IEntity* CEntityManager::CreateLineEntity( const CVector& first, const CVector& last )
+{
+	return new CLineEntity( m_oRenderer, first, last );
+}
+
+IEntity* CEntityManager::CreateCylinder( float fRadius, float fHeight )
+{
+	return new CCylinderEntity( m_oGeometryManager, m_oRenderer, m_oRessourceManager, m_oCollisionManager, fRadius, fHeight );
 }
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& oDesc )

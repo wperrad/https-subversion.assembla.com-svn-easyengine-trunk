@@ -140,8 +140,7 @@ void CMobileEntity::Run( bool bLoop )
 void CMobileEntity::HitLeftFoot( bool bLoop )
 {
 	SetPredefinedAnimation( "HitLeftFoot", bLoop );
-	m_sCurrentHitBoneName = "OrteilsG";
-	OnHit( this );
+	OnHit( this, "OrteilsG" );
 }
 
 void CMobileEntity::PlayReceiveHit( bool bLoop )
@@ -247,29 +246,7 @@ void CMobileEntity::IncreaseLife( int nLife )
 	m_nLife += nLife;
 }
 
-bool CMobileEntity::IsHitIntersectEnemySphere( IFighterEntity* pEnemy )
-{
-	CMobileEntity* pEnemyMobileEntity = dynamic_cast< CMobileEntity* >( pEnemy );
-	ISphere* pBoneSphere = GetBoneSphere( m_sCurrentHitBoneName ); 
-	CVector oEnemyWorldPosition;
-	pEnemy->GetPosition( oEnemyWorldPosition );
-	float fBoneDistance = ( pBoneSphere->GetCenter() - oEnemyWorldPosition ).Norm();
-	return fBoneDistance < ( pBoneSphere->GetRadius() / 2.f + pEnemyMobileEntity->GetBoundingSphereRadius() / 2.f );
-}
-
-bool CMobileEntity::IsHitIntersectEnemyBox( IFighterEntity* pEnemy )
-{
-	CMobileEntity* pEnemyMobileEntity = dynamic_cast< CMobileEntity* >( pEnemy );
-	IMesh* pMesh = pEnemyMobileEntity->GetMesh();
-	string sAnimationName;
-	pEnemyMobileEntity->GetCurrentAnimation()->GetName( sAnimationName );
-	IBox* pEnemyBox = pMesh->GetAnimationBBox( sAnimationName );
-	pEnemyBox->SetWorldMatrix( pEnemy->GetWorldTM() );
-	ISphere* pBoneSphere = GetBoneSphere( m_sCurrentHitBoneName );
-	return m_oCollisionManager.IsIntersection( *pEnemyBox, *pBoneSphere );
-}
-
-void CMobileEntity::GetPosition( CVector& oPosition )
+void CMobileEntity::GetPosition( CVector& oPosition ) const
 { 
 	GetWorldPosition( oPosition ); 
 }
@@ -308,4 +285,12 @@ void CMobileEntity::Stand()
 CMatrix& CMobileEntity::GetWorldTM()
 { 
 	return m_oWorldMatrix; 
+}
+
+IBox* CMobileEntity::GetBoundingBox()
+{
+	IMesh* pMesh = GetMesh();
+	string sAnimationName;
+	m_pCurrentAnimation->GetName( sAnimationName );
+	return pMesh->GetAnimationBBox( sAnimationName );
 }

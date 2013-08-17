@@ -55,7 +55,6 @@ public:
 	IEntity*			GetPerso();
 	IEntity*			CreateSphere( float fSize );
 	IEntity*			CreateBox( IRenderer& oRenderer, const CVector& oDimension );
-	IEntity*			CreateSphere( IRenderer& oRenderer, ISphere& oSphere );
 	ISphere&			GetSphere( IEntity* pSphereEntity );
 	IBox&				GetBox( IEntity* pBoxEntity );
 	void				AddCollideEntity( IEntity* pEntity );
@@ -69,6 +68,8 @@ public:
 	IFighterEntity*		GetNextFighterEntity();
 	IEntity*			GetFirstMobileEntity();
 	IEntity*			GetNextMobileEntity();
+	IEntity*			CreateLineEntity( const CVector& first, const CVector& last );
+	IEntity*			CreateCylinder( float fRadius, float fHeight );
 	
 };
 

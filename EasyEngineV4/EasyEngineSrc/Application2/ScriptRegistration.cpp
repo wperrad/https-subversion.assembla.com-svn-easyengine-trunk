@@ -111,8 +111,14 @@ void SetEntityName( IScriptState* pState )
 	CScriptFuncArgInt* pEntityID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	CScriptFuncArgString* pEntityName = static_cast< CScriptFuncArgString* >( pState->GetArg( 1 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pEntityID->m_nValue );
-	pEntity->SetEntityName( pEntityName->m_sValue );
-	pEntity->SetName( "test" );
+	if( pEntity )
+		pEntity->SetEntityName( pEntityName->m_sValue );
+	else
+	{
+		ostringstream oss;
+		oss << "Erreur : Entité " << pEntityID->m_nValue << " inconnue";
+		m_pConsole->Print( oss.str() );
+	}
 }
 
 void Goto( IScriptState* pState )
@@ -122,7 +128,23 @@ void Goto( IScriptState* pState )
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 3 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pEntityID->m_nValue );
-	pEntity->Goto( CVector(px->m_fValue, py->m_fValue, pz->m_fValue), 10.f );
+	try
+	{
+		if( pEntity )
+			pEntity->Goto( CVector(px->m_fValue, py->m_fValue, pz->m_fValue), 10.f );
+		else
+		{
+			ostringstream oss;
+			oss << "Erreur : Entité " << pEntityID->m_nValue << " introuvable";
+			m_pConsole->Print( oss.str() );
+		}
+	}
+	catch( CEException& e )
+	{
+		string sMessage;
+		e.GetErrorMessage( sMessage );
+		m_pConsole->Print( sMessage );
+	}
 }
 
 void DisplayAnimationBBox( IScriptState* pState )
@@ -152,8 +174,8 @@ void CreateBox( IScriptState* pState )
 void CreateSphere( IScriptState* pState )
 {
 	CScriptFuncArgFloat* pRadius = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 0 ) );
-	ISphere* pSphere = m_pGeometryManager->CreateSphere( CVector(), pRadius->m_fValue );
-	IEntity* pSphereEntity = m_pEntityManager->CreateSphere( *m_pRenderer, *pSphere );
+	//ISphere* pSphere = m_pGeometryManager->CreateSphere( CVector(), pRadius->m_fValue );
+	IEntity* pSphereEntity = m_pEntityManager->CreateSphere( pRadius->m_fValue );
 	pSphereEntity->Link( m_pScene );
 	ostringstream oss;
 	oss << "La sphere a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pSphereEntity ) << ".";
@@ -170,31 +192,43 @@ void CreateRepere( IScriptState* pState )
 
 void Test( IScriptState* pState )
 {
-	string s = "\tBonjour";
-	m_pConsole->Print( s );
-	s = "\t\tBonjour";
-	m_pConsole->Print( s );
-	return;
-	CScriptFuncArgInt* pBox1 = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
-	CScriptFuncArgInt* pBox2 = static_cast< CScriptFuncArgInt* >( pState->GetArg( 1 ) );
-	IEntity* pBox1Entity = m_pEntityManager->GetEntity( pBox1->m_nValue );
-	IEntity* pBox2Entity = m_pEntityManager->GetEntity( pBox2->m_nValue );
+	IEntity* pMaison = m_pEntityManager->GetEntity( 13 );
+	IEntity* pHuman = m_pEntityManager->GetEntity( 12 );
+	IBox* pCollideBox = pMaison->GetBBox();
+	pCollideBox->SetWorldMatrix( pMaison->GetWorldMatrix() );
+	float fBoundingCylinderRadius = pCollideBox->ComputeBoundingCylinderRadius( IBox::TAxis::eAxisY );
+	CVector oPos, oDestination( 502,411, 5000);
+	pHuman->GetWorldPosition( oPos );
+	ISegment* pSegment = m_pGeometryManager->CreateSegment( oPos, oDestination );
 
-	pBox1Entity->Update();
-	pBox2Entity->Update();
+	CVector oCylinderCenter, H;
+	pCollideBox->GetCenter( oCylinderCenter );
+	oCylinderCenter = pCollideBox->GetWorldMatrix() * oCylinderCenter;
+	pSegment->ComputeProjectedPointOnLine( oCylinderCenter, H );
+	float fDistanceTocylinder = pSegment->ComputeDistanceToPoint( oCylinderCenter ) - fBoundingCylinderRadius;
+	if( fDistanceTocylinder < 0 )
+	{
+		// calculer le point de contact de la tangente du cylindre
+		CVector oTangent;
 
-	IBox& oBox1 = m_pEntityManager->GetBox( pBox1Entity );
-	IBox& oBox2 = m_pEntityManager->GetBox( pBox2Entity );
-	
-	CMatrix oBox1Matrix, oBox2Matrix;
-	pBox1Entity->GetWorldMatrix( oBox1Matrix );
-	pBox2Entity->GetWorldMatrix( oBox2Matrix );
-	oBox1.SetWorldMatrix( oBox1Matrix );
-	oBox2.SetWorldMatrix( oBox2Matrix );
-	if( m_pCollisionManager->IsIntersection( oBox1, oBox2 ) )
-		m_pConsole->Print( "Collision" );
-	else
-		m_pConsole->Print( "Pas de collision" );
+	}
+
+
+	ISphere* pSphere = m_pGeometryManager->CreateSphere(CVector(), 20 );
+	IEntity* pSphereEntity = m_pEntityManager->CreateSphere( 20 );
+	pSphereEntity->Link( m_pScene );
+	pSphereEntity->SetWorldPosition( H.m_x, H.m_y, H.m_z );
+
+	IEntity* pLineTrajectoire = m_pEntityManager->CreateLineEntity( oPos, oDestination );
+	pLineTrajectoire->Link( m_pScene );
+
+	float fBoxHeight = pCollideBox->GetDimension().m_y;
+	IEntity* pCylinderEntity = m_pEntityManager->CreateCylinder( fBoundingCylinderRadius, fBoxHeight );
+	pCylinderEntity->SetWorldPosition( oCylinderCenter.m_x, oCylinderCenter.m_y, oCylinderCenter.m_z );
+	pCylinderEntity->Link( m_pScene );
+
+	IEntity* pLineTangent = m_pEntityManager->CreateLineEntity( oCylinderCenter, H );
+	pLineTangent->Link( m_pScene );
 }
 
 void ChangeBase( IScriptState* pState )
@@ -1283,7 +1317,14 @@ void SetEntityWeight( IScriptState* pState )
 	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* pWeight = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
-	pEntity->SetWeight( pWeight->m_fValue );
+	if( pEntity )
+		pEntity->SetWeight( pWeight->m_fValue );
+	else
+	{
+		ostringstream oss;
+		oss << "Erreur : Entité " << pID->m_nValue << " introuvable";
+		m_pConsole->Print( oss.str() );
+	}
 }
 
 void LoadHM( IScriptState* pState )

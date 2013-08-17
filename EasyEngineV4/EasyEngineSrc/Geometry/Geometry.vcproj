@@ -187,7 +187,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Cylinder.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\GeometryManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Segment.cpp"
 				>
 			</File>
 			<File
@@ -209,7 +217,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Cylinder.h"
+				>
+			</File>
+			<File
 				RelativePath=".\GeometryManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Segment.h"
 				>
 			</File>
 			<File

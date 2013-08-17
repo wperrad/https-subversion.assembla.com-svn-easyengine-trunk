@@ -29,7 +29,6 @@ protected:
 	bool						m_bPerso;
 	int							m_nLife;
 	map< TAnimation, float >	m_mAnimationSpeedByType;
-	string						m_sCurrentHitBoneName;
 	
 
 	static map< string, TAction >			s_mActions;
@@ -53,15 +52,16 @@ protected:
 	void				IncreaseLife( int nLife );
 	ISphere*			GetBoneSphere( string sBoneName );
 	bool				HasAlreadyHitEnemy();
-	bool				IsHitIntersectEnemySphere( IFighterEntity* pEnemy );
-	bool				IsHitIntersectEnemyBox( IFighterEntity* pEnemy );
-	void				GetPosition( CVector& oPosition );
+	void				GetPosition( CVector& oPosition ) const;
 	IMesh*				GetMesh();
 	IAnimation*			GetCurrentAnimation();
 	IFighterEntity*		GetFirstEnemy();
 	IFighterEntity*		GetNextEnemy();
 	void				Stand();
 	CMatrix&			GetWorldTM();
+	float				GetBoundingSphereRadius(){ return m_fBoundingSphereRadius; }
+	IBox*				GetBoundingBox();
+	ICollisionManager&	GetCollisionManager(){ return m_oCollisionManager; }
 
 	static void			OnWalkAnimationCallback( IAnimation::TEvent e, void* pEntity );
 	static void 		Walk( CMobileEntity*, bool bLoop );

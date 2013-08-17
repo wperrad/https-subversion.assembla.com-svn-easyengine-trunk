@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../Interfaces;../../../Utils;../../Opengl;../Utils2"
+				AdditionalIncludeDirectories="../../Interfaces;../../../Utils;../../;../Utils2"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -119,7 +119,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../Interfaces;../../../Utils;../../Opengl;../Utils2"
+				AdditionalIncludeDirectories="../../Interfaces;../../../Utils;../../;../Utils2"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"

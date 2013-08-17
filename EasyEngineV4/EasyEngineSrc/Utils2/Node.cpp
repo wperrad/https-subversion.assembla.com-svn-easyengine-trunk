@@ -188,12 +188,6 @@ void CNode::SetWorldPosition( float x, float y, float z )
 
 void CNode::GetWorldPosition( CVector& vPosition ) const
 {
-	/*
-	vPosition.m_x = m_oLocalMatrix.m_03;
-	vPosition.m_y = m_oLocalMatrix.m_13;
-	vPosition.m_z = m_oLocalMatrix.m_23;
-	vPosition.m_w = m_oLocalMatrix.m_33;
-	*/
 	vPosition.m_x = m_oWorldMatrix.m_03;
 	vPosition.m_y = m_oWorldMatrix.m_13;
 	vPosition.m_z = m_oWorldMatrix.m_23;
@@ -290,6 +284,11 @@ int CNode::GetID() const
 void CNode::GetWorldMatrix( CMatrix& oMatrix )
 {
 	oMatrix = m_oWorldMatrix;
+}
+
+const CMatrix& CNode::GetWorldMatrix() const
+{
+	return m_oWorldMatrix;
 }
 
 void CNode::GetWorldQuaternion( CQuaternion& oQuaternion )

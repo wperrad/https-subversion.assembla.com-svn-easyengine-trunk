@@ -31,17 +31,45 @@ public:
 class IBox : public IPersistantObject
 {
 public:
+
+	enum TAxis
+	{
+		eAxisX = 0,
+		eAxisY,
+		eAxisZ
+	};
+
 	virtual const CVector&		GetMinPoint() const = 0;
 	virtual void				GetWorldMatrix( CMatrix& m ) const = 0;
+	virtual const CMatrix&		GetWorldMatrix() const = 0;
 	virtual const CVector&		GetDimension() const = 0;
 	virtual float				ComputeBoundingSphereRadius()const = 0;
+	virtual float				ComputeBoundingCylinderRadius( TAxis eGeneratorAxis ) const = 0;
 	virtual float				GetBoundingSphereRadius() const = 0;
 	virtual void				AddPoint( const CVector& p ) = 0;
 	virtual IBox&				operator=( const IBox& oBox ) = 0;
 	virtual void				Set( const CVector& oMinPoint, const CVector& oDimension ) = 0;
-	virtual void				SetWorldMatrix( CMatrix& oMatrix ) = 0;
+	virtual void				SetWorldMatrix( const CMatrix& oMatrix ) = 0;
 	virtual void				GetPoints( vector< CVector >& vPoints ) = 0;
 	virtual void				GetCenter( CVector& oCenter ) const = 0;
+};
+
+class ISegment
+{
+public:
+	virtual ~ISegment() = 0{}
+	virtual void	ComputeProjectedPointOnLine( const CVector& oPointToProject, CVector& oProjectedPoint ) const = 0;
+	virtual float	ComputeDistanceToPoint( const CVector& oPoint ) = 0;
+	//virtual void	SetPoints( const CVector& first, const CVector last ) = 0;
+};
+
+class ICylinder
+{
+public:
+	virtual CVector&	GetBase() = 0;
+	virtual float		GetRadius() = 0;
+	virtual float		GetHeight() = 0;
+	virtual void		Set( const CVector& oBase, float fRadius, float fHeight ) = 0;
 };
 
 class IGeometryManager : public CPlugin
@@ -53,6 +81,8 @@ public:
 	virtual IBox*			CreateBox( const IBox& oBox ) = 0;
 	virtual ISphere*		CreateSphere() = 0;
 	virtual ISphere*		CreateSphere( CVector& oCenter, float fRadius ) = 0;
+	virtual ISegment*		CreateSegment( const CVector& first, const CVector& last ) = 0;
+	virtual ICylinder*		CreateCylinder( const CVector& oBase, float fRadius, float fHeight ) = 0;
 	virtual int				GetLastCreateBoxID() = 0;
 	virtual IBox*			GetBox( int nID ) const = 0;
 };

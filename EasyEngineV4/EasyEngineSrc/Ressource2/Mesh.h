@@ -46,11 +46,9 @@ private:
 	IBox*								m_pBbox;
 	bool								m_bDrawBoundingBox;
 	bool								m_bDrawAnimationBoundingBox;
-	//string								m_sAnimationBoundingBoxName;
 	IBox*								m_pCurrentAnimationBoundingBox;
 	IShader*							m_pShader;
 	int									m_nParentBoneID;
-	//CMatrix								m_oOrgWorldTM;
 	CVector								m_oOrgMaxPosition;
 	IRenderer::TRenderType				m_eRenderType;
 	map< string, IBox* >				m_mAnimationKeyBox;

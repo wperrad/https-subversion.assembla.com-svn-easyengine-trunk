@@ -69,6 +69,26 @@ float CBox::ComputeBoundingSphereRadius() const
 	return fBoundingSphereRadius;
 }
 
+float CBox::ComputeBoundingCylinderRadius( TAxis eGeneratorAxis ) const
+{
+	CVector oCenter;
+	float fRadius;
+	switch( eGeneratorAxis )
+	{
+	case eAxisX:
+		oCenter = m_oMinPoint + CVector( 0.f, m_oDimension.m_y / 2.f, m_oDimension.m_z / 2.f );
+		break;
+	case eAxisY:
+		oCenter = m_oMinPoint + CVector( m_oDimension.m_x / 2.f, 0.f, m_oDimension.m_z / 2.f );
+		break;
+	case eAxisZ:
+		oCenter = m_oMinPoint + CVector( m_oDimension.m_x / 2.f, m_oDimension.m_y / 2.f, 0.f );
+		break;
+	}
+	fRadius = ( oCenter - m_oMinPoint ).Norm();
+	return fRadius;
+}
+
 float CBox::GetBoundingSphereRadius() const
 {
 	return m_fBoundingSphereRadius;
@@ -111,6 +131,11 @@ void CBox::GetWorldMatrix( CMatrix& m ) const
 	m = m_oWorldMatrix;
 }
 
+const CMatrix& CBox::GetWorldMatrix() const
+{
+	return m_oWorldMatrix;
+}
+
 const CVector& CBox::GetDimension() const
 {
 	return m_oDimension;
@@ -126,7 +151,7 @@ IBox& CBox::operator=( const IBox& oBox )
 	return *this;
 }
 
-void CBox::SetWorldMatrix( CMatrix& oMatrix )
+void CBox::SetWorldMatrix( const CMatrix& oMatrix )
 {
 	m_oWorldMatrix = oMatrix;
 }

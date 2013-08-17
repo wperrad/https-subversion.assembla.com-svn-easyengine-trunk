@@ -570,7 +570,8 @@ void CEntity::DrawAnimationBoundingBox( bool bDraw )
 
 void CEntity::Goto( const CVector& oPosition, float fSpeed )
 {
-	throw 1;
+	CEException e( "La méthode \"Goto\" n'est pas encore implémentée pour les entité génériques. Veuillez l'utiliser uniquement pour les entité de type \"IAEntity\"" );
+	throw e;
 }
 
 void CEntity::SetEntityName( string sName )

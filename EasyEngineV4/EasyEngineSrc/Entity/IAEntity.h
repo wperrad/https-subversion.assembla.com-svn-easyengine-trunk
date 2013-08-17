@@ -6,6 +6,7 @@ class ISphere;
 class IBone;
 class IMesh;
 class IAnimation;
+class IGeometryManager;
 
 class IAEntity : public virtual IFighterEntity
 {
@@ -47,12 +48,15 @@ private:
 	void						TurnFaceToDestination();
 	void						OnReceiveHit( IFighterEntity* pAgressor );
 	void						OnEndHitAnimation();
+	virtual void				ComputePathFind( const CVector& oDestination, vector< CVector >& vPoints ) = 0;
 	virtual void				SetDestination( const CVector& oDestination );
 	virtual void				Turn( float fAngle ) = 0;
 	virtual void				Attack( IFighterEntity* pFighter ) = 0;
 	virtual IAnimation*			GetCurrentAnimation() = 0;
 	virtual float				GetDistanceTo2dPoint( const CVector& oPosition ) = 0;
 	virtual void				Run() = 0;
+	virtual IBox*				GetFirstCollideBox() = 0;
+	virtual IBox*				GetNextCollideBox() = 0;
 
 	static void					OnHitReceivedCallback( IAnimation::TEvent e, void* pData );
 
