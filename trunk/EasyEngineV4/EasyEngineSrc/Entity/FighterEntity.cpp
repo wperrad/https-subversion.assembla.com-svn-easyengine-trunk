@@ -1,5 +1,6 @@
 #include "FighterEntity.h"
 #include "IGeometry.h"
+#include "ICollisionManager.h"
 
 IFighterEntity::IFighterEntity():
 m_bHitEnemy( false )
@@ -35,8 +36,9 @@ void IFighterEntity::OnHitAnimationCallback( IAnimation::TEvent e, void* pData )
 	}
 }
 
-void IFighterEntity::OnHit( IFighterEntity* pAgressor )
+void IFighterEntity::OnHit( IFighterEntity* pAgressor, string sHitBoneName )
 {
+	m_sCurrentHitBoneName = sHitBoneName;
 	pAgressor->GetCurrentAnimation()->AddCallback( OnHitAnimationCallback, pAgressor );
 }
 
@@ -60,4 +62,21 @@ void IFighterEntity::OnHitReceivedAnimationCallback( IAnimation::TEvent e, void*
 		pThisEntity->Stand();
 		break;
 	}
+}
+
+bool IFighterEntity::IsHitIntersectEnemySphere( IFighterEntity* pEnemy )
+{
+	ISphere* pBoneSphere = GetBoneSphere( m_sCurrentHitBoneName );
+	CVector oEnemyWorldPosition;
+	pEnemy->GetPosition( oEnemyWorldPosition );
+	float fBoneDistance = ( pBoneSphere->GetCenter() - oEnemyWorldPosition ).Norm();
+	return fBoneDistance < ( pBoneSphere->GetRadius() / 2.f + pEnemy->GetBoundingSphereRadius() / 2.f );
+}
+
+bool IFighterEntity::IsHitIntersectEnemyBox( IFighterEntity* pEnemy )
+{
+	IBox* pEnemyBox = pEnemy->GetBoundingBox();
+	pEnemyBox->SetWorldMatrix( pEnemy->GetWorldTM() );
+	ISphere* pBoneSphere = GetBoneSphere( m_sCurrentHitBoneName );
+	return GetCollisionManager().IsIntersection( *pEnemyBox, *pBoneSphere );
 }

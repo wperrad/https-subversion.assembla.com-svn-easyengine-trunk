@@ -15,6 +15,8 @@ public:
 	IBox*			GetBox( int nID ) const;
 	ISphere*		CreateSphere();
 	ISphere*		CreateSphere( CVector& oCenter, float fRadius );
+	ISegment*		CreateSegment( const CVector& first, const CVector& last );
+	ICylinder*		CreateCylinder( const CVector& oBase, float fRadius, float fHeight );
 };
 
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc );

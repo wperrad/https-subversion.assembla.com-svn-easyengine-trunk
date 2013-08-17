@@ -18,6 +18,7 @@ public:
 
 	const CVector&		GetMinPoint() const;
 	void				GetWorldMatrix( CMatrix& m ) const;
+	const CMatrix&		GetWorldMatrix() const;
 	const CVector&		GetDimension() const;
 
 	CBox();
@@ -28,6 +29,7 @@ public:
 	void			AddPoint( const CVector& p );
 	float			GetBoundingSphereRadius() const;
 	float			ComputeBoundingSphereRadius()const;
+	float			ComputeBoundingCylinderRadius( TAxis eGeneratorAxis ) const;
 	void			Store( CBinaryFileStorage& store ) const;
 	void			Load( CBinaryFileStorage& store );
 	void 			Store( CAsciiFileStorage& store ) const;
@@ -35,7 +37,7 @@ public:
 	void 			Store( CStringStorage& store ) const;
 	void 			Load( CStringStorage& store );
 	IBox&			operator=( const IBox& oBox );
-	void			SetWorldMatrix( CMatrix& oMatrix );
+	void			SetWorldMatrix( const CMatrix& oMatrix );
 	void			GetPoints( vector< CVector >& vPoints );
 };
 

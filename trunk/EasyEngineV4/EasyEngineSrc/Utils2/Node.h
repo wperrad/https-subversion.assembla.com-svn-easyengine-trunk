@@ -63,6 +63,7 @@ public:
 	void						SetID( int nID );
 	int							GetID() const;
 	void						GetWorldMatrix( CMatrix& oMatrix );
+	const CMatrix&				GetWorldMatrix() const;
 	void						GetWorldQuaternion( CQuaternion& oQuaternion );
 	void						GetHierarchyCount( int& nCount );
 	void						SetQuaternionMode( bool bQuarternion );

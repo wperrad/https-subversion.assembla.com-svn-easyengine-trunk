@@ -136,7 +136,6 @@ public:
 	virtual IEntity*			GetPerso() = 0;
 	virtual IEntity*			CreateSphere( float fSize ) = 0;
 	virtual IEntity*			CreateBox( IRenderer& oRenderer, const CVector& oDimension ) = 0;
-	virtual IEntity*			CreateSphere( IRenderer& oRenderer, ISphere& oSphere ) = 0;
 	virtual ISphere&			GetSphere( IEntity* pSphereEntity ) = 0;
 	virtual IBox&				GetBox( IEntity* pBoxEntity ) = 0;
 	virtual void				AddCollideEntity( IEntity* pEntity ) = 0;
@@ -151,6 +150,8 @@ public:
 	virtual IFighterEntity*		GetNextFighterEntity() = 0;
 	virtual IEntity*			GetFirstMobileEntity() = 0;
 	virtual IEntity*			GetNextMobileEntity() = 0;
+	virtual IEntity*			CreateLineEntity( const CVector& first, const CVector& last ) = 0;
+	virtual IEntity*			CreateCylinder( float fRadius, float fHeight ) = 0;
 };
 
 class ISceneManager : public CPlugin

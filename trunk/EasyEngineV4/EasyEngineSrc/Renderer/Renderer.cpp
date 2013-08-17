@@ -7,7 +7,7 @@
 #include "Renderer.h"
 #include "Exception.h"
 #include <gl/gl.h>
-#include "glext.h"
+#include "gl/glext.h"
 #include <gl/gl.h >
 #include <gl/glu.h>
 #include "GLExtension.h"

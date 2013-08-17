@@ -43,6 +43,8 @@ public:
 	void	SetHeightMapPrecision( int nPrecision );
 	bool	IsIntersection( const IBox& b, const ISphere& s );
 	bool	IsIntersection( const IBox& b1, const IBox& b2 );
+	bool	IsIntersection( const ISegment& s, const IBox& b2 );
+	bool	IsIntersection( const ISegment& s, const CVector& oCircleCenter, float fCircleRadius );
 };
 
 extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc );

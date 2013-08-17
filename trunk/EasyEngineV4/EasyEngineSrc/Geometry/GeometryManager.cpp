@@ -2,6 +2,8 @@
 #include "WeightTable.h"
 #include "Box.h"
 #include "Sphere.h"
+#include "Segment.h"
+#include "Cylinder.h"
 
 CGeometryManager::CGeometryManager( CPlugin::Desc& oDesc ) : IGeometryManager()
 {
@@ -54,6 +56,15 @@ ISphere* CGeometryManager::CreateSphere( CVector& oCenter, float fRadius )
 	return pSphere;
 }
 
+ISegment* CGeometryManager::CreateSegment( const CVector& first, const CVector& last )
+{
+	return new CSegment( first, last );
+}
+
+ICylinder* CGeometryManager::CreateCylinder( const CVector& oBase, float fRadius, float fHeight )
+{
+	return new CCylinder( oBase, fRadius, fHeight );
+}
 
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc )
 {

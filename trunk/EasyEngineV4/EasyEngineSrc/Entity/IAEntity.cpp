@@ -1,6 +1,7 @@
 #include "IAEntity.h"
 #include "TimeManager.h"
-
+#include "ICollisionManager.h"
+#include "IGeometry.h"
 
 IAEntity::IAEntity():
 m_nRecuperationTime( 1500 ),
@@ -124,6 +125,10 @@ void IAEntity::Goto( const CVector& oPosition, float fSpeed )
 {
 	m_oDestination = oPosition;
 	m_fAngleRemaining = GetDestinationAngleRemaining();
+
+	vector< CVector > vPoints;
+	ComputePathFind( m_oDestination, vPoints );
+
 	//LookAt( m_fAngleRemaining );
 	Run();
 	m_bArriveAtDestination = false;
@@ -153,7 +158,6 @@ void IAEntity::UpdateGoto()
 		if( fDistance < 100.f )
 		{
 			m_bArriveAtDestination = true;
-			//if( m_eCurrentAnimationType == eRun )
 			Stand();
 		}
 	}
@@ -198,7 +202,6 @@ void IAEntity::OnCollision( IAEntity* pEntity )
 {
 	IAEntity* pHuman = static_cast< IAEntity* >( pEntity );
 	pHuman->m_bArriveAtDestination = true;
-	//if( pHuman->m_eCurrentAnimationType != eStand )
 	pHuman->Stand();
 }
 
@@ -206,3 +209,4 @@ void IAEntity::TurnFaceToDestination()
 { 
 	Turn( GetDestinationAngleRemaining() ); 
 }
+

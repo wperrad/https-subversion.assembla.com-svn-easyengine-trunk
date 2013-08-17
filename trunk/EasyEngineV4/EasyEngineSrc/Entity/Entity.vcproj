@@ -274,6 +274,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CylinderEntity.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Entity.cpp"
 				>
 			</File>
@@ -299,6 +303,10 @@
 			</File>
 			<File
 				RelativePath=".\LightEntity.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LineEntity.cpp"
 				>
 			</File>
 			<File
@@ -356,6 +364,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CylinderEntity.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Entity.h"
 				>
 			</File>
@@ -377,6 +389,10 @@
 			</File>
 			<File
 				RelativePath=".\LightEntity.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LineEntity.h"
 				>
 			</File>
 			<File

@@ -13,6 +13,7 @@ class ILoaderManager;
 class CBox;
 class ISphere;
 class IGeometryManager;
+class ISegment;
 
 class ICollisionManager : public CPlugin
 {
@@ -41,4 +42,6 @@ public:
 	virtual	void	SetHeightMapPrecision( int nPrecision ) = 0;
 	virtual bool	IsIntersection( const IBox& b, const ISphere& s ) = 0;
 	virtual bool	IsIntersection( const IBox& b1, const IBox& b2 ) = 0;
+	virtual bool	IsIntersection( const ISegment& s, const IBox& b2 ) = 0;
+	virtual bool	IsIntersection( const ISegment& s, const CVector& oCircleCenter, float fCircleRadius ) = 0;
 };

@@ -1,6 +1,8 @@
 #include "IAEntity.h"
 #include "MobileEntity.h"
 
+#pragma warning( disable:4250 )
+
 class CNPCEntity : public CMobileEntity, public IAEntity
 {
 
@@ -19,19 +21,20 @@ public:
 	void					Run();
 	void					Attack( IFighterEntity* pEnemy );
 	void					ReceiveHit( IAEntity* pEnemy );
-	float					GetBoundingSphereRadius(){ return m_fBoundingSphereRadius; }
 	ICollisionManager&		GetCollisionManager(){ return m_oCollisionManager; }
-	ISphere*				GetBoneSphere( string sBoneName );
 	void					LookAt( float alpha );
 	void					Update();
 	IAnimation*				GetCurrentAnimation();
 	CMatrix&				GetWorldTM();
-	bool					IsHitIntersectEnemySphere( IFighterEntity* pEnemy );
 	IFighterEntity*			GetFirstEnemy();
 	IFighterEntity*			GetNextEnemy();
 	void					GetPosition( CVector& v );
 	void					ReceiveHit( IFighterEntity* pEnemy );
-	bool					IsHitIntersectEnemyBox( IFighterEntity* pEnemy );
 	void					Stand();
 	void					Goto( const CVector& oPosition, float fSpeed );
+	IBox*					GetFirstCollideBox();
+	IBox*					GetNextCollideBox();
+
+	// temporaire
+	void	ComputePathFind( const CVector& oDestination, vector< CVector >& vPoints );
 };
