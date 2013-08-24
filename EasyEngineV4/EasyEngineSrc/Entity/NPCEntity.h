@@ -36,5 +36,5 @@ public:
 	IBox*					GetNextCollideBox();
 
 	// temporaire
-	void	ComputePathFind( const CVector& oDestination, vector< CVector >& vPoints );
+	void	ComputePathFind( const CVector& oOrigin, const CVector& oDestination, vector< CVector >& vPoints );
 };

@@ -33,6 +33,8 @@ public:
 	bool operator==( const CVector& v ) const;
 	bool operator!=( const CVector& v ) const;
 	CVector operator-() const;
+	CVector& operator +=( const CVector& v );
+	CVector& operator -=( const CVector& v );
 
 	float	Norm();
 	void	Normalize();

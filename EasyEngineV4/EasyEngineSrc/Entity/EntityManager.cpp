@@ -261,6 +261,7 @@ IEntity* CEntityManager::GetPerso()
 IEntity* CEntityManager::CreateSphere( float fSize )
 {
 	IEntity* pSphere = CreateEntity( "sphere.bme", "", m_oRenderer );
+	pSphere->SetScaleFactor( fSize, fSize, fSize );
 	CreateEntity( pSphere, "Sphere" );
 	return pSphere;
 }

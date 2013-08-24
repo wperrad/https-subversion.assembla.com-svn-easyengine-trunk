@@ -192,43 +192,9 @@ void CreateRepere( IScriptState* pState )
 
 void Test( IScriptState* pState )
 {
-	IEntity* pMaison = m_pEntityManager->GetEntity( 13 );
-	IEntity* pHuman = m_pEntityManager->GetEntity( 12 );
-	IBox* pCollideBox = pMaison->GetBBox();
-	pCollideBox->SetWorldMatrix( pMaison->GetWorldMatrix() );
-	float fBoundingCylinderRadius = pCollideBox->ComputeBoundingCylinderRadius( IBox::TAxis::eAxisY );
-	CVector oPos, oDestination( 502,411, 5000);
-	pHuman->GetWorldPosition( oPos );
-	ISegment* pSegment = m_pGeometryManager->CreateSegment( oPos, oDestination );
 
-	CVector oCylinderCenter, H;
-	pCollideBox->GetCenter( oCylinderCenter );
-	oCylinderCenter = pCollideBox->GetWorldMatrix() * oCylinderCenter;
-	pSegment->ComputeProjectedPointOnLine( oCylinderCenter, H );
-	float fDistanceTocylinder = pSegment->ComputeDistanceToPoint( oCylinderCenter ) - fBoundingCylinderRadius;
-	if( fDistanceTocylinder < 0 )
-	{
-		// calculer le point de contact de la tangente du cylindre
-		CVector oTangent;
-
-	}
-
-
-	ISphere* pSphere = m_pGeometryManager->CreateSphere(CVector(), 20 );
-	IEntity* pSphereEntity = m_pEntityManager->CreateSphere( 20 );
-	pSphereEntity->Link( m_pScene );
-	pSphereEntity->SetWorldPosition( H.m_x, H.m_y, H.m_z );
-
-	IEntity* pLineTrajectoire = m_pEntityManager->CreateLineEntity( oPos, oDestination );
-	pLineTrajectoire->Link( m_pScene );
-
-	float fBoxHeight = pCollideBox->GetDimension().m_y;
-	IEntity* pCylinderEntity = m_pEntityManager->CreateCylinder( fBoundingCylinderRadius, fBoxHeight );
-	pCylinderEntity->SetWorldPosition( oCylinderCenter.m_x, oCylinderCenter.m_y, oCylinderCenter.m_z );
-	pCylinderEntity->Link( m_pScene );
-
-	IEntity* pLineTangent = m_pEntityManager->CreateLineEntity( oCylinderCenter, H );
-	pLineTangent->Link( m_pScene );
+	IEntity* pHuman = m_pEntityManager->GetEntity( 34 );
+	pHuman->Goto( CVector( 502,411, 5000 ) , -1.f );
 }
 
 void ChangeBase( IScriptState* pState )

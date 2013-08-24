@@ -51,6 +51,7 @@ public:
 	virtual void				WorldTranslate( float dx , float dy , float dz );
 	virtual void				WorldTranslate( const CVector& vTranslate );
   	void                		SetWorldPosition(float x, float y , float z);
+	void                		SetWorldPosition( const CVector& vPos );
 	virtual void				GetWorldPosition( CVector& vPosition ) const;
 	virtual void				SetLocalMatrix( const CMatrix& oMat );
 	virtual void				SetWorldMatrix( const CMatrix& oMat );

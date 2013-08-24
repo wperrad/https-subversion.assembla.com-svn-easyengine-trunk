@@ -298,9 +298,19 @@ bool CCollisionManager::IsIntersection( const ISegment& s, const CVector& oCircl
 	s.ComputeProjectedPointOnLine( oCircleCenter, H );
 
 	return false;
-	
-
 }
+
+void CCollisionManager::Get2DIntersection( const CVector& oLine1First, const CVector& oLine1Last, const CVector& oLine2First, const CVector& oLine2Last, CVector& oIntersection )
+{
+	ISegment* pL1 = m_oGeometryManager.CreateSegment( oLine1First, oLine1Last );
+	ISegment* pL2 = m_oGeometryManager.CreateSegment( oLine2First, oLine2Last );
+	float a1, b1, c1, a2, b2, c2;
+	pL1->Compute2DLineEquation( a1, b1, c1 );
+	pL2->Compute2DLineEquation( a2, b2, c2 );
+	oIntersection.m_x = 1 / a1 * ( b1 * ( (a2 * c1 - a1 * c2 ) / ( a2 * b1 - a1 * b2 )  ) - c1 );
+	oIntersection.m_z = ( a1 * c2 - a2 * c1 ) / ( a2 * b1 - a1 * b2 );
+}
+
 
 extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc )
 {

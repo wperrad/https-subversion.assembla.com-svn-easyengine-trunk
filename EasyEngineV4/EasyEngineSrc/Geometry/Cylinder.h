@@ -14,5 +14,5 @@ public:
 	float		GetRadius();
 	float		GetHeight();
 	void		Set( const CVector& oBase, float fRadius, float fHeight );
-	
+	void		ComputeTangent( const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft );	
 };

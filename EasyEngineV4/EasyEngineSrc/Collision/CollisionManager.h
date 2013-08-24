@@ -45,6 +45,7 @@ public:
 	bool	IsIntersection( const IBox& b1, const IBox& b2 );
 	bool	IsIntersection( const ISegment& s, const IBox& b2 );
 	bool	IsIntersection( const ISegment& s, const CVector& oCircleCenter, float fCircleRadius );
+	void	Get2DIntersection( const CVector& oLine1First, const CVector& oLine1Last, const CVector& oLine2First, const CVector& oLine2Last, CVector& oIntersection );
 };
 
 extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc );
