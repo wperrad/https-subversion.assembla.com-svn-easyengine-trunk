@@ -8,7 +8,9 @@ m_nRecuperationTime( 1500 ),
 m_bHitEnemy( false ),
 m_eFightState( eNoFight ),
 m_fAngleRemaining( 0.f ),
-m_bArriveAtDestination( true )
+m_bArriveAtDestination( true ),
+m_fDestinationDeltaRadius( 100.f ),
+m_nCurrentPathPointNumber( 0 )
 {
 }
 
@@ -121,13 +123,19 @@ void IAEntity::OnEndHitAnimation()
 	Stand();
 }
 
-void IAEntity::Goto( const CVector& oPosition, float fSpeed )
+void IAEntity::Goto( const CVector& oDestination, float fSpeed )
 {
-	m_oDestination = oPosition;
-	m_fAngleRemaining = GetDestinationAngleRemaining();
+	CVector oPos;
+	GetPosition( oPos );
+	ComputePathFind( oPos, oDestination, m_vCurrentPath );
 
-	vector< CVector > vPoints;
-	ComputePathFind( m_oDestination, vPoints );
+	if( m_vCurrentPath.size() > 1 )
+		m_fDestinationDeltaRadius = 50.f;
+	else
+		m_fDestinationDeltaRadius  = 100.f;
+	m_nCurrentPathPointNumber = 0;
+	m_oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
+	m_fAngleRemaining = GetDestinationAngleRemaining();
 
 	//LookAt( m_fAngleRemaining );
 	Run();
@@ -155,10 +163,19 @@ void IAEntity::UpdateGoto()
 		else
 			Turn( GetDestinationAngleRemaining() );
 		
-		if( fDistance < 100.f )
+		if( fDistance < m_fDestinationDeltaRadius )
 		{
-			m_bArriveAtDestination = true;
-			Stand();
+			if( m_nCurrentPathPointNumber >= m_vCurrentPath.size() - 1 )
+			{
+				m_bArriveAtDestination = true;
+				Stand();
+				m_vCurrentPath.clear();
+			}
+			else
+			{
+				m_nCurrentPathPointNumber++;
+				m_oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
+			}
 		}
 	}
 }

@@ -186,6 +186,11 @@ void CNode::SetWorldPosition( float x, float y, float z )
   	m_oLocalMatrix.m_23 = z;
 }
 
+void CNode::SetWorldPosition( const CVector& vPos )
+{
+	SetWorldPosition( vPos.m_x, vPos.m_y, vPos.m_z );
+}
+
 void CNode::GetWorldPosition( CVector& vPosition ) const
 {
 	vPosition.m_x = m_oWorldMatrix.m_03;

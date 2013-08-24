@@ -159,6 +159,21 @@ CVector	CVector::operator^( const CVector& v )
 	return CVector( m_y * v.m_z - m_z * v.m_y, m_z * v.m_x - m_x * v.m_z, m_x * v.m_y - m_y * v.m_x );
 }
 
+CVector& CVector::operator +=( const CVector& v )
+{
+	m_x += v.m_x;
+	m_y += v.m_y;
+	m_z += v.m_z;
+	return *this;
+}
+
+CVector& CVector::operator -=( const CVector& v )
+{
+	m_x -= v.m_x;
+	m_y -= v.m_y;
+	m_z -= v.m_z;
+	return *this;
+}
 
 void CVector::Lerp( const CVector& v1, const CVector& v2, float t, CVector& vOut )
 {

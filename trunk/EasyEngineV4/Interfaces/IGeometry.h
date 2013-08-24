@@ -60,6 +60,7 @@ public:
 	virtual ~ISegment() = 0{}
 	virtual void	ComputeProjectedPointOnLine( const CVector& oPointToProject, CVector& oProjectedPoint ) const = 0;
 	virtual float	ComputeDistanceToPoint( const CVector& oPoint ) = 0;
+	virtual void	Compute2DLineEquation( float& a, float& b, float& c ) const = 0;
 	//virtual void	SetPoints( const CVector& first, const CVector last ) = 0;
 };
 
@@ -70,6 +71,7 @@ public:
 	virtual float		GetRadius() = 0;
 	virtual float		GetHeight() = 0;
 	virtual void		Set( const CVector& oBase, float fRadius, float fHeight ) = 0;
+	virtual void		ComputeTangent( const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft ) = 0;
 };
 
 class IGeometryManager : public CPlugin
