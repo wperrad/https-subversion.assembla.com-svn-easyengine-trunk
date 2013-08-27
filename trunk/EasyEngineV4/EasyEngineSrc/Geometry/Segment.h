@@ -12,4 +12,5 @@ public:
 	void	ComputeProjectedPointOnLine( const CVector& oPointToProject, CVector& oProjectedPoint ) const;
 	float	ComputeDistanceToPoint( const CVector& oPoint );
 	void	Compute2DLineEquation( float& a, float& b, float& c ) const;
+	void	GetPoints( CVector& p1, CVector& p2 ) const;
 };

@@ -46,3 +46,14 @@ void CCylinder::ComputeTangent( const CVector& oLinePoint, CVector& oTangentPoin
 	CVector oPointToTangent = oPointToTangentNorm * fPointToTangentNorm;
 	oTangentPoint = oLinePoint + oPointToTangent;
 }
+
+bool CCylinder::IsPointIntoCylinder( const CVector& oPoint ) const
+{
+	CVector oPoint2D( oPoint.m_x, 0.f, oPoint.m_z );
+	if( ( oPoint2D - m_oBase ).Norm() > m_fRadius )
+		return false;
+	if( oPoint.m_y < m_oBase.m_y || oPoint.m_y > m_oBase.m_y + m_fHeight )
+		return false;
+	return true;
+}
+

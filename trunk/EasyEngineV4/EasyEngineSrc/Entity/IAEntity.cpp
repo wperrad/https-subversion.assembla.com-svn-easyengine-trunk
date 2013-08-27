@@ -125,6 +125,7 @@ void IAEntity::OnEndHitAnimation()
 
 void IAEntity::Goto( const CVector& oDestination, float fSpeed )
 {
+	m_vCurrentPath.clear();
 	CVector oPos;
 	GetPosition( oPos );
 	ComputePathFind( oPos, oDestination, m_vCurrentPath );
@@ -190,6 +191,8 @@ void IAEntity::SetDestination( const CVector& oDestination )
 {
 	m_oDestination = oDestination;
 	m_bArriveAtDestination = false;
+	if( m_vCurrentPath.size() == 0 )
+		m_vCurrentPath.push_back( m_oDestination );
 }
 
 float IAEntity::GetDestinationAngleRemaining()

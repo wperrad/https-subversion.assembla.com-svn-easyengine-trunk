@@ -4,6 +4,7 @@
 #include "Sphere.h"
 #include "Segment.h"
 #include "Cylinder.h"
+#include "Circle.h"
 
 CGeometryManager::CGeometryManager( CPlugin::Desc& oDesc ) : IGeometryManager()
 {
@@ -64,6 +65,11 @@ ISegment* CGeometryManager::CreateSegment( const CVector& first, const CVector& 
 ICylinder* CGeometryManager::CreateCylinder( const CVector& oBase, float fRadius, float fHeight )
 {
 	return new CCylinder( oBase, fRadius, fHeight );
+}
+
+ICircle* CGeometryManager::CreateCircle( const CVector2D& oCenter, float fRadius )
+{
+	return new CCircle( oCenter, fRadius );
 }
 
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc )

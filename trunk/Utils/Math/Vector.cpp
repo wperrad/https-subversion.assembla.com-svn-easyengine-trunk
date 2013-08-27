@@ -212,3 +212,50 @@ void CVector::Store( CStringStorage& store ) const
 void CVector::Load( CStringStorage& store )
 {
 }
+
+
+CVector2D::CVector2D( float x, float y ):
+m_x( x ),
+m_y( y )
+{
+}
+
+CVector2D CVector2D::operator-(const CVector2D& v) const
+{
+	return CVector2D( -m_x, -m_y );
+}
+
+void CVector2D::Normalize()
+{
+	float fNorma = Norm();
+	if ( fNorma > 0 )
+	{
+		m_x /= fNorma;
+		m_y /= fNorma;
+	}
+}
+
+float CVector2D::Norm() const
+{
+	return sqrt( m_x * m_x + m_y * m_y  );
+}
+
+CVector CVector2D::operator^( const CVector2D& v ) const
+{
+	return CVector( 0, 0, m_x * v.m_y - m_y * v.m_x );
+}
+
+float CVector2D::operator *(const CVector2D& v) const
+{
+	return ( m_x * v.m_x + m_y * v.m_y );
+}
+
+CVector2D CVector2D::operator *( float d ) const
+{
+	return CVector2D( m_x * d, m_y * d );
+}
+
+CVector2D CVector2D::operator+( const CVector2D& v ) const
+{
+	return CVector2D( m_x + v.m_x, m_y + v.m_y );
+}

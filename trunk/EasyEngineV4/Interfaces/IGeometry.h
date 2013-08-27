@@ -61,6 +61,7 @@ public:
 	virtual void	ComputeProjectedPointOnLine( const CVector& oPointToProject, CVector& oProjectedPoint ) const = 0;
 	virtual float	ComputeDistanceToPoint( const CVector& oPoint ) = 0;
 	virtual void	Compute2DLineEquation( float& a, float& b, float& c ) const = 0;
+	virtual void	GetPoints( CVector& p1, CVector& p2 ) const = 0;
 	//virtual void	SetPoints( const CVector& first, const CVector last ) = 0;
 };
 
@@ -72,6 +73,16 @@ public:
 	virtual float		GetHeight() = 0;
 	virtual void		Set( const CVector& oBase, float fRadius, float fHeight ) = 0;
 	virtual void		ComputeTangent( const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft ) = 0;
+	virtual bool		IsPointIntoCylinder( const CVector& oPoint ) const = 0;
+};
+
+class ICircle
+{
+public:
+	virtual void		Set( const CVector2D& oCenter, float fRadius ) = 0;
+	virtual bool		IsSegmentAtLeftSide( const CVector2D& oStartPoint, const CVector2D& oEndPoint ) const = 0;
+	virtual bool		IsPointIntoCircle( const CVector2D& oPoint ) const = 0;
+	virtual void		ComputeTangent( const CVector2D& oLinePoint, CVector2D& oTangentPoint, bool bLeft ) const = 0;
 };
 
 class IGeometryManager : public CPlugin
@@ -85,6 +96,7 @@ public:
 	virtual ISphere*		CreateSphere( CVector& oCenter, float fRadius ) = 0;
 	virtual ISegment*		CreateSegment( const CVector& first, const CVector& last ) = 0;
 	virtual ICylinder*		CreateCylinder( const CVector& oBase, float fRadius, float fHeight ) = 0;
+	virtual ICircle*		CreateCircle( const CVector2D& oCenter, float fRadius ) = 0;
 	virtual int				GetLastCreateBoxID() = 0;
 	virtual IBox*			GetBox( int nID ) const = 0;
 };

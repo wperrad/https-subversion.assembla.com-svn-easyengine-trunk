@@ -39,3 +39,9 @@ void CSegment::Compute2DLineEquation( float& a, float& b, float& c ) const
 	b = m_oLast.m_x - m_oFirst.m_x;
 	c = m_oFirst.m_x * ( m_oLast.m_z - m_oFirst.m_z ) - m_oFirst.m_z * ( m_oLast.m_x - m_oFirst.m_x );
 }
+
+void CSegment::GetPoints( CVector& p1, CVector& p2 ) const
+{
+	p1 = m_oFirst;
+	p2 = m_oLast;
+}

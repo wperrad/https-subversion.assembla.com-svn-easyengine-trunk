@@ -1239,8 +1239,6 @@ void CRenderer::SetCurrentCameraMatrix( CMatrix& m )
 
 void CRenderer::ReadPixels( int x, int y, int nWidth, int nHeight, vector< unsigned char >& vPixels, TPixelFormat format )
 {
-	//int nWidth, nHeight;
-	//GetResolution( nWidth, nHeight );
 	int size = 0;
 	switch( format )
 	{
@@ -1254,11 +1252,7 @@ void CRenderer::ReadPixels( int x, int y, int nWidth, int nHeight, vector< unsig
 		break;
 	default:
 		throw 1;
-	}/*
-	int viewport[ 4 ];
-	glGetIntegerv( GL_VIEWPORT, viewport );
-	int nWidth = viewport[ 3 ];
-	int nHeight = viewport[ 0 ];*/
+	}
 	vPixels.resize( nWidth * nHeight * size );
 	glPixelStorei(GL_PACK_ALIGNMENT, 1 );	
 	glReadPixels( x, y, nWidth, nHeight, m_mPixelFormat[ format ], GL_UNSIGNED_BYTE, &vPixels[ 0 ]);

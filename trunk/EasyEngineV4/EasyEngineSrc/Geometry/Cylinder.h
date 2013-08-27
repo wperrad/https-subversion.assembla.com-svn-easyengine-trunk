@@ -15,4 +15,5 @@ public:
 	float		GetHeight();
 	void		Set( const CVector& oBase, float fRadius, float fHeight );
 	void		ComputeTangent( const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft );	
+	bool		IsPointIntoCylinder( const CVector& oPoint ) const;
 };

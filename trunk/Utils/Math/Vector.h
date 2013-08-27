@@ -51,5 +51,22 @@ public:
 	static void Lerp( const CVector& v1, const CVector& v2, float t, CVector& vOut );
 };
 
+class CVector2D
+{
+public:
+	float m_x;
+	float m_y;
+
+	CVector2D( float x, float y );
+
+	CVector2D	operator-(const CVector2D& v) const;
+	CVector		operator^( const CVector2D& v ) const;
+	float		operator*( const CVector2D& v ) const;
+	CVector2D	operator*( float d ) const;
+	CVector2D	operator+( const CVector2D& v ) const;
+	void		Normalize();
+	float		Norm() const;
+
+};
 
 #endif //VECTOR_H
