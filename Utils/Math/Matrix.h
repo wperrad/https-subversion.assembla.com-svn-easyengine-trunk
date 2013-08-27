@@ -99,5 +99,20 @@ public:
 	void Afficher() const;
 };	
 
+class CMatrix2X2
+{
+public:	
+	float				m_00,m_01;
+	float				m_10,m_11;
+	
+	
+
+	CMatrix2X2( float a00, float a01, float a10, float a11 );
+
+	CVector2D		operator*(const CVector2D& v) const;
+
+	static CMatrix2X2	GetRotation(float Angle);
+};
+
 
 #endif //MATRIX_H_

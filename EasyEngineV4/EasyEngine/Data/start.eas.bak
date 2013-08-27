@@ -86,6 +86,8 @@ SetEntityPos(9, 0, 3000, 0);
 AddLightw("omni", 10);
 SetEntityPos(10, 0, -3000, 0);
 
+Goto(34, 1968, 420, 931);
+
 //////////////////////////////////////
 
 ComputeKeysBoundingBoxes( "testexport14", "perso", "testexport14_stand" );

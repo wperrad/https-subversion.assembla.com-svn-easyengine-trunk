@@ -819,3 +819,25 @@ void CMatrix::Store( CStringStorage& store ) const
 void CMatrix::Load( CStringStorage& store )
 {
 }
+
+
+CMatrix2X2::CMatrix2X2( float a00, float a01, float a10, float a11 )
+{
+	m_00 = a00;
+	m_01 = a01;
+	m_10 = a10;
+	m_11 = a11;
+}
+
+CMatrix2X2 CMatrix2X2::GetRotation( float Angle )
+{
+	float fAngleRad = Angle * (float)M_PI / 180.f;
+	return CMatrix2X2(	cosf(fAngleRad)		,	-sinf(fAngleRad),
+						sinf(fAngleRad)		,	cosf(fAngleRad)	); 
+}
+
+CVector2D CMatrix2X2::operator*(const CVector2D& v) const
+{
+	return CVector2D(	m_00*v.m_x + m_01*v.m_y,
+						m_10*v.m_x + m_11*v.m_y );
+}

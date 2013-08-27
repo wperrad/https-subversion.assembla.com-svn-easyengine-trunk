@@ -300,7 +300,7 @@ bool CCollisionManager::IsIntersection( const ISegment& s, const CVector& oCircl
 	return false;
 }
 
-void CCollisionManager::Get2DIntersection( const CVector& oLine1First, const CVector& oLine1Last, const CVector& oLine2First, const CVector& oLine2Last, CVector& oIntersection )
+void CCollisionManager::Get2DLineIntersection( const CVector& oLine1First, const CVector& oLine1Last, const CVector& oLine2First, const CVector& oLine2Last, CVector& oIntersection )
 {
 	ISegment* pL1 = m_oGeometryManager.CreateSegment( oLine1First, oLine1Last );
 	ISegment* pL2 = m_oGeometryManager.CreateSegment( oLine2First, oLine2Last );
@@ -311,6 +311,102 @@ void CCollisionManager::Get2DIntersection( const CVector& oLine1First, const CVe
 	oIntersection.m_z = ( a1 * c2 - a2 * c1 ) / ( a2 * b1 - a1 * b2 );
 }
 
+void CCollisionManager::Get2DLineIntersection( const ISegment& oSeg1, const ISegment& oSeg2, CVector& oIntersection )
+{
+	float a1, b1, c1, a2, b2, c2;
+	oSeg1.Compute2DLineEquation( a1, b1, c1 );
+	oSeg2.Compute2DLineEquation( a2, b2, c2 );
+	oIntersection.m_x = 1 / a1 * ( b1 * ( (a2 * c1 - a1 * c2 ) / ( a2 * b1 - a1 * b2 )  ) - c1 );
+	oIntersection.m_z = ( a1 * c2 - a2 * c1 ) / ( a2 * b1 - a1 * b2 );
+}
+
+bool CCollisionManager::Is2DSegmentRectIntersect( const ISegment& s, float fRectw, float fRecth, const CMatrix& oRectTM )
+{
+	CVector S1, S2;
+	s.GetPoints( S1, S2 );
+	return Is2DSegmentRectIntersect( S1, S2, fRectw, fRecth, oRectTM );
+
+}
+
+bool CCollisionManager::Is2DSegmentRectIntersect( const CVector& S1, const CVector& S2, float fRectw, float fRecth, const CMatrix& oRectTM )
+{
+	CVector x( 1, 0, 0 );
+
+	CVector R0 = CVector( -fRectw / 2.f, 0, -fRecth / 2.f );
+	CVector R1 = CVector( fRectw / 2.f, 0, -fRecth / 2.f );
+	CVector R2 = CVector( fRectw / 2.f, 0, fRecth / 2.f );
+	CVector R3 = CVector( -fRectw / 2.f, 0, fRecth / 2.f );
+	CMatrix oRectInvTM;
+	oRectTM.GetInverse( oRectInvTM );
+	
+	CVector S1Inv = oRectInvTM * S1;
+	CVector S2Inv = oRectInvTM * S2;
+
+	float fMinx = R0.m_x, fMaxx = R1.m_x, fMinz = R0.m_z, fMaxz = R2.m_z;
+	float fSegMinx = S1Inv.m_x;
+	if( fSegMinx > S2Inv.m_x ) fSegMinx = S2Inv.m_x;
+	if( fSegMinx > fMaxx )
+		return false;
+	float fSegMaxx = S1Inv.m_x;
+	if( fSegMaxx < S2Inv.m_x ) fSegMaxx = S2Inv.m_x;
+	if( fSegMaxx < fMinx )
+		return false;
+	float fSegMinz = S1Inv.m_z;
+	if( fSegMinz > S2Inv.m_z ) fSegMinz = S2Inv.m_z;
+	if( fSegMinz > fMaxz )
+		return false;
+	float fSegMaxz = S1Inv.m_z;
+	if( fSegMaxz < S2Inv.m_z ) fSegMaxz = S2Inv.m_z;
+	if( fSegMaxz < fMinz )
+		return false;
+
+	CVector R0tm = oRectTM * CVector( -fRectw / 2.f, 0, -fRecth / 2.f );
+	CVector R1tm = oRectTM * CVector( fRectw / 2.f, 0, -fRecth / 2.f );
+	CVector R2tm = oRectTM * CVector( fRectw / 2.f, 0, fRecth / 2.f );
+	CVector R3tm = oRectTM * CVector( -fRectw / 2.f, 0, fRecth / 2.f );
+
+	float alpha = acosf( ( ( S2 - S1 ) * x ) / ( S2 - S1 ).Norm() ) * 180.f / 3.1415927f;
+	CMatrix oSegTM = CMatrix::GetyRotation( alpha ), oSegTMInv;
+	oSegTM.AddTranslation( S1 );
+	oSegTM.GetInverse( oSegTMInv );
+
+	CVector R0Inv = oSegTMInv * R0tm;
+	CVector R1Inv = oSegTMInv * R1tm;
+	CVector R2Inv = oSegTMInv * R2tm;
+	CVector R3Inv = oSegTMInv * R3tm;
+
+	CVector S3Inv = oSegTMInv * S2;
+
+	fMinx = R0Inv.m_z;
+	if( R1Inv.m_x < fMinx ) fMinx = R1Inv.m_x;
+	if( R2Inv.m_x < fMinx ) fMinx = R2Inv.m_x;
+	if( R3Inv.m_x < fMinx ) fMinx = R3Inv.m_x;
+	if( fMinx > S3Inv.m_x )
+		return false;
+
+	fMaxx = R0Inv.m_z;
+	if( R1Inv.m_x > fMaxx ) fMaxx = R1Inv.m_z;
+	if( R2Inv.m_x > fMaxx ) fMaxx = R2Inv.m_z;
+	if( R3Inv.m_x > fMaxx ) fMaxx = R3Inv.m_z;
+	if( fMaxx < 0 )
+		return false;
+
+	fMinz = R0Inv.m_z;
+	if( R1Inv.m_z < fMinz ) fMinz = R1Inv.m_z ;
+	if( R2Inv.m_z < fMinz ) fMinz = R2Inv.m_z;
+	if( R3Inv.m_z < fMinz ) fMinz = R3Inv.m_z;
+	if( fMinz > 0 )
+		return false;
+
+	fMaxz = R0Inv.m_z;
+	if( R1Inv.m_z > fMaxz ) fMaxz = R1Inv.m_z;
+	if( R2Inv.m_z > fMaxz ) fMaxz = R2Inv.m_z ;
+	if( R3Inv.m_z > fMaxz ) fMaxz = R3Inv.m_z;
+	if( fMaxz < 0 )
+		return false;
+
+	return true;
+}
 
 extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc )
 {
