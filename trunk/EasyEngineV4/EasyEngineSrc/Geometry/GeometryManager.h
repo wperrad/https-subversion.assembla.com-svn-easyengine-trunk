@@ -18,6 +18,7 @@ public:
 	ISegment*		CreateSegment( const CVector& first, const CVector& last );
 	ICylinder*		CreateCylinder( const CVector& oBase, float fRadius, float fHeight );
 	ICircle*		CreateCircle( const CVector2D& oCenter, float fRadius );
+	ISegment2D*		CreateSegment2D( const CVector2D& first, const CVector2D& last );
 };
 
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc );

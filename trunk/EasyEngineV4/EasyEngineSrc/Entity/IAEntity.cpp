@@ -128,14 +128,17 @@ void IAEntity::Goto( const CVector& oDestination, float fSpeed )
 	m_vCurrentPath.clear();
 	CVector oPos;
 	GetPosition( oPos );
-	ComputePathFind( oPos, oDestination, m_vCurrentPath );
+	CVector2D oDestination2D( oDestination.m_x, oDestination.m_z ), oPos2D( oPos.m_x, oPos.m_z );
+	ComputePathFind2D( oPos2D, oDestination2D, m_vCurrentPath );
 
 	if( m_vCurrentPath.size() > 1 )
 		m_fDestinationDeltaRadius = 50.f;
 	else
 		m_fDestinationDeltaRadius  = 100.f;
 	m_nCurrentPathPointNumber = 0;
-	m_oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
+	//m_oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
+	oDestination2D = m_vCurrentPath[ m_nCurrentPathPointNumber ];
+	m_oDestination = CVector( oDestination2D.m_x, 0.f, oDestination2D.m_y );
 	m_fAngleRemaining = GetDestinationAngleRemaining();
 
 	//LookAt( m_fAngleRemaining );
@@ -175,7 +178,8 @@ void IAEntity::UpdateGoto()
 			else
 			{
 				m_nCurrentPathPointNumber++;
-				m_oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
+				CVector2D oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
+				m_oDestination = CVector( oDestination.m_x, 0.f, oDestination.m_y );
 			}
 		}
 	}
@@ -192,7 +196,10 @@ void IAEntity::SetDestination( const CVector& oDestination )
 	m_oDestination = oDestination;
 	m_bArriveAtDestination = false;
 	if( m_vCurrentPath.size() == 0 )
-		m_vCurrentPath.push_back( m_oDestination );
+	{
+		CVector2D oDestination2D( m_oDestination.m_x, m_oDestination.m_z );
+		m_vCurrentPath.push_back( oDestination2D );
+	}
 }
 
 float IAEntity::GetDestinationAngleRemaining()

@@ -72,6 +72,11 @@ ICircle* CGeometryManager::CreateCircle( const CVector2D& oCenter, float fRadius
 	return new CCircle( oCenter, fRadius );
 }
 
+ISegment2D*	CGeometryManager::CreateSegment2D( const CVector2D& first, const CVector2D& last )
+{
+	return new CSegment2D( first, last );
+}
+
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc )
 {
 	return new CGeometryManager( oDesc );

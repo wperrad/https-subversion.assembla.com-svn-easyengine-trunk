@@ -300,49 +300,45 @@ bool CCollisionManager::IsIntersection( const ISegment& s, const CVector& oCircl
 	return false;
 }
 
-void CCollisionManager::Get2DLineIntersection( const CVector& oLine1First, const CVector& oLine1Last, const CVector& oLine2First, const CVector& oLine2Last, CVector& oIntersection )
+void CCollisionManager::Get2DLineIntersection( const CVector2D& oLine1First, const CVector2D& oLine1Last, const CVector2D& oLine2First, const CVector2D& oLine2Last, CVector2D& oIntersection )
 {
-	ISegment* pL1 = m_oGeometryManager.CreateSegment( oLine1First, oLine1Last );
-	ISegment* pL2 = m_oGeometryManager.CreateSegment( oLine2First, oLine2Last );
-	float a1, b1, c1, a2, b2, c2;
-	pL1->Compute2DLineEquation( a1, b1, c1 );
-	pL2->Compute2DLineEquation( a2, b2, c2 );
-	oIntersection.m_x = 1 / a1 * ( b1 * ( (a2 * c1 - a1 * c2 ) / ( a2 * b1 - a1 * b2 )  ) - c1 );
-	oIntersection.m_z = ( a1 * c2 - a2 * c1 ) / ( a2 * b1 - a1 * b2 );
+	ISegment2D* pL1 = m_oGeometryManager.CreateSegment2D( oLine1First, oLine1Last );
+	ISegment2D* pL2 = m_oGeometryManager.CreateSegment2D( oLine2First, oLine2Last );
+	Get2DLineIntersection( *pL1, *pL2, oIntersection );
 }
 
-void CCollisionManager::Get2DLineIntersection( const ISegment& oSeg1, const ISegment& oSeg2, CVector& oIntersection )
+void CCollisionManager::Get2DLineIntersection( const ISegment2D& oSeg1, const ISegment2D& oSeg2, CVector2D& oIntersection )
 {
 	float a1, b1, c1, a2, b2, c2;
-	oSeg1.Compute2DLineEquation( a1, b1, c1 );
-	oSeg2.Compute2DLineEquation( a2, b2, c2 );
+	oSeg1.ComputeLineEquation( a1, b1, c1 );
+	oSeg2.ComputeLineEquation( a2, b2, c2 );
 	oIntersection.m_x = 1 / a1 * ( b1 * ( (a2 * c1 - a1 * c2 ) / ( a2 * b1 - a1 * b2 )  ) - c1 );
-	oIntersection.m_z = ( a1 * c2 - a2 * c1 ) / ( a2 * b1 - a1 * b2 );
+	oIntersection.m_y = ( a1 * c2 - a2 * c1 ) / ( a2 * b1 - a1 * b2 );
 }
 
-bool CCollisionManager::Is2DSegmentRectIntersect( const ISegment& s, float fRectw, float fRecth, const CMatrix& oRectTM )
+bool CCollisionManager::IsSegmentRectIntersect( const ISegment2D& s, float fRectw, float fRecth, const CMatrix2X2& oRectTM )
 {
-	CVector S1, S2;
+	CVector2D S1, S2;
 	s.GetPoints( S1, S2 );
-	return Is2DSegmentRectIntersect( S1, S2, fRectw, fRecth, oRectTM );
+	return IsSegmentRectIntersect( S1, S2, fRectw, fRecth, oRectTM );
 
 }
 
-bool CCollisionManager::Is2DSegmentRectIntersect( const CVector& S1, const CVector& S2, float fRectw, float fRecth, const CMatrix& oRectTM )
+bool CCollisionManager::IsSegmentRectIntersect( const CVector2D& S1, const CVector2D& S2, float fRectw, float fRecth, const CMatrix2X2& oRectTM )
 {
-	CVector x( 1, 0, 0 );
+	CVector2D x( 1, 0 );
 
-	CVector R0 = CVector( -fRectw / 2.f, 0, -fRecth / 2.f );
-	CVector R1 = CVector( fRectw / 2.f, 0, -fRecth / 2.f );
-	CVector R2 = CVector( fRectw / 2.f, 0, fRecth / 2.f );
-	CVector R3 = CVector( -fRectw / 2.f, 0, fRecth / 2.f );
-	CMatrix oRectInvTM;
+	CVector2D R0 = CVector2D( -fRectw / 2.f, -fRecth / 2.f );
+	CVector2D R1 = CVector2D( fRectw / 2.f, -fRecth / 2.f );
+	CVector2D R2 = CVector2D( fRectw / 2.f, fRecth / 2.f );
+	CVector2D R3 = CVector2D( -fRectw / 2.f, fRecth / 2.f );
+	CMatrix2X2 oRectInvTM;
 	oRectTM.GetInverse( oRectInvTM );
 	
-	CVector S1Inv = oRectInvTM * S1;
-	CVector S2Inv = oRectInvTM * S2;
+	CVector2D S1Inv = oRectInvTM * S1;
+	CVector2D S2Inv = oRectInvTM * S2;
 
-	float fMinx = R0.m_x, fMaxx = R1.m_x, fMinz = R0.m_z, fMaxz = R2.m_z;
+	float fMinx = R0.m_x, fMaxx = R1.m_x, fMinz = R0.m_y, fMaxz = R2.m_y;
 	float fSegMinx = S1Inv.m_x;
 	if( fSegMinx > S2Inv.m_x ) fSegMinx = S2Inv.m_x;
 	if( fSegMinx > fMaxx )
@@ -351,57 +347,57 @@ bool CCollisionManager::Is2DSegmentRectIntersect( const CVector& S1, const CVect
 	if( fSegMaxx < S2Inv.m_x ) fSegMaxx = S2Inv.m_x;
 	if( fSegMaxx < fMinx )
 		return false;
-	float fSegMinz = S1Inv.m_z;
-	if( fSegMinz > S2Inv.m_z ) fSegMinz = S2Inv.m_z;
+	float fSegMinz = S1Inv.m_y;
+	if( fSegMinz > S2Inv.m_y ) fSegMinz = S2Inv.m_y;
 	if( fSegMinz > fMaxz )
 		return false;
-	float fSegMaxz = S1Inv.m_z;
-	if( fSegMaxz < S2Inv.m_z ) fSegMaxz = S2Inv.m_z;
+	float fSegMaxz = S1Inv.m_y;
+	if( fSegMaxz < S2Inv.m_y ) fSegMaxz = S2Inv.m_y;
 	if( fSegMaxz < fMinz )
 		return false;
 
-	CVector R0tm = oRectTM * CVector( -fRectw / 2.f, 0, -fRecth / 2.f );
-	CVector R1tm = oRectTM * CVector( fRectw / 2.f, 0, -fRecth / 2.f );
-	CVector R2tm = oRectTM * CVector( fRectw / 2.f, 0, fRecth / 2.f );
-	CVector R3tm = oRectTM * CVector( -fRectw / 2.f, 0, fRecth / 2.f );
+	CVector2D R0tm = oRectTM * CVector2D( -fRectw / 2.f, -fRecth / 2.f );
+	CVector2D R1tm = oRectTM * CVector2D( fRectw / 2.f, -fRecth / 2.f );
+	CVector2D R2tm = oRectTM * CVector2D( fRectw / 2.f, fRecth / 2.f );
+	CVector2D R3tm = oRectTM * CVector2D( -fRectw / 2.f, fRecth / 2.f );
 
 	float alpha = acosf( ( ( S2 - S1 ) * x ) / ( S2 - S1 ).Norm() ) * 180.f / 3.1415927f;
-	CMatrix oSegTM = CMatrix::GetyRotation( alpha ), oSegTMInv;
+	CMatrix2X2 oSegTM = CMatrix2X2::GetRotation( alpha ), oSegTMInv;
 	oSegTM.AddTranslation( S1 );
 	oSegTM.GetInverse( oSegTMInv );
 
-	CVector R0Inv = oSegTMInv * R0tm;
-	CVector R1Inv = oSegTMInv * R1tm;
-	CVector R2Inv = oSegTMInv * R2tm;
-	CVector R3Inv = oSegTMInv * R3tm;
+	CVector2D R0Inv = oSegTMInv * R0tm;
+	CVector2D R1Inv = oSegTMInv * R1tm;
+	CVector2D R2Inv = oSegTMInv * R2tm;
+	CVector2D R3Inv = oSegTMInv * R3tm;
 
-	CVector S3Inv = oSegTMInv * S2;
+	CVector2D S3Inv = oSegTMInv * S2;
 
-	fMinx = R0Inv.m_z;
+	fMinx = R0Inv.m_y;
 	if( R1Inv.m_x < fMinx ) fMinx = R1Inv.m_x;
 	if( R2Inv.m_x < fMinx ) fMinx = R2Inv.m_x;
 	if( R3Inv.m_x < fMinx ) fMinx = R3Inv.m_x;
 	if( fMinx > S3Inv.m_x )
 		return false;
 
-	fMaxx = R0Inv.m_z;
-	if( R1Inv.m_x > fMaxx ) fMaxx = R1Inv.m_z;
-	if( R2Inv.m_x > fMaxx ) fMaxx = R2Inv.m_z;
-	if( R3Inv.m_x > fMaxx ) fMaxx = R3Inv.m_z;
+	fMaxx = R0Inv.m_y;
+	if( R1Inv.m_x > fMaxx ) fMaxx = R1Inv.m_y;
+	if( R2Inv.m_x > fMaxx ) fMaxx = R2Inv.m_y;
+	if( R3Inv.m_x > fMaxx ) fMaxx = R3Inv.m_y;
 	if( fMaxx < 0 )
 		return false;
 
-	fMinz = R0Inv.m_z;
-	if( R1Inv.m_z < fMinz ) fMinz = R1Inv.m_z ;
-	if( R2Inv.m_z < fMinz ) fMinz = R2Inv.m_z;
-	if( R3Inv.m_z < fMinz ) fMinz = R3Inv.m_z;
+	fMinz = R0Inv.m_y;
+	if( R1Inv.m_y < fMinz ) fMinz = R1Inv.m_y;
+	if( R2Inv.m_y < fMinz ) fMinz = R2Inv.m_y;
+	if( R3Inv.m_y < fMinz ) fMinz = R3Inv.m_y;
 	if( fMinz > 0 )
 		return false;
 
-	fMaxz = R0Inv.m_z;
-	if( R1Inv.m_z > fMaxz ) fMaxz = R1Inv.m_z;
-	if( R2Inv.m_z > fMaxz ) fMaxz = R2Inv.m_z ;
-	if( R3Inv.m_z > fMaxz ) fMaxz = R3Inv.m_z;
+	fMaxz = R0Inv.m_y;
+	if( R1Inv.m_y > fMaxz ) fMaxz = R1Inv.m_y;
+	if( R2Inv.m_y > fMaxz ) fMaxz = R2Inv.m_y ;
+	if( R3Inv.m_y > fMaxz ) fMaxz = R3Inv.m_y;
 	if( fMaxz < 0 )
 		return false;
 

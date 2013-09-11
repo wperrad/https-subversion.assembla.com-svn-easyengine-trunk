@@ -45,3 +45,8 @@ void CCircle::ComputeTangent( const CVector2D& oLinePoint, CVector2D& oTangentPo
 	CVector2D oPointToTangent = oPointToTangentNorm * fPointToTangentNorm;
 	oTangentPoint = oLinePoint + oPointToTangent;
 }
+
+CVector2D& CCircle::GetCenter()
+{
+	return m_oCenter;
+}

@@ -102,14 +102,23 @@ public:
 class CMatrix2X2
 {
 public:	
-	float				m_00,m_01;
-	float				m_10,m_11;
+	float				m_00, m_01, m_02;
+	float				m_10, m_11, m_12;
+	float				m_20, m_21, m_22;
 	
 	
 
-	CMatrix2X2( float a00, float a01, float a10, float a11 );
+	CMatrix2X2();
+	CMatrix2X2::CMatrix2X2( float a00, float a01, float a02, 
+							float a10, float a11, float a12,
+							float a20, float a21, float a22	);
 
 	CVector2D		operator*(const CVector2D& v) const;
+	CMatrix2X2		operator*(const CMatrix2X2& mat) const;
+	void			SetIdentity();
+	float			GetDeterminant()const;
+	void			GetInverse( CMatrix2X2& oMatrixInv ) const;
+	void			AddTranslation( const CVector2D& v );
 
 	static CMatrix2X2	GetRotation(float Angle);
 };

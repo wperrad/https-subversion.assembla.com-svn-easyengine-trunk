@@ -473,17 +473,19 @@ public:
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hPrevInstance,
                                                   LPSTR lpCmdLine, int nCmdShow)
 {
-	CNPC* pNPC = new CNPC;
-	IFighter* pFighter = dynamic_cast< IFighter* >( pNPC );
-	pFighter->f();
+	CVector2D v( 10, 25 );
+	CMatrix2X2 m = CMatrix2X2::GetRotation( 60 ), mInv;
+	m.AddTranslation( v );
 
-	/*
-	IBase* pBase = pDerived;
-	IBase1* pBase1 = dynamic_cast< IBase* >( pBase );
-	d.f();
-	d.g();
-*/
-	
+	m.GetInverse( mInv );
+
+	CMatrix2X2 mTest = mInv * m;
+
+
+	m = CMatrix2X2::GetRotation( -30 );
+	m.AddTranslation( CVector2D( 100, -12 ) );
+	m.GetInverse( mInv );
+	mTest = mInv * m;
 	return TRUE;
 }
 

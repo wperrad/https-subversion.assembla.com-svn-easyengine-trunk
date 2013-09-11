@@ -13,6 +13,7 @@ class CHeightMap;
 class IFileSystem;
 class CBox;
 class ISphere;
+class ISegment2D;
 
 class CCollisionManager : public ICollisionManager
 {
@@ -45,10 +46,10 @@ public:
 	bool	IsIntersection( const IBox& b1, const IBox& b2 );
 	bool	IsIntersection( const ISegment& s, const IBox& b2 );
 	bool	IsIntersection( const ISegment& s, const CVector& oCircleCenter, float fCircleRadius );
-	void	Get2DLineIntersection( const CVector& oLine1First, const CVector& oLine1Last, const CVector& oLine2First, const CVector& oLine2Last, CVector& oIntersection );
-	void	Get2DLineIntersection( const ISegment& pSeg1, const ISegment& pSeg2, CVector& oIntersection );
-	bool	Is2DSegmentRectIntersect( const ISegment& s, float fRectw, float fRecth, const CMatrix& oRectTM );
-	bool	Is2DSegmentRectIntersect( const CVector& S1, const CVector& S2, float fRectw, float fRecth, const CMatrix& oRectTM );
+	void	Get2DLineIntersection( const ISegment2D& pSeg1, const ISegment2D& pSeg2, CVector2D& oIntersection );
+	void	Get2DLineIntersection( const CVector2D& oLine1First, const CVector2D& oLine1Last, const CVector2D& oLine2First, const CVector2D& oLine2Last, CVector2D& oIntersection );
+	bool	IsSegmentRectIntersect( const ISegment2D& s, float fRectw, float fRecth, const CMatrix2X2& oRectTM );
+	bool	IsSegmentRectIntersect( const CVector2D& S1, const CVector2D& S2, float fRectw, float fRecth, const CMatrix2X2& oRectTM );
 };
 
 extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc );

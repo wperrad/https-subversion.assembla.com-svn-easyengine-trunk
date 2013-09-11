@@ -185,21 +185,23 @@ IBox* CNPCEntity::GetNextCollideBox()
 	return NULL;
 }
 
-void CNPCEntity::ComputePathFind( const CVector& oOrigin, const CVector& oDestination, vector< CVector >& vPoints )
+void CNPCEntity::ComputePathFind2D( const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints )
 {
 	unsigned float fNearestDistance = -1.f;
 	IBox* pNearestCollideBox = NULL;
-	CVector oCylinderCenter;
+	
 	unsigned float fBoundingCylinderRadius = -1.f;
-	CVector oPos = oOrigin;
-	oPos.m_y = 0;
+	CVector2D oCircleCenter;
 	IBox* pCollideBox = GetFirstCollideBox();
 	while( pCollideBox )
-	{		
+	{	
+		CVector oCylinderCenter;
 		pCollideBox->GetCenter( oCylinderCenter );
 		oCylinderCenter = pCollideBox->GetWorldMatrix() * oCylinderCenter;
+		oCircleCenter.m_x = oCylinderCenter.m_x;
+		oCircleCenter.m_y = oCylinderCenter.m_z;
 		fBoundingCylinderRadius = pCollideBox->ComputeBoundingCylinderRadius( IBox::eAxisY );
-		float fDistance = ( oPos - oCylinderCenter ).Norm() - fBoundingCylinderRadius;
+		float fDistance = ( oOrigin - oCircleCenter ).Norm() - fBoundingCylinderRadius;
 		if( fNearestDistance > fDistance )
 		{
 			fNearestDistance = fDistance;
@@ -208,78 +210,31 @@ void CNPCEntity::ComputePathFind( const CVector& oOrigin, const CVector& oDestin
 		pCollideBox = GetNextCollideBox();
 	}
 
-
-	CVector H;
-	ICylinder* pBoundingCylinder = m_oGeometryManager.CreateCylinder( oCylinderCenter, fBoundingCylinderRadius, pNearestCollideBox->GetDimension().m_y );
-	ISegment* pSegment = m_oGeometryManager.CreateSegment( oPos, oDestination );
-	pSegment->ComputeProjectedPointOnLine( pBoundingCylinder->GetBase(), H );
-	float fDistanceTocylinder = ( pBoundingCylinder->GetBase() - H ).Norm() - fBoundingCylinderRadius;
+	CVector2D H;
+	ICircle* pBoundingCircle = m_oGeometryManager.CreateCircle( oCircleCenter, fBoundingCylinderRadius );
+	ISegment2D* pSegment = m_oGeometryManager.CreateSegment2D( oOrigin, oDestination );
+	pSegment->ComputeProjectedPointOnLine( pBoundingCircle->GetCenter(), H );
+	float fDistanceTocylinder = ( pBoundingCircle->GetCenter() - H ).Norm() - fBoundingCylinderRadius;
 	if( fDistanceTocylinder < 0 )
 	{
-		CVector oPathIntersect;
-		if( pBoundingCylinder->IsPointIntoCylinder( oPos ) && pBoundingCylinder->IsPointIntoCylinder( oDestination ) ) // le test du cylindre suffit-il ?
+		CVector2D oPathIntersect;
+		if( !pBoundingCircle->IsPointIntoCircle( oOrigin ) && !pBoundingCircle->IsPointIntoCircle( oDestination ) ) // le test du cylindre suffit-il ?
 		{
-			CVector oTangentStart, oTangentEnd;
-			// On calcul le point de contact de la tangente du cylindre au point de départ
-			CVector oCenterCylDirection = pBoundingCylinder->GetBase() - oPos;
-			oCenterCylDirection.m_y = 0.f;
-			oCenterCylDirection.Normalize();
-			CVector oDirection = oDestination - oPos;
-			oDirection.m_y = 0.f;
-			oDirection.Normalize();
-			CVector v = oCenterCylDirection ^ oDirection;
-			bool bLeft = v.m_y > 0.f;
-			pBoundingCylinder->ComputeTangent( oPos, oTangentStart, bLeft );
-
-			// On calcule le point de contact de la tangente du cylindre au point d'arrivée
-			oCenterCylDirection = pBoundingCylinder->GetBase() - oDestination;
-			oCenterCylDirection.m_y = 0.f;
-			oCenterCylDirection.Normalize();
-			oDirection = -oDirection;
-			v = oCenterCylDirection ^ oDirection;
-			bLeft = v.m_y > 0.f;
-			pBoundingCylinder->ComputeTangent( oDestination, oTangentEnd, bLeft );
-			m_oCollisionManager.Get2DLineIntersection( oPos, oTangentStart, oDestination, oTangentEnd, oPathIntersect );
-
+			CVector2D oTangentStart, oTangentEnd;
+			bool bLeft = pBoundingCircle->IsSegmentAtLeftSide( oOrigin, oDestination );
+			pBoundingCircle->ComputeTangent( oOrigin, oTangentStart, bLeft );
+			pBoundingCircle->ComputeTangent( oDestination, oTangentEnd, !bLeft);
+			m_oCollisionManager.Get2DLineIntersection( oOrigin, oTangentStart, oDestination, oTangentEnd, oPathIntersect );
 			vPoints.push_back( oPathIntersect );
-			ComputePathFind( oPathIntersect, oDestination, vPoints );
-
-			// test
-#if 0
-			CVector u1 = oPos;
-			u1.m_y = 700.f;
-			CVector u2 = oTangentStart;
-			u2.m_y = 300.f;
-			CVector ouDir = oTangentStart - oPos;
-			ouDir.Normalize();
-			u2 += ouDir * 1000.f;
-			//u1 -= ouDir * 1000.f;
-
-			CVector v1 = oTangentEnd;
-			v1.m_y = 500.f;
-			CVector v2 = oDestination;
-			v2.m_y = -300.f;
-			CVector ovDir = oDestination - oTangentEnd;
-			ovDir.Normalize();
-			v1 -= ovDir * 1000.f;
-
-			IEntity* pTangentStart = m_pEntityManager->CreateLineEntity( u1, u2 );
-			pTangentStart->Link( m_pScene );
-
-			IEntity* pTangentEnd = m_pEntityManager->CreateLineEntity( v1, v2 );
-			pTangentEnd->Link( m_pScene );
-
-			IEntity* pSphere = m_pEntityManager->CreateSphere( 10 );
-			CVector w = oTangent;
-			w.m_y = 700.f;
-			pSphere->SetWorldPosition( w );
-			//pSphere->Link( m_pScene );
-#endif
-			// fin test
+			ComputePathFind2D( oPathIntersect, oDestination, vPoints );
 		}
 		else // le test du cylindre n'est pas assez précis, on doit faire un test sur la box
 		{
-			if( m_oCollisionManager.Is2DSegmentRectIntersect( oPos, oDestination, pNearestCollideBox->GetDimension().m_x, pNearestCollideBox->GetDimension().m_z, pNearestCollideBox->GetWorldMatrix() ) )
+			const CMatrix& oBoxTM = pNearestCollideBox->GetWorldMatrix();
+			CMatrix2X2 oRectTM( oBoxTM.m_00	, oBoxTM.m_02	, oBoxTM.m_03,
+								oBoxTM.m_20	, oBoxTM.m_22	, oBoxTM.m_23,
+								0			,	0			,		1	);
+			if( m_oCollisionManager.IsSegmentRectIntersect( oOrigin, oDestination, pNearestCollideBox->GetDimension().m_x, pNearestCollideBox->GetDimension().m_z, oRectTM ) )
 			{
 				int test = 0;
 				vPoints.push_back( oDestination ); // temporaire
@@ -287,8 +242,6 @@ void CNPCEntity::ComputePathFind( const CVector& oOrigin, const CVector& oDestin
 			else
 				vPoints.push_back( oDestination );
 		}
-
-		//ComputePathFind( oPathIntersect, oDestination, vPoints );
 	}
 	else
 		vPoints.push_back( oDestination );
