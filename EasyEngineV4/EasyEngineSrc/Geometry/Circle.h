@@ -13,4 +13,5 @@ public:
 	bool		IsSegmentAtLeftSide( const CVector2D& oStartPoint, const CVector2D& oEndPoint ) const;
 	bool		IsPointIntoCircle( const CVector2D& oPoint ) const;
 	void		ComputeTangent( const CVector2D& oLinePoint, CVector2D& oTangentPoint, bool bLeft ) const;
+	CVector2D&	GetCenter();
 };

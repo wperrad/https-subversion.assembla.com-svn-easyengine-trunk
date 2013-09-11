@@ -56,7 +56,9 @@ class CVector2D
 public:
 	float m_x;
 	float m_y;
+	float m_w;
 
+	CVector2D();
 	CVector2D( float x, float y );
 
 	CVector2D	operator-(const CVector2D& v) const;

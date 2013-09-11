@@ -83,7 +83,7 @@ CVector CVector::operator +(const CVector& v) const
 	return CVector(m_x+v.m_x,m_y+v.m_y,m_z+v.m_z,1);
 }
 
-CVector CVector::operator -(const CVector& v) const
+CVector CVector::operator-(const CVector& v) const
 {
 	return CVector(m_x-v.m_x,m_y-v.m_y,m_z-v.m_z,1);
 }
@@ -213,16 +213,23 @@ void CVector::Load( CStringStorage& store )
 {
 }
 
-
-CVector2D::CVector2D( float x, float y ):
-m_x( x ),
-m_y( y )
+CVector2D::CVector2D():
+m_x( 0 ),
+m_y( 0 ),
+m_w( 1 )
 {
 }
 
-CVector2D CVector2D::operator-(const CVector2D& v) const
+CVector2D::CVector2D( float x, float y ):
+m_x( x ),
+m_y( y ),
+m_w( 1 )
 {
-	return CVector2D( -m_x, -m_y );
+}
+
+CVector2D CVector2D::operator-( const CVector2D& v ) const
+{
+	return CVector2D( m_x - v.m_x, m_y - v.m_y );
 }
 
 void CVector2D::Normalize()
@@ -245,7 +252,7 @@ CVector CVector2D::operator^( const CVector2D& v ) const
 	return CVector( 0, 0, m_x * v.m_y - m_y * v.m_x );
 }
 
-float CVector2D::operator *(const CVector2D& v) const
+float CVector2D::operator *( const CVector2D& v ) const
 {
 	return ( m_x * v.m_x + m_y * v.m_y );
 }

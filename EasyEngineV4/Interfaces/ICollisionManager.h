@@ -13,6 +13,7 @@ class ILoaderManager;
 class CBox;
 class ISphere;
 class IGeometryManager;
+class ISegment2D;
 class ISegment;
 
 class ICollisionManager : public CPlugin
@@ -44,7 +45,7 @@ public:
 	virtual bool	IsIntersection( const IBox& b1, const IBox& b2 ) = 0;
 	virtual bool	IsIntersection( const ISegment& s, const IBox& b2 ) = 0;
 	virtual bool	IsIntersection( const ISegment& s, const CVector& oCircleCenter, float fCircleRadius ) = 0;
-	virtual void	Get2DLineIntersection( const CVector& oLine1First, const CVector& oLine1Last, const CVector& oLine2First, const CVector& oLine2Last, CVector& oIntersection ) = 0;
-	virtual bool	Is2DSegmentRectIntersect( const ISegment& s, float fRectw, float fRecth, const CMatrix& oSquareTM ) = 0;
-	virtual bool	Is2DSegmentRectIntersect( const CVector& S1, const CVector& S2, float fRectw, float fRecth, const CMatrix& oRectTM ) = 0;
+	virtual void	Get2DLineIntersection( const CVector2D& oLine1First, const CVector2D& oLine1Last, const CVector2D& oLine2First, const CVector2D& oLine2Last, CVector2D& oIntersection ) = 0;
+	virtual bool	IsSegmentRectIntersect( const ISegment2D& s, float fRectw, float fRecth, const CMatrix2X2& oSquareTM ) = 0;
+	virtual bool	IsSegmentRectIntersect( const CVector2D& S1, const CVector2D& S2, float fRectw, float fRecth, const CMatrix2X2& oRectTM ) = 0;
 };

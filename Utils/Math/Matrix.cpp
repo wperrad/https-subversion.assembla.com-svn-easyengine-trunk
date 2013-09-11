@@ -820,24 +820,92 @@ void CMatrix::Load( CStringStorage& store )
 {
 }
 
+CMatrix2X2::CMatrix2X2()
+{
+	SetIdentity();
+}
 
-CMatrix2X2::CMatrix2X2( float a00, float a01, float a10, float a11 )
+CMatrix2X2::CMatrix2X2( float a00, float a01, float a02, 
+						float a10, float a11, float a12,
+						float a20, float a21, float a22	)
 {
 	m_00 = a00;
 	m_01 = a01;
+	m_02 = a02;
 	m_10 = a10;
 	m_11 = a11;
+	m_12 = a12;
+	m_20 = a20;
+	m_21 = a21;
+	m_22 = a22;
+}
+
+void CMatrix2X2::SetIdentity()
+{
+	m_00 = 1.f;
+	m_01 = 0.f;
+	m_02 = 0.f;
+	m_10 = 0.f; 
+	m_11 = 1.f;
+	m_12 = 0.f;
+	m_20 = 0.f;
+	m_21 = 0.f;
+	m_22 = 1.f;
 }
 
 CMatrix2X2 CMatrix2X2::GetRotation( float Angle )
 {
 	float fAngleRad = Angle * (float)M_PI / 180.f;
-	return CMatrix2X2(	cosf(fAngleRad)		,	-sinf(fAngleRad),
-						sinf(fAngleRad)		,	cosf(fAngleRad)	); 
+	return CMatrix2X2(	cosf(fAngleRad)		,	-sinf(fAngleRad), 0, 
+						sinf(fAngleRad)		,	cosf(fAngleRad) , 0,
+								0			,			0		, 1 ); 
 }
 
-CVector2D CMatrix2X2::operator*(const CVector2D& v) const
+CVector2D CMatrix2X2::operator*( const CVector2D& v ) const
 {
-	return CVector2D(	m_00*v.m_x + m_01*v.m_y,
-						m_10*v.m_x + m_11*v.m_y );
+	return CVector2D(	m_00 * v.m_x + m_01 * v.m_y + m_02 * v.m_w, 
+						m_10 * v.m_x + m_11 * v.m_y + m_12 * v.m_w );
+}
+
+void CMatrix2X2::GetInverse( CMatrix2X2& oMatrixInv ) const
+{
+	float det = GetDeterminant();
+	oMatrixInv.m_00 = ( m_11 * m_22 - m_12 * m_21 ) / det;
+	oMatrixInv.m_10 = -( m_10 * m_22 - m_12 * m_20 ) / det;
+	oMatrixInv.m_20 = ( m_10 * m_21 - m_11 * m_20 ) / det;
+	oMatrixInv.m_01 = - ( m_01 * m_22 - m_02 * m_21 ) / det;
+	oMatrixInv.m_11 = ( m_00 * m_22 - m_02 * m_20 ) / det;
+	oMatrixInv.m_21 = -( m_00 * m_21 - m_01 * m_20 ) / det;
+	oMatrixInv.m_02 = ( m_01 * m_12 - m_02 * m_11 ) / det;
+	oMatrixInv.m_12 = -( m_00 * m_12 - m_02 * m_10 ) / det;
+	oMatrixInv.m_22 = ( m_00 * m_11 - m_01 * m_10 ) / det;
+}
+
+void CMatrix2X2::AddTranslation( const CVector2D& v )
+{
+	m_02 += v.m_x;
+	m_12 += v.m_y;
+}
+
+float CMatrix2X2::GetDeterminant()const
+{
+	return m_00 * ( m_11 * m_22 - m_12 * m_21 ) - m_01 * ( m_10 * m_22 - m_12 * m_20 ) + m_02 * ( m_10 * m_21 - m_11 * m_20 );
+}
+
+CMatrix2X2 CMatrix2X2::operator*(const CMatrix2X2& mat) const
+{
+	CMatrix2X2 res;
+	res.m_00 = m_00*mat.m_00 + m_01*mat.m_10 + m_02*mat.m_20;
+	res.m_01 = m_00*mat.m_01 + m_01*mat.m_11 + m_02*mat.m_21;
+	res.m_02 = m_00*mat.m_02 + m_01*mat.m_12 + m_02*mat.m_22;
+
+	res.m_10 = m_10*mat.m_00 + m_11*mat.m_10 + m_12*mat.m_20;
+	res.m_11 = m_10*mat.m_01 + m_11*mat.m_11 + m_12*mat.m_21;
+	res.m_12 = m_10*mat.m_02 + m_11*mat.m_12 + m_12*mat.m_22;
+
+	res.m_20 = m_20*mat.m_00 + m_21*mat.m_10 + m_22*mat.m_20;
+	res.m_21 = m_20*mat.m_01 + m_21*mat.m_11 + m_22*mat.m_21;
+	res.m_22 = m_20*mat.m_02 + m_21*mat.m_12 + m_22*mat.m_22;
+
+	return res;
 }

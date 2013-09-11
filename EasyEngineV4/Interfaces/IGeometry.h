@@ -65,6 +65,16 @@ public:
 	//virtual void	SetPoints( const CVector& first, const CVector last ) = 0;
 };
 
+class ISegment2D
+{
+public:
+	virtual ~ISegment2D() = 0{}
+	virtual void	ComputeProjectedPointOnLine( const CVector2D& oPointToProject, CVector2D& oProjectedPoint ) const = 0;
+	virtual float	ComputeDistanceToPoint( const CVector2D& oPoint ) = 0;
+	virtual void	ComputeLineEquation( float& a, float& b, float& c ) const = 0;
+	virtual void	GetPoints( CVector2D& p1, CVector2D& p2 ) const = 0;
+};
+
 class ICylinder
 {
 public:
@@ -79,10 +89,11 @@ public:
 class ICircle
 {
 public:
-	virtual void		Set( const CVector2D& oCenter, float fRadius ) = 0;
-	virtual bool		IsSegmentAtLeftSide( const CVector2D& oStartPoint, const CVector2D& oEndPoint ) const = 0;
-	virtual bool		IsPointIntoCircle( const CVector2D& oPoint ) const = 0;
-	virtual void		ComputeTangent( const CVector2D& oLinePoint, CVector2D& oTangentPoint, bool bLeft ) const = 0;
+	virtual void			Set( const CVector2D& oCenter, float fRadius ) = 0;
+	virtual bool			IsSegmentAtLeftSide( const CVector2D& oStartPoint, const CVector2D& oEndPoint ) const = 0;
+	virtual bool			IsPointIntoCircle( const CVector2D& oPoint ) const = 0;
+	virtual void			ComputeTangent( const CVector2D& oLinePoint, CVector2D& oTangentPoint, bool bLeft ) const = 0;
+	virtual CVector2D&		GetCenter() = 0;
 };
 
 class IGeometryManager : public CPlugin
@@ -95,6 +106,7 @@ public:
 	virtual ISphere*		CreateSphere() = 0;
 	virtual ISphere*		CreateSphere( CVector& oCenter, float fRadius ) = 0;
 	virtual ISegment*		CreateSegment( const CVector& first, const CVector& last ) = 0;
+	virtual ISegment2D*		CreateSegment2D( const CVector2D& first, const CVector2D& last ) = 0;
 	virtual ICylinder*		CreateCylinder( const CVector& oBase, float fRadius, float fHeight ) = 0;
 	virtual ICircle*		CreateCircle( const CVector2D& oCenter, float fRadius ) = 0;
 	virtual int				GetLastCreateBoxID() = 0;
