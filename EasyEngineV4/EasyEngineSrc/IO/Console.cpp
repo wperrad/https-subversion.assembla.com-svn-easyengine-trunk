@@ -39,64 +39,10 @@ m_nLastTickCount( 0 ),
 m_bBlink( false ),
 m_nStaticTextID( -1 )
 {
-
-	//m_pActionManager = oDesc.m_pActionManager;
 	m_oInputManager.AbonneToKeyEvent( static_cast< CPlugin* > ( this ), OnKeyAction );
 	m_xPos = oDesc.xPos;
 	m_yPos = oDesc.yPos;
 	m_sLinePrefix = "> ";
-
-		
-	m_mLetters[ 32 ] = ' ';
-
-	for ( int i = 0; i <=26; i++ )
-		m_mLetters[ i+65 ] = 'a'+ i;
-	for( int i = 0; i < 10; i++ )
-		m_mLetters[ i + 96 ] = '0' + i;
-	m_mLetters[ 48 ] = 'à';
-	m_mLetters[ 49 ] = '&'; 
-	m_mLetters[ 50 ] = 'é';
-	m_mLetters[ 51 ] = '\"';
-	m_mLetters[ 52 ] = '\'';
-	m_mLetters[ 53 ] = '(';
-	m_mLetters[ 54 ] = '-';
-	m_mLetters[ 55 ] = 'è';
-	m_mLetters[ 56 ] = '_';
-	m_mLetters[ 57 ] = 'ç';
-	m_mLetters[ 186 ] = '$';
-	m_mLetters[ 187 ] = '=';
-	m_mLetters[ 188 ] = ',';
-	m_mLetters[ 190 ] = ';';
-	m_mLetters[ 191 ] = ':';
-	m_mLetters[ 192 ] = 'ù';
-	m_mLetters[ 219 ] = ')';
-	m_mLetters[ 220 ] = '*';	
-	m_mLetters[ 223 ] = '!';
-	m_mLetters[ 226 ] = '<';
-	
-
-	m_mShiftLetters[ 48 ] = '0';
-	m_mShiftLetters[ 49 ] = '1'; 
-	m_mShiftLetters[ 50 ] = '2';
-	m_mShiftLetters[ 51 ] = '3';
-	m_mShiftLetters[ 52 ] = '4';
-	m_mShiftLetters[ 53 ] = '5';
-	m_mShiftLetters[ 54 ] = '6';
-	m_mShiftLetters[ 55 ] = '7';
-	m_mShiftLetters[ 56 ] = '8';
-	m_mShiftLetters[ 57 ] = '9';
-	m_mShiftLetters[ 186 ] = '£';
-	m_mShiftLetters[ 187 ] = '+';
-	m_mShiftLetters[ 188 ] = '?';
-	m_mShiftLetters[ 190 ] = '.';
-	m_mShiftLetters[ 191 ] = '/';
-	m_mShiftLetters[ 192 ] = '%';
-	m_mShiftLetters[ 219 ] = '°';
-	m_mShiftLetters[ 220 ] = 'µ';	
-	m_mShiftLetters[ 223 ] = '§';
-	m_mShiftLetters[ 226 ] = '>';
-	for ( int i = 0; i <=26; i++ )
-		m_mShiftLetters[ i+65 ] = 'A'+ i;
 	NewLine();
 }
 
@@ -275,33 +221,20 @@ void CConsole::OnKeyPress( unsigned char key )
 	{
 		sLine.erase( sLine.begin() + m_nCursorPos );
 	}
-	else
+	else if ( key != VK_SHIFT && key != VK_CONTROL && key != VK_MENU && key != 222)
 	{
-		unsigned char c=0;
-		IInputManager::KEY_STATE LShiftPressed = m_oInputManager.GetKeyState( VK_SHIFT );
 		IInputManager::KEY_STATE LCtrlPressed = m_oInputManager.GetKeyState( VK_CONTROL );
-		if ( ( LShiftPressed == IInputManager::JUST_PRESSED ) || ( LShiftPressed == IInputManager::PRESSED ) )
-		{
-			map< unsigned char, unsigned char >::iterator itChar = m_mShiftLetters.find( key );
-			if( itChar != m_mShiftLetters.end() )
-				c = itChar->second;
-			else
-				c = 0;
-		}
-		else if( LCtrlPressed == IInputManager::JUST_PRESSED || LCtrlPressed == IInputManager::PRESSED )
-		{
-			if( m_oInputManager.GetKeyState( VK_SPACE ) == IInputManager::JUST_PRESSED )
-				ManageAutoCompletion();
-		}
+		unsigned char c = 0;
+		if( (LCtrlPressed == IInputManager::JUST_PRESSED || LCtrlPressed == IInputManager::PRESSED) &&
+			( m_oInputManager.GetKeyState( VK_SPACE ) == IInputManager::JUST_PRESSED ))
+			ManageAutoCompletion();
 		else
 		{
-			map< unsigned char, unsigned char >::iterator itChar = m_mLetters.find( key );
-			if( itChar != m_mLetters.end() )
-				c = itChar->second;
-			else if( key == 110 )
-				c = '.';
-			else
-				c = 0;
+			unsigned char kbs[256];
+			GetKeyboardState(kbs);
+			unsigned short ch;
+			ToAscii(key, MapVirtualKey(key, MAPVK_VK_TO_VSC), kbs, &ch, 0);
+			c = char(ch);
 		}
 		if ( c != 0 )
 		{

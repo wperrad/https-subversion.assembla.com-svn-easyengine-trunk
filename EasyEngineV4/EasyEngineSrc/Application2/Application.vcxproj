@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D02F88A6-7E3A-474A-900F-B1175354DD4F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Application</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)\..\EasyEngine\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\..\EasyEngine\$(Configuration)\Intermediate</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)\..\EasyEngine\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\..\EasyEngine\$(Configuration)\Intermediate</IntDir>
+    <TargetExt>.exe</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;APPLICATION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\Interfaces;..\..\..\Utils;..\Utils2</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>math.lib;UtilsEE.lib;Utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\Utils\$(ConfigurationName);..\..\EasyEngine\lib\$(ConfigurationName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;APPLICATION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\Interfaces;..\..\..\Utils;..\Utils2</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\..\..\Utils\$(ConfigurationName);..\..\EasyEngine\lib\$(ConfigurationName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>math.lib;UtilsEE.lib;Utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Interfaces\define.h" />
+    <ClInclude Include="..\..\Interfaces\EEPlugin.h" />
+    <ClInclude Include="..\..\Interfaces\Event.h" />
+    <ClInclude Include="..\..\Interfaces\Exception.h" />
+    <ClInclude Include="..\..\Interfaces\IActionManager.h" />
+    <ClInclude Include="..\..\Interfaces\ICamera.h" />
+    <ClInclude Include="..\..\Interfaces\ICameraManager.h" />
+    <ClInclude Include="..\..\Interfaces\ICollisionManager.h" />
+    <ClInclude Include="..\..\Interfaces\IConsole.h" />
+    <ClInclude Include="..\..\Interfaces\ICore.h" />
+    <ClInclude Include="..\..\Interfaces\IDrawTool.h" />
+    <ClInclude Include="..\..\Interfaces\IEntity.h" />
+    <ClInclude Include="..\..\Interfaces\IEventDispatcher.h" />
+    <ClInclude Include="..\..\Interfaces\IFileSystem.h" />
+    <ClInclude Include="..\..\Interfaces\IGeometry.h" />
+    <ClInclude Include="..\..\Interfaces\IGUIManager.h" />
+    <ClInclude Include="..\..\Interfaces\IInputManager.h" />
+    <ClInclude Include="..\..\Interfaces\ILoader.h" />
+    <ClInclude Include="..\..\Interfaces\INode.h" />
+    <ClInclude Include="..\..\Interfaces\IRenderer.h" />
+    <ClInclude Include="..\..\Interfaces\IRessource.h" />
+    <ClInclude Include="..\..\Interfaces\IScriptManager.h" />
+    <ClInclude Include="..\..\Interfaces\IShader.h" />
+    <ClInclude Include="..\..\Interfaces\ISystems.h" />
+    <ClInclude Include="..\..\Interfaces\ITestMesh.h" />
+    <ClInclude Include="..\..\Interfaces\ITestShaderManager.h" />
+    <ClInclude Include="..\..\Interfaces\IWidget.h" />
+    <ClInclude Include="..\..\Interfaces\IWindow.h" />
+    <ClInclude Include="..\..\Interfaces\IXMLParser.h" />
+    <ClInclude Include="PluginCreation.h" />
+    <ClInclude Include="ScriptRegistration.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ScriptRegistration.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

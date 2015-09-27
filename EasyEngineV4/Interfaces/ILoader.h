@@ -29,6 +29,7 @@ public:
 
 	enum TPixelFormat
 	{
+		ePixelFormatNone = -1,
 		eRGB = 0,
 		eRGBA,
 		eBGR,

@@ -38,7 +38,7 @@ LocalTranslate(2, 0, 150, 300);
 
 CreateNPC("testExport14");
 Stand(27);
-SetEntityPos(27, 1000, 0, 0);
+SetEntityPos(27, -200, 1000, 1000);
 SetEntityName(27, "Entity27");
 
 CreateNPC("testExport14");

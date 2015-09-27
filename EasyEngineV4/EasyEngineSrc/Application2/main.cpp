@@ -34,7 +34,7 @@
 #include "ISystems.h"
 #include "IGeometry.h"
 
-//#define CATCH_EXCEPTION
+#define CATCH_EXCEPTION
 
 using namespace std;
 
@@ -326,13 +326,13 @@ void InitPlugins( string sCmdLine )
 	m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGeometryManagerDesc, "Geometry.dll", "CreateGeometryManager" ) );
 
 	ILoaderManager::Desc oLoaderDesc( *m_pFileSystem, *m_pGeometryManager );
-	m_pLoaderManager =  static_cast< ILoaderManager* >( CPlugin::Create( oLoaderDesc, sDirectoryName + "Loader2.dll", "CreateLoaderManager" ) );
+	m_pLoaderManager =  static_cast< ILoaderManager* >( CPlugin::Create( oLoaderDesc, sDirectoryName + "Loader.dll", "CreateLoaderManager" ) );
 
 	ISystemsManager::Desc oSystemsDesc( *m_pGeometryManager );
 	m_pSystemsManager = static_cast< ISystemsManager* >( CPlugin::Create( oSystemsDesc, sDirectoryName + "Systems.dll", "CreateSystemsManager" ) );
 
 	IRessourceManager::Desc oRessourceManagerDesc( *m_pRenderer, *m_pFileSystem, *m_pLoaderManager, *m_pSystemsManager );
-	m_pRessourceManager = static_cast< IRessourceManager* >( CPlugin::Create( oRessourceManagerDesc, sDirectoryName + "Ressource2.dll", "CreateRessourceManager" ) );
+	m_pRessourceManager = static_cast< IRessourceManager* >( CPlugin::Create( oRessourceManagerDesc, sDirectoryName + "Ressource.dll", "CreateRessourceManager" ) );
 
 	ICollisionManager::Desc oCollisionManagerDesc( *m_pRenderer, *m_pLoaderManager, *m_pGeometryManager );
 	oCollisionManagerDesc.m_pFileSystem = m_pFileSystem;
@@ -355,7 +355,7 @@ void InitPlugins( string sCmdLine )
 	m_pXMLParser = static_cast< IXMLParser* >( CPlugin::Create( oXMLParserDesc, sDirectoryName + "FileUtils.dll", "CreateXMLParser" ) );
 
 	IGUIManager::Desc oGUIManagerDesc( *m_pRenderer, *m_pRessourceManager, *m_pXMLParser, *m_pInputManager );
-	m_pGUIManager = static_cast< IGUIManager* >( CPlugin::Create( oGUIManagerDesc, sDirectoryName + "GUI2.dll", "CreateGUIManager" ) );
+	m_pGUIManager = static_cast< IGUIManager* >( CPlugin::Create( oGUIManagerDesc, sDirectoryName + "GUI.dll", "CreateGUIManager" ) );
 
 	IScriptManager::Desc oScriptManagerDesc( *m_pFileSystem );
 	m_pScriptManager = static_cast< IScriptManager* >( CPlugin::Create( oScriptManagerDesc, sDirectoryName + "Script.dll", "CreateScriptManager" ) );
@@ -366,11 +366,6 @@ void InitPlugins( string sCmdLine )
 	oConsoleDesc.yPos = 100;
 	oConsoleDesc.m_nHeight = 800;
 	m_pConsole = static_cast< IConsole* >( CPlugin::Create( oConsoleDesc, sDirectoryName + "IO.dll", "CreateConsole" ) );
-
-	ICore::Desc oCoreDesc( *m_pRenderer, *m_pFileSystem, *m_pInputManager, *m_pWindow, *m_pEventDispatcher, *m_pRessourceManager, *m_pCameraManager, *m_pSceneManager, *m_pActionManager );
-	oCoreDesc.m_pGUIManager = m_pGUIManager;
-	oCoreDesc.m_sDefaultShader = "PerPixelLighting";
-	m_pCore = static_cast< ICore* >( CPlugin::Create( oCoreDesc, sDirectoryName + "Core2.dll", "CreateCore" ) );
 }
 
 int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine, int nCmdShow )
@@ -387,11 +382,14 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 		ICamera* pFreeCamera = m_pCameraManager->CreateCamera( ICameraManager::T_FREE_CAMERA, 40.f, *m_pEntityManager );
 		m_pCameraManager->SetActiveCamera( pFreeCamera );
 		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 40.f, *m_pEntityManager );
+		const char pAzerty[] = {'Z', 'S', 'Q', 'D'};
+		const char pQwerty[] = {'W', 'S', 'A', 'D'};
+		const char* pCurrent = pQwerty;
 
-		m_pActionManager->AddKeyAction("Avancer" , 'Z');
-		m_pActionManager->AddKeyAction("Reculer" , 'S');
-		m_pActionManager->AddKeyAction("StrafeLeft" , 'Q');
-		m_pActionManager->AddKeyAction("StrafeRight" , 'D');
+		m_pActionManager->AddKeyAction("Avancer" , pCurrent[0]);
+		m_pActionManager->AddKeyAction("Reculer" , pCurrent[1]);
+		m_pActionManager->AddKeyAction("StrafeLeft" , pCurrent[2]);
+		m_pActionManager->AddKeyAction("StrafeRight" , pCurrent[3]);
 		m_pActionManager->AddKeyAction("MoreSpeed" , 'V');
 		m_pActionManager->AddKeyAction("LessSpeed" , 'C');
 		m_pActionManager->AddKeyAction("CameraYaw" , AXIS_H);

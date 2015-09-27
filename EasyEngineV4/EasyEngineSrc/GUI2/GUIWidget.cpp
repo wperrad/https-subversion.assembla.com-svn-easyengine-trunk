@@ -5,6 +5,7 @@
 #include "IRessource.h"
 #include "Exception.h"
 #include "IShader.h"
+#include "IGUIManager.h"
 
 using namespace std;
 

@@ -34,7 +34,7 @@ void IMeshLoader::LoadMeshInfos( CChunk& oChunk, IFileSystem& oFileSystem )
 	{
 		LoadMaterial( oChunk );
 	}
-	catch ( CEOFException& e )
+	catch ( CEOFException& )
 	{
 		m_CurrentFile.Reopen( oFileSystem );
 		string* pTextureName = new string;
@@ -64,7 +64,7 @@ void IMeshLoader::LoadMeshInfos( CChunk& oChunk, IFileSystem& oFileSystem )
 		oChunk.Add(pUVVertexArray, "UVVertexArray");
 		oChunk.Add(pUVIndexArray, "UVIndexArray");
 	}
-	catch (CEOFException& e)
+	catch (CEOFException& )
 	{
 		m_CurrentFile.Reopen( oFileSystem );
 	}

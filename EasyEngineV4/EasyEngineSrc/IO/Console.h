@@ -20,8 +20,6 @@ class IPlugin;
 
 class CConsole : public IConsole
 {
-	std::map< unsigned char, unsigned char >		m_mLetters;
-	std::map< unsigned char, unsigned char >		m_mShiftLetters;
 	bool											m_bIsOpen;
 	std::vector< std::string >						m_vLines;
 	IInputManager&									m_oInputManager;

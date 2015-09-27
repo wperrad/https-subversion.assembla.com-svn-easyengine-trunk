@@ -22,16 +22,13 @@ class IFighterEntity
 
 	virtual IAnimation*			GetCurrentAnimation() = 0;
 	virtual void				OnReceiveHit( IFighterEntity* pEnemy );
-	virtual void				ReceiveHit( IFighterEntity* pEnemy ) = 0;
 	virtual IFighterEntity*		GetFirstEnemy() = 0;
 	virtual IFighterEntity*		GetNextEnemy() = 0;
 	virtual bool				IsHitIntersectEnemySphere( IFighterEntity* pEnemy );
 	virtual bool				IsHitIntersectEnemyBox( IFighterEntity* pEnemy );
 	virtual void				SetLife( int nLife ) = 0;
-	virtual ISphere*			GetBoneSphere( string sBoneName ) = 0;
-	virtual void				OnEndHitAnimation();
-	virtual float				GetBoundingSphereRadius() = 0;
-	virtual IBox*				GetBoundingBox() = 0;
+	virtual void				OnEndHitAnimation();	
+	virtual IBox*				GetBoundingBox() = 0;	
 
 	static void			OnHitAnimationCallback( IAnimation::TEvent e, void* pData );
 	static void			OnHitReceivedAnimationCallback( IAnimation::TEvent e, void* pData );
@@ -50,6 +47,10 @@ public:
 public: // temporaire, à mettre en privé ou protected par la suite
 	
 	virtual CMatrix&			GetWorldTM() = 0;
+	virtual ISphere*			GetBoneSphere( string sBoneName ) = 0;
+	virtual float				GetBoundingSphereRadius() = 0;
+	virtual IMesh*				GetMesh() = 0;
+	virtual void				ReceiveHit( IFighterEntity* pEnemy ) = 0;
 };
 
 #endif // IFIGHTERENTITY_H

@@ -63,6 +63,7 @@ public:
 	void			Load( std::string sFileName, IRessourceInfos& mi ){}
 	void			Export( string sFileName, const ILoader::IRessourceInfos& ri );
 	void			CreateBMPFromData( const vector< unsigned char >& vData, int nWidth, int nHeight, int nBitPerPixel, string sFileName );
+	void			ReadBMP(string sFileName, vector< unsigned char >& vData, int& nWidth, int& nHeight, int& nBitPerPixel);
 };
 
 

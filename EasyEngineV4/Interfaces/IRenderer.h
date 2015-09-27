@@ -56,7 +56,8 @@ public:
 		T_RGB = 0, 
 		T_RGBA,
 		T_BGR,
-		T_BGRA
+		T_BGRA,
+		T_FormatNone
 	};
 
 	enum TRenderType

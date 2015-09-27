@@ -1,8 +1,8 @@
 #include "widget.h"
 #include "../ressource2/Mesh.h"
 #include "listener.h"
-#include "../Renderer2/Renderer.h"
-#include "IShaderManager.h"
+#include "../Renderer/Renderer.h"
+#include "IShader.h"
 
 using namespace std;
 
@@ -83,23 +83,23 @@ void CWidget::UpdateCallback( int nCursorXPos, int nCursorYPos, const unsigned i
 				bIsCursorInWidget = true;
 				if (!_bIsCursorInWidget)
 				{
-					_pListener->ExecuteCallBack( EVENT_MOUSEENTERED );
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEENTERED );
 					_bIsCursorInWidget = true;
 					return;
 				}
 				if ( nButtonState == WM_LBUTTONDOWN )
 				{
-					_pListener->ExecuteCallBack( EVENT_LMOUSECLICK );
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_LMOUSECLICK );
 					return;
 				}
 				if ( nButtonState == WM_LBUTTONUP)
 				{
-					_pListener->ExecuteCallBack( EVENT_LMOUSERELEASED );
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_LMOUSERELEASED );
 					return;
 				}
 				if ( _NextCursorPos.GetX() != nCursorXPos || _NextCursorPos.GetY() != nCursorYPos )
 				{
-					_pListener->ExecuteCallBack( EVENT_MOUSEMOVE);
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEMOVE);
 					_NextCursorPos.SetPosition(static_cast<float> (nCursorXPos), static_cast<float> (nCursorYPos) );
 					return;
 				}				
@@ -107,11 +107,11 @@ void CWidget::UpdateCallback( int nCursorXPos, int nCursorYPos, const unsigned i
 		}	
 		if ( !bIsCursorInWidget && _bIsCursorInWidget )
 		{
-			_pListener->ExecuteCallBack( EVENT_MOUSEEXITED );
+			_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEEXITED );
 			_bIsCursorInWidget = false;
 			return;
 		}
-		_pListener->ExecuteCallBack( EVENT_NONE );
+		_pListener->ExecuteCallBack( IGUIManager::EVENT_NONE );
 	}
 }
 

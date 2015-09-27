@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 // OpenGL
-#include <gl/glaux.h>
 
 // Engine
 #include "textureloader.h"
@@ -25,44 +24,52 @@ CBMPLoader::~CBMPLoader(void)
 }
 
 
-bool CBMPLoader::Load( const string& sFileName, CChunk& chunk, IFileSystem& oFileSystem )
+void CBMPLoader::ReadBMP(string sFileName, vector< unsigned char >& vData, int& nWidth, int& nHeight, int& nBitPerPixel)
 {
-	string sRootDirectory;
-	
-	FILE* pFile = oFileSystem.OpenFile( sFileName, "rb" );
-	if ( pFile )
+	// file header
+	FILE* pFile = fopen(sFileName.c_str(), "rb");
+	char sMagic[3];
+	ZeroMemory(sMagic, 2 * sizeof(char));
+	fread(sMagic, 1, 2, pFile);
+	sMagic[2] = 0;
+	if (strcmp(sMagic, "BM") != 0)
 	{
-		oFileSystem.GetRootDirectory( sRootDirectory );
-		fclose( pFile );
-	}
-	else
-		return false;
-	
-	string sPath;
-	if ( sRootDirectory.size() > 0 )
-		sPath = sRootDirectory + "\\" + sFileName;
-	else
-		sPath = sFileName;
-	AUX_RGBImageRec* pImage = auxDIBImageLoadA( sPath.c_str() );
-	if ( pImage == NULL )
-	{
-		string sMessage = sFileName + " not found";
-		exception e( sMessage.c_str() );
+		CFileNotFoundException e(sFileName);
 		throw e;
 	}
-	size_t size = pImage->sizeX * pImage->sizeY * 3;
-	unsigned char* pTexels = new unsigned char[size];
-	memcpy(pTexels , pImage->data , size);
-	CDimension* pDim = new CDimension(static_cast<float> (pImage->sizeX) , static_cast<float> (pImage->sizeY) );
-	TPixelFormat* pPixelFormat = new TPixelFormat;
-	*pPixelFormat = eRGB ;
+	int nDataSize = 0;
+	fread(&nDataSize, 4, 1, pFile);
+	int id = 0;
+	fread(&id, 1, 2, pFile);
+	fread(&id, 1, 2, pFile);
+	int DataAdress = 0;
+	//int nDataAdressOffset = ftell(pFile);
+	fread(&DataAdress, 4, 1, pFile);
 
-	chunk.Add(pTexels, "Texels");
-	chunk.Add(pDim, "Dimensions");
-	chunk.Add(pPixelFormat, "Pixels format");
+	// image header
+	int nHeaderSize = 0;
+	fread(&nHeaderSize, 4, 1, pFile);
+	fread(&nWidth, 4, 1, pFile);
+	fread(&nHeight, 4, 1, pFile);
+	int nPlanes = 1;
+	fread(&nPlanes, 2, 1, pFile);
+	fread(&nBitPerPixel, 2, 1, pFile);
+	int zero = 0;
+	fread(&zero, sizeof(int), 1, pFile);
+	int nImageSize = 0;
+	fread(&nImageSize, sizeof(int), 1, pFile);
+	int nResw = 0, nResh = 0;
+	fread(&nResw, sizeof(int), 1, pFile);
+	fread(&nResh, sizeof(int), 1, pFile);
+	fread(&zero, sizeof(int), 1, pFile);
+	fread(&zero, sizeof(int), 1, pFile);
 
-	delete(pImage);
-	return true;
+	// Pixel data
+	vData.resize(nImageSize);
+	fread(&vData[0], sizeof(unsigned char), nImageSize, pFile);
+
+	// complete
+	fclose(pFile);
 }
 
 void CBMPLoader::Load( string sFileName, IRessourceInfos& ri, IFileSystem& oFileSystem )
@@ -80,22 +87,27 @@ void CBMPLoader::Load( string sFileName, IRessourceInfos& ri, IFileSystem& oFile
 			sPath = sRootDirectory + "\\" + sFileName;
 		else
 			sPath = sFileName;
-		AUX_RGBImageRec* pImage = auxDIBImageLoadA( sPath.c_str() );
-		if ( pImage == NULL )
-		{
-			string sMessage = sFileName + " not found";
-			exception e( sMessage.c_str() );
-			throw e;
-		}
-		size_t size = pImage->sizeX * pImage->sizeY * 3;
+		vector< unsigned char > vData;
+		int nBitPerPixel = 0;
+		ReadBMP(sPath, vData, pTI->m_nWidth, pTI->m_nHeight, nBitPerPixel);
+		size_t size = pTI->m_nWidth * pTI->m_nHeight * nBitPerPixel / 8;
 		pTI->m_vTexels.resize( size );
-		memcpy( &pTI->m_vTexels[ 0 ], pImage->data , size );
-		pTI->m_nWidth = pImage->sizeX;
-		pTI->m_nHeight = pImage->sizeY;
-		pTI->m_ePixelFormat = eRGB;
+		memcpy(&pTI->m_vTexels[0], &vData[0], size);
+		switch(nBitPerPixel)
+		{
+		case 24:
+			pTI->m_ePixelFormat = eBGR;
+			break;
+		case 32:
+			pTI->m_ePixelFormat = eBGRA;
+			break;
+		default:
+			pTI->m_ePixelFormat = ePixelFormatNone;
+			break;
+		}
+		
 		if( pTI->m_bFlip )
 			FlipImage( *pTI );
-		delete(pImage);
 	}
 	else
 	{
