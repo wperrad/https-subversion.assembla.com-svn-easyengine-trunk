@@ -108,18 +108,20 @@ INT_PTR CALLBACK CBinaryMeshMaxExporter::ExportDlgProc(HWND hWnd, UINT msg, WPAR
 
 int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Interface *pInterface, BOOL suppressPrompts, DWORD options )
 {
-	IGeometryManager::Desc oGMDesc( NULL, "" );
-	m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGMDesc, "Geometry.dll", "CreateGeometryManager" ) );
-
-	string sFileName = pName;
-	int nDotPos = (int)sFileName.find_last_of( "." );
-	string sExtension = sFileName.substr( nDotPos + 1, sFileName.size() - nDotPos - 1 );
-	string sExtensionLower = sExtension;
-	transform( sExtension.begin(), sExtension.end(), sExtensionLower.begin(), tolower );
-	sExtension = sExtensionLower;
-
 	try
 	{
+
+		IGeometryManager::Desc oGMDesc( NULL, "" );
+		m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGMDesc, "Geometry.dll", "CreateGeometryManager" ) );
+
+		string sFileName = pName;
+		int nDotPos = (int)sFileName.find_last_of( "." );
+		string sExtension = sFileName.substr( nDotPos + 1, sFileName.size() - nDotPos - 1 );
+		string sExtensionLower = sExtension;
+		transform( sExtension.begin(), sExtension.end(), sExtensionLower.begin(), tolower );
+		sExtension = sExtensionLower;
+
+
 		map< string, INode* > mBones;
 		
 		map< int, INode* > mBoneByID;
@@ -581,7 +583,7 @@ bool CBinaryMeshMaxExporter::DumpModels( const string& sFilePath, ILoader::CAnim
 	IFileSystem::Desc oFSDesc( NULL, "" );
 	IFileSystem* pFileSystem = static_cast< IFileSystem* >( CPlugin::Create( oFSDesc, "FileUtils.dll", "CreateFileSystem" ) );
 	ILoaderManager::Desc oLDesc( *pFileSystem, *m_pGeometryManager );
-	ILoaderManager* pLoaderManager = static_cast< ILoaderManager* >(  CPlugin::Create( oLDesc, "Loader2.dll", "CreateLoaderManager" ) );
+	ILoaderManager* pLoaderManager = static_cast< ILoaderManager* >(  CPlugin::Create( oLDesc, "Loader.dll", "CreateLoaderManager" ) );
 	pLoaderManager->Export( sFilePath, ami );
 	return bRet;
 }

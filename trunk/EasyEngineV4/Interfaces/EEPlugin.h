@@ -59,7 +59,7 @@ public:
 		return pPlugin;
 	}
 
-	static CPlugin* Create( const CPlugin::Desc& oDesc, const std::string& sDllPath, const std::string& sFuncName )
+	static CPlugin* Create( const CPlugin::Desc& oDesc, std::string sDllPath, const std::string& sFuncName )
 	{
 		HMODULE hDll = LoadLibrary( sDllPath.c_str() );
 		if ( !hDll )

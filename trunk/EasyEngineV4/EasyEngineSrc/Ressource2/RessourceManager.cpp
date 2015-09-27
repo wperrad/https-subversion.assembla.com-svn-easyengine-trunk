@@ -379,12 +379,29 @@ IRessource* CRessourceManager::CreateTexture( string sFileName, CRessourceManage
 	ILoader::CTextureInfos ti;
 	pRessourceManager->m_oLoaderManager.LoadTexture( sFileName, ti );
 	ti.m_sFileName = sFileName;
-	IRenderer::TPixelFormat format;
-	
-	if ( ti.m_ePixelFormat == ILoader::eRGB )
+	IRenderer::TPixelFormat format = IRenderer::T_FormatNone;
+	switch(ti.m_ePixelFormat)
+	{
+	case ILoader::eRGB:
 		format = IRenderer::T_RGB;
-	if ( ti.m_ePixelFormat == ILoader::eRGBA )
+		break;
+	case ILoader::eRGBA:
 		format = IRenderer::T_RGBA;
+		break;
+	case ILoader::eBGR:
+		format = IRenderer::T_BGR;
+		break;
+	case ILoader::eBGRA:
+		format = IRenderer::T_BGRA;
+		break;
+	default:
+		{
+			ostringstream oss;
+			oss << "Error : \"" << sFileName << "\" : Bad Texture format";
+			CRessourceException e(oss.str());
+			throw e;
+		}
+	}	
 
 	CTexture2D::CDesc desc( oRenderer, NULL, 0 );
 	desc.m_nWidth = ti.m_nWidth;

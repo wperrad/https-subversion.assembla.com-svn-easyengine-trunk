@@ -1,9 +1,9 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
-#include "Container.h"
-#include "../LogicalGUI/Position.h"
-#include "../LogicalGUI/Dimension.h"
+#include "../Utils2/Position.h"
+#include "../Utils2/Dimension.h"
+#include <string>
 
 class CMesh;
 class CListener;

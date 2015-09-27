@@ -105,7 +105,7 @@ void CLoaderManager::Export( string sFileName, const ILoader::IRessourceInfos& r
 		{
 			itLoader->second->Export( sFilePath, ri );
 		}
-		catch( CFileNotFoundException& e )
+		catch( CFileNotFoundException&  )
 		{
 			itLoader->second->Export( sFileName, ri );
 		}

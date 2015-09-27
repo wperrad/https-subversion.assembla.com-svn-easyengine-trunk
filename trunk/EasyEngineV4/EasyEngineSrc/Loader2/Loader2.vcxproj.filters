@@ -74,6 +74,9 @@
     <ClInclude Include="Loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Loader2API.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="LoaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -1,11 +1,3 @@
-#ifndef LISTENER_CPP
-#ifndef GUIMANAGER_CPP
-#ifndef GUIWIDGET_CPP
-#error
-#endif
-#endif
-#endif
-
 #ifndef LISTENER_H
 #define LISTENER_H
 

@@ -79,8 +79,7 @@ void CFightSystem::Update()
 	IAEntity* pFighter = m_oEntityManager.GetFirstIAEntity();
 	while( pFighter )
 	{
-		if( !pFighter->IsPerso() )
-			pFighter->UpdateFightState();
+		pFighter->UpdateFightState();
 		pFighter = m_oEntityManager.GetNextIAEntity();
 	}
 }

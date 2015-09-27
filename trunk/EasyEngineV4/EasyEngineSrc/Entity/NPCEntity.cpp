@@ -164,6 +164,7 @@ IBox* CNPCEntity::GetFirstCollideBox()
 IBox* CNPCEntity::GetNextCollideBox()
 {
 	IEntity* pEntity = m_pEntityManager->GetNextCollideEntity();
+	IBox* pBoxRet = NULL;
 	if( pEntity )
 	{
 		if( pEntity == this )
@@ -173,24 +174,31 @@ IBox* CNPCEntity::GetNextCollideBox()
 		{
 			string sAnimationName;
 			pEntity->GetCurrentAnimation()->GetName( sAnimationName );
-			return pMesh->GetAnimationBBox( sAnimationName );
+			pBoxRet = pMesh->GetAnimationBBox( sAnimationName );
 		}
 		else
 		{
 			IBox* pBox = m_oGeometryManager.CreateBox( *pMesh->GetBBox() );
 			pBox->SetWorldMatrix( pEntity->GetWorldMatrix() );
-			return pBox;
+			pBoxRet = pBox;
 		}
 	}
-	return NULL;
+	return pBoxRet;
 }
 
 void CNPCEntity::ComputePathFind2D( const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints )
 {
-	unsigned float fNearestDistance = -1.f;
+	float fDestinationDistance = (oOrigin - oDestination).Norm() - m_pBBox->ComputeBoundingCylinderRadius( IBox::eAxisY );
+	if(fDestinationDistance < 0)
+	{
+		vPoints.push_back(oDestination);
+		return;
+	}
+	
+	float fNearestDistance = -1.f;
 	IBox* pNearestCollideBox = NULL;
 	
-	unsigned float fBoundingCylinderRadius = -1.f;
+	float fBoundingCylinderRadius = -1.f;
 	CVector2D oCircleCenter;
 	IBox* pCollideBox = GetFirstCollideBox();
 	while( pCollideBox )
@@ -235,15 +243,11 @@ void CNPCEntity::ComputePathFind2D( const CVector2D& oOrigin, const CVector2D& o
 								oBoxTM.m_20	, oBoxTM.m_22	, oBoxTM.m_23,
 								0			,	0			,		1	);
 			if( m_oCollisionManager.IsSegmentRectIntersect( oOrigin, oDestination, pNearestCollideBox->GetDimension().m_x, pNearestCollideBox->GetDimension().m_z, oRectTM ) )
-			{
-				int test = 0;
 				vPoints.push_back( oDestination ); // temporaire
-			}
-			else
-				vPoints.push_back( oDestination );
+			else 
+				vPoints.push_back( oDestination );			
 		}
 	}
 	else
 		vPoints.push_back( oDestination );
-
 }

@@ -650,9 +650,9 @@ int CRenderer::CreateTexture2D( vector< unsigned char>& vTexel, int nWidth, int 
 	glGenTextures( 1, &nTextureID);
 	glBindTexture( GL_TEXTURE_2D, nTextureID );
 	GLint nInternalFormat;
-	if ( format == T_RGB )
+	if ( format == T_RGB || format == T_BGR)
 		nInternalFormat = 3;
-	if (format == T_RGBA )
+	if (format == T_RGBA || format == T_BGRA)
 		nInternalFormat = 4;
 	if( nWidth * nHeight * nInternalFormat != vTexel.size() )
 	{

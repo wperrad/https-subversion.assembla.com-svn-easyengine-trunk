@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
-#include <mysql/mysql.h>
+#include "mysql/include/mysql.h"
 
 using namespace std;
 

@@ -2,8 +2,9 @@
 #define IWINDOW_H
 
 #include "IWidget.h"
-#include "WindowsGUI/Menu2.h"
 #include "IEventDispatcher.h"
+
+class CMenu2;
 
 typedef LRESULT ( *WINDOWCALLBACK )( IWidget*, UINT, WPARAM, LPARAM );
 

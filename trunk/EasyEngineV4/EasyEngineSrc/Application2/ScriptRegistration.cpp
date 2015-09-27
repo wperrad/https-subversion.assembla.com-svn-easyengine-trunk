@@ -439,7 +439,14 @@ void SetCurrentPerso( IScriptState* pState )
 {
 	CScriptFuncArgInt* pPersoID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	IEntity* pPerso = m_pEntityManager->GetEntity( pPersoID->m_nValue );
-	m_pEntityManager->SetPerso( pPerso );
+	if(pPerso)
+		m_pEntityManager->SetPerso( pPerso );
+	else
+	{
+		ostringstream oss;
+		oss << "Erreur : SetCurrentPerso(" << pPersoID->m_nValue << ") -> Id not exists";
+		m_pConsole->Print(oss.str());
+	}		
 }
 
 void SetGravity( IScriptState* pState )

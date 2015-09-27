@@ -10,7 +10,7 @@
 #include "Ressource2API.h"
 #include "math/matrix.h"
 
-class RESSOURCE2_API CCamera
+class CCamera
 {
 	CMatrix							m_matRotation;
 	CMatrix							m_matTranslation;
