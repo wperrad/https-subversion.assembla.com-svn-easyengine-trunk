@@ -4,7 +4,7 @@
 #include "ILoader.h"
 #include "HeightMap.h"
 #include "IGeometry.h"
-#include "RenderUtils.h"
+#include "Utils2/RenderUtils.h"
 
 IMesh* CCollisionManager::s_pMesh = NULL;
 

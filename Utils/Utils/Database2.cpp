@@ -53,7 +53,7 @@ void CDatabase2::SQLTest( SQLRETURN ret, string sMsg )
 
 int CDatabase2::GetRowCount()
 {
-	SQLINTEGER nb = 0;
+	SQLLEN nb = 0;
 	SQLTest( SQLRowCount ( m_hstmt, &nb), "Erreur lors de l'exécution de GetRowCount()" );
 	return nb;
 }

@@ -6,7 +6,7 @@
 #include "IFileSystem.h"
 #include "Renderer.h"
 #include "Math/Matrix.h"
-#include "StringUtils.h"
+#include "Utils2/StringUtils.h"
 
 
 #include <map>

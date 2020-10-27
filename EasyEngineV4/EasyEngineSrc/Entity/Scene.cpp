@@ -8,8 +8,8 @@
 #include "LightEntity.h"
 #include "ICollisionManager.h"
 #include "ISystems.h"
-#include "StringUtils.h"
-#include "TimeManager.h"
+#include "Utils2/StringUtils.h"
+#include "Utils2/TimeManager.h"
 
 using namespace std;
 

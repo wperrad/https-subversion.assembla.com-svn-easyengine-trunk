@@ -476,7 +476,7 @@ void CBMELoader::ExportAnimatableMeshInfos( CAsciiFileStorage& store, const ILoa
 	store.SetWidth( 0 );
 	ExportSkeleton( ami, store );
 	ExportBonesBoundingBoxes( ami.m_mBonesBoundingBoxes, store );
-	store << "\n\nMesh count = " << ami.m_vMeshes.size();
+	store << "\n\nMesh count = " << (unsigned int) ami.m_vMeshes.size();
 
 	for( unsigned int i = 0; i < ami.m_vMeshes.size(); i++ )
 		ExportMeshInfos( ami.m_vMeshes[ i ], store );
@@ -636,7 +636,7 @@ void CBMELoader::ExportKeyBoundingBoxesInfos( const map< string, map< int, IBox*
 		{
 			fs << itAnim->first;
 			const map< int, IBox* >& oKeyBoxes = itAnim->second;
-			fs << oKeyBoxes.size();
+			fs << (unsigned int) oKeyBoxes.size();
 			for( map< int, IBox* >::const_iterator itBox = oKeyBoxes.begin(); itBox != oKeyBoxes.end(); itBox++ )
 			{
 				fs << itBox->first;

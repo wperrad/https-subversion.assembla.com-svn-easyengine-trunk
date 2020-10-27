@@ -41,6 +41,7 @@ class CConsole : public IConsole
 	int												m_nLastTickCount;
 	bool											m_bBlink;
 	int												m_nStaticTextID;
+	int												m_nConsoleShortCut;
 
 	void											OnKeyPress( unsigned char key );
 	void											OnKeyRelease( unsigned char key );
@@ -69,6 +70,8 @@ public:
 	void											Open( bool bOpen );
 	void											Print( string s );
 	void											SetBlink( bool blink );
+	int												GetConsoleShortCut();
+	void											SetConsoleShortCut(int key);
 };
 
 extern "C" _declspec(dllexport) IConsole* CreateConsole( IConsole::Desc& oDesc );

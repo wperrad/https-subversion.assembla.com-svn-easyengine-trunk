@@ -3,7 +3,7 @@
 
 #include "Math/Matrix.h"
 #include "Math/Quaternion.h"
-#include "Node.h"
+#include "Utils2/Node.h"
 #include "EEPlugin.h"
 #include <string>
 

@@ -2,7 +2,7 @@
 
 #include "material.h"
 #include "Exception.h"
-#include "../Loader2/AseLoader.h"
+#include "Loader/AseLoader.h"
 #include "Texture.h"
 #include "IShader.h"
 

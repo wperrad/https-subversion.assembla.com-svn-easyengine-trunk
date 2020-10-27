@@ -37,7 +37,8 @@ m_bCursorBlinkState( true ),
 m_nLastMillisecondCursorStateChanged( 0 ),
 m_nLastTickCount( 0 ),
 m_bBlink( false ),
-m_nStaticTextID( -1 )
+m_nStaticTextID( -1 ),
+m_nConsoleShortCut( 0 )
 {
 	m_oInputManager.AbonneToKeyEvent( static_cast< CPlugin* > ( this ), OnKeyAction );
 	m_xPos = oDesc.xPos;
@@ -221,7 +222,7 @@ void CConsole::OnKeyPress( unsigned char key )
 	{
 		sLine.erase( sLine.begin() + m_nCursorPos );
 	}
-	else if ( key != VK_SHIFT && key != VK_CONTROL && key != VK_MENU && key != 222)
+	else if ( key != VK_SHIFT && key != VK_CONTROL && key != VK_MENU && key != m_nConsoleShortCut)
 	{
 		IInputManager::KEY_STATE LCtrlPressed = m_oInputManager.GetKeyState( VK_CONTROL );
 		unsigned char c = 0;
@@ -347,6 +348,17 @@ void CConsole::Print( string s )
 	AddString( s );
 	NewLine();
 }
+
+int CConsole::GetConsoleShortCut()
+{
+	return m_nConsoleShortCut;
+}
+
+void CConsole::SetConsoleShortCut(int key)
+{
+	m_nConsoleShortCut = key;
+}
+
 
 extern "C" _declspec(dllexport) IConsole* CreateConsole( IConsole::Desc& oDesc )
 {

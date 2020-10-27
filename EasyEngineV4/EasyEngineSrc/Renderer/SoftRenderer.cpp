@@ -1,7 +1,7 @@
 #include "SoftRenderer.h"
 #include "MeshBuffer.h"
-#include "DebugTool.h"
-#include "RenderUtils.h"
+#include "Utils2/DebugTool.h"
+#include "Utils2/RenderUtils.h"
 
 // gl
 #include <gl/gl.h>

@@ -38,6 +38,8 @@ public:
 	virtual void	Open( bool bOpen ) = 0;
 	virtual void	Cls() = 0;
 	virtual void	Print( string s ) = 0;
+	virtual int		GetConsoleShortCut() = 0;
+	virtual void	SetConsoleShortCut(int key) = 0;
 };
 
 #endif // _ICONSOLE_H_

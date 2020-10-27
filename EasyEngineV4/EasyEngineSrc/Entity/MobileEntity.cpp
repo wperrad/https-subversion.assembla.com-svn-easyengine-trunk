@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "ICollisionManager.h"
 #include "IGeometry.h"
-#include "TimeManager.h"
+#include "Utils2/TimeManager.h"
 #include "Scene.h"
 
 map< string, IEntity::TAnimation >			CMobileEntity::s_mAnimationStringToType;
