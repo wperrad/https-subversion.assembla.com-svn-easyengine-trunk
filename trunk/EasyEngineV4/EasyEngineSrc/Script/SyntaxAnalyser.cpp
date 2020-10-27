@@ -167,6 +167,11 @@ void CSyntaxAnalyser::ReduceOperations( CSyntaxNode& oNode, const vector< CLexAn
 		ReduceOperations( oNode.m_vChild[ i ], vType );
 }
 
+int min(int a, int b)
+{
+	return a < b ? a : b;
+}
+
 void GetParenthesisIndices( const vector< CSyntaxNode >& vNode, int& iBegin, int& iEnd, unsigned int iFirst = 0, unsigned int iLast = -1 )
 {
 	int lPar = 0;

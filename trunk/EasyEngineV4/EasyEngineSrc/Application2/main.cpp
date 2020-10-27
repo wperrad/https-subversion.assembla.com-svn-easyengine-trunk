@@ -193,15 +193,10 @@ void OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE s
 	switch( state )
 	{
 	case IInputManager::JUST_PRESSED:
-		switch( key )
-		{
-		case VK_TAB:
-			SetGUIMode( !m_bGUIMode );
-			break;
-		case 222:
-			m_pConsole->Open( !m_pConsole->IsOpen() );
-			break;
-		}
+		if(key == VK_TAB)
+			SetGUIMode(!m_bGUIMode);
+		else if(key == m_pConsole->GetConsoleShortCut())
+			m_pConsole->Open(!m_pConsole->IsOpen());
 	}
 }
 
@@ -299,7 +294,7 @@ void InitPlugins( string sCmdLine )
 	IEventDispatcher::Desc oEventDispatcherDesc( NULL, "Event dispatcher " );
 	m_pEventDispatcher = static_cast< IEventDispatcher* >( CPlugin::Create( oEventDispatcherDesc, sDirectoryName + "WindowsGUI.dll", "CreateEventDispatcher" ) );
 
-	int nResX = 1280, nResY = 1024;
+	int nResX = 1920, nResY = 1080;
 
 	IInputManager::Desc oInputManagerDesc( *m_pEventDispatcher );
 	oInputManagerDesc.m_nResX = nResX;
@@ -366,6 +361,7 @@ void InitPlugins( string sCmdLine )
 	oConsoleDesc.yPos = 100;
 	oConsoleDesc.m_nHeight = 800;
 	m_pConsole = static_cast< IConsole* >( CPlugin::Create( oConsoleDesc, sDirectoryName + "IO.dll", "CreateConsole" ) );
+	m_pConsole->SetConsoleShortCut(192);
 }
 
 int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine, int nCmdShow )

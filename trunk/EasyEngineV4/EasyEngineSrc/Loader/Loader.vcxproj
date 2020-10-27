@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{62B04933-84EC-4B2E-8F59-CF3603A26D3A}</ProjectGuid>
+    <ProjectGuid>{9646310A-B0CA-464C-AF46-BABFBE9302B2}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Collision</RootNamespace>
+    <RootNamespace>Loader2</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -87,7 +87,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;COLLISION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LOADER2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -100,13 +100,13 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;COLLISION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\Interfaces;..\..\..\utils\;..\..\;..</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;LOADER2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\Interfaces;..\..\..\utils\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>math.lib;Utils2.lib;Utils.lib;glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>math.lib;Utils2.lib;Utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\utils\x64\$(Configuration);..\x64\$(Configuration)</AdditionalLibraryDirectories>
       <OutputFile>..\..\EasyEngine\$(ConfigurationName)\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
@@ -119,7 +119,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;COLLISION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LOADER2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,23 +136,41 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;COLLISION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;LOADER2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <OutputFile>..\..\EasyEngine\$(ConfigurationName)\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CollisionManager.h" />
-    <ClInclude Include="HeightMap.h" />
+    <ClInclude Include="AHMOLoader.h" />
+    <ClInclude Include="ASELoader.h" />
+    <ClInclude Include="ASMELoader.h" />
+    <ClInclude Include="BKELoader.h" />
+    <ClInclude Include="BMELoader.h" />
+    <ClInclude Include="BSELoader.h" />
+    <ClInclude Include="LightLoader.h" />
+    <ClInclude Include="Loader.h" />
+    <ClInclude Include="Loader2API.h" />
+    <ClInclude Include="LoaderManager.h" />
+    <ClInclude Include="MeshLoader.h" />
+    <ClInclude Include="TextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CollisionManager.cpp" />
-    <ClCompile Include="HeightMap.cpp" />
+    <ClCompile Include="AHMOLoader.cpp" />
+    <ClCompile Include="AseLoader.cpp" />
+    <ClCompile Include="ASMELoader.cpp" />
+    <ClCompile Include="BKELoader.cpp" />
+    <ClCompile Include="BMELoader.cpp" />
+    <ClCompile Include="BSELoader.cpp" />
+    <ClCompile Include="ILoader.cpp" />
+    <ClCompile Include="LightLoader.cpp" />
+    <ClCompile Include="LoaderManager.cpp" />
+    <ClCompile Include="MeshLoader.cpp" />
+    <ClCompile Include="TextureLoader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

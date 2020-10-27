@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{62B04933-84EC-4B2E-8F59-CF3603A26D3A}</ProjectGuid>
+    <ProjectGuid>{F8746752-77AC-4A3B-8BC6-246B49F9542A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Collision</RootNamespace>
+    <RootNamespace>Entity</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -87,7 +87,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;COLLISION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ENTITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -100,7 +100,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;COLLISION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;ENTITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\Interfaces;..\..\..\utils\;..\..\;..</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -119,7 +119,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;COLLISION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;ENTITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,7 +136,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;COLLISION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;ENTITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -147,12 +147,52 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CollisionManager.h" />
-    <ClInclude Include="HeightMap.h" />
+    <ClInclude Include="BoxEntity.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="CameraManager.h" />
+    <ClInclude Include="CylinderEntity.h" />
+    <ClInclude Include="Entity.h" />
+    <ClInclude Include="EntityManager.h" />
+    <ClInclude Include="FighterEntity.h" />
+    <ClInclude Include="FightSystem.h" />
+    <ClInclude Include="FreeCamera.h" />
+    <ClInclude Include="IAEntity.h" />
+    <ClInclude Include="LightEntity.h" />
+    <ClInclude Include="LineEntity.h" />
+    <ClInclude Include="LinkedCamera.h" />
+    <ClInclude Include="MobileEntity.h" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="NPCEntity.h" />
+    <ClInclude Include="PathFinder.h" />
+    <ClInclude Include="Repere.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneManager.h" />
+    <ClInclude Include="Shape.h" />
+    <ClInclude Include="SphereEntity.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CollisionManager.cpp" />
-    <ClCompile Include="HeightMap.cpp" />
+    <ClCompile Include="BoxEntity.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CameraManager.cpp" />
+    <ClCompile Include="CylinderEntity.cpp" />
+    <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="FighterEntity.cpp" />
+    <ClCompile Include="FightSystem.cpp" />
+    <ClCompile Include="FreeCamera.cpp" />
+    <ClCompile Include="IAEntity.cpp" />
+    <ClCompile Include="IEntity.cpp" />
+    <ClCompile Include="LightEntity.cpp" />
+    <ClCompile Include="LineEntity.cpp" />
+    <ClCompile Include="LinkedCamera.cpp" />
+    <ClCompile Include="MobileEntity.cpp" />
+    <ClCompile Include="NPCEntity.cpp" />
+    <ClCompile Include="PathFinder.cpp" />
+    <ClCompile Include="Repere.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
+    <ClCompile Include="Shape.cpp" />
+    <ClCompile Include="SphereEntity.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,12 +1,10 @@
 #ifndef ISOCKET_H
 #define ISOCKET_H
 
-//#include <winsock2.h>
-//#include <windows.h>
+#include <winsock2.h>
+#include <windows.h>
 #include <string>
 
-typedef _W64 unsigned int UINT_PTR, *PUINT_PTR;
-typedef UINT_PTR        SOCKET;
 
 class ISocket
 {
