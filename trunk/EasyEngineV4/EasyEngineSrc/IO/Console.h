@@ -52,6 +52,8 @@ class CConsole : public IConsole
 	void											ManageAutoCompletion();
 	void											UpdateBlink( int nFontHeight );
 	void											OnPressEnter();	
+	bool											m_bHasToUpdateStaticTest;
+	bool											m_bInputEnabled;
 	
 	static void										OnKeyAction( CPlugin*, unsigned int key, IInputManager::KEY_STATE );	
 
@@ -68,10 +70,12 @@ public:
 	void											Close();
 	void											Cls();
 	void											Open( bool bOpen );
-	void											Print( string s );
+	void											Print(string s);
+	void											Println(string s);
 	void											SetBlink( bool blink );
 	int												GetConsoleShortCut();
 	void											SetConsoleShortCut(int key);
+	void											EnableInput(bool enable);
 };
 
 extern "C" _declspec(dllexport) IConsole* CreateConsole( IConsole::Desc& oDesc );

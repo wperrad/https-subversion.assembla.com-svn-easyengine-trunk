@@ -41,6 +41,7 @@ extern CDebugTool*			m_pDebugTool;
 extern IGeometryManager*	m_pGeometryManager;
 extern IEntity*				m_pRepere;
 extern bool					m_bRenderScene;
+extern IEventDispatcher*	m_pEventDispatcher;
 
 
 enum TObjectType
@@ -69,27 +70,27 @@ IEntity* LoadEntity( string sName )
 		pEntity = m_pEntityManager->CreateEntity( sName, "", *m_pRenderer );
 		ostringstream oss;
 		oss << "L'entité \"" << sName << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	catch( CFileNotFoundException& e )
 	{		
 		string sMessage = string( "Erreur : fichier \"" ) + e.m_sFileName + "\" manquant.";
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	catch( CRessourceException& e )
 	{
 		string s;
 		e.GetErrorMessage( s );
-		m_pConsole->Print( s );
+		m_pConsole->Println( s );
 	}
 	catch( CBadFileFormat )
 	{
-		m_pConsole->Print( "Mauvais format de fichier, essayez de le réexporter" );
+		m_pConsole->Println( "Mauvais format de fichier, essayez de le réexporter" );
 	}
 	catch( CEException )
 	{
 		string sMessage = string( "\"" ) + sName + "\" introuvable";
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 	return pEntity;
@@ -97,7 +98,7 @@ IEntity* LoadEntity( string sName )
 
 void DisplayFov( IScriptState* pState )
 {
-	m_pConsole->Print( "Fonction pas encore implémentée" );
+	m_pConsole->Println( "Fonction pas encore implémentée" );
 }
 
 void SetFov( IScriptState* pState )
@@ -117,7 +118,7 @@ void SetEntityName( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : Entité " << pEntityID->m_nValue << " inconnue";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 }
 
@@ -136,14 +137,14 @@ void Goto( IScriptState* pState )
 		{
 			ostringstream oss;
 			oss << "Erreur : Entité " << pEntityID->m_nValue << " introuvable";
-			m_pConsole->Print( oss.str() );
+			m_pConsole->Println( oss.str() );
 		}
 	}
 	catch( CEException& e )
 	{
 		string sMessage;
 		e.GetErrorMessage( sMessage );
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 }
 
@@ -168,7 +169,7 @@ void CreateBox( IScriptState* pState )
 	pBox->Link( m_pScene );
 	ostringstream oss;
 	oss << "La boite a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pBox ) << ".";
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void CreateSphere( IScriptState* pState )
@@ -179,7 +180,7 @@ void CreateSphere( IScriptState* pState )
 	pSphereEntity->Link( m_pScene );
 	ostringstream oss;
 	oss << "La sphere a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pSphereEntity ) << ".";
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void CreateRepere( IScriptState* pState )
@@ -187,7 +188,7 @@ void CreateRepere( IScriptState* pState )
 	IEntity* pRepere = m_pEntityManager->CreateRepere( *m_pRenderer );
 	ostringstream oss;
 	oss << "Le repère a été créé avec l'identifiant " << m_pEntityManager->GetEntityID( pRepere )  << ".";
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void Test( IScriptState* pState )
@@ -251,7 +252,7 @@ void SetPreferedKeyBBox( IScriptState* pState )
 		m_pLoaderManager->Export( sFileName, ami );
 	}
 	else
-		m_pConsole->Print( "L'objet entré en argument n'existe pas dans le fichier indiqué" );
+		m_pConsole->Println( "L'objet entré en argument n'existe pas dans le fichier indiqué" );
 }
 
 void ComputeKeysBoundingBoxes( IScriptState* pState )
@@ -409,7 +410,7 @@ void LocalTranslate( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : entité " << pEntityID->m_nValue << " introuvable";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 }
 
@@ -426,7 +427,7 @@ void SetCameraType( IScriptState* pState )
 		if( pPerso )
 			pCamera->Link( pPerso );
 		else
-			m_pConsole->Print( "Erreur : vous devez définir un personnage (fonction SetCurrentPerso(persoID)) avant de définir une caméra liée." );
+			m_pConsole->Println( "Erreur : vous devez définir un personnage (fonction SetCurrentPerso(persoID)) avant de définir une caméra liée." );
 	}
 	else if( pCamType->m_sValue == "free" )
 	{
@@ -445,7 +446,7 @@ void SetCurrentPerso( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : SetCurrentPerso(" << pPersoID->m_nValue << ") -> Id not exists";
-		m_pConsole->Print(oss.str());
+		m_pConsole->Println(oss.str());
 	}		
 }
 
@@ -466,23 +467,23 @@ void DisplayNodeInfos( IScriptState* pState )
 		string sBoneName;
 		pBone->GetName( sBoneName );
 		sBoneName = string( "Bone \"" ) + sBoneName + "\" : ";
-		m_pConsole->Print( sBoneName );
+		m_pConsole->Println( sBoneName );
 		CMatrix oTM;
 		pBone->GetLocalMatrix( oTM );
 		string sTM;
 		m_pDebugTool->SetNumberWidth( 10 );
 		m_pDebugTool->SerializeMatrix( oTM, 0.f, sTM );
-		m_pConsole->Print( "Matrice locale : " );
-		m_pConsole->Print( sTM );
+		m_pConsole->Println( "Matrice locale : " );
+		m_pConsole->Println( sTM );
 		m_pDebugTool->SerializeMatrix( oTM, 0.f, sTM );
-		m_pConsole->Print( "Matrice world : " );
-		m_pConsole->Print( sTM );
+		m_pConsole->Println( "Matrice world : " );
+		m_pConsole->Println( sTM );
 	}
 	else
 	{
 		ostringstream ossMessage;
 		ossMessage << "Erreur d'identifiant pour l'entité " << pEntityID->m_nValue;
-		m_pConsole->Print( ossMessage.str() );
+		m_pConsole->Println( ossMessage.str() );
 	}
 }
 
@@ -507,7 +508,7 @@ void SetAnimationSpeed( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : entité " << pEntityID->m_nValue << " inconnue";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 }
 
@@ -543,7 +544,7 @@ void Stand( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : Entité " << pEntityID->m_nValue << " inconnue";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 }
 
@@ -562,7 +563,7 @@ void RunAction( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : Entité " << pEntityID->m_nValue << " inconnue";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 }
 
@@ -581,7 +582,7 @@ void SetScale( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : Entité " << pEntityID->m_nValue << " inconnue";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 }
 
@@ -600,30 +601,30 @@ void CreateMobileEntity( IScriptState* pState )
 		pEntity->Link( m_pScene );
 		ostringstream oss;
 		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	catch( CFileNotFoundException& e )
 	{		
 		ostringstream oss;
 		oss <<"Erreur : fichier \"" << e.m_sFileName << "\" manquant, l'entité \"" << pName->m_sValue << "\" ne peut pas être chargée." ;
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	catch( CRessourceException& e )
 	{
 		string s;
 		e.GetErrorMessage( s );
-		m_pConsole->Print( s );
+		m_pConsole->Println( s );
 	}
 	catch( CBadFileFormat& e )
 	{
 		string sMessage;
 		e.GetErrorMessage( sMessage );
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	catch( CEException )
 	{
 		string sMessage = string( "\"" ) + sName + "\" introuvable";
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 }
@@ -643,30 +644,30 @@ void CreateNPC( IScriptState* pState )
 		pEntity->Link( m_pScene );
 		ostringstream oss;
 		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	catch( CFileNotFoundException& e )
 	{		
 		ostringstream oss;
 		oss <<"Erreur : fichier \"" << e.m_sFileName << "\" manquant, l'entité \"" << pName->m_sValue << "\" ne peut pas être chargée." ;
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	catch( CRessourceException& e )
 	{
 		string s;
 		e.GetErrorMessage( s );
-		m_pConsole->Print( s );
+		m_pConsole->Println( s );
 	}
 	catch( CBadFileFormat& e )
 	{
 		string sMessage;
 		e.GetErrorMessage( sMessage );
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	catch( CEException )
 	{
 		string sMessage = string( "\"" ) + sName + "\" introuvable";
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 }
@@ -679,10 +680,10 @@ void DisplayAnimationTime( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << pEntity->GetCurrentAnimation()->GetAnimationTime();
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	else
-		m_pConsole->Print( "Erreur : identifiant incorrect" );
+		m_pConsole->Println( "Erreur : identifiant incorrect" );
 }
 
 void SetAnimationTime( IScriptState* pState )
@@ -693,7 +694,7 @@ void SetAnimationTime( IScriptState* pState )
 	if( pEntity )
 		pEntity->GetCurrentAnimation()->SetAnimationTime( pFrame->m_nValue );
 	else
-		m_pConsole->Print( "Erreur : identifiant incorrect" );
+		m_pConsole->Println( "Erreur : identifiant incorrect" );
 }
 
 void NextAnimationKey( IScriptState* pState )
@@ -705,7 +706,7 @@ void NextAnimationKey( IScriptState* pState )
 		pBone->Update();
 	}
 	else
-		m_pConsole->Print( "Erreur : le noeud sélectionné n'est pas un bone" );
+		m_pConsole->Println( "Erreur : le noeud sélectionné n'est pas un bone" );
 }
 
 void NextAnimationFrame( IScriptState* pState )
@@ -715,7 +716,7 @@ void NextAnimationFrame( IScriptState* pState )
 	if( pEntity )
 		pEntity->GetCurrentAnimation()->NextFrame();
 	else
-		m_pConsole->Print( "Erreur : identifiant incorrect" );
+		m_pConsole->Println( "Erreur : identifiant incorrect" );
 }
 
 void SetConstantLocalTranslate( IScriptState* pState )
@@ -780,7 +781,7 @@ void Link( IScriptState* pState )
 				{
 					ostringstream oss;
 					oss << "Erreur : l'entité " << pIDEntity2->m_nValue << " ne possède pas de squelette";
-					m_pConsole->Print( oss.str() );
+					m_pConsole->Println( oss.str() );
 					return;
 				}
 			}
@@ -854,7 +855,7 @@ void PauseAnimation( IScriptState* pState )
 	{
 		ostringstream ossMessage;
 		ossMessage << "Erreur, l'identifiant numéro " << pIDEntity->m_nValue << " n'est pas valide";
-		m_pConsole->Print( ossMessage.str() );
+		m_pConsole->Println( ossMessage.str() );
 	}	
 }
 
@@ -876,16 +877,16 @@ void SelectBone( IScriptState* pState )
 				string sBoneName;
 				m_pSelectedNode->GetName( sBoneName );
 				string sMessage = string( "Bone \"" ) + sBoneName + "\" sélectionné";
-				m_pConsole->Print( sMessage );
+				m_pConsole->Println( sMessage );
 			}
 			else
-				m_pConsole->Print( "Identifiant de bone incorrect" );
+				m_pConsole->Println( "Identifiant de bone incorrect" );
 		}
 		else
-			m_pConsole->Print( "Erreur : L'entité sélectionné n'a pas de squelette" );
+			m_pConsole->Println( "Erreur : L'entité sélectionné n'a pas de squelette" );
 	}
 	else
-		m_pConsole->Print( "Identifiant d'entité incorrect" );
+		m_pConsole->Println( "Identifiant d'entité incorrect" );
 }
 
 void Yaw( IScriptState* pState )
@@ -945,11 +946,11 @@ void DisplayEntitySkeletonInfos( IScriptState* pState )
 		{
 			oss.str( "" );
 			oss << "Nom : " << vInfos[ i ].m_sName << " , ID : " << vInfos[ i ].m_nID;
-			m_pConsole->Print( oss.str() );
+			m_pConsole->Println( oss.str() );
 		}
 	}
 	else
-		m_pConsole->Print( "Erreur d'identifiant" );
+		m_pConsole->Println( "Erreur d'identifiant" );
 }
 
 void reset( IScriptState* pState )
@@ -976,17 +977,17 @@ void SetAnimation( IScriptState* pState )
 		catch( CFileNotFoundException& e )
 		{
 			string sMessage = string( "fichier \"" ) + e.m_sFileName + "\" introuvable";
-			m_pConsole->Print( sMessage );
+			m_pConsole->Println( sMessage );
 		}
 		catch( CEException&e )
 		{
 			string sMessage;
 			e.GetErrorMessage( sMessage );
-			m_pConsole->Print( sMessage );
+			m_pConsole->Println( sMessage );
 		}
 	}
 	else
-		m_pConsole->Print( "Erreur : L'identifiant entré ne correspond pas à celui d'une entité animable" );
+		m_pConsole->Println( "Erreur : L'identifiant entré ne correspond pas à celui d'une entité animable" );
 }
 
 void PlayCurrentAnimation( IScriptState* pState )
@@ -999,10 +1000,10 @@ void PlayCurrentAnimation( IScriptState* pState )
 		if( pAnimation )
 			pAnimation->Play( true );
 		else
-			m_pConsole->Print( "Errreur : L'entité sélectionnée est animable mais ne contient pas l'animation demandée." );
+			m_pConsole->Println( "Errreur : L'entité sélectionnée est animable mais ne contient pas l'animation demandée." );
 	}
 	else
-		m_pConsole->Print( "Erreur : Identifiant incorrect" );
+		m_pConsole->Println( "Erreur : Identifiant incorrect" );
 }
 //
 //void ClearRessources( IScriptState* pState )
@@ -1023,7 +1024,7 @@ void DisplayShaderName( IScriptState* pState )
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
 	string sShaderName;
 	pEntity->GetRessource()->GetCurrentShader()->GetName( sShaderName );
-	m_pConsole->Print( sShaderName );
+	m_pConsole->Println( sShaderName );
 }
 
 void SetHMPrecision( IScriptState* pState )
@@ -1046,7 +1047,7 @@ void ExtractHM( IScriptState* pState )
 		string sMessage;
 		e.GetErrorMessage( sMessage );
 		sMessage = string( "Erreur : ") + sMessage;
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 }
 
@@ -1065,7 +1066,7 @@ void DisplayHM( IScriptState* pState )
 	if( pMesh )
 		m_pCollisionManager->DisplayHeightMap( pMesh );
 	else
-		m_pConsole->Print("Erreur : ressource non valide");
+		m_pConsole->Println("Erreur : ressource non valide");
 }
 
 void DisplaySceneChilds( IScriptState* pState )
@@ -1074,7 +1075,7 @@ void DisplaySceneChilds( IScriptState* pState )
 	for( unsigned int i = 0; i < m_pScene->GetChildCount(); i++ )
 	{
 		m_pScene->GetChild( i )->GetName( sName );
-		m_pConsole->Print( sName );
+		m_pConsole->Println( sName );
 	}
 }
 
@@ -1090,7 +1091,7 @@ void flist( IScriptState* pState )
 		string sFuncNameLow = vFuncNames[ i ];
 		transform( vFuncNames[ i ].begin(), vFuncNames[ i ].end(), sFuncNameLow.begin(), tolower );
 		if( sFuncNameLow.find( sBegin ) != -1 )
-			m_pConsole->Print( vFuncNames[ i ] );
+			m_pConsole->Println( vFuncNames[ i ] );
 	}
 }
 
@@ -1101,7 +1102,7 @@ void DisplayLightIntensity( IScriptState* pState )
 	float fIntensity = m_pRessourceManager->GetLightIntensity( pLightEntity->GetRessource() );
 	ostringstream oss;
 	oss << fIntensity;
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void SetReperePos( IScriptState* pState )
@@ -1131,12 +1132,12 @@ void RunScript( string sFileName )
 		{
 			string sMessage;
 			e.GetErrorMessage( sMessage );
-			m_pConsole->Print( sMessage );
+			m_pConsole->Println( sMessage );
 		}
 		fclose( pFile );
 	}
 	else
-		m_pConsole->Print( "Fichier introuvable" );
+		m_pConsole->Println( "Fichier introuvable" );
 }
 
 void run( IScriptState* pState )
@@ -1156,11 +1157,11 @@ void LoadImage( IScriptState* pState )
 	try
 	{
 		m_pLoaderManager->Load( pName->m_sValue, ti );
-		m_pConsole->Print("Fichier chargé.");
+		m_pConsole->Println("Fichier chargé.");
 	}
 	catch( ILoaderManager::CBadExtension& )
 	{
-		m_pConsole->Print("Erreur : extension de fichier non gérée.");
+		m_pConsole->Println("Erreur : extension de fichier non gérée.");
 	}
 }
 
@@ -1173,9 +1174,40 @@ void DisplayRepere( IScriptState* pState )
 		m_pRepere->Unlink();
 }
 
+DWORD WINAPI ExportBMEToAsciiCallback(void* lpThreadParameter)
+{
+	vector<string>* callbackArg = (vector<string>*)lpThreadParameter;
+	string sBMEName = callbackArg->at(0);
+	string sOutputName = callbackArg->at(1);
+	delete callbackArg;
+	ILoader::CAnimatableMeshData oData;
+	ILoader* pLoader = m_pLoaderManager->GetLoader("bme");
+	pLoader->Load(sBMEName, oData, *m_pFileSystem);
+	for (int i = 0; i < oData.m_vMessages.size(); i++) {
+		m_pConsole->Println(oData.m_vMessages[i]);
+	}
+
+	m_pConsole->Println("Export en cours...");
+	
+	oData.m_vMessages.clear();
+	pLoader->SetAsciiExportPrecision(7);
+	try {
+		pLoader->Export(sOutputName, oData);
+		m_pConsole->Println("Export terminé");
+	}
+	catch (exception& e) {
+		char msg[256];
+		sprintf(msg, "Error while accessing \"%s\"", e.what());
+		m_pConsole->Println(msg);
+	}
+	m_pConsole->EnableInput(true);
+	return 0;
+}
+
 void ExportBMEToAscii( IScriptState* pState )
 {
 	CScriptFuncArgString* pFileName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
+	CScriptFuncArgString* pOutFileName = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
 	string sBMEName = pFileName->m_sValue;
 	int nExtPos = (int)sBMEName.find( ".bme" );
 	string sFileNameWithoutExt;
@@ -1185,17 +1217,35 @@ void ExportBMEToAscii( IScriptState* pState )
 		sBMEName += ".bme";		
 	}
 	else
-		sFileNameWithoutExt = sBMEName.substr( nExtPos );
-	string sTXTName = sFileNameWithoutExt + ".txt";
-	//ILoader::CAnimatableMeshData oData;
-	//m_pLoaderManager->Load( sBMEName, oData );
-	//m_pLoaderManager->Export( sTXTName, oData );
+		sFileNameWithoutExt = sBMEName.substr(0, nExtPos );
+	string sOutputName = pOutFileName ? pOutFileName->m_sValue : sFileNameWithoutExt + ".txt";
+	
 
+	vector<string>* callbackArg = new vector<string>;
+	callbackArg->push_back(sBMEName);
+	callbackArg->push_back(sOutputName);
+	DWORD threadID;
+	CreateThread(NULL, 0, ExportBMEToAsciiCallback, callbackArg, 0, &threadID);
+
+	m_pConsole->EnableInput(false);
+
+	return;
 	ILoader::CAnimatableMeshData oData;
 	ILoader* pLoader = m_pLoaderManager->GetLoader( "bme" );
-	pLoader->Load( sBMEName, oData, *m_pFileSystem );
+	pLoader->Load( sBMEName, oData, *m_pFileSystem );	
+	for (int i = 0; i < oData.m_vMessages.size(); i++) {
+		m_pConsole->Println(oData.m_vMessages[i]);
+	}
 	pLoader->SetAsciiExportPrecision( 7 );
-	pLoader->Export( sTXTName, oData );
+	try{ 
+		pLoader->Export(sOutputName, oData);
+		m_pConsole->Println("Export terminé");
+	}
+	catch (exception& e) {
+		char msg[256];
+		sprintf(msg, "Error while accessing \"%s\"", e.what());
+		m_pConsole->Println(msg);
+	}
 }
 
 void ExportBKEToAscii( IScriptState* pState )
@@ -1219,7 +1269,7 @@ void ExportBKEToAscii( IScriptState* pState )
 	pLoader->SetAsciiExportPrecision( pPrecision->m_nValue );
 	pLoader->Export( sTXTName, oData );
 	string sMessage = string( "Fichier exporté dans \"" ) + sTXTName + "\"";
-	m_pConsole->Print( sMessage );
+	m_pConsole->Println( sMessage );
 }
 
 void ClearScene( IScriptState* pState )
@@ -1258,29 +1308,29 @@ void SetSceneMap( IScriptState* pState )
 		string sError;
 		m_pRessourceManager->PopErrorMessage( sError );
 		if( sError.size() > 0 )
-			m_pConsole->Print( sError );
+			m_pConsole->Println( sError );
 	}
 	catch( CRessourceException& e )
 	{
 		string s;
 		e.GetErrorMessage( s );
-		m_pConsole->Print( s );
+		m_pConsole->Println( s );
 	}
 	catch( CBadFileFormat& )
 	{
-		m_pConsole->Print( "Mauvais format de fichier, essayez de le réexporter" );
+		m_pConsole->Println( "Mauvais format de fichier, essayez de le réexporter" );
 	}
 	catch( CFileNotFoundException& e )
 	{
 		string sFileName;
 		e.GetErrorMessage( sFileName );
 		string sMessage = string("Erreur : fichier \"") + sFileName + "\" manquant";
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	catch( CEException&  )
 	{
 		string sMessage = string( "\"" ) + sFileName + "\" introuvable";
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 }
@@ -1296,7 +1346,7 @@ void SetEntityWeight( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : Entité " << pID->m_nValue << " introuvable";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 }
 
@@ -1307,11 +1357,11 @@ void LoadHM( IScriptState* pState )
 	try
 	{
 		m_pCollisionManager->LoadHeightMap( pFileName->m_sValue, vPixels );
-		m_pConsole->Print( "Height map correctement chargée" );
+		m_pConsole->Println( "Height map correctement chargée" );
 	}
 	catch ( ILoaderManager::CBadExtension&  )
 	{
-		m_pConsole->Print( "Erreur -> fichier non trouvé" );
+		m_pConsole->Println( "Erreur -> fichier non trouvé" );
 	}
 	int test = 0;
 }
@@ -1352,7 +1402,7 @@ void CreateHM( IScriptState* pState )
 		string sError;
 		e.GetErrorMessage( sError );
 		string s = string( "Erreur : " ) + sError;
-		m_pConsole->Print( s );
+		m_pConsole->Println( s );
 	}
 	if( pEntity )
 	{
@@ -1367,7 +1417,7 @@ void CreateHM( IScriptState* pState )
 		}
 	}
 	else
-		m_pConsole->Print( "Une erreur s'est produite lors de la création de l'entité" );
+		m_pConsole->Println( "Une erreur s'est produite lors de la création de l'entité" );
 }
 
 void ScreenCapture( IScriptState* pState )
@@ -1402,7 +1452,7 @@ void SetLightIntensity( IScriptState* pState )
 	{
 		ostringstream oss;
 		oss << "Erreur : " << pID->m_nValue << " n'est pas un identifiant de lumière";
-		m_pConsole->Print("Erreur : ");
+		m_pConsole->Println("Erreur : ");
 	}
 }
 
@@ -1425,14 +1475,14 @@ void AddLight( IScriptState* pState )
 		type = IRessource::SPOT;
 	else
 	{
-		m_pConsole->Print( "Paramètre 4 invalide, vous devez entrer un type de lumière parmis les 3 suivants : \"omni\" , \"dir\" , \"spot\" " );
+		m_pConsole->Println( "Paramètre 4 invalide, vous devez entrer un type de lumière parmis les 3 suivants : \"omni\" , \"dir\" , \"spot\" " );
 		return;
 	}
 	IEntity* pEntity = m_pEntityManager->CreateLightEntity( Color, type, pIntensity->m_fValue );
 	pEntity->Link( m_pScene );
 	ostringstream oss;
 	oss << "La lumière a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity );;
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void AddLightw( IScriptState* pState )
@@ -1451,14 +1501,14 @@ void AddLightw( IScriptState* pState )
 		type = IRessource::SPOT;
 	else
 	{
-		m_pConsole->Print( "Paramètre 4 invalide, vous devez entrer un type de lumière parmis les 3 suivants : \"omni\" , \"dir\" , \"spot\" " );
+		m_pConsole->Println( "Paramètre 4 invalide, vous devez entrer un type de lumière parmis les 3 suivants : \"omni\" , \"dir\" , \"spot\" " );
 		return;
 	}
 	IEntity* pEntity = m_pEntityManager->CreateLightEntity( Color, type, pIntensity->m_fValue );
 	pEntity->Link( m_pScene );
 	ostringstream oss;
 	oss << "La lumière a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity );;
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void RollEntity( IScriptState* pState )
@@ -1477,7 +1527,7 @@ void PitchEntity( IScriptState* pState )
 	if( pEntity )
 		pEntity->Pitch( pPitch->m_fValue );
 	else
-		m_pConsole->Print("Identifiant invalide");
+		m_pConsole->Println("Identifiant invalide");
 }
 
 void YawEntity( IScriptState* pState )
@@ -1517,13 +1567,13 @@ void DisplayNodeInfos( CNode* pNode, int nLevel = 0 )
 			if( sRessourceFileName.size() > 0 )
 				sLine << sRessourceFileName;
 			sLine << ", ID = " << m_pEntityManager->GetEntityID( pEntity );
-			m_pConsole->Print( sLine.str() );
+			m_pConsole->Println( sLine.str() );
 		}
 		else
 		{
 			IEntity* pRepere = dynamic_cast< IEntity* >( pRessource );
 			if( pRepere )
-				m_pConsole->Print( "Repere" );
+				m_pConsole->Println( "Repere" );
 		}
 		CNode* pSkeleton = pEntity->GetSkeletonRoot();
 		if( pSkeleton )
@@ -1547,12 +1597,12 @@ void GetEntityID( IScriptState* pState )
 	{
 		int nID = m_pEntityManager->GetEntityID( pEntity );
 		oss << nID;
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	else
 	{
 		oss << "Entité \"" << pName->m_sValue << "\" introuvable";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 }
 
@@ -1573,7 +1623,7 @@ void DisplayBBoxInfos( IScriptState* pState )
 	ostringstream oss;
 	oss << "Dimensions : ( " << pBox->GetDimension().m_x << ", " << pBox->GetDimension().m_y << ", " << pBox->GetDimension().m_z << ")  "
 		<< " min point : " << pBox->GetMinPoint().m_x << ", " << pBox->GetMinPoint().m_y << ", " << pBox->GetMinPoint().m_z << ")";
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 	delete pBox;
 }
 
@@ -1583,7 +1633,7 @@ void DisplayBkgColor( IScriptState* pState )
 	m_pRenderer->GetBackgroundColor( vColor );
 	ostringstream oss;
 	oss << (int)( vColor.m_x * 255. )<< " , " << (int)( vColor.m_y * 255. )<< " , " << (int)( vColor.m_z * 255. );
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void SetBkgColor( IScriptState* pState )
@@ -1603,7 +1653,7 @@ void DisplayCamPos( IScriptState* pState )
 	m_pCameraManager->GetActiveCamera()->GetWorldPosition( vPos );
 	ostringstream oss;
 	oss << vPos.m_x << " , " << vPos.m_y << " , " << vPos.m_z;
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void SetCamPos( IScriptState* pState )
@@ -1624,7 +1674,7 @@ void SetEntityPos( IScriptState* pState )
 	if( pEntity )
 		pEntity->SetWorldPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
 	else
-		m_pConsole->Print("Identifiant invalide");
+		m_pConsole->Println("Identifiant invalide");
 }
 
 void DisplayEntityPosition( IScriptState* pState )
@@ -1635,7 +1685,7 @@ void DisplayEntityPosition( IScriptState* pState )
 	pEntity->GetWorldPosition( vPos );
 	ostringstream oss;
 	oss << vPos.m_x << " , " << vPos.m_y << " , " << vPos.m_z;
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void Exit( IScriptState* pState )
@@ -1658,29 +1708,29 @@ void LoadEntity( IScriptState* pState )
 		//pEntity->Pitch( -90.f );
 		ostringstream oss;
 		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	catch( CFileNotFoundException& e )
 	{		
 		string sMessage = string( "Erreur : fichier \"" ) + e.m_sFileName + "\" manquant.";
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	catch( CRessourceException& e )
 	{
 		string s;
 		e.GetErrorMessage( s );
-		m_pConsole->Print( s );
+		m_pConsole->Println( s );
 	}
 	catch( CBadFileFormat )
 	{
 		ostringstream oss;
 		oss << "\"" << sName << "\" : Mauvais format de fichier, essayez de le réexporter";
-		m_pConsole->Print( oss.str() );
+		m_pConsole->Println( oss.str() );
 	}
 	catch( CEException )
 	{
 		string sMessage = string( "\"" ) + sName + "\" introuvable";
-		m_pConsole->Print( sMessage );
+		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 }
@@ -1695,11 +1745,11 @@ void SaveScene( IScriptState* pState )
 			sFileName += ".bse";
 		m_pSceneManager->Export( m_pScene, sFileName );
 		//m_pScene->Export( sFileName );
-		m_pConsole->Print( "Scène sauvegardée" );
+		m_pConsole->Println( "Scène sauvegardée" );
 	}
 	catch( exception e )
 	{
-		m_pConsole->Print( e.what() );
+		m_pConsole->Println( e.what() );
 	}
 }
 
@@ -1716,20 +1766,20 @@ void LoadScene( IScriptState* pState )
 	catch( CFileNotFoundException )
 	{
 		string s = string("Fichier \"") + sFileName + "\" introuvable";
-		m_pConsole->Print( s );
+		m_pConsole->Println( s );
 	}
 	catch( CExtensionNotFoundException )
 	{
-		//m_pConsole->Print( "L'extension \"bse\" n'est pas gérée par le gestionnaire de ressource" );
-		m_pConsole->Print( "Erreur inconnue, veuillez contacter l'administrateur pour plus d'information" );
+		//m_pConsole->Println( "L'extension \"bse\" n'est pas gérée par le gestionnaire de ressource" );
+		m_pConsole->Println( "Erreur inconnue, veuillez contacter l'administrateur pour plus d'information" );
 	}
 	catch( CBadFileFormat )
 	{
-		m_pConsole->Print( "Mauvais format de fichier,essayez de réexporter la scene" );
+		m_pConsole->Println( "Mauvais format de fichier,essayez de réexporter la scene" );
 	}
 	catch( CEException& e )
 	{
-		m_pConsole->Print(e.what());
+		m_pConsole->Println(e.what());
 	}
 }
 
@@ -1759,7 +1809,7 @@ void Operation( IScriptState* pState )
 	CScriptFuncArgFloat* p2 = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
 	ostringstream oss;
 	oss << "arg 0 = " << p0->m_fValue << "\narg 1 = " << p1->m_fValue << "\narg 2 = " << p2->m_fValue;
-	m_pConsole->Print( oss.str() );
+	m_pConsole->Println( oss.str() );
 }
 
 void Operation3( IScriptState* pState )
@@ -1975,7 +2025,8 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetSceneMap", SetSceneMap, vType );
 
 	vType.clear();
-	vType.push_back( eString );
+	vType.push_back(eString);
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction( "ExportBMEToAscii", ExportBMEToAscii, vType );
 
 	vType.clear();

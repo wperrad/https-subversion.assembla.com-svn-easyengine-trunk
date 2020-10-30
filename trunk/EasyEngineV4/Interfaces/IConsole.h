@@ -37,9 +37,12 @@ public:
 	virtual bool	IsOpen() = 0;
 	virtual void	Open( bool bOpen ) = 0;
 	virtual void	Cls() = 0;
-	virtual void	Print( string s ) = 0;
+	virtual void	Print(string s) = 0;
+	virtual void	Println(string s) = 0;
+	virtual void	NewLine() = 0;
 	virtual int		GetConsoleShortCut() = 0;
 	virtual void	SetConsoleShortCut(int key) = 0;
+	virtual void	EnableInput(bool enable) = 0;
 };
 
 #endif // _ICONSOLE_H_

@@ -39,10 +39,10 @@ struct CKey
 // Class de base pour tous les plugins d'export 3DSMAX
 class CMaxExporter : public SceneExport 
 {
-	string				m_sVersion;
+	wstring				m_wVersion;
 
 protected:
-	vector< string >	m_vNonTCBBoneNames;
+	vector< wstring >	m_vNonTCBBoneNames;
 	bool				g_bInterruptExport;
 
 	static bool			IsBone( Object* pObject );

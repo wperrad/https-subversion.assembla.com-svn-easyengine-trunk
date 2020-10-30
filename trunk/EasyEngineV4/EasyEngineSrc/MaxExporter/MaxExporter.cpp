@@ -1,6 +1,7 @@
 #include "MaxExporter.h"
 #include "3dsmaxport.h"
 #include <sstream>
+#include "Utils2/StringUtils.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ int CMaxExporterClassDesc::IsPublic()
 
 const TCHAR* CMaxExporterClassDesc::ClassName() 
 { 
-	return "MaxExporter"; 
+	return L"MaxExporter"; 
 }
 
 SClass_ID CMaxExporterClassDesc::SuperClassID() 
@@ -58,12 +59,12 @@ CMaxExporter::~CMaxExporter()
 
 const TCHAR * CMaxExporter::LongDesc()
 {
-	return "Easy engine export (BME for geometry and BKE for animation)";
+	return _T("Easy engine export (BME for geometry and BKE for animation)");
 }
 
 const TCHAR * CMaxExporter::ShortDesc()
 {
-	return "Easy engine export";
+	return _T("Easy engine export");
 }
 
 const TCHAR * CMaxExporter::AuthorName() 
@@ -73,15 +74,15 @@ const TCHAR * CMaxExporter::AuthorName()
 
 const TCHAR * CMaxExporter::CopyrightMessage() 
 {
-	return "Anti propriété intellectuelle";
+	return _T("Anti propriété intellectuelle");
 }
 
 const TCHAR * CMaxExporter::OtherMessage1()
 {
 	ostringstream ossVersion;
 	ossVersion << __DATE__ << __TIME__;
-	m_sVersion = ossVersion.str();
-	return m_sVersion.c_str();
+	CStringUtils::ConvertStringToWString(ossVersion.str(), m_wVersion);
+	return m_wVersion.c_str();
 }
 
 const TCHAR * CMaxExporter::OtherMessage2() 
@@ -220,7 +221,7 @@ void CMaxExporter::GetAnimation( Interface* pInterface, const map< int, INode* >
 		{
 			MSTR sClassName;
 			pControl->GetClassName( sClassName );
-			char* sName = pNode->GetName();
+			const wchar_t* sName = pNode->GetName();
 			m_vNonTCBBoneNames.push_back( sName );
 		}
 		pControl = pNode->GetTMController()->GetPositionController();

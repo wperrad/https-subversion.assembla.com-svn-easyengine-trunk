@@ -29,7 +29,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,ULONG fdwReason,LPVOID lpvReserved)
 
 extern "C" __declspec( dllexport ) const TCHAR* LibDescription() 
 {
-	return "Easy Engine exporter";
+	return _T("Easy Engine exporter");
 }
 
 /// MUST CHANGE THIS NUMBER WHEN ADD NEW CLASS 

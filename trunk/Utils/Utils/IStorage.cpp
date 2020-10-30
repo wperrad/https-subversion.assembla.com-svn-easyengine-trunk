@@ -1,6 +1,8 @@
+#include <windows.h>
 #include "IStorage.h"
 #include <sstream>
 #include <iomanip>
+#include <errno.h>
 
 using namespace std;
 
@@ -115,16 +117,23 @@ m_bEnableVectorEnumeration( true )
 }
 
 
-bool CAsciiFileStorage::OpenFile( string sFileName, TOpenMode mode )
+bool CAsciiFileStorage::OpenFile(string sFileName, TOpenMode mode)
 {
-	if( m_pFile )
-		fclose( m_pFile );
+	if (m_pFile)
+		fclose(m_pFile);
 	string sMode;
-	if( mode == eRead )
+	if (mode == eRead)
 		sMode = "r";
-	else if( mode == eWrite )
+	else if (mode == eWrite)
 		sMode = "w";
-	m_pFile = fopen( sFileName.c_str(), sMode.c_str() );
+	errno = 0;
+	fopen_s(&m_pFile, sFileName.c_str(), sMode.c_str());
+	//m_pFile = fopen( sFileName.c_str(), sMode.c_str() );
+	if (!m_pFile) {
+		char msg[64];
+		sprintf(msg, "Error %d (%s) \n", errno, strerror(errno));
+		OutputDebugStringA(msg);
+	}
 	return m_pFile != NULL;
 }
 
