@@ -38,7 +38,9 @@ m_nLastMillisecondCursorStateChanged( 0 ),
 m_nLastTickCount( 0 ),
 m_bBlink( false ),
 m_nStaticTextID( -1 ),
-m_nConsoleShortCut( 0 )
+m_nConsoleShortCut( 0 ),
+m_bHasToUpdateStaticTest(false),
+m_bInputEnabled(true)
 {
 	m_oInputManager.AbonneToKeyEvent( static_cast< CPlugin* > ( this ), OnKeyAction );
 	m_xPos = oDesc.xPos;
@@ -91,13 +93,19 @@ void CConsole::Update()
 	if ( m_bIsOpen )
 	{
 		int nFontHeight = m_oGUIManager.GetCurrentFontHeight();
-		if( m_nStaticTextID == -1 )
-			m_nStaticTextID = m_oGUIManager.CreateStaticText( m_vLines, m_xPos, m_yPos );
+		if (m_nStaticTextID == -1 || m_bHasToUpdateStaticTest) {
+			if (m_nStaticTextID != -1)
+				m_oGUIManager.DestroyStaticTest(m_nStaticTextID);
+			m_nStaticTextID = m_oGUIManager.CreateStaticText(m_vLines, m_xPos, m_yPos);
+			m_bHasToUpdateStaticTest = false;
+		}
 		m_oGUIManager.PrintStaticText( m_nStaticTextID );
 		string sLine = m_sLinePrefix + m_vLines[ m_vLines.size() - 1 ];
-		m_oGUIManager.Print( sLine, m_xPos, m_yPos + ( m_vLines.size() - 1 ) * nFontHeight );
+		if(m_bInputEnabled || (sLine.size()!=2) )
+			m_oGUIManager.Print( sLine, m_xPos, m_yPos + ( m_vLines.size() - 1 ) * nFontHeight );
 		
-		UpdateBlink( nFontHeight );
+		if(m_bInputEnabled)
+			UpdateBlink( nFontHeight );
 	}
 }
 
@@ -150,7 +158,7 @@ void CConsole::OnPressEnter()
 		string sErrorType;
 		string sMessage;
 		e.GetErrorMessage( sMessage );
-		Print( sMessage );
+		Println( sMessage );
 	}
 	catch( CScriptException& e )
 	{
@@ -165,6 +173,8 @@ void CConsole::OnPressEnter()
 
 void CConsole::OnKeyPress( unsigned char key )
 {
+	if (!m_bInputEnabled)
+		return;
 	SetBlink( false );
 	string& sLine = m_vLines[ m_vLines.size() - 1 ];
 	if ( key == VK_BACK )
@@ -345,7 +355,13 @@ void CConsole::Cls()
 
 void CConsole::Print( string s )
 {
-	AddString( s );
+	AddString(s);
+	m_bHasToUpdateStaticTest = true;
+}
+
+void CConsole::Println(string s)
+{
+	Print(s);
 	NewLine();
 }
 
@@ -359,6 +375,10 @@ void CConsole::SetConsoleShortCut(int key)
 	m_nConsoleShortCut = key;
 }
 
+void CConsole::EnableInput(bool enable)
+{
+	m_bInputEnabled = enable;
+}
 
 extern "C" _declspec(dllexport) IConsole* CreateConsole( IConsole::Desc& oDesc )
 {

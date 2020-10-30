@@ -25,7 +25,7 @@ public:
 
 class CBinaryMeshMaxExporter : public CMaxExporter
 {
-	vector< std::string >				m_vExtension;
+	vector< std::wstring >				m_vExtension;
 	bool								m_bMultipleSmGroup;
 	int									m_nCurrentSmGroup;
 	bool								m_bFlipNormals;

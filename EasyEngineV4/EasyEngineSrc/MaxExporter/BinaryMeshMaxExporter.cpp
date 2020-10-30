@@ -1,7 +1,7 @@
 #include "BinaryMeshMaxExporter.h"
 #include "IFileSystem.h"
 #include "EEPlugin.h"
-#include "RenderUtils.h"
+#include "Utils2/RenderUtils.h"
 
 // stl
 #include <algorithm>
@@ -37,7 +37,7 @@ m_pLogFile( NULL ),
 m_bExportBoundingBox( true ),
 m_bExportBBoxAtKey( false )
 {
-	m_vExtension.push_back( "bme" );
+	m_vExtension.push_back( L"bme" );
 	s_pCurrentInstance = this;
 }
 
@@ -53,7 +53,7 @@ int CBinaryMeshMaxExporter::ExtCount()
 
 const TCHAR* CBinaryMeshMaxExporter::Ext( int n )
 {
-	return m_vExtension[ n ].c_str();
+	return m_vExtension[n].c_str();
 }
 
 INT_PTR CALLBACK CBinaryMeshMaxExporter::ExportDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -110,14 +110,13 @@ int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Inter
 {
 	try
 	{
-
 		IGeometryManager::Desc oGMDesc( NULL, "" );
-		m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGMDesc, "Geometry.dll", "CreateGeometryManager" ) );
-
-		string sFileName = pName;
-		int nDotPos = (int)sFileName.find_last_of( "." );
-		string sExtension = sFileName.substr( nDotPos + 1, sFileName.size() - nDotPos - 1 );
-		string sExtensionLower = sExtension;
+		m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGMDesc, "stdplugs\\EasyEngine\\Geometry.dll", "CreateGeometryManager" ) );
+		
+		wstring wFileName = pName;
+		int nDotPos = (int)wFileName.find_last_of( L"." );
+		wstring sExtension = wFileName.substr( nDotPos + 1, wFileName.size() - nDotPos - 1 );
+		wstring sExtensionLower = sExtension;
 		transform( sExtension.begin(), sExtension.end(), sExtensionLower.begin(), tolower );
 		sExtension = sExtensionLower;
 
@@ -140,8 +139,9 @@ int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Inter
 			if( !g_bInterruptExport )
 			{
 				mi.m_mBonesBoundingBoxes = m_mBoneBox;
-				if( DumpModels( pName, mi ) )
-					MessageBox( NULL, "Export terminé", "Export", MB_OK );
+				string sFileName(wFileName.begin(), wFileName.end());
+				if( DumpModels(sFileName, mi ) )
+					MessageBox( NULL, L"Export terminé", L"Export", MB_OK );
 				if( m_pLogFile )
 					fclose( m_pLogFile );
 			}
@@ -162,17 +162,22 @@ void CBinaryMeshMaxExporter::GetSkeleton( INode* pRoot, map< string, INode* >& m
 		Object* pObject = pNode->EvalWorldState( 0 ).obj;
 		if ( IsBone( pObject ) )
 		{
-			mBone[ pNode->GetName() ] = pNode;
+			wstring wname(pNode->GetName());
+			string name(wname.begin(), wname.end());
+			mBone[name] = pNode;
 			GetSkeleton( pNode, mBone );
 		}
 	}
 }
 
-void CBinaryMeshMaxExporter::GetBonesIDByName( INode* pRoot, map< string, int >& mBoneIDByName ) const
+void CBinaryMeshMaxExporter::GetBonesIDByName(INode* pRoot, map< string, int >& mBoneIDByName) const
 {
-	Object* pObject = pRoot->EvalWorldState( 0 ).obj;
-	if ( pObject && IsBone( pObject ) ) //( pObject->CanConvertToType( Class_ID( BONE_CLASS_ID, 0 ) ) == TRUE || pObject->CanConvertToType( BONE_OBJ_CLASSID ) == TRUE ) )
-		mBoneIDByName[ pRoot->GetName() ] = (int)mBoneIDByName.size();
+	Object* pObject = pRoot->EvalWorldState(0).obj;
+	if (pObject && IsBone(pObject)) {//( pObject->CanConvertToType( Class_ID( BONE_CLASS_ID, 0 ) ) == TRUE || pObject->CanConvertToType( BONE_OBJ_CLASSID ) == TRUE ) )
+		wstring wname(pRoot->GetName());
+		string name(wname.begin(), wname.end());
+		mBoneIDByName[name] = (int)mBoneIDByName.size();
+	}
 	for( int i = 0; i < pRoot->NumberOfChildren(); i++ )
 		GetBonesIDByName( pRoot->GetChildNode( i ), mBoneIDByName );
 }
@@ -196,8 +201,9 @@ void CBinaryMeshMaxExporter::GetWeightTable( IWeightTable& oWeightTable, const m
 	for ( int i = 0; i < pGameScene->GetTopLevelNodeCount(); i++ )
 	{
 		IGameNode* pGameNode = pGameScene->GetTopLevelNode( i );
-		string sNodeName = pGameNode->GetName();
-		if( sNodeName != sObjectName )
+		wstring wNodeName = pGameNode->GetName();
+		wstring wObjectName(sObjectName.begin(), sObjectName.end());
+		if(wNodeName != wObjectName)
 			continue;
 		IGameObject* pGameObject = pGameNode->GetIGameObject();
 		IGameSkin* pGameSkin = pGameObject->GetIGameSkin();
@@ -212,7 +218,9 @@ void CBinaryMeshMaxExporter::GetWeightTable( IWeightTable& oWeightTable, const m
 					float fWeight = pGameSkin->GetWeight( iVertexIndex, iBoneIndex );
 					if( fWeight > 0.f )
 					{
-						map< string, int >::const_iterator itBone = mBoneID.find( pBone->GetName() );
+						wstring wName(pBone->GetName());
+						string sName(wName.begin(), wName.end());
+						map< string, int >::const_iterator itBone = mBoneID.find(sName);
 						oWeightTable.Add( iVertexIndex, itBone->second, fWeight );
 						nBoneCount++;
 					}
@@ -242,7 +250,7 @@ void CBinaryMeshMaxExporter::GetGeometry( Interface* pInterface, vector< ILoader
 	for ( int iNode = 0; iNode < pRoot->NumberOfChildren(); iNode++ )
 	{
 		INode* pNode = pRoot->GetChildNode( iNode );
-		string sTest = pNode->GetName();
+		wstring wTest = pNode->GetName();
 		Object* pObject = pNode->EvalWorldState( 0 ).obj;
 		if( IsBone( pObject ) )
 		{
@@ -310,7 +318,9 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	Object* pObject = pMesh->EvalWorldState( 0 ).obj;
 	TriObject* pTriObject = static_cast< TriObject* > ( pObject->ConvertToType( 0, Class_ID( TRIOBJ_CLASS_ID, 0 ) ) );
 	Mesh& oMesh = pTriObject->GetMesh();
-	mi.m_sName = pMesh->GetName();
+	wstring wName(pMesh->GetName());
+	string sName(wName.begin(), wName.end());
+	mi.m_sName = sName;
 	bool bIsTextured = false;
 
 	if( m_bLog )
@@ -338,7 +348,9 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	INode* pParent = pMesh->GetParentNode();
 	if( pParent && IsBone( pParent ) )
 	{
-		map< string, int >::iterator itBone = m_mBoneIDByName.find( pParent->GetName() );
+		wstring wName(pParent->GetName());
+		string sName(wName.begin(), wName.end());
+		map< string, int >::iterator itBone = m_mBoneIDByName.find(sName);
 		if( itBone == m_mBoneIDByName.end() )
 		{
 			CEException e( "Erreur dans l'exporteur, tous les nodes de la hiérarchy ne sont pas récupérés correctement" );
@@ -547,7 +559,9 @@ void CBinaryMeshMaxExporter::GetMaterialTextureName( Mtl* pMaterial, string& sTe
 		BitmapTex* pTexture = ( BitmapTex* ) pTexmap;
 		if ( pTexture )
 		{
-			sTextureName = pTexture->GetMapName();
+			wstring wTexture(pTexture->GetMapName());
+			string sTexture(wTexture.begin(), wTexture.end());
+			sTextureName = sTexture;
 			int nLastSlashPos = (int)sTextureName.find_last_of( "\\" );
 			sTextureName = sTextureName.substr( nLastSlashPos + 1, sTextureName.size() - nLastSlashPos );
 		}
@@ -575,15 +589,15 @@ void CBinaryMeshMaxExporter::UpdateVersionFile( string sVersion )
 bool CBinaryMeshMaxExporter::DumpModels( const string& sFilePath, ILoader::CAnimatableMeshData& ami )
 {
 	bool bRet = true;
-	string sVersion = OtherMessage1();
+	wstring wVersion = OtherMessage1();
+	string sVersion(wVersion.begin(), wVersion.end());
 	UpdateVersionFile( sVersion );
-
 	ami.m_sFileVersion = sVersion;
 
 	IFileSystem::Desc oFSDesc( NULL, "" );
-	IFileSystem* pFileSystem = static_cast< IFileSystem* >( CPlugin::Create( oFSDesc, "FileUtils.dll", "CreateFileSystem" ) );
+	IFileSystem* pFileSystem = static_cast< IFileSystem* >( CPlugin::Create( oFSDesc, "stdplugs\\EasyEngine\\FileUtils.dll", "CreateFileSystem" ) );
 	ILoaderManager::Desc oLDesc( *pFileSystem, *m_pGeometryManager );
-	ILoaderManager* pLoaderManager = static_cast< ILoaderManager* >(  CPlugin::Create( oLDesc, "Loader.dll", "CreateLoaderManager" ) );
+	ILoaderManager* pLoaderManager = static_cast< ILoaderManager* >(  CPlugin::Create( oLDesc, "stdplugs\\EasyEngine\\Loader.dll", "CreateLoaderManager" ) );
 	pLoaderManager->Export( sFilePath, ami );
 	return bRet;
 }
@@ -595,7 +609,9 @@ void CBinaryMeshMaxExporter::StoreMaxMaterialToMaterialInfos( Mtl* pMaterial, IL
 	StoreMaxColorToVector( pMaterial->GetDiffuse(), mi.m_vDiffuse );
 	StoreMaxColorToVector( pMaterial->GetSpecular(), mi.m_vSpecular );
 	mi.m_fShininess = pMaterial->GetShininess() * 128.f;
-	mi.m_sName = pMaterial->GetName();
+	wstring wName(pMaterial->GetName());
+	string sName(wName.begin(), wName.end());
+	mi.m_sName = sName;
 	GetMaterialTextureName( pMaterial, mi.m_sDiffuseMapName, 1 );
 	int nMtlCount = 0, iMtl = 0;
 	Mtl* pSubMtl = NULL;
@@ -690,8 +706,9 @@ void CBinaryMeshMaxExporter::StoreSkeletonToSkeletonMap( const map< int, INode* 
 		if ( nParentID == -1 )
 			nRootCount++;
 
-
-		ami.m_mBones[ itNode->first ].first = itNode->second->GetName();
+		wstring wName(itNode->second->GetName());
+		string sName(wName.begin(), wName.end());
+		ami.m_mBones[ itNode->first ].first = sName;
 		Matrix3 oMaxMatrix = itNode->second->GetNodeTM(0);
 		CMatrix oMatrix;
 		MaxMatrixToEngineMatrix( oMaxMatrix, ami.m_mBones[ itNode->first ].second );
@@ -699,7 +716,7 @@ void CBinaryMeshMaxExporter::StoreSkeletonToSkeletonMap( const map< int, INode* 
 	}
 
 	if ( nRootCount > 1 )
-		MessageBox( NULL, "Attention, le squelette de votre modèle comporte plus de 1 bone racine.", "", MB_ICONWARNING );
+		MessageBox( NULL, L"Attention, le squelette de votre modèle comporte plus de 1 bone racine.", L"", MB_ICONWARNING );
 }
 
 void CBinaryMeshMaxExporter::StoreSkinningToMeshInfos( const IWeightTable& wt, ILoader::CMeshInfos& mi )

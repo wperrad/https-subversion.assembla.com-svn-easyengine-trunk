@@ -147,7 +147,7 @@ void InitScene( ISceneManager* pSceneManager )
 				m_pScriptManager->ExecuteCommand( "run(\"start\");" );
 		}
 		else
-			m_pConsole->Print( "Fichier start introuvable." );
+			m_pConsole->Println( "Fichier start introuvable." );
 	}
 	catch( CEException& e )
 	{

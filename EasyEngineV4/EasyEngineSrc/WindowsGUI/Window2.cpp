@@ -138,34 +138,28 @@ LRESULT CALLBACK CWindow2::WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
 	try
 	{
-		switch( msg )
+		switch (msg)
 		{
 		case WM_DESTROY:
 			pCurrentWindow->m_bDestroy = true;
-			PostQuitMessage( 0 );
+			PostQuitMessage(0);
 			break;
 		case WM_COMMAND:
-			if ( pCurrentWindow->m_pMenu )
+			if (pCurrentWindow->m_pMenu)
 			{
-				if ( pCurrentWindow->m_pMenu->m_pfnCallback )
-					pCurrentWindow->m_pMenu->m_pfnCallback( (int)wParam );
+				if (pCurrentWindow->m_pMenu->m_pfnCallback)
+					pCurrentWindow->m_pMenu->m_pfnCallback((int)wParam);
 			}
 			break;
 		}
 
-		if ( pCurrentWindow )
+		if (pCurrentWindow)
 		{
-			IWidget* pWindow = reinterpret_cast< IWidget* > ( pCurrentWindow );
-			pCurrentWindow->CallCallback( CallbackArgs( pWindow, msg, wParam, lParam ) );
-			for ( int i = 0; i < pCurrentWindow->GetChildCount(); i++ )
-				pCurrentWindow->GetChild( i )->CallCallback( CallbackArgs( pWindow, msg, wParam, lParam ) );
+			IWidget* pWindow = reinterpret_cast<IWidget*> (pCurrentWindow);
+			pCurrentWindow->CallCallback(CallbackArgs(pWindow, msg, wParam, lParam));
+			for (int i = 0; i < pCurrentWindow->GetChildCount(); i++)
+				pCurrentWindow->GetChild(i)->CallCallback(CallbackArgs(pWindow, msg, wParam, lParam));
 		}
-	}
-	catch( exception& e )
-	{
-		MessageBoxA( NULL, e.what(), "", MB_ICONERROR );
-		pCurrentWindow->m_bDestroy = true;
-		PostQuitMessage( 0 );
 	}
 	catch( CTerminateException& e )
 	{

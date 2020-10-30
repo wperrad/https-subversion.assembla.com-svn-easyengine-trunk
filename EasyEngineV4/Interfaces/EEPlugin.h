@@ -61,7 +61,7 @@ public:
 
 	static CPlugin* Create( const CPlugin::Desc& oDesc, std::string sDllPath, const std::string& sFuncName )
 	{
-		HMODULE hDll = LoadLibrary( sDllPath.c_str() );
+		HMODULE hDll = LoadLibraryA(sDllPath.c_str());
 		if ( !hDll )
 		{
 			std::string sMessage = sDllPath + " introuvable";

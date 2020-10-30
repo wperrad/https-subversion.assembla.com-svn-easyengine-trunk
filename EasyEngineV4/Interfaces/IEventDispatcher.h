@@ -39,6 +39,7 @@ public:
 	virtual void 			AbonneToKeyEvent( CPlugin* pPlugin, TKeyCallback pfnCallback ) = 0;
 	virtual void 			AbonneToMouseEvent( CPlugin* pPlugin, TMouseCallback pfnCallback ) = 0;
 	virtual void 			AbonneToWindowEvent( CPlugin* pPlugin, TWindowCallback pfnCallback ) = 0;
+	virtual void			DesabonneToWindowEvent(TWindowCallback pfnCallback) = 0;
 
 	virtual void 			DispatchKeyEvent( TKeyEvent, int nKeyCode ) = 0;
 	virtual void 			DispatchMouseEvent( TMouseEvent, int x, int y ) = 0;

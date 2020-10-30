@@ -1,6 +1,8 @@
 #include "StringUtils.h"
 #include <algorithm>
 
+#include <codecvt>
+
 using namespace std;
 
 
@@ -106,4 +108,18 @@ void CStringUtils::GetFileNameWithoutExtension( string sFileName, string& sOut )
 	int nSlashPos = sFileName.find_last_of( "\\" );
 	int nDotPos = sFileName.find_last_of( "." );
 	sOut = sFileName.substr( nSlashPos + 1, nDotPos - nSlashPos - 1 );
+}
+
+void CStringUtils::ConvertStringToWString(const string& s, wstring& w)
+{
+	using convert_typeX = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+	w = converterX.from_bytes(s);
+}
+
+void CStringUtils::ConvertWStringToString(const wstring& w, string& s)
+{
+	using convert_typeX = std::codecvt_utf8<wchar_t>;
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+	s = converterX.to_bytes(w);
 }

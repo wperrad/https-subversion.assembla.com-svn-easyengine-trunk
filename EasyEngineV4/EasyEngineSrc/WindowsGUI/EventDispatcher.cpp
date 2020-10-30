@@ -22,6 +22,16 @@ void CEventDispatcher::AbonneToWindowEvent( CPlugin* pPlugin, TWindowCallback pf
 	m_vWindowAbonnedPlugins.push_back( pair< CPlugin*, TWindowCallback >::pair( pPlugin, pfnCallback ) );
 }
 
+void CEventDispatcher::DesabonneToWindowEvent(TWindowCallback pfnCallback)
+{
+	for (vector< pair< CPlugin*, TWindowCallback > >::iterator it = m_vWindowAbonnedPlugins.begin(); it != m_vWindowAbonnedPlugins.end(); it++) {
+		if (it->second == pfnCallback) {
+			m_vWindowAbonnedPlugins.erase(it);
+			break;
+		}
+	}
+}
+
 void CEventDispatcher::DispatchKeyEvent( TKeyEvent e, int nKeyCode )
 {
 	for ( unsigned int i = 0; i < m_vKeyAbonnedPlugins.size(); i++ )

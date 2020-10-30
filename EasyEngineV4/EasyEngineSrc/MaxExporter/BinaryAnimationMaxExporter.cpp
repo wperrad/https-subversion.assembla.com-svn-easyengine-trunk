@@ -30,8 +30,8 @@ int CBinaryAnimationMaxExporter::ExtCount()
 const TCHAR* CBinaryAnimationMaxExporter::Ext( int n )
 {
 	if( n == 0 )
-		return "bke";
-	return "";
+		return L"bke";
+	return L"";
 }
 
 CBinaryAnimationMaxExporter::CBinaryAnimationMaxExporter()
@@ -42,8 +42,11 @@ CBinaryAnimationMaxExporter* g_pExporter = NULL;
 
 INT_PTR CALLBACK CBinaryAnimationMaxExporter::OnExportAnim(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-	//CBinaryAnimationMaxExporter* pExporter = NULL;	
-	char pFirst[ 16 ], pLast[ 16 ];
+	wchar_t pFirst[ 16 ], pLast[ 16 ];
+
+	wstring wFirst, wLast, wText, wText2;
+	string sFirst, sLast, sText, sText2;
+
 	HWND hFirst = GetDlgItem( hWnd, ID_EDITFIRST );
 	HWND hLast = GetDlgItem( hWnd, ID_EDITLAST );
 	ostringstream oss;
@@ -54,10 +57,14 @@ INT_PTR CALLBACK CBinaryAnimationMaxExporter::OnExportAnim(HWND hWnd, UINT msg, 
 		g_pExporter = (CBinaryAnimationMaxExporter*)lParam;
 		CenterWindow( hWnd, GetParent( hWnd ) );
 		oss << g_pExporter->m_nAnimationStart;
-		SetWindowText( hFirst, oss.str().c_str() );
+		sText = oss.str().c_str();
+		wText.assign(sText.begin(), sText.end());
+		SetWindowText( hFirst, wText.c_str());
 		oss.str( "" );
 		oss << g_pExporter->m_nAnimationEnd;
-		SetWindowText( hLast, oss.str().c_str() );
+		sText2.assign(oss.str().c_str());
+		wText2.assign(sText2.begin(), sText2.end());
+		SetWindowText( hLast, wText2.c_str() );
 		break;
 	case WM_CLOSE:
 		EndDialog( hWnd, 0 );
@@ -68,8 +75,13 @@ INT_PTR CALLBACK CBinaryAnimationMaxExporter::OnExportAnim(HWND hWnd, UINT msg, 
 		case IDEXPORTANIM:
 			GetWindowText( hFirst, pFirst, 16 );
 			GetWindowText( hLast, pLast, 16 );
-			g_pExporter->m_nExportAnimationStart = atoi( pFirst );
-			g_pExporter->m_nExportAnimationEnd = atoi( pLast );
+
+			wFirst = pFirst;
+			wLast = pLast;
+			sFirst.assign(wFirst.begin(), wFirst.end());
+			sLast.assign(wLast.begin(), wLast.end());
+			g_pExporter->m_nExportAnimationStart = atoi(sFirst.c_str());
+			g_pExporter->m_nExportAnimationEnd = atoi(sLast.c_str());
 			EndDialog( hWnd, 1 );
 			break;
 		case IDCANCELANIM:
@@ -86,7 +98,7 @@ int CBinaryAnimationMaxExporter::DoExport(const TCHAR* pName,ExpInterface *ei, I
 {
 	try
 	{
-		string sFileName = pName;
+		wstring wFileName = pName;
 		map< int, INode* > mBoneByID;
 		map< string, INode* > mBones;
 		map< string, int > mBoneIDByName;
@@ -103,21 +115,25 @@ int CBinaryAnimationMaxExporter::DoExport(const TCHAR* pName,ExpInterface *ei, I
 		{
 			map< int, vector< CKey > > mBonesKey;
 			GetAnimation( pInterface, mBoneByID, mBonesKey );
-			DumpAnimation( sFileName, mBonesKey );
+			string sFileName(wFileName.begin(), wFileName.end());
+			DumpAnimation(sFileName, mBonesKey );
 
 			if( m_vNonTCBBoneNames.size() > 0 )
 			{
-				string sWarningMessage = string( "Les bones suivants contiennent des clés non TCB, elles ne peuvent donc pas être exportées : \n " );
-				for( unsigned int i = 0; i < m_vNonTCBBoneNames.size(); i++ )
-					sWarningMessage += m_vNonTCBBoneNames[ i ] + "\n";
-				MessageBoxA( NULL, sWarningMessage.c_str(), "Avertissement", MB_ICONWARNING );
+				wstring wWarningMessage = L"Les bones suivants contiennent des clés non TCB, elles ne peuvent donc pas être exportées : \n ";
+				for (unsigned int i = 0; i < m_vNonTCBBoneNames.size(); i++) {
+					wWarningMessage += m_vNonTCBBoneNames[i] + L"\n";
+				}
+				MessageBox( NULL, wWarningMessage.c_str(), L"Avertissement", MB_ICONWARNING );
 			}
-			MessageBox( NULL, "Export terminé", "Export", MB_OK );
+			MessageBox( NULL, L"Export terminé", L"Export", MB_OK );
 		}
 	}
 	catch( exception& e )
 	{
-		MessageBox( NULL, e.what(), "", MB_ICONERROR );
+		string msg(e.what());
+		wstring wmsg(msg.begin(), msg.end());
+		MessageBox( NULL, wmsg.c_str(), L"", MB_ICONERROR );
 	}
 
 	return TRUE;
@@ -132,7 +148,9 @@ void CBinaryAnimationMaxExporter::GetSkeleton( INode* pRoot, map< string, INode*
 		Object* pObject = pNode->EvalWorldState( 0 ).obj;
 		if  ( IsBone( pObject ) ) //( pObject->CanConvertToType( Class_ID( BONE_CLASS_ID, 0 ) ) == TRUE || pObject->CanConvertToType( BONE_OBJ_CLASSID ) == TRUE )
 		{
-			mBone[ pNode->GetName() ] = pNode;
+			wstring wName(pNode->GetName());
+			string sName(wName.begin(), wName.end());
+			mBone[sName] = pNode;
 			GetSkeleton( pNode, mBone );
 		}
 	}
@@ -141,8 +159,11 @@ void CBinaryAnimationMaxExporter::GetSkeleton( INode* pRoot, map< string, INode*
 void CBinaryAnimationMaxExporter::GetBonesIDByName( INode* pRoot, map< string, int >& mBoneIDByName ) const
 {
 	Object* pObject = pRoot->EvalWorldState( 0 ).obj;
-	if ( pObject && IsBone( pObject ) ) //->CanConvertToType( Class_ID( BONE_CLASS_ID, 0 ) ) == TRUE || pObject->CanConvertToType( BONE_OBJ_CLASSID ) == TRUE ) )
-		mBoneIDByName[ pRoot->GetName() ] = (int)mBoneIDByName.size();
+	if (pObject && IsBone(pObject)) {
+		wstring wName(pRoot->GetName());
+		string sName(wName.begin(), wName.end());
+		mBoneIDByName[sName] = (int)mBoneIDByName.size();
+	}
 	for( int i = 0; i < pRoot->NumberOfChildren(); i++ )
 		GetBonesIDByName( pRoot->GetChildNode( i ), mBoneIDByName );
 }

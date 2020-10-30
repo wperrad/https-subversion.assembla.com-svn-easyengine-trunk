@@ -42,6 +42,7 @@ public:
 		string	m_sFileName;
 		string	m_sName;
 		string	m_sFileVersion;
+		vector<string> m_vMessages;
 	};
 
 	struct CMaterialInfos : public IRessourceInfos

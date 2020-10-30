@@ -25,72 +25,69 @@ m_oGeometryManager( oGeometryManager )
 
 typedef const TCHAR* (*TotherMessage)();
 
-void CBMELoader::Load( string sFileName, ILoader::IRessourceInfos& ri, IFileSystem& oFileSystem )
+void CBMELoader::Load(string sFileName, ILoader::IRessourceInfos& ri, IFileSystem& oFileSystem)
 {
-	if( m_sExportPluginVersion.size() == 0 )
+	if (m_sExportPluginVersion.size() == 0)
 	{
 		string sVersionFile = "version.ver";
-		FILE* pVersionFile = oFileSystem.OpenFile( sVersionFile, "r" );
-		if( pVersionFile )
+		FILE* pVersionFile = oFileSystem.OpenFile(sVersionFile, "r");
+		if (pVersionFile)
 		{
-			m_sExportPluginVersion.resize( 19 );
-			fread( &m_sExportPluginVersion[ 0 ], sizeof( char ), m_sExportPluginVersion.size(), pVersionFile );
-			fclose( pVersionFile );
+			m_sExportPluginVersion.resize(19);
+			fread(&m_sExportPluginVersion[0], sizeof(char), m_sExportPluginVersion.size(), pVersionFile);
+			fclose(pVersionFile);
 		}
 		else
 		{
-			string sMessage = string( "Erreur : fichier \"" ) + sVersionFile + "\" manquant";
-			CFileNotFoundException e( sMessage );
+			string sMessage = string("Erreur : fichier \"") + sVersionFile + "\" manquant";
+			CFileNotFoundException e(sMessage);
 			e.m_sFileName = sVersionFile;
 			throw e;
 		}
 	}
 
-	CAnimatableMeshData* pData = static_cast< CAnimatableMeshData* >( &ri );
+	CAnimatableMeshData* pData = static_cast<CAnimatableMeshData*>(&ri);
 	pData->m_bMultiMaterialActivated = false;
 	m_nFileOffset = 0;
-	FILE* pFile = oFileSystem.OpenFile( sFileName, "rb" );
-	if ( !pFile )
+	FILE* pFile = oFileSystem.OpenFile(sFileName, "rb");
+	if (!pFile)
 	{
-		string sMessage = string( "Erreur : fichier \"" ) + sFileName + "\" manquant";
-		CFileNotFoundException e( sMessage );
+		string sMessage = string("Erreur : fichier \"") + sFileName + "\" manquant";
+		CFileNotFoundException e(sMessage);
 		e.m_sFileName = sFileName;
 		throw e;
 	}
-	fclose( pFile );
+	fclose(pFile);
 	//string sBMEVersion;
 
 	CBinaryFileStorage fs;
 	string dir;
-	oFileSystem.GetRootDirectory( dir );
-	string sFilePath = dir + "\\" + sFileName;
-	fs.OpenFile( sFilePath, CBinaryFileStorage::eRead );
-	fs >> pData->m_sFileVersion;
-	if( m_sExportPluginVersion != pData->m_sFileVersion )
-	{
-		ostringstream oss;
-		oss << "\"" << sFileName << "\" : la version de votre fichier est antérieure à la version de l'exporteur MAX, voulez-vous quand même le charger ?";
-		 if( MessageBoxA( NULL, oss.str().c_str(), "", MB_YESNO ) != 6 )
-		 {
-			 fs.CloseFile();
-			 return;
-		 }
-	}
+	oFileSystem.GetRootDirectory(dir);
+	string sFilePath = dir.empty() ? sFileName : dir + "\\" + sFileName;
+	if (fs.OpenFile(sFilePath, CBinaryFileStorage::eRead)) {
+		fs >> pData->m_sFileVersion;
+		if (m_sExportPluginVersion != pData->m_sFileVersion)
+		{
+			ostringstream oss;
+			oss << "\"" << sFileName << "\" : Avertissement : la version de votre fichier est antérieure à la version de l'exporteur MAX";
+			pData->m_vMessages.push_back(oss.str());
+		}
 
-	LoadSkeleton( fs, *pData );
-	LoadBonesBoundingBoxes( fs, pData->m_mBonesBoundingBoxes );
-	int nObjectCount;
-	fs >> nObjectCount;
-	
-	for( int iMesh = 0; iMesh < nObjectCount; iMesh++ )
-	{
-		CMeshInfos mi;
-		LoadMesh( fs, mi );
-		mi.m_sFileName = sFileName;
-		pData->m_vMeshes.push_back( mi );
-	}
+		LoadSkeleton(fs, *pData);
+		LoadBonesBoundingBoxes(fs, pData->m_mBonesBoundingBoxes);
+		int nObjectCount;
+		fs >> nObjectCount;
 
-	fs.CloseFile();
+		for (int iMesh = 0; iMesh < nObjectCount; iMesh++)
+		{
+			CMeshInfos mi;
+			LoadMesh(fs, mi);
+			mi.m_sFileName = sFileName;
+			pData->m_vMeshes.push_back(mi);
+		}
+
+		fs.CloseFile();																							
+	}
 }
 
 void CBMELoader::LoadMesh( CBinaryFileStorage& fs, CMeshInfos& mi )
@@ -220,16 +217,6 @@ void CBMELoader::Export( string sFileName, const IRessourceInfos& ri )
 	CStringUtils::GetExtension( sFileName, sExt );
 	const CAnimatableMeshData* pData = static_cast< const CAnimatableMeshData* >( &ri );
 	
-	if( sExt == "txt" )
-	{
-		CAsciiFileStorage* pStorage = new CAsciiFileStorage;
-		if( !pStorage->OpenFile( sFileName, CFileStorage::eWrite ) )
-		{
-			CFileNotFoundException e( sFileName );
-			throw e;
-		}
-		ExportAnimatableMeshInfos( *pStorage, *pData );
-	}
 	if( sExt == "bme" )
 	{
 		CBinaryFileStorage* pStorage = new CBinaryFileStorage;
@@ -239,7 +226,16 @@ void CBMELoader::Export( string sFileName, const IRessourceInfos& ri )
 			throw e;
 		}
 		ExportAnimatableMeshInfos( *pStorage, *pData );
-	}	
+	}
+	else {
+		CAsciiFileStorage* pStorage = new CAsciiFileStorage;
+		if (!pStorage->OpenFile(sFileName, CFileStorage::eWrite))
+		{
+			CFileNotFoundException e(sFileName);
+			throw e;
+		}
+		ExportAnimatableMeshInfos(*pStorage, *pData);
+	}
 }
 
 void CBMELoader::ExportAscii( string sFileName, const CAnimatableMeshData& oData )
