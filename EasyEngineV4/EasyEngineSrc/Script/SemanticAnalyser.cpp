@@ -45,6 +45,24 @@ VarMap& CSemanticAnalyser::GetVarMap()
 	return m_mVar;
 }
 
+const CVar* CSemanticAnalyser::GetVariable(string varName)
+{
+	CVar* ret = NULL;
+	int nScope = m_nCurrentScopeNumber;
+
+	while (!ret && nScope >= 0) {
+		VarMap::iterator itVarMap = m_mVar.find(nScope);
+		if (itVarMap != m_mVar.end()) {
+			map<string, CVar>::iterator itVar = itVarMap->second.find(varName);
+			if (itVar != itVarMap->second.end()) {
+				ret = &itVar->second;
+			}
+		}
+		nScope--;
+	}
+	return ret;
+}
+
 void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 {
 	if( oTree.m_Lexem.m_eType == CLexAnalyser::CLexem::eFunction )
@@ -75,7 +93,7 @@ void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 	{
 		if( oTree.m_vChild.size() == 0 )
 		{
-			switch( oTree.m_Lexem.m_eType )
+			switch (oTree.m_Lexem.m_eType)
 			{
 			case CLexAnalyser::CLexem::eInt:
 				oTree.m_Type = CSyntaxNode::eInt;
@@ -84,20 +102,26 @@ void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 				oTree.m_Type = CSyntaxNode::eFloat;
 				break;
 			case CLexAnalyser::CLexem::eString:
-				{
-					oTree.m_Type = CSyntaxNode::eString;
+			{
+				oTree.m_Type = CSyntaxNode::eString;
 #ifndef STRING_IN_BIN
-					map< string, int >::iterator itString = m_mStringAddress.find( oTree.m_Lexem.m_sValue );
-					if( itString == m_mStringAddress.end() )
-					{
-						m_mStringAddress.insert( map< string, int >::value_type( oTree.m_Lexem.m_sValue, (int)m_mStringAddress.size() ) );
-						oTree.m_nAddress = (unsigned int)m_mStringAddress.size() - 1;
-						m_mAddressString[ oTree.m_nAddress ] = oTree.m_Lexem.m_sValue;
-					}
-					else
-						oTree.m_nAddress = itString->second;
-#endif // 0
+				map< string, int >::iterator itString = m_mStringAddress.find(oTree.m_Lexem.m_sValue);
+				if (itString == m_mStringAddress.end())
+				{
+					m_mStringAddress.insert(map< string, int >::value_type(oTree.m_Lexem.m_sValue, (int)m_mStringAddress.size()));
+					oTree.m_nAddress = (unsigned int)m_mStringAddress.size() - 1;
+					m_mAddressString[oTree.m_nAddress] = oTree.m_Lexem.m_sValue;
 				}
+				else
+					oTree.m_nAddress = itString->second;
+#endif // 0
+				break;
+			}
+			case CLexAnalyser::CLexem::eVar:
+				AddNewVariable(oTree);
+				break;
+			default:
+				throw 1;
 				break;
 			}
 		}
@@ -110,18 +134,7 @@ void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 	}
 	else if( oTree.m_Lexem.m_eType == CLexAnalyser::CLexem::eVar )
 	{
-		string sVarName = oTree.m_Lexem.m_sValue;
-		
-		map< string, CVar >& mVar = m_mVar[ m_nCurrentScopeNumber ];
-		map< string, CVar >::iterator itVar = mVar.find( sVarName );
-		if( itVar == mVar.end() )
-		{
-			int nPosition = mVar.size();
-			CVar v;
-			v.m_nScopePos = nPosition;
-			mVar[ sVarName ] = v;
-		}
-		oTree.m_nScope = m_nCurrentScopeNumber;
+		AddNewVariable(oTree);
 		
 		for( unsigned int i = 0; i < oTree.m_vChild.size(); i++ )
 			CompleteSyntaxicTree( oTree.m_vChild[ i ] );
@@ -131,6 +144,23 @@ void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 		for( unsigned int i = 0; i < oTree.m_vChild.size(); i++ )
 			CompleteSyntaxicTree( oTree.m_vChild[ i ] );
 	}
+}
+
+void CSemanticAnalyser::AddNewVariable(CSyntaxNode& oTree)
+{
+	string sVarName = oTree.m_Lexem.m_sValue;
+
+	map< string, CVar >& mVar = m_mVar[m_nCurrentScopeNumber];
+	map< string, CVar >::iterator itVar = mVar.find(sVarName);
+	if (itVar == mVar.end())
+	{
+		int nPosition = mVar.size();
+		CVar v;
+		v.m_nScopePos = m_nCurrentScopeNumber;
+		v.m_nRelativeStackPosition = nPosition;
+		mVar[sVarName] = v;
+	}
+	oTree.m_nScope = m_nCurrentScopeNumber;
 }
 
 void CSemanticAnalyser::SetTypeFromChildType( CSyntaxNode& oTree )

@@ -15,8 +15,9 @@ public:
 struct CVar
 {
 	int		m_nScopePos;
+	int		m_nRelativeStackPosition; // relative var position from current scope ebp
 	bool	m_bIsDeclared;
-	CVar() : m_bIsDeclared( false ){}
+	CVar() : m_bIsDeclared( false ), m_nRelativeStackPosition(0){}
 };
 
 
@@ -32,6 +33,10 @@ class CSemanticAnalyser
 	VarMap					m_mVar;
 	int						m_nCurrentScopeNumber;
 
+
+protected:
+	void					AddNewVariable(CSyntaxNode& oTree);
+
 public:
 	CSemanticAnalyser();
 	void			RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType );
@@ -42,6 +47,7 @@ public:
 	void			CallInterruption( int nIndex, const vector< float >& vArgs );
 	void			GetRegisteredFunctions( vector< string >& vFuncNames );
 	VarMap&			GetVarMap();
+	const CVar*		GetVariable(string varName);
 };
 
 #endif // SEMANTICANALYSER_H

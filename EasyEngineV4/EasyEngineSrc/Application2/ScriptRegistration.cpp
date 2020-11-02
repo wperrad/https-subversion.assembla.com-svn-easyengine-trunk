@@ -107,6 +107,15 @@ void SetFov( IScriptState* pState )
 	m_pRenderer->SetFov( pFov->m_fValue );
 }
 
+void print(IScriptState* pState)
+{
+	CScriptFuncArgString* pVarName = (CScriptFuncArgString*)pState->GetArg(0);
+	int val = m_pScriptManager->GetVariableValue(pVarName->m_sValue);
+	char msg[16];
+	sprintf(msg, "%d", val);
+	m_pConsole->Println(msg);
+}
+
 void SetEntityName( IScriptState* pState )
 {
 	CScriptFuncArgInt* pEntityID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
@@ -2325,4 +2334,8 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back( eFloat );
 	m_pScriptManager->RegisterFunction( "SetFov", SetFov, vType );
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("print", print, vType);
 }

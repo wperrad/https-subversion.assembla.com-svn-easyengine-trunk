@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define STACK_SIZE 16
+#define MEM_SIZE 16
 
 class CVirtualProcessor
 {
@@ -20,9 +20,10 @@ class CVirtualProcessor
 	float 	m_nEbp;
 	float 	m_nEsp;
 
-	//const CSemanticAnalyser::FuncMap& m_mInterruption;
+	map<int, int> m_mEbpValueByScope;
 
-	float	m_pStack[ STACK_SIZE ];
+
+	float	m_pMemory[ MEM_SIZE ];
 
 	map< CBinGenerator::TProcInstr, TInstrFunc > m_mInstrFunc;
 	vector< float* >	m_vRegAddr;
@@ -62,8 +63,11 @@ class CVirtualProcessor
 	static CVirtualProcessor* s_pCurrentInstance;
 	static CSemanticAnalyser* s_pSemanticAnalyser;
 
+	static int GetMemRegisterAddress(unsigned char* pOperand);
+
+
 public:
-	//CVirtualProcessor( const CSemanticAnalyser::FuncMap& mInterruption );
 	CVirtualProcessor( CSemanticAnalyser* pSemanticAnalyser );
 	void	Execute( const vector< unsigned char >& vBinary, const vector< int >& vInstrSize );
+	float GetVariableValue(string varName);
 };

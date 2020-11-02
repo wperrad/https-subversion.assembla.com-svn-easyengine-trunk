@@ -14,12 +14,15 @@ void CBinGenerator::AddImmToByteArray( float nImm, vector< unsigned char >& vBin
 CBinGenerator::CBinGenerator()
 {
 	int iInstrNum = 1;
+
+	// Mov
 	s_tabInstr[ CAsmGenerator::eMov ][ eReg ][ eReg ] = iInstrNum++;
 	s_tabInstr[ CAsmGenerator::eMov ][ eReg ][ eImm ] = iInstrNum++;
 	s_tabInstr[ CAsmGenerator::eMov ][ eReg ][ eAddr ] = iInstrNum++;
 	s_tabInstr[ CAsmGenerator::eMov ][ eAddr ][ eReg ] = iInstrNum++;
 	s_tabInstr[ CAsmGenerator::eMov ][ eAddr ][ eImm ] = iInstrNum++;
 
+	// Operations
 	for( int i = CAsmGenerator::eAdd; i <= CAsmGenerator::eDiv; i++ )
 	{
 		s_tabInstr[ i ][ eReg ][ eReg ] = iInstrNum++;
@@ -51,9 +54,9 @@ CBinGenerator::CBinGenerator()
 
 	s_vInstrSize.push_back( 2 );
 	s_vInstrSize.push_back( 6 );
-	s_vInstrSize.push_back( 6 );
-	s_vInstrSize.push_back( 6 );
-	s_vInstrSize.push_back( 10 );
+	s_vInstrSize.push_back( 4 );
+	s_vInstrSize.push_back( 4 );
+	s_vInstrSize.push_back( 7 );
 
 	for( int i = CAsmGenerator::eAdd; i <= CAsmGenerator::eDiv; i++ )
 	{
@@ -91,11 +94,11 @@ CBinGenerator::CBinGenerator()
 void CBinGenerator::GenBinary( const vector< CAsmGenerator::CInstr >& vAsmCode, vector< unsigned char >& vBin )
 {
 	for( unsigned int i = 0; i < vAsmCode.size(); i++ )
-		GenOpcode( vAsmCode[ i ], vBin );
+		GenInstructionBinary( vAsmCode[ i ], vBin );
 }
 
 
-void CBinGenerator::GenOpcode( const CAsmGenerator::CInstr& oInstr, vector< unsigned char >& vBin )
+void CBinGenerator::GenInstructionBinary( const CAsmGenerator::CInstr& oInstr, vector< unsigned char >& vBin )
 {
 	if( oInstr.m_vOperand.size() > 0 )
 	{
@@ -107,6 +110,7 @@ void CBinGenerator::GenOpcode( const CAsmGenerator::CInstr& oInstr, vector< unsi
 				const CRegister* pReg2 = dynamic_cast< const CRegister* >( oInstr.m_vOperand[ 1 ] );
 				if( pReg2 )
 				{
+					// reg reg
 					vBin.push_back( s_tabInstr[ oInstr.m_eMnem ][ eReg ][ eReg ] );
 					int r1 = pReg1->m_eValue << 4;
 					int r2 = pReg2->m_eValue;
@@ -117,14 +121,25 @@ void CBinGenerator::GenOpcode( const CAsmGenerator::CInstr& oInstr, vector< unsi
 					const CNumeric* pNum = dynamic_cast< const CNumeric* >( oInstr.m_vOperand[ 1 ] );
 					if( pNum )
 					{
+						// reg imm
 						vBin.push_back( s_tabInstr[ oInstr.m_eMnem ][ eReg ][ eImm ] );
 						vBin.push_back( pReg1->m_eValue );
 						AddImmToByteArray( pNum->m_fValue, vBin );
+					}
+					else {
+						const CMemory* pMemory = dynamic_cast<CMemory*>(oInstr.m_vOperand[1]);
+						if (pMemory) {
+							// reg mem
+							vBin.push_back(s_tabInstr[CAsmGenerator::eMov][eReg][eAddr]);
+							vBin.push_back(pReg1->m_eValue);
+							GenMemoryBinary(pMemory, vBin);
+						}
 					}
 				}
 			}
 			else
 			{
+				// reg
 				vBin.push_back( s_tabInstr[ oInstr.m_eMnem ][ eReg ][ 0 ] );
 				vBin.push_back( pReg1->m_eValue );
 			}
@@ -139,6 +154,7 @@ void CBinGenerator::GenOpcode( const CAsmGenerator::CInstr& oInstr, vector< unsi
 					const CRegister* pReg2 = dynamic_cast< const CRegister* >( oInstr.m_vOperand[ 1 ] );
 					if( pReg2 )
 					{
+						// reg imm
 						vBin.push_back( s_tabInstr[ oInstr.m_eMnem ][ eImm ][ eReg ] );
 						vBin.push_back( pReg2->m_eValue );
 						AddImmToByteArray( pNum1->m_fValue, vBin );
@@ -146,8 +162,32 @@ void CBinGenerator::GenOpcode( const CAsmGenerator::CInstr& oInstr, vector< unsi
 				}
 				else
 				{
+					// imm
 					vBin.push_back( s_tabInstr[ oInstr.m_eMnem ][ eImm ][ 0 ] );
 					AddImmToByteArray( pNum1->m_fValue, vBin );
+				}
+			}
+			else {
+				const CMemory* pMem = dynamic_cast< const CMemory* >(oInstr.m_vOperand[0]);
+				if (pMem) {
+					const CNumeric* pNum = dynamic_cast< const CNumeric* >(oInstr.m_vOperand[1]);
+					if (pNum)
+					{
+						// mem imm
+						vBin.push_back(s_tabInstr[oInstr.m_eMnem][eAddr][eImm]);
+						GenMemoryBinary(pMem, vBin);
+						AddImmToByteArray(pNum->m_fValue, vBin);
+					}
+					else {
+						const CRegister* pReg2 = dynamic_cast< const CRegister* >(oInstr.m_vOperand[1]);
+						if (pReg2) {
+							// mem reg
+							vBin.push_back(s_tabInstr[oInstr.m_eMnem][eAddr][eReg]);
+							GenMemoryBinary(pMem, vBin);
+							vBin.push_back(pReg2->m_eValue);
+						}
+					}
+
 				}
 			}
 		}
@@ -156,4 +196,10 @@ void CBinGenerator::GenOpcode( const CAsmGenerator::CInstr& oInstr, vector< unsi
 	{
 		vBin.push_back( s_tabInstr[ oInstr.m_eMnem ][ 0 ][ 0 ] );
 	}
+}
+
+void CBinGenerator::GenMemoryBinary(const CMemory* pMemory, vector< unsigned char >& vBin)
+{
+	vBin.push_back(pMemory->m_oBase.m_eValue | pMemory->m_oIndex.m_eValue << 4);
+	vBin.push_back(pMemory->m_nDisplacement);
 }

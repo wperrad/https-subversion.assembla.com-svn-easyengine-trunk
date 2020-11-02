@@ -22,13 +22,13 @@ public:
 	{
 		eMovRegReg = 1, // op = reg1(0.5) + reg2(0.5)
 		eMovRegImm,		// op = reg(1) + imm(4)
-		eMovRegAddr,	// op = reg(0.5) + reg addr(0.5) + addr(4)
-		eMovAddrReg,	// op = reg addr(0.5) + reg(0.5) + addr(4)
-		eMovAddrImm,	// op = reg addr(1) + Addr(4) + Imm(4)
+		eMovRegAddr,	// op = reg(1) + reg base(0.5) + reg index(0.5) + displacement(1) 
+		eMovAddrReg,	// op = reg base(0.5) + reg index(0.5) + displacement(1) + reg(1)
+		eMovAddrImm,	// op = reg base(0.5) + reg index(0.5) + displacement(1) + Imm(4)
 
 		eAddRegReg,		// op = reg1(0.5) + reg2(0.5)
 		eAddRegImm,		// op = reg(1) + Imm(4)
-		eAddRegAddr,	// op = reg(0.5) + reg addr(0.5) + addr(4)
+		eAddRegAddr,	// op = reg(1) + reg base(0.5) + reg index(0.5) + displacement(1)
 		eAddImmReg,		// op = reg(1) + imm(4)
 		eAddAddrReg,	// op = reg addr( 0.5) + reg(0.5) + addr(4)
 		eAddAddrImm,	// op = reg addr(1) + addr(4) + imm(4)
@@ -78,7 +78,8 @@ private:
 
 	map< CAsmGenerator::TMnemonic, int > MnemToInstrNum;
 
-	void			GenOpcode( const CAsmGenerator::CInstr& oInstr, vector< unsigned char >& vBin  );
+	void			GenInstructionBinary( const CAsmGenerator::CInstr& oInstr, vector< unsigned char >& vBin  );
+	void			GenMemoryBinary(const CMemory* pMemory, vector< unsigned char >& vBin);
 	
 	static void AddImmToByteArray( float nImm, vector< unsigned char >& vBin );
 

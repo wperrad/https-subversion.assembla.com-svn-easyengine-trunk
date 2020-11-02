@@ -68,7 +68,7 @@ struct CMemory : public IOperand
 {
 	CRegister	m_oBase;
 	CRegister	m_oIndex;
-	int			m_nOffset;
+	int			m_nDisplacement;
 	TOperandType GetType() const { return eMemory; }
 	void		GetStringName( string& sName );
 };
@@ -117,6 +117,7 @@ private:
 	map< TMnemonic, string >						m_mMnemonicToString;
 	map< string, vector< pair< int, int > >	>		m_mStringInstr; // Pour chaque string en dur, contient le numéro de l'instruction et de l'opérande
 	int						m_nCurrentScopeNumber;
+	bool					m_bEaxBusy;
 
 
 	void					GenOperation( CLexAnalyser::CLexem::TLexem, const CSyntaxNode& child1, const CSyntaxNode& child2, vector< CInstr >& vAssembler );
@@ -128,11 +129,16 @@ private:
 	void					GenPushImm( float val, vector< CInstr >& vAssembler );
 	void					GenCall( const CSyntaxNode& oNode, vector< CInstr >& );
 	void					GenMov( CRegister::TType a, CRegister::TType b, vector< CInstr >& );
-	void					GenMovAddrImm( CRegister::TType eBase, CRegister::TType eIndex, int nOffset, VarMap& mVar, const CSyntaxNode& oImm, vector< CInstr >& vAssembler );
+	CMemory*				CreateMemoryRegister(CRegister::TType eBase, CRegister::TType eIndex, int nDisplacement);
+	void					GenMovAddrImm(CMemory* pMemory, VarMap& mVar, const CSyntaxNode& oImm, vector< CInstr >& vAssembler );
+	void					GenMovAddrReg(CRegister::TType scrReg, CMemory* pdestMem, vector< CInstr >& vAssembler);
+	void					GenMovRegAddr(CRegister::TType destReg, CMemory* pSrcMemory, vector< CInstr >& vAssembler);
+	void					GenMovAddrAddr(CMemory* pSrcMemory, CMemory* pDestMemory, vector< CInstr >& vAssembler);
 	void					GenPop( CRegister::TType, vector< CInstr >& );
 	void					FillOperandFromSyntaxNode( CNumeric* oOperand, const CSyntaxNode& oTree );
 	void					ResolveAddresses( vector< CInstr >& vCodeOut );
 	void					GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CInstr >& vCodeOut, const map<string, int>& mFuncAddr, VarMap& mVar );
+	void					createStackFrame(vector< CInstr >& vCodeOut);
 };
 
 #endif // CODEGEN_H
