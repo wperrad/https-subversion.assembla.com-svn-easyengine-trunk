@@ -136,8 +136,8 @@ void InitScene( ISceneManager* pSceneManager )
 	m_pRepere->Link( pScene );
 	try
 	{
-		FILE* pFile = m_pFileSystem->OpenFile( "start.eas", "r" );
-		m_pConsole->Open( true );
+		m_pConsole->Open(true);
+		FILE* pFile = m_pFileSystem->OpenFile( "start.eas", "r" );		
 		if( pFile )
 		{
 			fseek( pFile, 0, SEEK_END );
@@ -148,6 +148,20 @@ void InitScene( ISceneManager* pSceneManager )
 		}
 		else
 			m_pConsole->Println( "Fichier start introuvable." );
+
+		// test
+		pFile = m_pFileSystem->OpenFile("test.eas", "r");
+		if (pFile)
+		{
+			fseek(pFile, 0, SEEK_END);
+			long pos = ftell(pFile);
+			fclose(pFile);
+			if (pos > 0)
+				m_pScriptManager->ExecuteCommand("run(\"test\");");
+		}
+		else
+			m_pConsole->Println("Fichier test introuvable.");
+		// fin test
 	}
 	catch( CEException& e )
 	{
@@ -312,8 +326,7 @@ void InitPlugins( string sCmdLine )
 	IRenderer::Desc oRendererDesc( *m_pWindow, *m_pFileSystem );
 	oRendererDesc.m_sDefaultShader = "PerPixelLighting";
 	oRendererDesc.m_sShaderDirectory = "Shaders";
-	m_pRenderer = static_cast< IRenderer* >( CPlugin::Create( oRendererDesc, sDirectoryName + "Renderer.dll", "CreateRenderer" ) );
-	m_pRenderer->SetBackgroundColor( 0, 100, 255 );
+	m_pRenderer = static_cast< IRenderer* >( CPlugin::Create( oRendererDesc, sDirectoryName + "Renderer.dll", "CreateRenderer" ) );	
 
 	m_pRenderer->AbonneToRenderEvent( OnRender );
 

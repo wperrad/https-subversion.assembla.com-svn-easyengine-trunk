@@ -57,24 +57,25 @@ void CMemory::GetStringName( string& sName )
 			oss << sIndex;
 	}
 		
-	if( m_nOffset != 0 )
+	if( m_nDisplacement != 0 )
 	{
 		if( sBase.size() > 0 || sIndex.size() > 0 )
 		{
-			if( m_nOffset > 0 )
-				oss << " + " << m_nOffset;
+			if( m_nDisplacement > 0 )
+				oss << " + " << m_nDisplacement;
 			else
-				oss << " - " << -m_nOffset;
+				oss << " - " << -m_nDisplacement;
 		}
 		else
-			oss << m_nOffset;
+			oss << m_nDisplacement;
 	}
 	oss << " ]";
 	sName = oss.str();
 }
 
 CAsmGenerator::CAsmGenerator():
-m_nCurrentScopeNumber( 0 )
+	m_nCurrentScopeNumber( 0 ),
+	m_bEaxBusy(false)
 {
 	m_mTypeToMnemonic[ CLexAnalyser::CLexem::eAdd ] = eAdd;
 	m_mTypeToMnemonic[ CLexAnalyser::CLexem::eSub ] = eSub;
@@ -122,7 +123,7 @@ void CAsmGenerator::CreateAssemblerListing( vector< CInstr >& vCodeOut, string s
 
 void CAsmGenerator::FillOperandFromSyntaxNode( CNumeric* pOperand, const CSyntaxNode& oTree )
 {
-	switch ( oTree.m_Lexem.m_eType )
+	switch (oTree.m_Lexem.m_eType)
 	{
 	case CLexAnalyser::CLexem::eFloat:
 		pOperand->m_fValue = oTree.m_Lexem.m_fValue;
@@ -133,15 +134,32 @@ void CAsmGenerator::FillOperandFromSyntaxNode( CNumeric* pOperand, const CSyntax
 	case CLexAnalyser::CLexem::eString:
 		pOperand->m_fValue = oTree.m_nAddress;
 		break;
-	}	
+	}
+}
+
+void CAsmGenerator::createStackFrame(vector< CInstr >& vCodeOut)
+{
+	CInstr oIntr;
+	// create stack frame
+	oIntr.m_eMnem = eMov;
+	CRegister* pEbp = new CRegister(CRegister::ebp);
+	CRegister* pEsp = new CRegister(CRegister::esp);
+	oIntr.m_vOperand.push_back(pEbp);
+	oIntr.m_vOperand.push_back(pEsp);
+	vCodeOut.push_back(oIntr);
 }
 
 void CAsmGenerator::GenAssembler( const CSyntaxNode& oTree, vector< CInstr >& vCodeOut, const map<string, int>& mFuncAddr, VarMap& mVar )
 {
-	GenAssemblerFirstPass( oTree, vCodeOut, mFuncAddr, mVar );
 	CInstr oIntr;
+	// generate asm
+	GenAssemblerFirstPass( oTree, vCodeOut, mFuncAddr, mVar );
+
+	// add ret instruction
+	/*
 	oIntr.m_eMnem = eRet;
-	vCodeOut.push_back( oIntr );
+	vCodeOut.push_back( oIntr );*/
+
 	ResolveAddresses( vCodeOut );
 }
 
@@ -153,21 +171,21 @@ void CAsmGenerator::GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CIn
 			GenOperation( oTree.m_Lexem.m_eType, oTree.m_vChild[ 0 ], oTree.m_vChild[ 1 ], vAssembler );
 		else 
 		{
-			bool eaxBusy = false;
+			
 			if( oTree.m_vChild[ 0 ].m_vChild.size() > 0 )
 			{
 				GenAssemblerFirstPass(oTree.m_vChild[ 0 ], vAssembler, mFuncAddr, mVar );
-				eaxBusy = true;
+				m_bEaxBusy = true;
 			}
 			if( oTree.m_vChild[ 1 ].m_vChild.size() == 0 )
 			{
-				if( !eaxBusy )
+				if( !m_bEaxBusy)
 					GenMov( CRegister::eax, oTree.m_vChild[ 0 ], vAssembler );
 				GenOperation( oTree.m_Lexem.m_eType, CRegister::eax, oTree.m_vChild[ 1 ], vAssembler );
 			}
 			else
 			{
-				if( eaxBusy )
+				if(m_bEaxBusy)
 				{
 					GenPush( CRegister::eax, vAssembler );
 					GenAssemblerFirstPass( oTree.m_vChild[ 1 ], vAssembler, mFuncAddr, mVar );
@@ -202,14 +220,24 @@ void CAsmGenerator::GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CIn
 	}
 	else if( oTree.m_Lexem.m_eType == CLexAnalyser::CLexem::eAffect )
 	{
-		CVar& v = mVar[ m_nCurrentScopeNumber ][ oTree.m_vChild[ 0 ].m_Lexem.m_sValue ];
-		if( !v.m_bIsDeclared )
+		CVar& v1 = mVar[ m_nCurrentScopeNumber ][ oTree.m_vChild[ 0 ].m_Lexem.m_sValue ];
+		if( !v1.m_bIsDeclared )
 		{
 			GenPushImm( 0, vAssembler );
-			v.m_bIsDeclared = true;
+			v1.m_bIsDeclared = true;
 		}
-		if( oTree.m_vChild[ 1 ].m_vChild.size() == 0 )
-			GenMovAddrImm( CRegister::ebp, CRegister::TType::eNone, 4 * ( v.m_nScopePos - 1 ), mVar, oTree.m_vChild[ 1 ], vAssembler );
+		if (oTree.m_vChild[1].m_vChild.size() == 0) {
+			const CSyntaxNode& destNode = oTree.m_vChild[1];
+			CMemory* pDestMemory = CreateMemoryRegister(CRegister::ebp, CRegister::TType::eNone, -4 * v1.m_nRelativeStackPosition);
+			if (oTree.m_vChild[1].m_Lexem.m_eType == CLexAnalyser::CLexem::eVar) {
+				CVar& v2 = mVar[m_nCurrentScopeNumber][oTree.m_vChild[1].m_Lexem.m_sValue];
+				CMemory* pSrcMemory = CreateMemoryRegister(CRegister::ebp, CRegister::eNone, -4 * v2.m_nRelativeStackPosition);
+				GenMovAddrAddr(pSrcMemory, pDestMemory, vAssembler);
+			}
+			else if (oTree.m_vChild[1].m_Type == CSyntaxNode::eInt || oTree.m_vChild[1].m_Type == CSyntaxNode::eFloat || oTree.m_vChild[1].m_Type == CSyntaxNode::eString) {
+				GenMovAddrImm(pDestMemory, mVar, destNode, vAssembler);
+			}
+		}
 		else
 			throw 1;
 	}
@@ -274,9 +302,7 @@ void CAsmGenerator::GenMov( CRegister::TType reg, const CSyntaxNode& oNode, vect
 	oInstr.m_vOperand.push_back( pNum );
 	vAssembler.push_back( oInstr );
 	if( oNode.m_Lexem.m_eType == CLexAnalyser::CLexem::eString )
-	{
 		m_mStringInstr[ oNode.m_Lexem.m_sValue ].push_back( pair< int, int >::pair( (int)vAssembler.size() - 1, 1 ) );
-	}
 }
 
 void CAsmGenerator::GenMov( CRegister::TType a, CRegister::TType b, vector< CInstr >& vAssembler )
@@ -290,23 +316,54 @@ void CAsmGenerator::GenMov( CRegister::TType a, CRegister::TType b, vector< CIns
 	vAssembler.push_back( oInstr );
 }
 
-void CAsmGenerator::GenMovAddrImm( CRegister::TType eBase, CRegister::TType eIndex, int nOffset, VarMap& mVar, const CSyntaxNode& oImm, vector< CInstr >& vAssembler )
+CMemory* CAsmGenerator::CreateMemoryRegister(CRegister::TType eBase, CRegister::TType eIndex, int nDisplacement)
+{
+	CMemory* pMemory = new CMemory;
+	pMemory->m_oBase = eBase;
+	pMemory->m_oIndex = eIndex;
+	pMemory->m_nDisplacement = nDisplacement;
+	return pMemory;
+}
+
+void CAsmGenerator::GenMovAddrImm(CMemory* pMemory, VarMap& mVar, const CSyntaxNode& oImm, vector< CInstr >& vAssembler )
 {
 	CInstr oInstr;
 	oInstr.m_eMnem = CAsmGenerator::eMov;
-
-	CRegister r0( eBase ), r1( eIndex );
-	CMemory* pMem = new CMemory;
-	pMem->m_oBase = r0;
-	pMem->m_oIndex = r1;
-	pMem->m_nOffset = nOffset;
 	
 	CNumeric* pNum = new CNumeric;
 	FillOperandFromSyntaxNode( pNum, oImm );
 
-	oInstr.m_vOperand.push_back( pMem );
+	oInstr.m_vOperand.push_back(pMemory);
 	oInstr.m_vOperand.push_back( pNum );
 	vAssembler.push_back( oInstr );
+}
+
+void CAsmGenerator::GenMovAddrReg(CRegister::TType scrReg, CMemory* pDestMemory, vector< CInstr >& vAssembler)
+{
+	CInstr oInstr;
+	oInstr.m_eMnem = CAsmGenerator::eMov;
+	oInstr.m_vOperand.push_back(pDestMemory);
+	oInstr.m_vOperand.push_back(new CRegister(scrReg));
+	vAssembler.push_back(oInstr);
+}
+
+void CAsmGenerator::GenMovRegAddr(CRegister::TType destReg, CMemory* pSrcMemory, vector< CInstr >& vAssembler)
+{
+	CInstr oInstr;
+	oInstr.m_eMnem = CAsmGenerator::eMov;
+	oInstr.m_vOperand.push_back(new CRegister(destReg));
+	oInstr.m_vOperand.push_back(pSrcMemory);
+	vAssembler.push_back(oInstr);
+}
+
+void CAsmGenerator::GenMovAddrAddr(CMemory* pSrcMemory, CMemory* pDestMemory, vector< CInstr >& vAssembler)
+{
+	if (m_bEaxBusy)
+		GenPush(CRegister::eax, vAssembler);
+	GenMovRegAddr(CRegister::eax, pSrcMemory, vAssembler);
+	GenMovAddrReg(CRegister::eax, pDestMemory, vAssembler);
+	if (m_bEaxBusy)
+		GenPop(CRegister::eax, vAssembler);
 }
 
 void CAsmGenerator::GenPush( const CSyntaxNode& oNode, vector< CInstr >& vAssembler )

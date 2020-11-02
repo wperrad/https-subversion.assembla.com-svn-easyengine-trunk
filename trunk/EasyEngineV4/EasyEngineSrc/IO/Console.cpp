@@ -93,7 +93,7 @@ void CConsole::Update()
 	if ( m_bIsOpen )
 	{
 		int nFontHeight = m_oGUIManager.GetCurrentFontHeight();
-		if (m_nStaticTextID == -1 || m_bHasToUpdateStaticTest) {
+		if (m_bHasToUpdateStaticTest) {
 			if (m_nStaticTextID != -1)
 				m_oGUIManager.DestroyStaticTest(m_nStaticTextID);
 			m_nStaticTextID = m_oGUIManager.CreateStaticText(m_vLines, m_xPos, m_yPos);
@@ -141,6 +141,13 @@ void CConsole::OnPressEnter()
 {
 	string sCommand = m_vLines.back();
 	m_vLines.back() = m_sLinePrefix + m_vLines.back();
+
+
+	if (m_nStaticTextID != -1)
+		m_oGUIManager.DestroyStaticTest(m_nStaticTextID);
+	m_nStaticTextID = m_oGUIManager.CreateStaticText(m_vLines, m_xPos, m_yPos);
+
+
 	m_vLines.resize( m_vLines.size() + 1 );
 	m_nCursorPos = 0;
 	try
@@ -166,9 +173,7 @@ void CConsole::OnPressEnter()
 		AddString( e.what() );
 	}
 
-	if( m_nStaticTextID != -1 )
-		m_oGUIManager.DestroyStaticTest( m_nStaticTextID );
-	m_nStaticTextID = m_oGUIManager.CreateStaticText( m_vLines, m_xPos, m_yPos );
+
 }
 
 void CConsole::OnKeyPress( unsigned char key )

@@ -7,6 +7,8 @@
 #include "VirtualProcessor.h"
 #include "Exception.h"
 
+//#define CREATE_ASSEMBLING_LISTING
+
 CScriptManager::CScriptManager( const Desc& oDesc ):
 IScriptManager( oDesc )
 {
@@ -47,7 +49,9 @@ void CScriptManager::ExecuteCommand( std::string sCommand )
 	m_pSemanticAnalyser->GetFunctionAddress( mFuncAddr );
 	
 	m_pCodeGenerator->GenAssembler( oTree, vAssembler, mFuncAddr, m_pSemanticAnalyser->GetVarMap() );
-	//m_pCodeGenerator->CreateAssemblerListing( vAssembler, "test.asm" );
+#ifdef CREATE_ASSEMBLING_LISTING
+	m_pCodeGenerator->CreateAssemblerListing( vAssembler, "test.asm" );
+#endif // CREATE_ASSEMBLING_LISTING
 	vector< unsigned char > vBin;
 	m_pBinGenerator->GenBinary( vAssembler, vBin );
 	m_pProc->Execute( vBin, CBinGenerator::s_vInstrSize );
@@ -56,6 +60,11 @@ void CScriptManager::ExecuteCommand( std::string sCommand )
 void CScriptManager::GetRegisteredFunctions( vector< string >& vFuncNames )
 {
 	m_pSemanticAnalyser->GetRegisteredFunctions( vFuncNames );
+}
+
+float CScriptManager::GetVariableValue(string variableName)
+{
+	return m_pProc->GetVariableValue(variableName);
 }
 
 void CScriptManager::RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType )

@@ -100,3 +100,4 @@ void Goto( IScriptState* pState );
 void SetEntityName( IScriptState* pState );
 void DisplayFov( IScriptState* pState );
 void SetFov( IScriptState* pState );
+void print(IScriptState* pState);

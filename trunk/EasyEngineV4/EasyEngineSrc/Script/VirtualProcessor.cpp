@@ -9,11 +9,11 @@ CSemanticAnalyser* CVirtualProcessor::s_pSemanticAnalyser = NULL;
 
 CVirtualProcessor::CVirtualProcessor( CSemanticAnalyser* pSemanticAnalyser ):
 m_nEip( 0 ),
-m_nEsp( STACK_SIZE - 1 ),
+m_nEsp( MEM_SIZE - 1 ),
 m_bEnd( false ),
 m_nEax( -1 ), m_nEbx( -1 ), m_nEcx( -1 ), m_nEdx( -1 ), m_nEsi( -1 ), m_nEdi( -1 ), m_nEbp( -1 )
 {
-	ZeroMemory( m_pStack, STACK_SIZE * sizeof( float ) );
+	ZeroMemory( m_pMemory, MEM_SIZE * sizeof( float ) );
 	s_pSemanticAnalyser = pSemanticAnalyser;
 	s_pCurrentInstance = this;
 
@@ -81,11 +81,18 @@ m_nEax( -1 ), m_nEbx( -1 ), m_nEcx( -1 ), m_nEdx( -1 ), m_nEsi( -1 ), m_nEdi( -1
 	m_mInstrFunc[ CBinGenerator::eRet ] = Ret;
 
 	m_vRegAddr.resize( 8 );
-	m_vRegAddr[ CRegister::eax ] = &m_nEax;
-	m_vRegAddr[ CRegister::ebx ] = &m_nEbx;
-	m_vRegAddr[ CRegister::ecx ] = &m_nEcx;
-	m_vRegAddr[ CRegister::edx ] = &m_nEdx;
+	m_vRegAddr[CRegister::eax] = &m_nEax;
+	m_vRegAddr[CRegister::ebx] = &m_nEbx;
+	m_vRegAddr[CRegister::ecx] = &m_nEcx;
+	m_vRegAddr[CRegister::edx] = &m_nEdx;
+	m_vRegAddr[CRegister::esi] = &m_nEsi;
+	m_vRegAddr[CRegister::edi] = &m_nEdi;
+	m_vRegAddr[CRegister::ebp] = &m_nEbp;
+	m_vRegAddr[CRegister::esp] = &m_nEsp;
 
+	m_nEbp = m_nEsp;
+
+	m_mEbpValueByScope[0] = m_nEbp;
 }
 
 void CVirtualProcessor::Execute( const vector< unsigned char >& vBinary, const vector< int >& vInstrSize )
@@ -114,10 +121,18 @@ void CVirtualProcessor::Execute( const vector< unsigned char >& vBinary, const v
 			oss << "Erreur, instruction " << iCurrInstr << " inexistante";
 			MessageBox( NULL, oss.str().c_str(), "Erreur de runtime", MB_ICONERROR );
 		}
-			//throw 1;
 		m_nEip += nInstrSize;
+		if (m_nEip == vBinary.size())
+			m_bEnd = true;
 	}
 	while( !m_bEnd );
+}
+
+float CVirtualProcessor::GetVariableValue(string varName)
+{
+	const CVar* var = s_pSemanticAnalyser->GetVariable(varName);
+	int ebp = m_mEbpValueByScope[var->m_nScopePos];
+	return m_pMemory[ebp - var->m_nRelativeStackPosition];
 }
 
 void CVirtualProcessor::MovRegReg( unsigned char* pOperand )
@@ -135,19 +150,47 @@ void CVirtualProcessor::MovRegImm( unsigned char* pOperand )
 	*s_pCurrentInstance->m_vRegAddr[ r ] = fOperand;
 }
 
-void CVirtualProcessor::MovRegAddr( unsigned char* pOperand )
+int CVirtualProcessor::GetMemRegisterAddress(unsigned char* pOperand)
 {
-	throw 1;
+	unsigned char baseIndexId;
+	char displacement;
+	float fimm;
+	int imm;
+	memcpy(&baseIndexId, &pOperand[0], 1);
+	memcpy(&displacement, &pOperand[1], 1);
+	displacement /= 4;
+	unsigned char baseId = baseIndexId & 0xf;
+	unsigned char indexId = (baseIndexId >> 4);
+	int base = *s_pCurrentInstance->m_vRegAddr[baseId];
+	int index = indexId == 0xf ? 0 : *s_pCurrentInstance->m_vRegAddr[indexId];
+	int address = base + index + displacement;
+	return address;
+}
+
+void CVirtualProcessor::MovRegAddr(unsigned char* pOperand)
+{
+	int address = GetMemRegisterAddress(pOperand + 1);	
+	int memValue = s_pCurrentInstance->m_pMemory[address];
+	char regId = pOperand[0];
+	*s_pCurrentInstance->m_vRegAddr[regId] = memValue;
 }
 
 void CVirtualProcessor::MovAddrReg( unsigned char* pOperand )
 {
-	throw 1;
+	int address = GetMemRegisterAddress(pOperand);
+	char regId = pOperand[2];
+	int regValue = *s_pCurrentInstance->m_vRegAddr[regId];
+	s_pCurrentInstance->m_pMemory[address] = regValue;
 }
 
 void CVirtualProcessor::MovAddrImm( unsigned char* pOperand )
 {
-	throw 1;
+	int address = GetMemRegisterAddress(pOperand);
+	float fimm;
+	int imm;
+	memcpy(&fimm, &pOperand[2], 4);
+	imm = fimm;
+	s_pCurrentInstance->m_pMemory[address] = imm;
 }
 
 void CVirtualProcessor::AddRegReg( unsigned char* pOperand )
@@ -228,13 +271,13 @@ void CVirtualProcessor::DivRegImm( unsigned char* pOperand )
 
 void CVirtualProcessor::PushReg( unsigned char* pOperand )
 {
-	s_pCurrentInstance->m_pStack[ (int)s_pCurrentInstance->m_nEsp ] = *s_pCurrentInstance->m_vRegAddr[ pOperand[ 0 ] ];
+	s_pCurrentInstance->m_pMemory[ (int)s_pCurrentInstance->m_nEsp ] = *s_pCurrentInstance->m_vRegAddr[ pOperand[ 0 ] ];
 	s_pCurrentInstance->m_nEsp -= 1.f;
 }
 
 void CVirtualProcessor::PushImm( unsigned char* pOperand )
 {
-	memcpy( &s_pCurrentInstance->m_pStack[ (int)s_pCurrentInstance->m_nEsp ], pOperand, 4 );
+	memcpy( &s_pCurrentInstance->m_pMemory[ (int)s_pCurrentInstance->m_nEsp ], pOperand, 4 );
 	s_pCurrentInstance->m_nEsp -= 1.f;
 }
 
@@ -245,7 +288,7 @@ void CVirtualProcessor::PushAddr( unsigned char* pOperand )
 
 void CVirtualProcessor::PopReg( unsigned char* pOperand )
 {
-	*s_pCurrentInstance->m_vRegAddr[ (int)pOperand[ 0 ]  ] = s_pCurrentInstance->m_pStack[ (int)++s_pCurrentInstance->m_nEsp ];
+	*s_pCurrentInstance->m_vRegAddr[ (int)pOperand[ 0 ]  ] = s_pCurrentInstance->m_pMemory[ (int)++s_pCurrentInstance->m_nEsp ];
 }
 
 void CVirtualProcessor::IntImm( unsigned char* pOperand )
@@ -256,14 +299,14 @@ void CVirtualProcessor::IntImm( unsigned char* pOperand )
 	int nFuncArgCount = s_pSemanticAnalyser->GetFuncArgsCount( (int)fIndex );
 	vector< float > vArgs;
 	for( int i = 0; i < nFuncArgCount; i++ )
-		vArgs.push_back( s_pCurrentInstance->m_pStack[ (int)s_pCurrentInstance->m_nEsp + i + 1 ] );
+		vArgs.push_back( s_pCurrentInstance->m_pMemory[ (int)s_pCurrentInstance->m_nEsp + i + 1 ] );
 	s_pCurrentInstance->m_nEsp += nFuncArgCount;
 	s_pSemanticAnalyser->CallInterruption( (int)fIndex, vArgs );
 }
 
 void CVirtualProcessor::Ret( unsigned char* pOperand )
 {
-	if( s_pCurrentInstance->m_nEsp == STACK_SIZE - 1 )
+	if( s_pCurrentInstance->m_nEsp == MEM_SIZE - 1 )
 		s_pCurrentInstance->m_bEnd = true;
 	else
 		MessageBox( NULL, "RET : Problème de pile incohérente", "", MB_ICONERROR );

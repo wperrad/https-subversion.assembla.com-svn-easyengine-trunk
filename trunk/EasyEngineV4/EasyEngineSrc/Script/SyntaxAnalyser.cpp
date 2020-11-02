@@ -16,6 +16,11 @@ m_nAddress( -1 )
 {
 }
 
+bool CSyntaxNode::IsValue(NODE_TYPE node)
+{
+	return (node == eVal) || (node == eInt) || (node == eFloat) || (node == eString);
+}
+
 void CSyntaxAnalyser::ReduceInstruction( CSyntaxNode& oTree )
 {
 	unsigned int i = 0;

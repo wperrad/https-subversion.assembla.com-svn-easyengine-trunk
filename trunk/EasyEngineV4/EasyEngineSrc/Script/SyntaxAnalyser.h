@@ -29,6 +29,7 @@ public:
 
 	CSyntaxNode();
 	CSyntaxNode( CLexAnalyser::CLexem );
+	static bool				IsValue(NODE_TYPE node);
 	CLexAnalyser::CLexem	m_Lexem;
 	vector< CSyntaxNode >	m_vChild;
 	NODE_TYPE				m_Type;
