@@ -54,7 +54,8 @@ void CSyntaxAnalyser::GetSyntaxicTree( const vector< CLexAnalyser::CLexem >& vLe
 		if( vSyntax[ i ].m_Lexem.m_eType == CLexAnalyser::CLexem::eFloat ||  
 			vSyntax[ i ].m_Lexem.m_eType == CLexAnalyser::CLexem::eInt ||
 			vSyntax[ i ].m_Lexem.m_eType == CLexAnalyser::CLexem::eString ||
-			vSyntax[ i ].m_Lexem.m_eType == CLexAnalyser::CLexem::eVar )
+			vSyntax[ i ].m_Lexem.m_eType == CLexAnalyser::CLexem::eVar ||
+			vSyntax[i].m_Lexem.m_eType == CLexAnalyser::CLexem::eFunction)
 		{
 			vSyntax[ i ].m_Type = CSyntaxNode::eVal;
 		}

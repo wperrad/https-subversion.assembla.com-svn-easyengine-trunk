@@ -54,6 +54,8 @@ class CConsole : public IConsole
 	void											OnPressEnter();	
 	bool											m_bHasToUpdateStaticTest;
 	bool											m_bInputEnabled;
+
+	void											GetClipboardContent(string& text);
 	
 	static void										OnKeyAction( CPlugin*, unsigned int key, IInputManager::KEY_STATE );	
 

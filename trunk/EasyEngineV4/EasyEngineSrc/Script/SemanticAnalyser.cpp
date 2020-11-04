@@ -1,10 +1,21 @@
 #include "SemanticAnalyser.h"
 #include "Exception.h"
 #include <sstream>
+#include <algorithm>
 
 void CScriptState::AddArg( IScriptFuncArg* pArg )
 {
 	m_vArg.push_back( pArg );
+}
+
+void CScriptState::SetReturnValue(float ret)
+{
+	m_fReturnValue = ret;
+}
+
+float CScriptState::GetReturnValue()
+{
+	return m_fReturnValue;
 }
 
 IScriptFuncArg* CScriptState::GetArg( int iIndex )
@@ -225,7 +236,7 @@ unsigned int CSemanticAnalyser::GetFuncArgsCount( int nFuncIndex )
 	return (unsigned int)itFunc->second.second.size();
 }
 
-void CSemanticAnalyser::CallInterruption( int nIntIndex, const vector< float >& vArgs )
+float CSemanticAnalyser::CallInterruption( int nIntIndex, const vector< float >& vArgs )
 {
 	FuncMap::iterator itFunc = m_mInterruption.begin();
 	std::advance( itFunc, nIntIndex );
@@ -251,6 +262,7 @@ void CSemanticAnalyser::CallInterruption( int nIntIndex, const vector< float >& 
 			pState->AddArg( pArg );
 		}
 		itFunc->second.first( pState );
+		return pState->GetReturnValue();
 	}
 	catch( CBadArgCountException& e )
 	{

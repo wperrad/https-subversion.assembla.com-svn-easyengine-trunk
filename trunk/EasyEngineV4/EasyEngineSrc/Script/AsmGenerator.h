@@ -127,6 +127,7 @@ private:
 	void					GenPush( CRegister::TType, vector< CInstr >& );
 	void					GenPush( const CSyntaxNode&, vector< CInstr >& );
 	void					GenPushImm( float val, vector< CInstr >& vAssembler );
+	void					GenPushMemory(CMemory* pMemory, vector< CInstr >& vAssembler);
 	void					GenCall( const CSyntaxNode& oNode, vector< CInstr >& );
 	void					GenMov( CRegister::TType a, CRegister::TType b, vector< CInstr >& );
 	CMemory*				CreateMemoryRegister(CRegister::TType eBase, CRegister::TType eIndex, int nDisplacement);

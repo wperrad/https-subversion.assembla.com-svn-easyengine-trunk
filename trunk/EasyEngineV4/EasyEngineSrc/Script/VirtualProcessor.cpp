@@ -131,8 +131,11 @@ void CVirtualProcessor::Execute( const vector< unsigned char >& vBinary, const v
 float CVirtualProcessor::GetVariableValue(string varName)
 {
 	const CVar* var = s_pSemanticAnalyser->GetVariable(varName);
-	int ebp = m_mEbpValueByScope[var->m_nScopePos];
-	return m_pMemory[ebp - var->m_nRelativeStackPosition];
+	if (var) {
+		int ebp = m_mEbpValueByScope[var->m_nScopePos];
+		return m_pMemory[ebp - var->m_nRelativeStackPosition];
+	}
+	return -1.f;
 }
 
 void CVirtualProcessor::MovRegReg( unsigned char* pOperand )
@@ -283,7 +286,11 @@ void CVirtualProcessor::PushImm( unsigned char* pOperand )
 
 void CVirtualProcessor::PushAddr( unsigned char* pOperand )
 {
-	throw 1;
+	int address = GetMemRegisterAddress(pOperand);
+	float memValue = s_pCurrentInstance->m_pMemory[address];
+
+	memcpy(&s_pCurrentInstance->m_pMemory[(int)s_pCurrentInstance->m_nEsp], &memValue, 4);
+	s_pCurrentInstance->m_nEsp -= 1.f;
 }
 
 void CVirtualProcessor::PopReg( unsigned char* pOperand )
@@ -301,7 +308,7 @@ void CVirtualProcessor::IntImm( unsigned char* pOperand )
 	for( int i = 0; i < nFuncArgCount; i++ )
 		vArgs.push_back( s_pCurrentInstance->m_pMemory[ (int)s_pCurrentInstance->m_nEsp + i + 1 ] );
 	s_pCurrentInstance->m_nEsp += nFuncArgCount;
-	s_pSemanticAnalyser->CallInterruption( (int)fIndex, vArgs );
+	s_pCurrentInstance->m_nEax = s_pSemanticAnalyser->CallInterruption( (int)fIndex, vArgs );
 }
 
 void CVirtualProcessor::Ret( unsigned char* pOperand )

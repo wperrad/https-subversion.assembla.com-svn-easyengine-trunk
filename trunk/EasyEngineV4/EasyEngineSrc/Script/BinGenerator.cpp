@@ -70,7 +70,7 @@ CBinGenerator::CBinGenerator()
 	
 	s_vInstrSize.push_back( 2 );
 	s_vInstrSize.push_back( 5 );
-	s_vInstrSize.push_back( 6 );
+	s_vInstrSize.push_back( 3 );
 
 	s_vInstrSize.push_back( 2 );
 	s_vInstrSize.push_back( 6 );
@@ -170,24 +170,29 @@ void CBinGenerator::GenInstructionBinary( const CAsmGenerator::CInstr& oInstr, v
 			else {
 				const CMemory* pMem = dynamic_cast< const CMemory* >(oInstr.m_vOperand[0]);
 				if (pMem) {
-					const CNumeric* pNum = dynamic_cast< const CNumeric* >(oInstr.m_vOperand[1]);
-					if (pNum)
-					{
-						// mem imm
-						vBin.push_back(s_tabInstr[oInstr.m_eMnem][eAddr][eImm]);
+					if (oInstr.m_vOperand.size() < 2) {
+						vBin.push_back(s_tabInstr[oInstr.m_eMnem][eAddr][0]);
 						GenMemoryBinary(pMem, vBin);
-						AddImmToByteArray(pNum->m_fValue, vBin);
 					}
 					else {
-						const CRegister* pReg2 = dynamic_cast< const CRegister* >(oInstr.m_vOperand[1]);
-						if (pReg2) {
-							// mem reg
-							vBin.push_back(s_tabInstr[oInstr.m_eMnem][eAddr][eReg]);
+						const CNumeric* pNum = dynamic_cast<const CNumeric*>(oInstr.m_vOperand[1]);
+						if (pNum)
+						{
+							// mem imm
+							vBin.push_back(s_tabInstr[oInstr.m_eMnem][eAddr][eImm]);
 							GenMemoryBinary(pMem, vBin);
-							vBin.push_back(pReg2->m_eValue);
+							AddImmToByteArray(pNum->m_fValue, vBin);
+						}
+						else {
+							const CRegister* pReg2 = dynamic_cast<const CRegister*>(oInstr.m_vOperand[1]);
+							if (pReg2) {
+								// mem reg
+								vBin.push_back(s_tabInstr[oInstr.m_eMnem][eAddr][eReg]);
+								GenMemoryBinary(pMem, vBin);
+								vBin.push_back(pReg2->m_eValue);
+							}
 						}
 					}
-
 				}
 			}
 		}

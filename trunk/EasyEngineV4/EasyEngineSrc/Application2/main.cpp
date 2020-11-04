@@ -137,7 +137,8 @@ void InitScene( ISceneManager* pSceneManager )
 	try
 	{
 		m_pConsole->Open(true);
-		FILE* pFile = m_pFileSystem->OpenFile( "start.eas", "r" );		
+		FILE* pFile = NULL;
+		pFile = m_pFileSystem->OpenFile("start.eas", "r");
 		if( pFile )
 		{
 			fseek( pFile, 0, SEEK_END );
@@ -149,19 +150,6 @@ void InitScene( ISceneManager* pSceneManager )
 		else
 			m_pConsole->Println( "Fichier start introuvable." );
 
-		// test
-		pFile = m_pFileSystem->OpenFile("test.eas", "r");
-		if (pFile)
-		{
-			fseek(pFile, 0, SEEK_END);
-			long pos = ftell(pFile);
-			fclose(pFile);
-			if (pos > 0)
-				m_pScriptManager->ExecuteCommand("run(\"test\");");
-		}
-		else
-			m_pConsole->Println("Fichier test introuvable.");
-		// fin test
 	}
 	catch( CEException& e )
 	{

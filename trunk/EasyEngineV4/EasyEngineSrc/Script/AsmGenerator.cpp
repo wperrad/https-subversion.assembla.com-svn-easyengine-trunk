@@ -210,6 +210,11 @@ void CAsmGenerator::GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CIn
 			int nIndex = (int)oTree.m_vChild.size() - i - 1;
 			if( oTree.m_vChild[ nIndex ].m_Lexem.IsNumeric() )
 				GenPush( oTree.m_vChild[ nIndex ], vAssembler );
+			else if (oTree.m_vChild[nIndex].m_Lexem.m_eType == CLexAnalyser::CLexem::eVar) {
+				CVar& v = mVar[m_nCurrentScopeNumber][oTree.m_vChild[nIndex].m_Lexem.m_sValue];
+				CMemory* pMemory = CreateMemoryRegister(CRegister::ebp, CRegister::eNone, -4 * v.m_nRelativeStackPosition);
+				GenPushMemory(pMemory, vAssembler);
+			}
 			else
 			{
 				GenAssemblerFirstPass( oTree.m_vChild[ nIndex ], vAssembler, mFuncAddr, mVar );
@@ -226,20 +231,20 @@ void CAsmGenerator::GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CIn
 			GenPushImm( 0, vAssembler );
 			v1.m_bIsDeclared = true;
 		}
-		if (oTree.m_vChild[1].m_vChild.size() == 0) {
-			const CSyntaxNode& destNode = oTree.m_vChild[1];
-			CMemory* pDestMemory = CreateMemoryRegister(CRegister::ebp, CRegister::TType::eNone, -4 * v1.m_nRelativeStackPosition);
-			if (oTree.m_vChild[1].m_Lexem.m_eType == CLexAnalyser::CLexem::eVar) {
-				CVar& v2 = mVar[m_nCurrentScopeNumber][oTree.m_vChild[1].m_Lexem.m_sValue];
-				CMemory* pSrcMemory = CreateMemoryRegister(CRegister::ebp, CRegister::eNone, -4 * v2.m_nRelativeStackPosition);
-				GenMovAddrAddr(pSrcMemory, pDestMemory, vAssembler);
-			}
-			else if (oTree.m_vChild[1].m_Type == CSyntaxNode::eInt || oTree.m_vChild[1].m_Type == CSyntaxNode::eFloat || oTree.m_vChild[1].m_Type == CSyntaxNode::eString) {
-				GenMovAddrImm(pDestMemory, mVar, destNode, vAssembler);
-			}
+		
+		const CSyntaxNode& destNode = oTree.m_vChild[1];
+		CMemory* pDestMemory = CreateMemoryRegister(CRegister::ebp, CRegister::TType::eNone, -4 * v1.m_nRelativeStackPosition);
+		if (oTree.m_vChild[1].m_Lexem.m_eType == CLexAnalyser::CLexem::eVar) {
+			CVar& v2 = mVar[m_nCurrentScopeNumber][oTree.m_vChild[1].m_Lexem.m_sValue];
+			CMemory* pSrcMemory = CreateMemoryRegister(CRegister::ebp, CRegister::eNone, -4 * v2.m_nRelativeStackPosition);
+			GenMovAddrAddr(pSrcMemory, pDestMemory, vAssembler);
 		}
-		else
-			throw 1;
+		else if (oTree.m_vChild[1].m_Type == CSyntaxNode::eInt || oTree.m_vChild[1].m_Type == CSyntaxNode::eFloat || oTree.m_vChild[1].m_Type == CSyntaxNode::eString)
+			GenMovAddrImm(pDestMemory, mVar, destNode, vAssembler);
+		else if (oTree.m_vChild[1].m_Lexem.m_eType == CLexAnalyser::CLexem::eFunction) {
+			GenAssemblerFirstPass(oTree.m_vChild[1], vAssembler, mFuncAddr, mVar);
+			GenMovAddrReg(CRegister::eax, pDestMemory, vAssembler);
+		}
 	}
 	else
 	{
@@ -396,6 +401,14 @@ void CAsmGenerator::GenPushImm( float val, vector< CInstr >& vAssembler )
 	CNumeric* pNumeric = new CNumeric( val );
 	oInstr.m_vOperand.push_back( pNumeric );
 	vAssembler.push_back( oInstr );
+}
+
+void CAsmGenerator::GenPushMemory(CMemory* pMemory, vector< CInstr >& vAssembler)
+{
+	CInstr oInstr;
+	oInstr.m_eMnem = CAsmGenerator::ePush;
+	oInstr.m_vOperand.push_back(pMemory);
+	vAssembler.push_back(oInstr);
 }
 
 void CAsmGenerator::GenOperation( CLexAnalyser::CLexem::TLexem optype, CRegister::TType reg1, CRegister::TType reg2, vector< CInstr >& vAssembler )

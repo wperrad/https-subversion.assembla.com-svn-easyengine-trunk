@@ -40,6 +40,7 @@ class IScriptState
 {
 public:
 	virtual IScriptFuncArg* GetArg( int iIndex ) = 0;
+	virtual void			SetReturnValue(float ret) = 0;
 };
 
 typedef void ( *ScriptFunction )( IScriptState* );
@@ -67,6 +68,7 @@ public:
 	virtual void	RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType ) = 0;
 	virtual void	ExecuteCommand( std::string sCommand ) = 0;
 	virtual void	GetRegisteredFunctions( vector< string >& vFuncNames ) = 0;
+	virtual float	GetVariableValue(string variableName) = 0;
 };
 
 #endif // ISCRIPTMANAGER_H

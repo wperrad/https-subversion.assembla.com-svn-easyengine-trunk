@@ -101,3 +101,4 @@ void SetEntityName( IScriptState* pState );
 void DisplayFov( IScriptState* pState );
 void SetFov( IScriptState* pState );
 void print(IScriptState* pState);
+void GetCameraID(IScriptState* pState);
