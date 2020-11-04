@@ -1,53 +1,54 @@
+SetBkgColor(0, 100, 255);
 SetSceneMap("terrain");
-AddLightw("omni", 4000);
-SetEntityPos(4, 0, 10000, 55000);
 
-AddLightw("omni", 75000);
-SetEntityPos(5, 0, 75000, -260000);
+l=AddLightw("omni", 4000);
+SetEntityPos(l, 0, 10000, 55000);
 
-CreateMobileEntity("testExport14");
-SetEntityName(12, "Entity12");
-SetCurrentPerso(12);
-Stand(12);
-SetAnimationSpeed(12, "run", 1.5);
+l=AddLightw("omni", 75000);
+SetEntityPos(l, 0, 75000, -260000);
 
-LoadEntity("Armors\2\Armure2_cuirasse");
-LoadEntity("Armors\2\Armure2_jupe");
-LoadEntity("Armors\2\Armure2_JambiereD");
-LoadEntity("Armors\2\Armure2_JambiereG");
-LoadEntity("Armors\2\Armure2_BrassiereD");
-LoadEntity("Armors\2\Armure2_BrassiereG");
-LoadEntity("Armors\2\Armure2_EpauletteD");
-LoadEntity("Armors\2\Armure2_EpauletteG");
+p=CreateMobileEntity("testExport14");
+SetEntityName(p, "Entity12");
+SetCurrentPerso(p);
+Stand(p);
+SetAnimationSpeed(p, "run", 1.5);
 
-Link(13, -1, 12, 3, "preserve");
-Link(14, -1, 12, 1, "preserve");
-Link(15, -1, 12, 44, "preserve");
-Link(16, -1, 12, 49, "preserve");
-Link(17, -1, 12, 9, "preserve");
-Link(18, -1, 12, 27, "preserve");
-Link(19, -1, 12, 7, "preserve");
-Link(20, -1, 12, 25, "preserve");
+a = LoadEntity("Armors\2\Armure2_cuirasse");
+Link(a, -1, 12, 3, "preserve");
+a = LoadEntity("Armors\2\Armure2_jupe");
+Link(a, -1, 12, 1, "preserve");
+a = LoadEntity("Armors\2\Armure2_JambiereD");
+Link(a, -1, 12, 44, "preserve");
+a = LoadEntity("Armors\2\Armure2_JambiereG");
+Link(a, -1, 12, 49, "preserve");
+a = LoadEntity("Armors\2\Armure2_BrassiereD");
+Link(a, -1, 12, 9, "preserve");
+a = LoadEntity("Armors\2\Armure2_BrassiereG");
+Link(a, -1, 12, 27, "preserve");
+a = LoadEntity("Armors\2\Armure2_EpauletteD");
+Link(a, -1, 12, 7, "preserve");
+a = LoadEntity("Armors\2\Armure2_EpauletteG");
+Link(a, -1, 12, 25, "preserve");
 
 SetCameraType("link");
 SetFov(60);
 
-RollEntity(2, 180);
-PitchEntity(2, 80);
-LocalTranslate(2, 0, 150, 300);
+c = GetCameraID("link");
 
-CreateNPC("testExport14");
-Stand(27);
-SetEntityPos(27, -200, 1000, 1000);
-SetEntityName(27, "Entity27");
+RollEntity(c, 180);
+PitchEntity(c, 80);
+LocalTranslate(c, 0, 120, 300);
 
-CreateNPC("testExport14");
-Stand(34);
-SetEntityPos(34, 2000, 0, 0);
-SetEntityName(34, "Entity34");
+p = CreateNPC("testExport14");
+Stand(p);
+SetEntityPos(p, -200, 1000, 1000);
+SetEntityName(p, "Entity27");
 
+p = CreateNPC("testExport14");
+Stand(p);
+SetEntityPos(p, 2000, 0, 0);
+SetEntityName(p, "Entity34");
 
-LoadEntity("maison");
-SetEntityWeight(35, 1);
-SetEntityPos(35, 2000, 5000, 2000);
-
+p = LoadEntity("maison");
+SetEntityWeight(p, 1);
+SetEntityPos(p, 2000, 5000, 2000);

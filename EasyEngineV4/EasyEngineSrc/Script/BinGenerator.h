@@ -56,7 +56,7 @@ public:
 
 		ePushReg,		// op = reg(1)
 		ePushImm,		// op = imm(4)
-		ePushAddr,		// op = reg addr(1) + addr(4)
+		ePushAddr,		// op = reg base(0.5) + reg index(0.5) + displacement(1)
 
 		ePopReg,
 		ePopAddr,

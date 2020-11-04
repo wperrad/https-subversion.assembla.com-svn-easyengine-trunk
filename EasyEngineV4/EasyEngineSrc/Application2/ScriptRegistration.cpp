@@ -202,9 +202,8 @@ void CreateRepere( IScriptState* pState )
 
 void Test( IScriptState* pState )
 {
-
-	IEntity* pHuman = m_pEntityManager->GetEntity( 34 );
-	pHuman->Goto( CVector( 502,411, 5000 ) , -1.f );
+	m_pConsole->Println("Test de retour de valeur");
+	pState->SetReturnValue(28);
 }
 
 void ChangeBase( IScriptState* pState )
@@ -445,6 +444,16 @@ void SetCameraType( IScriptState* pState )
 	}
 }
 
+void GetCameraID(IScriptState* pState)
+{
+	CScriptFuncArgString* pType = (CScriptFuncArgString*)pState->GetArg(0);
+	ICameraManager::TCameraType type = ICameraManager::T_FREE_CAMERA;
+	if(pType->m_sValue == "link")
+		type = ICameraManager::T_LINKED_CAMERA;
+	ICamera* pCamera = m_pCameraManager->GetCameraFromType(type);
+	pState->SetReturnValue(m_pEntityManager->GetEntityID(pCamera));
+}
+
 void SetCurrentPerso( IScriptState* pState )
 {
 	CScriptFuncArgInt* pPersoID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
@@ -608,9 +617,11 @@ void CreateMobileEntity( IScriptState* pState )
 	{
 		IEntity* pEntity = m_pEntityManager->CreateMobileEntity( sName, m_pFileSystem );
 		pEntity->Link( m_pScene );
+		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
-		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
+		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
 		m_pConsole->Println( oss.str() );
+		pState->SetReturnValue(id);
 	}
 	catch( CFileNotFoundException& e )
 	{		
@@ -651,9 +662,11 @@ void CreateNPC( IScriptState* pState )
 	{
 		IEntity* pEntity = m_pEntityManager->CreateNPC( sName, m_pFileSystem );
 		pEntity->Link( m_pScene );
+		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
-		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
+		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
 		m_pConsole->Println( oss.str() );
+		pState->SetReturnValue(id);
 	}
 	catch( CFileNotFoundException& e )
 	{		
@@ -1516,8 +1529,9 @@ void AddLightw( IScriptState* pState )
 	IEntity* pEntity = m_pEntityManager->CreateLightEntity( Color, type, pIntensity->m_fValue );
 	pEntity->Link( m_pScene );
 	ostringstream oss;
-	oss << "La lumière a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity );;
+	oss << "La lumière a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity );
 	m_pConsole->Println( oss.str() );
+	pState->SetReturnValue(m_pEntityManager->GetEntityID(pEntity));
 }
 
 void RollEntity( IScriptState* pState )
@@ -1715,9 +1729,11 @@ void LoadEntity( IScriptState* pState )
 		IEntity* pEntity = m_pEntityManager->CreateEntity( sName, "", *m_pRenderer );
 		pEntity->Link( m_pScene );
 		//pEntity->Pitch( -90.f );
+		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
-		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
+		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
 		m_pConsole->Println( oss.str() );
+		pState->SetReturnValue(id);
 	}
 	catch( CFileNotFoundException& e )
 	{		
@@ -2338,4 +2354,8 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("print", print, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("GetCameraID", GetCameraID, vType);
 }

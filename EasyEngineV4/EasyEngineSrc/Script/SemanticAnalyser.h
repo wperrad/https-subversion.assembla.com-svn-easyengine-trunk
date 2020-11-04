@@ -7,9 +7,13 @@
 class CScriptState : public IScriptState
 {
 	vector< IScriptFuncArg* >	m_vArg;
+	float						m_fReturnValue;
+
 public:
 	IScriptFuncArg* GetArg( int iIndex );
 	void			AddArg( IScriptFuncArg* pArg );
+	void			SetReturnValue(float ret);
+	float			GetReturnValue();
 };
 
 struct CVar
@@ -44,7 +48,7 @@ public:
 	void			GetFunctionAddress( map< string, int >& mFuncAddr );
 	void			SetTypeFromChildType( CSyntaxNode& oTree );
 	unsigned int	GetFuncArgsCount( int nFuncIndex );
-	void			CallInterruption( int nIndex, const vector< float >& vArgs );
+	float			CallInterruption( int nIndex, const vector< float >& vArgs );
 	void			GetRegisteredFunctions( vector< string >& vFuncNames );
 	VarMap&			GetVarMap();
 	const CVar*		GetVariable(string varName);

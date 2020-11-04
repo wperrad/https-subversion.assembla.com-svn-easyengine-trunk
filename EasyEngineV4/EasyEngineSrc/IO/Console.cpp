@@ -53,6 +53,30 @@ CConsole::~CConsole(void)
 {
 }
 
+void CConsole::GetClipboardContent(string& text)
+{
+	// Try opening the clipboard
+	if (OpenClipboard(nullptr)) {
+
+		// Get handle of clipboard object for ANSI text
+		HANDLE hData = GetClipboardData(CF_TEXT);
+		if (hData != nullptr) {				
+			// Lock the handle to get the actual text pointer
+			char * pszText = static_cast<char*>(GlobalLock(hData));
+			if (pszText != nullptr) {
+				// Save text in a string class instance					
+				text = pszText;
+				// Release the lock
+				GlobalUnlock(hData);
+				// Release the clipboard
+				CloseClipboard();
+			}
+		}
+	}
+	else
+		Println("Error during get clipboard content");
+}
+
 void CConsole::SetBlink( bool blink )
 {
 	m_bBlink = blink;
@@ -241,9 +265,16 @@ void CConsole::OnKeyPress( unsigned char key )
 	{
 		IInputManager::KEY_STATE LCtrlPressed = m_oInputManager.GetKeyState( VK_CONTROL );
 		unsigned char c = 0;
-		if( (LCtrlPressed == IInputManager::JUST_PRESSED || LCtrlPressed == IInputManager::PRESSED) &&
-			( m_oInputManager.GetKeyState( VK_SPACE ) == IInputManager::JUST_PRESSED ))
-			ManageAutoCompletion();
+		if (LCtrlPressed == IInputManager::JUST_PRESSED || LCtrlPressed == IInputManager::PRESSED) {
+			if (m_oInputManager.GetKeyState(VK_SPACE) == IInputManager::JUST_PRESSED)			
+				ManageAutoCompletion();
+			else if (key == 'V') {
+				string text;
+				GetClipboardContent(text);
+				Print(text);
+				m_nCursorPos = sLine.size();
+			}
+		}
 		else
 		{
 			unsigned char kbs[256];
@@ -361,12 +392,13 @@ void CConsole::Cls()
 void CConsole::Print( string s )
 {
 	AddString(s);
-	m_bHasToUpdateStaticTest = true;
+	
 }
 
 void CConsole::Println(string s)
 {
 	Print(s);
+	m_bHasToUpdateStaticTest = true;
 	NewLine();
 }
 

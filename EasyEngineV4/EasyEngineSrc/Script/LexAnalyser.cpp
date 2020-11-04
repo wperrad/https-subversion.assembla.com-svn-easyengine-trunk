@@ -97,6 +97,8 @@ void CLexAnalyser::GetLexemArrayFromScript( string sScript, vector< CLexem >& vL
 			break;
 		case CLexem::eVar:
 		case CLexem::eFunction:
+			auto last = std::remove_if(sValue.begin(), sValue.end(), isspace);
+			sValue.erase(last, sValue.end());
 			l.m_sValue = sValue;
 			i--;
 			break;
