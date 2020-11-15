@@ -67,21 +67,24 @@ protected:
 	IFileSystem&							m_oFileSystem;
 	std::string								m_sDefaultShader;
 	string									m_sShadersDirectory;
+	string									m_sShaderDirectory;
+
 	CMatrix									m_oCameraMatrixInv;
 	CMatrix									m_oCurrentObjectMatrix;
 	TRenderType								m_eCurrentRenderType;
 	bool									m_bMustChangeFov;
-	float									m_fFov;
+	float									m_fFov;	
 
 	void						LoadMatrix( const CMatrix& m );
 	void						MultMatrix( const CMatrix& m );
 	virtual void				CreateOGLContext( const Desc& oDesc );
 	void						InitOpengl();
 	void						InitGLExtensions();
-	void						LoadShaderDirectory( const std::string& sShaderDirectory, IFileSystem& oFileSystem );
+	void						LoadShaderDirectory(const std::string& sShaderDirectory);
 	void						TurnOffAllLight();
 	void						ApplySetFov();
 	CVector						m_vBackgroundColor;
+	bool						m_bCameraLocked;
 
 public:	
 
@@ -97,6 +100,8 @@ public:
 	void						CalculProjectionMatrix( CMatrix& oMatrix, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar );
 	void						CalculProjectionMatrix( CMatrix& oMatrix, float fov );
 	void						GetProjectionMatrix( CMatrix& oMatrix );
+	void						GetModelViewMatrix(CMatrix& oMatrix);
+	void						GetModelViewProjectionMatrix(CMatrix& oMatrix);
 	void						SetFov( float fov );
 
 	
@@ -174,7 +179,7 @@ public:
 	void						DeleteShader( unsigned int nShaderID ) const;
 	void						DeleteProgram( unsigned int nProgramID ) const;
 	void						SetShaderSource( unsigned int nShaderID, const char* pSource ) const;
-	void						LoadShader( string sShaderName, IFileSystem& oFileSystem );
+	void						LoadShader( string sShaderName);
 	void						CompileShader( unsigned int nShaderID ) const;
 	void						AttachShaderToProgram( unsigned int nProgramID, unsigned int nShaderID ) const;
 	void						LinkProgram( unsigned int nProgramID ) const;
@@ -211,8 +216,13 @@ public:
 	void						SetBackgroundColor( int r, int g, int b, int a = 255 );
 	void						GetBackgroundColor( CVector& vColor );
 	void						ReadPixels( int x, int y, int width, int height, vector< unsigned char >& vPixels, TPixelFormat format );
-
-
+	void						LockCamera(bool lock);
+	void						SetLineWidth(int width);
+	void						ReloadShaders(IEventDispatcher& oEventDispatcher);
+	void						ReloadShader(string shaderName);
+	void						CullFace(bool enable);
+	void						EnableDepthTest(bool enable);
+	bool						IsCullingEnabled();
 
 	void						Test(  int nShader  );
 };

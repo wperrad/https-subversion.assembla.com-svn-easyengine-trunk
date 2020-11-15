@@ -52,6 +52,7 @@ private:
 	CVector								m_oOrgMaxPosition;
 	IRenderer::TRenderType				m_eRenderType;
 	map< string, IBox* >				m_mAnimationKeyBox;
+	bool								m_bUseAdditionalColor;
 	
 	void				CreateMaterialTexture( const std::map< int, CMaterial* >& );
 	void				DisplaySkeletonInfo( CNode* pRoot, bool bRecurse = true );
@@ -98,6 +99,7 @@ public:
 	void				SetRenderingType( IRenderer::TRenderType t );
 	IBox*				GetAnimationBBox( string sAnimation );
 	CVector&			GetOrgMaxPosition();
+	void				Colorize(float r, float g, float b, float a);
 
 	static void SetShaderName( std::string sShaderName );
 };

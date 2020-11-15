@@ -125,6 +125,7 @@ public:
 	virtual void			DrawAnimationBoundingBox( bool bDraw ) = 0;
 	virtual void			SetCurrentAnimationBoundingBox( string AnimationName ) = 0;
 	virtual CVector&		GetOrgMaxPosition() = 0;
+	virtual void			Colorize(float r, float g, float b, float a) = 0;
 };
 
 class IAnimatableMesh : public IRessource

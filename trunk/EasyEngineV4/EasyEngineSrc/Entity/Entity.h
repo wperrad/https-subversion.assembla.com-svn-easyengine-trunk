@@ -48,6 +48,8 @@ protected:
 	TCollisionCallback						m_pfnCollisionCallback;
 	string									m_sEntityName;
 	CScene*									m_pScene;
+	bool									m_bUseAdditionalColor;
+	CVector									m_oAdditionalColor;
 
 
 	void				SetNewBonesMatrixArray( std::vector< CMatrix >& vMatBones );
@@ -98,6 +100,7 @@ public:
 	void				Goto( const CVector& oPosition, float fSpeed );
 	void				SetEntityName( string sName );
 	void				GetEntityName( string& sName );
+	void				Colorize(float r, float g, float b, float a);
 };
 
 #endif // ENTITY_H

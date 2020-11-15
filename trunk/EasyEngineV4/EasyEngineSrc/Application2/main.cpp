@@ -38,6 +38,8 @@
 
 using namespace std;
 
+map<string, CPlugin*> CPlugin::s_mPlugins;
+
 struct CGFXOption
 {
 	bool m_bFullscreen;
@@ -144,8 +146,8 @@ void InitScene( ISceneManager* pSceneManager )
 			fseek( pFile, 0, SEEK_END );
 			long pos = ftell( pFile );
 			fclose( pFile );
-			if( pos > 0 )
-				m_pScriptManager->ExecuteCommand( "run(\"start\");" );
+			if (pos > 0)
+				m_pScriptManager->ExecuteCommand("run(\"start\");");
 		}
 		else
 			m_pConsole->Println( "Fichier start introuvable." );
@@ -330,12 +332,15 @@ void InitPlugins( string sCmdLine )
 	IRessourceManager::Desc oRessourceManagerDesc( *m_pRenderer, *m_pFileSystem, *m_pLoaderManager, *m_pSystemsManager );
 	m_pRessourceManager = static_cast< IRessourceManager* >( CPlugin::Create( oRessourceManagerDesc, sDirectoryName + "Ressource.dll", "CreateRessourceManager" ) );
 
-	ICollisionManager::Desc oCollisionManagerDesc( *m_pRenderer, *m_pLoaderManager, *m_pGeometryManager );
+	ICollisionManager::Desc oCollisionManagerDesc( *m_pRenderer, *m_pLoaderManager, *m_pGeometryManager);
+	oCollisionManagerDesc.m_sName = "Collision";
 	oCollisionManagerDesc.m_pFileSystem = m_pFileSystem;
 	m_pCollisionManager = static_cast< ICollisionManager* >( CPlugin::Create( oCollisionManagerDesc, "Collision.dll", "CreateCollisionManager" ) );
 
 	IEntityManager::Desc oEntityManagerDesc( *m_pRessourceManager, *m_pRenderer, *m_pFileSystem, *m_pCollisionManager, *m_pGeometryManager );
 	m_pEntityManager = static_cast< IEntityManager* >( CPlugin::Create( oEntityManagerDesc, sDirectoryName + "Entity.dll", "CreateEntityManager" ) );
+
+	m_pCollisionManager->SetEntityManager(m_pEntityManager);
 
 	vector< IRenderer* > vRenderer;
 	vRenderer.push_back( m_pRenderer );

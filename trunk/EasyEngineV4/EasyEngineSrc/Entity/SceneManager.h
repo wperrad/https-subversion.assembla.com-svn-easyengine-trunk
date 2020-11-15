@@ -31,6 +31,7 @@ public:
 	void		Load( IEntity* pScene, string sFileName );
 	void		Export( IEntity* pScene, string sFileName );
 	void		ClearScene( IEntity* pScene );
+	void		CreateCollisionMap(IEntity* pScene);
 };
 
 extern "C" _declspec(dllexport) ISceneManager* CreateSceneManager( const ISceneManager::Desc& oDesc );

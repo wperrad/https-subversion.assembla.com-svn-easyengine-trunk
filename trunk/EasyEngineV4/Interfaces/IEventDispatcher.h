@@ -44,6 +44,9 @@ public:
 	virtual void 			DispatchKeyEvent( TKeyEvent, int nKeyCode ) = 0;
 	virtual void 			DispatchMouseEvent( TMouseEvent, int x, int y ) = 0;
 	virtual void			DispatchWindowEvent( TWindowEvent, int nWidth, int nHeight ) = 0;
+
+	virtual void			StopDispatcher() = 0;
+	virtual void			StartDispatcher() = 0;
 };
 
 #endif // IEVENTDISPATCHER_H

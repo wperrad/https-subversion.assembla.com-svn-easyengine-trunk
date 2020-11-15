@@ -21,6 +21,7 @@ public:
 	virtual void			SendUniformVec4f( std::string sVariableName, float x, float y, float z, float w ) = 0;
 	virtual void			SendUniformVec3f( std::string sVariableName, CVector v ) = 0;
 	virtual void			SendUniformVec4f( std::string sVariableName, CVector v ) = 0;
+	virtual void 			SendUniformMatrix4(const std::string& sVariableName, const CMatrix& oMatrix, bool bTranspose = false) = 0;
 	virtual void 			SendUniformMatrix4Array( const std::string& sVariableName, std::vector< CMatrix >& vMatrix, bool bTranspose = false ) = 0;
 	virtual void			SendUniformValues( const std::string& sVariableName, float f ) const = 0;
 	virtual void			SendUniformValues( const std::string& sVariableName, int nValue ) const = 0;

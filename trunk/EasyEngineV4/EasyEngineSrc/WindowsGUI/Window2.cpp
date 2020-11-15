@@ -167,10 +167,6 @@ LRESULT CALLBACK CWindow2::WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		pCurrentWindow->m_bDestroy = true;
 		PostQuitMessage( 0 );
 	}
-	catch( ... )
-	{
-		MessageBoxA( NULL, "Exception non définie", "", MB_ICONERROR );
-	}
 	return DefWindowProcA( hWnd, msg, wParam, lParam );
 }
 

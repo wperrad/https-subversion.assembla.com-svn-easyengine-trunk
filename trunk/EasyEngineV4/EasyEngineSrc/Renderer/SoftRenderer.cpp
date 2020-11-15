@@ -22,7 +22,7 @@ m_fRotSpeed( 0 ),
 m_pMatBones( NULL )
 {
 	//m_mShader.clear();
-	LoadShaderDirectory( oDesc.m_sShaderDirectory + "\\Software", m_oFileSystem );
+	LoadShaderDirectory( oDesc.m_sShaderDirectory + "\\Software");
 	m_bUseTransposeMatrix = false;
 	int nVarID = 1;
 	m_mProgramID[ T_PER_PIXEL_LIGHTING_PROGRAM ] = VertexShaderPerPixelLighting;	
@@ -431,6 +431,11 @@ void CSoftRenderer::SetMaterialEmissive( float* fEmissive )
 void CSoftRenderer::SetMaterialShininess( float fShininess )
 {
 	m_oFrontMaterial.shininess = fShininess;
+}
+
+void CSoftRenderer::LoadShader(string sShaderName)
+{
+
 }
 //
 //void CSoftRenderer::SetDebugString( std::string s )

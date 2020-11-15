@@ -15,6 +15,11 @@ void CShape::DrawBoundingBox( bool bDraw )
 
 }
 
+void CShape::ReloadShader()
+{
+	m_pShader = m_oRenderer.GetShader("color");
+}
+
 void CShape::Update()
 {
 	CNode::Update();

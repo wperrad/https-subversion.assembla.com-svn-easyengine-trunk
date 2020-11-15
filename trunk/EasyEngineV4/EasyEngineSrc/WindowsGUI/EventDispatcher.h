@@ -10,6 +10,7 @@ class CEventDispatcher : public IEventDispatcher
 	std::vector< std::pair< CPlugin*, TMouseCallback > >	m_vMouseAbonnedPlugins;
 	std::vector< std::pair< CPlugin*, TWindowCallback > >	m_vWindowAbonnedPlugins;
 
+	bool m_bDispatcherWorking;
 
 public:
 
@@ -23,6 +24,9 @@ public:
 	void 			DispatchKeyEvent( TKeyEvent, int nKeyCode );
 	void 			DispatchMouseEvent( TMouseEvent, int x, int y );
 	void			DispatchWindowEvent( TWindowEvent, int nWidth, int nHeight );
+
+	void			StopDispatcher();
+	void			StartDispatcher();
 };
 
 extern "C" _declspec(dllexport) IEventDispatcher* CreateEventDispatcher( const IEventDispatcher::Desc& );

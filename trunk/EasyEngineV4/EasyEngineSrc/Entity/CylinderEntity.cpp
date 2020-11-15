@@ -12,6 +12,5 @@ CEntity( "Cylinder.bme", rm, r, NULL, gm, cm )
 
 void CCylinderEntity::Update()
 {
-	m_eRenderType = IRenderer::eLine;
 	CEntity::Update();
 }

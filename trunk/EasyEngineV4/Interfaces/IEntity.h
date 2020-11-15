@@ -96,6 +96,7 @@ public:
 	virtual float			GetBoundingSphereRadius() const = 0;
 	virtual void			Goto( const CVector& oPosition, float fSpeed ) = 0;
 	virtual void			SetEntityName( string sName ) = 0;
+	virtual void			Colorize(float r, float g, float b, float a) = 0;
 };
 
 class IEntityManager : public CPlugin
@@ -187,6 +188,7 @@ public:
 	virtual void		Load( IEntity* pScene, string sFileName ) = 0;
 	virtual void		Export( IEntity* pScene, string sFileName ) = 0;
 	virtual void		ClearScene( IEntity* pScene ) = 0;
+	virtual void		CreateCollisionMap(IEntity* pScene) = 0;
 };
 
 #endif // IENTITY_H

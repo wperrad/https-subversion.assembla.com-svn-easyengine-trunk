@@ -5,6 +5,8 @@
 #include "HeightMap.h"
 #include "IGeometry.h"
 #include "Utils2/RenderUtils.h"
+#include "IEntity.h"
+
 
 IMesh* CCollisionManager::s_pMesh = NULL;
 
@@ -16,9 +18,292 @@ m_oRenderer( oDesc.m_oRenderer ),
 m_oLoaderManager( oDesc.m_oLoaderManager ),
 m_nHeightMapPrecision( 1 ),
 m_pFileSystem( oDesc.m_pFileSystem ),
-m_oGeometryManager( oDesc.m_oGeometryManager )
+m_oGeometryManager( oDesc.m_oGeometryManager ),
+m_pGround(NULL),
+m_sCustomName("a"),
+m_fCustomValue(0.f),
+m_fGroundWidth(0),
+m_fGroundHeight(0),
+m_fGridBoxSize(1000.f),
+m_fGridHeight(800.f),
+m_pCollisionGrid(NULL),
+m_pScene(NULL),
+m_fScreenRatio(m_fScreenRatio),
+m_pEntityManager(NULL),
+m_subdivisionCount(30)
 {
 	g_pCurrentCollisionManager = this;
+	m_oRenderer.GetResolution(m_nScreenWidth, m_nScreenHeight);
+	m_fScreenRatio = (float)m_nScreenWidth / (float)m_nScreenHeight;
+	
+}
+
+void CCollisionManager::DisplayHeightMap(IMesh* pMesh)
+{
+	m_oRenderer.GetBackgroundColor(m_oOriginBackgroundColor);
+	ILoader::CTextureInfos ti;
+	CreateHeightMap(pMesh, ti);
+	s_pMesh = pMesh;
+	m_oRenderer.AbonneToRenderEvent(OnRenderHeightMap);
+}
+
+void CCollisionManager::StopDisplayHeightMap()
+{
+	m_oRenderer.DesabonneToRenderEvent(OnRenderHeightMap);
+	m_oRenderer.SetBackgroundColor(m_oOriginBackgroundColor.m_x, m_oOriginBackgroundColor.m_y, m_oOriginBackgroundColor.m_z);
+}
+
+void CCollisionManager::DisplayCollisionMap()
+{
+	m_oRenderer.AbonneToRenderEvent(OnRenderCollisionMapCallback);
+}
+
+void CCollisionManager::StopDisplayCollisionMap()
+{
+	m_oRenderer.DesabonneToRenderEvent(OnRenderCollisionMapCallback);
+}
+
+void CCollisionManager::OnRenderCollisionMapCallback(IRenderer*)
+{
+	g_pCurrentCollisionManager->OnRenderCollisionMap();
+}
+
+void CCollisionManager::RenderCollisionGeometry(IShader* pCollisionShader, const CMatrix& groundModel, const IBox* const pBox)
+{
+	pCollisionShader->SendUniformValues("h", pBox->GetDimension().m_y);
+	pCollisionShader->SendUniformValues("zMin", pBox->GetMinPoint().m_y);
+	pCollisionShader->SendUniformValues("scale", m_fWorldToScreenScaleFactor);
+	pCollisionShader->SendUniformMatrix4("modelMatrix", groundModel, true);
+	pCollisionShader->SendUniformValues("isGround", 1.f);
+	pCollisionShader->SendUniformValues("isGrid", 0.f);
+	pCollisionShader->SendUniformValues(m_sCustomName, m_fCustomValue);
+
+	m_pGround->Update();
+
+	pCollisionShader->SendUniformValues("isGround", 0.f);
+	for (vector<IEntity*>::iterator it = m_vCollideObjects.begin(); it != m_vCollideObjects.end(); it++) {
+		const CMatrix& model = (*it)->GetWorldMatrix();
+		pCollisionShader->SendUniformMatrix4("modelMatrix", model, true);
+		(*it)->Update();
+	}
+
+	pCollisionShader->SendUniformValues("isGround", 0.f);
+	pCollisionShader->SendUniformValues("isGrid", 1.f);
+	for (vector<IEntity*>::iterator it = m_vGridElements.begin(); it != m_vGridElements.end(); it++) {
+		const CMatrix& model = (*it)->GetWorldMatrix();
+		pCollisionShader->SendUniformMatrix4("modelMatrix", model, true);
+		(*it)->Update();
+	}
+	
+}
+
+void CCollisionManager::OnRenderCollisionMap()
+{
+	IShader* pOrgShader = m_pGround->GetCurrentShader();
+	IShader* pCollisionShader = m_oRenderer.GetShader("collision");
+	pCollisionShader->Enable(true);
+	m_pGround->SetShader(pCollisionShader);
+
+	CMatrix model, oProj;
+	int nWidth, nHeight;
+	m_oRenderer.GetResolution(nWidth, nHeight);
+	oProj.m_00 = (float)nHeight / (float)nWidth;
+
+	vector<IShader*> vBackStaticObjectShader;
+	vector<IShader*> vBackLineShader;
+
+	GetOriginalShaders(m_vCollideObjects, vBackStaticObjectShader);
+	SetCollisionShaders(m_vCollideObjects, pCollisionShader);
+
+	GetOriginalShaders(m_vGridElements, vBackLineShader);
+	SetCollisionShaders(m_vGridElements, pCollisionShader);
+
+	CMatrix oBakProj;
+	m_oRenderer.GetProjectionMatrix(oBakProj);
+	m_oRenderer.SetProjectionMatrix(oProj);
+
+	bool wasCullingEnabled = m_oRenderer.IsCullingEnabled();
+	if (wasCullingEnabled)
+		m_oRenderer.CullFace(false);
+	m_oRenderer.EnableDepthTest(false);
+
+	RenderCollisionGeometry(pCollisionShader, model, m_pGround->GetBBox());
+
+	m_oRenderer.EnableDepthTest(true);
+
+	if (wasCullingEnabled)
+		m_oRenderer.CullFace(true);
+
+	pCollisionShader->Enable(false);
+	m_pGround->SetShader(pOrgShader);
+
+	RestoreOriginalShaders(vBackStaticObjectShader, m_vCollideObjects);
+	RestoreOriginalShaders(vBackLineShader, m_vGridElements);
+
+	m_oRenderer.SetProjectionMatrix(oBakProj);
+}
+
+void CCollisionManager::ComputeGroundMapDimensions()
+{
+	IBox* pBox = m_pGround->GetBBox();
+	m_fMaxLenght = pBox->GetDimension().m_x;
+	if (m_fMaxLenght < pBox->GetDimension().m_z)
+	{
+		m_fMaxLenght = pBox->GetDimension().m_z;
+		m_fGroundMapWidth = (pBox->GetDimension().m_x * (float)m_nScreenWidth) / (m_fMaxLenght * m_fScreenRatio);
+		m_fGroundMapHeight = (float)m_nScreenHeight;
+	}
+	else
+	{
+		m_fGroundMapWidth = (float)m_nScreenWidth;
+		m_fGroundMapHeight = pBox->GetDimension().m_z * (float)m_nScreenHeight / m_fMaxLenght;
+	}
+}
+
+
+void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IEntity*> collides, IEntity* pScene, IRenderer::TPixelFormat format)
+{
+	m_pScene = pScene;
+
+	m_pGround = dynamic_cast<IMesh*>(pScene->GetRessource());
+	if (!m_pGround) {
+		CEException e("Erreur, aucun mesh défini pour la scene");
+		throw e;
+	}
+	
+	IShader* pOrgShader = m_pGround->GetCurrentShader();
+	IShader* pCollisionShader = m_oRenderer.GetShader("collision");
+	pCollisionShader->Enable(true);
+	m_pGround->SetShader(pCollisionShader);
+
+	CMatrix model, oProj;
+	
+
+	oProj.m_00 = 1.f / m_fScreenRatio;
+	const IBox* pBox = m_pGround->GetBBox();
+
+	/*
+	m_fMaxLenght = pBox->GetDimension().m_x;
+	if (m_fMaxLenght < pBox->GetDimension().m_z)
+	{
+		m_fMaxLenght = pBox->GetDimension().m_z;
+		m_fGroundMapWidth = (pBox->GetDimension().m_x * (float)m_nScreenWidth) / (m_fMaxLenght * m_fScreenRatio);
+		m_fGroundMapHeight = (float)m_nScreenHeight;
+	}
+	else
+	{
+		m_fGroundMapWidth = (float)m_nScreenWidth;
+		m_fGroundMapHeight = pBox->GetDimension().m_z * (float)m_nScreenHeight / m_fMaxLenght;
+	}*/
+	ComputeGroundMapDimensions();
+
+	m_fGroundMapWidth = ((int)m_fGroundMapWidth / 4) * 4;
+	m_fGroundMapHeight = ((int)m_fGroundMapHeight / 4) * 4;
+	float fOriginMapX = ((float)m_nScreenWidth - m_fGroundMapWidth) / 2.f;
+	float fOriginMapY = ((float)m_nScreenHeight - m_fGroundMapHeight) / 2.f;
+	m_fWorldToScreenScaleFactor = (m_fMaxLenght / 2.f);
+
+	m_fGroundWidth = pBox->GetDimension().m_x;
+	m_fGroundHeight = pBox->GetDimension().m_z;
+
+	int subdivisionCount = 30;
+	m_fGridBoxSize = m_fGroundWidth / subdivisionCount;
+
+
+	DisplayGrid();
+
+	m_vCollideObjects = collides;
+
+	vector<IShader*> vBackStaticObjectShader;
+	vector<IShader*> vBackLineShader;
+
+	GetOriginalShaders(m_vCollideObjects, vBackStaticObjectShader);
+	SetCollisionShaders(m_vCollideObjects, pCollisionShader);
+
+	GetOriginalShaders(m_vGridElements, vBackLineShader);
+	SetCollisionShaders(m_vGridElements, pCollisionShader);
+
+	CMatrix oBakProj;
+	m_oRenderer.GetProjectionMatrix(oBakProj);
+	m_oRenderer.SetProjectionMatrix(oProj);
+
+	bool wasCullingEnabled = m_oRenderer.IsCullingEnabled();
+	if (wasCullingEnabled)
+		m_oRenderer.CullFace(false);
+	m_oRenderer.EnableDepthTest(false);
+
+	m_oRenderer.BeginRender();
+
+	RenderCollisionGeometry(pCollisionShader, model, pBox);
+
+	m_oRenderer.ReadPixels(fOriginMapX, fOriginMapY, m_fGroundMapWidth, m_fGroundMapHeight, ti.m_vTexels, format);
+	ti.m_nWidth = (int)m_fGroundMapWidth;
+	ti.m_nHeight = (int)m_fGroundMapHeight;
+
+	m_oRenderer.EndRender();
+
+	m_oRenderer.EnableDepthTest(true);
+
+	if (wasCullingEnabled)
+		m_oRenderer.CullFace(true);
+
+	pCollisionShader->Enable(false);
+	m_pGround->SetShader(pOrgShader);
+
+	RestoreOriginalShaders(vBackStaticObjectShader, m_vCollideObjects);
+	RestoreOriginalShaders(vBackLineShader, m_vGridElements);
+
+	m_oRenderer.SetProjectionMatrix(oBakProj);
+}
+
+void CCollisionManager::LoadCollisionMap(string sFileName, IEntity* pScene)
+{
+	m_oLoaderManager.Load(sFileName, m_oCollisionMap);
+	IMesh* pGround = dynamic_cast<IMesh*>(pScene->GetRessource());
+	m_pGround = pGround;
+	m_pScene = pScene;
+	if (m_pGround) {
+		IBox* pBox = m_pGround->GetBBox();
+		m_fGroundWidth = pBox->GetDimension().m_x;
+		m_fGroundHeight = pBox->GetDimension().m_z;
+		m_fGridBoxSize = m_fGroundWidth / m_subdivisionCount;
+		ComputeGroundMapDimensions();
+	}
+
+	// test
+	for (int iRow = 0; iRow < 10; iRow++) {
+		for (int iColumn = 0; iColumn < 20; iColumn++) {
+			char red[] = { 0, 0, 255 };
+			memcpy(&m_oCollisionMap.m_vTexels[3 * (iRow * m_oCollisionMap.m_nWidth +  iColumn)], red, 3);
+		}
+	}
+	m_oLoaderManager.Export(sFileName, m_oCollisionMap);
+	// fin test
+	
+#ifdef TEST_REMPLISSAGE
+	int subdivisionCount = 30;
+	m_fGroundHeight = m_fMaxLenght = 30000;
+	m_fGroundWidth = 29700;
+	m_fGridBoxSize = m_fGroundWidth / subdivisionCount;
+	int mapBoxSize = WorldToPixel(m_fGridBoxSize);
+	int rowCount = m_oCollisionMap.m_nHeight / mapBoxSize;
+	int columnCount = m_oCollisionMap.m_nWidth / mapBoxSize;
+	
+	for (int k = 0; k < rowCount + 1; k++) {
+		for (int j = 0; j < columnCount + 1; j++) {
+			for (int i = 0; i < mapBoxSize; i++) {
+				int index = 3 * (j * mapBoxSize + i * m_oCollisionMap.m_nWidth + k * m_oCollisionMap.m_nWidth * mapBoxSize);
+				int fillSize = 3 * mapBoxSize;
+				if (j == columnCount) {
+					fillSize = (m_oCollisionMap.m_nWidth * 3) - j * 3 * mapBoxSize;
+				}
+				if(index < m_oCollisionMap.m_vTexels.size())
+					ZeroMemory(&m_oCollisionMap.m_vTexels[index], fillSize);
+			}
+		}
+	}
+ 	m_oLoaderManager.Export("Collision_terrain-exported.bmp", m_oCollisionMap);
+#endif // 0
 }
 
 void CCollisionManager::SetHeightMapPrecision( int nPrecision )
@@ -26,87 +311,87 @@ void CCollisionManager::SetHeightMapPrecision( int nPrecision )
 	m_nHeightMapPrecision = nPrecision;
 }
 
-void CCollisionManager::CreateHeightMap( IMesh* pMesh, ILoader::CTextureInfos& ti, IRenderer::TPixelFormat format )
+void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos& ti, IRenderer::TPixelFormat format )
 {
-	IShader* pOrgShader = pMesh->GetCurrentShader();
-	IShader* pHMShader = m_oRenderer.GetShader( "hm" );
-	pHMShader->Enable( true );
-	pMesh->SetShader( pHMShader );
-	
+	IShader* pOrgShader = pGround->GetCurrentShader();
+	IShader* pHMShader = m_oRenderer.GetShader("hm");
+	pHMShader->Enable(true);
+	pGround->SetShader(pHMShader);
+
 	CMatrix oModelView, oProj;
 	int nWidth, nHeight;
-	m_oRenderer.GetResolution( nWidth, nHeight );
+	m_oRenderer.GetResolution(nWidth, nHeight);
 	float fScreenRatio = (float)nWidth / (float)nHeight;
 	oProj.m_00 = 1.f / fScreenRatio;
-	const IBox* pBox = pMesh->GetBBox();
+	const IBox* pBox = pGround->GetBBox();
 	float maxLenght = pBox->GetDimension().m_x;
 	float fMapWidth, fMapHeight;
-	if( maxLenght < pBox->GetDimension().m_y )
+	if (maxLenght < pBox->GetDimension().m_z)
 	{
-		maxLenght = pBox->GetDimension().m_y;
-		fMapWidth = ( pBox->GetDimension().m_x * (float)nWidth ) / ( maxLenght * fScreenRatio );
+		maxLenght = pBox->GetDimension().m_z;
+		fMapWidth = (pBox->GetDimension().m_x * (float)nWidth) / (maxLenght * fScreenRatio);
 		fMapHeight = (float)nHeight;
 	}
 	else
 	{
 		fMapWidth = (float)nWidth;
-		fMapHeight = pBox->GetDimension().m_y * (float)nHeight / maxLenght;
+		fMapHeight = pBox->GetDimension().m_z * (float)nHeight / maxLenght;
 	}
-	fMapWidth = ( (int)fMapWidth / 4 ) * 4;
-	fMapHeight = ( (int)fMapHeight / 4 ) * 4;
-	float fOriginMapX = ( (float)nWidth - fMapWidth ) / 2.f;
-	float fOriginMapY = ( (float)nHeight - fMapHeight ) / 2.f;
-	float scale = ( maxLenght / 2.f );
-	
-	pHMShader->SendUniformValues( "h", pBox->GetDimension().m_z );
-	pHMShader->SendUniformValues( "zMin", pBox->GetMinPoint().m_z );	
-	pHMShader->SendUniformValues( "scale", scale );
-	pHMShader->SendUniformValues( "nPrecision", m_nHeightMapPrecision );
+	fMapWidth = ((int)fMapWidth / 4) * 4;
+	fMapHeight = ((int)fMapHeight / 4) * 4;
+	float fOriginMapX = ((float)nWidth - fMapWidth) / 2.f;
+	float fOriginMapY = ((float)nHeight - fMapHeight) / 2.f;
+	float scale = (maxLenght / 2.f);
+
+	pHMShader->SendUniformValues("h", pBox->GetDimension().m_y);
+	pHMShader->SendUniformValues("zMin", pBox->GetMinPoint().m_y);
+	pHMShader->SendUniformValues("scale", scale);
 
 	CMatrix oBakProj;
-	m_oRenderer.GetProjectionMatrix( oBakProj );
-	m_oRenderer.SetProjectionMatrix( oProj );
+	m_oRenderer.GetProjectionMatrix(oBakProj);
+	m_oRenderer.SetProjectionMatrix(oProj);
 
+	m_oRenderer.CullFace(false);
 	m_oRenderer.BeginRender();
-	pMesh->Update();
-	
-	m_oRenderer.ReadPixels( fOriginMapX, fOriginMapY, fMapWidth, fMapHeight, ti.m_vTexels, format );
+	pGround->Update();
+
+	m_oRenderer.ReadPixels(fOriginMapX, fOriginMapY, fMapWidth, fMapHeight, ti.m_vTexels, format);
 	ti.m_nWidth = (int)fMapWidth;
 	ti.m_nHeight = (int)fMapHeight;
 	m_oRenderer.EndRender();
+	m_oRenderer.CullFace(true);
 
-	pHMShader->Enable( false );
-	pMesh->SetShader( pOrgShader );
-	m_oRenderer.SetProjectionMatrix( oBakProj );
+	pHMShader->Enable(false);
+	pGround->SetShader(pOrgShader);
+	m_oRenderer.SetProjectionMatrix(oBakProj);
 }
 
-void CCollisionManager::DisplayHeightMap( IMesh* pMesh )
+void CCollisionManager::GetOriginalShaders(const vector<IEntity*>& staticObjects, vector<IShader*>& vBackupStaticObjectShader)
 {
-	m_oRenderer.GetBackgroundColor( m_oOriginBackgroundColor );
-	ILoader::CTextureInfos ti;
-	CreateHeightMap( pMesh, ti );
-	s_pMesh = pMesh;
-	m_oRenderer.AbonneToRenderEvent( Update );
+	for (vector<IEntity*>::const_iterator it = staticObjects.begin(); it != staticObjects.end(); it++) {
+		IMesh* pMesh = dynamic_cast<IMesh*>((*it)->GetRessource());
+		if (pMesh)
+			vBackupStaticObjectShader.push_back(pMesh->GetCurrentShader());
+	}
 }
 
-void CCollisionManager::StopDisplayHeightMap()
+void CCollisionManager::SetCollisionShaders(const vector<IEntity*>& staticObjects, IShader* pCollisionShader)
 {
-	m_oRenderer.DesabonneToRenderEvent( Update );
-	m_oRenderer.SetBackgroundColor( m_oOriginBackgroundColor.m_x, m_oOriginBackgroundColor.m_y, m_oOriginBackgroundColor.m_z );
+	for (vector<IEntity*>::const_iterator it = staticObjects.begin(); it != staticObjects.end(); it++) {
+		(*it)->SetShader(pCollisionShader);
+	}
 }
 
-void CCollisionManager::LoadHeightMap( string sFileName, vector< vector< unsigned char > >& vPixels )
+void CCollisionManager::RestoreOriginalShaders(const vector<IShader*>& vBackupStaticObjectShader, vector<IEntity*>& staticObjects)
 {
-	ILoader::CTextureInfos ti;
-	m_oLoaderManager.Load( sFileName, ti );
-	vPixels.clear();
-	vPixels.resize( ti.m_nWidth );
-	for( int i = 0; i < ti.m_nWidth ; i++ )
-		for( int j = 0; j < ti.m_nHeight; j++ )
-			vPixels[ i ].push_back( ti.m_vTexels[ j * ( ti.m_nWidth + 1 ) ] );
+	int i = 0;
+	for (vector<IEntity*>::iterator it = staticObjects.begin(); it != staticObjects.end(); it++) {
+		(*it)->SetShader(vBackupStaticObjectShader[i++]);
+	}
 }
 
-void CCollisionManager::Update( IRenderer* pRenderer )
+
+void CCollisionManager::OnRenderHeightMap( IRenderer* pRenderer )
 {
 	pRenderer->SetBackgroundColor( 0, 0, 255 );
 
@@ -150,6 +435,17 @@ int CCollisionManager::LoadHeightMap( string sFileName, IMesh* pMesh  )
 	int nID = (int)m_mHeigtMap.size();
 	m_mHeigtMap[ nID ] = hm;
 	return nID;
+}
+
+void CCollisionManager::LoadHeightMap(string sFileName, vector< vector< unsigned char > >& vPixels)
+{
+	ILoader::CTextureInfos ti;
+	m_oLoaderManager.Load(sFileName, ti);
+	vPixels.clear();
+	vPixels.resize(ti.m_nWidth);
+	for (int i = 0; i < ti.m_nWidth; i++)
+		for (int j = 0; j < ti.m_nHeight; j++)
+			vPixels[i].push_back(ti.m_vTexels[j * (ti.m_nWidth + 1)]);
 }
 
 float CCollisionManager::GetMapHeight( int nHeightMapID, float xModel, float zModel )
@@ -402,6 +698,240 @@ bool CCollisionManager::IsSegmentRectIntersect( const CVector2D& S1, const CVect
 		return false;
 
 	return true;
+}
+
+void CCollisionManager::SendCustomUniformValue(string name, float value)
+{
+	m_sCustomName = name;
+	m_fCustomValue = value;
+}
+
+void CCollisionManager::DisplayGrid()
+{
+	CVector first, last;
+	int rowCount = m_fGroundHeight / m_fGridBoxSize + 1;
+	int columnCount = m_fGroundWidth / m_fGridBoxSize + 1;
+	int w = m_fGroundWidth;
+	int h = m_fGroundHeight;
+	int s = m_fGridBoxSize;
+	if (w % s > 0)
+		columnCount++;
+	if (h % s > 0)
+		rowCount++;
+
+	float lineWidth = 15.f;
+	float y = 1130.f;
+
+	for (int i = 0; i < rowCount; i++) {
+		first.m_x = -m_fGroundWidth / 2;
+		first.m_z = -m_fGroundHeight / 2 + i * m_fGridBoxSize;
+
+		first.m_y = y;
+
+		IEntity* line = m_pEntityManager->CreateCylinder(lineWidth, m_fGroundWidth);
+		line->Link(m_pScene);
+		line->SetWorldPosition(first);
+		line->Roll(-90.f);
+		line->LocalTranslate(0, m_fGroundWidth / 2, 0);
+		line->Colorize(1, 0, 0, 1);
+		m_vGridElements.push_back(line);
+	}
+
+	for (int i = 0; i < columnCount; i++) {
+		first.m_x = -m_fGroundWidth / 2 + i * m_fGridBoxSize;
+		first.m_z = -m_fGroundHeight / 2;
+		
+		first.m_y = y;
+
+		IEntity* line = m_pEntityManager->CreateCylinder(lineWidth, m_fGroundWidth);
+		line->Link(m_pScene);
+		line->SetWorldPosition(first);
+		line->Pitch(90.f);
+		line->LocalTranslate(0, m_fGroundWidth / 2, 0);
+		m_vGridElements.push_back(line);
+	}
+}
+
+void CCollisionManager::MarkBox(int row, int column, float r, float g, float b, IEntityManager* pEntityManager)
+{
+	float x, z;
+	GetBoxPositionFromBoxCoord(row, column, x, z);
+	IEntity* pSphere = pEntityManager->CreateSphere(m_fGridBoxSize*3. / 8.);
+	IShader* pColorShader = m_oRenderer.GetShader("color");
+	pSphere->SetShader(pColorShader);
+	pSphere->Colorize(r, g, b, 0.5f);
+	pSphere->SetWorldPosition(x + m_fGridBoxSize / 2, m_fGridHeight , z + m_fGridBoxSize / 2);
+	pSphere->Link(m_pScene);
+	m_vGridElements.push_back(pSphere);
+}
+
+void CCollisionManager::MarkMapBox(int row, int column, int r, int g, int b)
+{
+	float x0, y0, x1, y1;
+	GetBoxPositionFromBoxCoord(row, column, x0, y0);
+	GetBoxPositionFromBoxCoord(row + 1, column + 1, x1, y1);
+
+	float mapX0 = WorldToPixel(x0);
+	float mapX1 = WorldToPixel(x1);
+
+	int subdivisionCount = 30;
+	int mapBoxSize = mapX1 - mapX0;
+	int rowCount = m_oCollisionMap.m_nHeight / mapBoxSize;
+	int columnCount = m_oCollisionMap.m_nWidth / mapBoxSize;
+
+	bool isObstacle = false;
+	for (int i = 0; i < mapBoxSize; i++) {
+		int index = 3 * (column * mapBoxSize + i * m_oCollisionMap.m_nWidth + row * m_oCollisionMap.m_nWidth * mapBoxSize);
+		int fillSize = 3 * mapBoxSize;
+		if (column == columnCount) {
+			fillSize = (m_oCollisionMap.m_nWidth * 3) - column * 3 * mapBoxSize;
+		}
+		if (index < m_oCollisionMap.m_vTexels.size()) {
+			for (int j = 0; j < fillSize / 3; j++) {
+				m_oCollisionMap.m_vTexels[index + 3 * j] = b;
+				m_oCollisionMap.m_vTexels[index + 3 * j + 1] = g;
+				m_oCollisionMap.m_vTexels[index + 3 * j + 2] = r;
+			}
+		}
+	}
+}
+
+void CCollisionManager::GetBoxPositionFromBoxCoord(int row, int column, float& x, float& y)
+{
+	int rowCount, columnCount;
+	ComputeRowAndColumnCount(rowCount, columnCount);
+	x = (column - columnCount / 2) * m_fGridBoxSize;
+	y = (row - rowCount / 2) * m_fGridBoxSize;
+}
+
+void CCollisionManager::GetBoxCoordFromPosition(float x, float y, int& row, int& column)
+{
+	row = (int)( (x + m_fGroundWidth / 2) / m_fGridBoxSize);
+	column = (int)( (y + m_fGroundHeight / 2) / m_fGridBoxSize);
+}
+
+void CCollisionManager::ComputeRowAndColumnCount(int& rowCount, int& columnCount)
+{
+	rowCount = m_fGroundHeight / m_fGridBoxSize;
+	columnCount = m_fGroundWidth / m_fGridBoxSize;
+}
+
+void CCollisionManager::ConvertLinearToCoord(int pixelNumber, int& x, int& y)
+{
+	x = pixelNumber / 3 - pixelNumber / (3 * m_oCollisionMap.m_nWidth) * m_oCollisionMap.m_nWidth;
+	y = pixelNumber / (3 * m_oCollisionMap.m_nWidth);
+}
+
+bool CCollisionManager::TestBoxObstacle(int row, int column)
+{
+	float x0, y0, x1, y1;
+	GetBoxPositionFromBoxCoord(row, column, x0, y0);
+	GetBoxPositionFromBoxCoord(row + 1, column + 1, x1, y1);
+
+	float mapX0 = WorldToPixel(x0);
+	float mapX1 = WorldToPixel(x1);
+
+	int subdivisionCount = 30;
+	int mapBoxSize = mapX1 - mapX0;
+	int rowCount = m_oCollisionMap.m_nHeight / mapBoxSize;
+	int columnCount = m_oCollisionMap.m_nWidth / mapBoxSize;
+
+	bool isObstacle = false;
+	for (int i = 0; i < mapBoxSize; i++) {
+		int index = 3 * (column * mapBoxSize + i * m_oCollisionMap.m_nWidth + row * m_oCollisionMap.m_nWidth * mapBoxSize);
+		int fillSize = 3 * mapBoxSize;
+		if (column == columnCount) {
+			fillSize = (m_oCollisionMap.m_nWidth * 3) - column * 3 * mapBoxSize;
+		}
+
+		for (int j = 0; j < fillSize / 3; j++) {
+			char rgb[3];
+			char obstacle[3] = { 0, 0, 255 };
+			memcpy(rgb, &m_oCollisionMap.m_vTexels[index + j * 3], 3);
+
+			int c = memcmp(obstacle, rgb, 3);
+			if (c == 0)
+				return true;
+		}
+	}
+
+	return false;
+
+}
+
+float CCollisionManager::WorldToPixel(float worldLenght)
+{
+	float ret;
+	int nWidth, nHeight;
+	m_oRenderer.GetResolution(nWidth, nHeight);
+	if (m_fMaxLenght == m_fGroundHeight)
+	{
+		ret = ( (worldLenght * (float)nWidth) / (m_fMaxLenght * m_fScreenRatio) );
+	}
+	else
+	{
+		ret = (float)nWidth;
+	}
+	return ret;
+}
+
+void CCollisionManager::MarkObstacles(IEntityManager* pEntityManager)
+{
+	
+	float originX = -m_fGroundWidth / 2;
+	float originY = -m_fGroundHeight / 2;
+	int firstRow = 0, firstColumn = 0;
+	int rowCount, columnCount;
+	GetBoxCoordFromPosition(originX, originY, firstRow, firstColumn);
+	ComputeRowAndColumnCount(rowCount, columnCount);
+	
+	m_pCollisionGrid = new char*[rowCount];
+	for (int iRow = 0; iRow < rowCount; iRow++) {
+		m_pCollisionGrid[iRow] = new char[columnCount];
+	}
+
+	for (int iRow = firstRow; iRow < firstRow + rowCount; iRow++) {
+		for (int iColumn = firstColumn; iColumn < firstColumn + columnCount; iColumn++) {
+			bool obstacle = TestBoxObstacle(iRow, iColumn);
+			if (obstacle) {
+				m_pCollisionGrid[iRow][iColumn] = 'o';
+				MarkBox(iRow, iColumn, 1, 0, 0, pEntityManager);
+				MarkMapBox(iRow, iColumn, 255, 0, 0);
+			}
+			else {
+				m_pCollisionGrid[iRow][iColumn] = 'f';
+			}
+		}
+	}
+	m_oLoaderManager.Export("Collision_terrain-exported.bmp", m_oCollisionMap);
+}
+
+void CCollisionManager::FindPath(float fromX, float fromY, float toX, float toY, IEntityManager* pEntityManager)
+{
+	MarkObstacles(pEntityManager);
+}
+
+void CCollisionManager::Test(IEntityManager* pEntityManager)
+{
+	float fromX = 2000.f;
+	float fromY = 0.f;
+	float toX = 2000.f;
+	float toY = 5000.f;
+	FindPath(fromX, fromY, toX, toY, pEntityManager);
+}
+
+void CCollisionManager::Test2()
+{
+	for (vector<IEntity*>::iterator it = m_vGridElements.begin(); it != m_vGridElements.end(); it++) {
+		(*it)->Unlink();
+		delete (*it);
+	}
+	m_vGridElements.clear();
+}
+
+void CCollisionManager::SetEntityManager(IEntityManager* pEntityManager)
+{
+	m_pEntityManager = pEntityManager;
 }
 
 extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc )

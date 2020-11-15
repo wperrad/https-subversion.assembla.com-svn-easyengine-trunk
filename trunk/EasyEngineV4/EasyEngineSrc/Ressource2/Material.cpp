@@ -25,7 +25,8 @@ m_pTexture( NULL )
 CMaterial::CMaterial( const Desc& oDesc ) :
 IRessource( oDesc ),
 m_pTexture(NULL),
-m_pShader( oDesc.m_pShader )
+m_pShader( oDesc.m_pShader ),
+m_bUseAdditionalColor(false)
 {
 	m_vAmbient = oDesc.m_vAmbient;
 	m_vDiffuse = oDesc.m_vDiffuse;
@@ -50,12 +51,26 @@ void CMaterial::Update()
 	{
 		GetRenderer().BindTexture( 0, 0, IRenderer::T_2D );
 		m_pShader->SendUniformValues( "ValueTexture0", 0 );
+	}	
+
+	if (!m_bUseAdditionalColor) {
+		GetRenderer().SetMaterialAmbient(&m_vAmbient[0]);
+		GetRenderer().SetMaterialDiffuse(&m_vDiffuse[0]);
 	}
-	GetRenderer().SetMaterialAmbient( &m_vAmbient[ 0 ] );
-	GetRenderer().SetMaterialDiffuse( &m_vDiffuse[ 0 ] );
-	GetRenderer().SetMaterialSpecular( &m_vSpecular[ 0 ] );
-	GetRenderer().SetMaterialEmissive( &m_vEmissive[ 0 ] );
-	GetRenderer().SetMaterialShininess( m_fShininess );
+	else {
+		vector<float> newAmbient, newDiffuse;
+		for (int i = 0; i < 3; i++) {
+			newAmbient.push_back(m_vAmbient[i] * (1 - m_vAdditionalColor[3]) + m_vAdditionalColor[i] * m_vAdditionalColor[3]);
+			newDiffuse.push_back(m_vDiffuse[i] * (1 - m_vAdditionalColor[3]) + m_vAdditionalColor[i] * m_vAdditionalColor[3]);
+		}
+		GetRenderer().SetMaterialAmbient(&newAmbient[0]);
+		GetRenderer().SetMaterialDiffuse(&newDiffuse[0]);
+		m_bUseAdditionalColor = false;
+	}
+
+	GetRenderer().SetMaterialSpecular(&m_vSpecular[0]);
+	GetRenderer().SetMaterialEmissive(&m_vEmissive[0]);
+	GetRenderer().SetMaterialShininess(m_fShininess);
 }
 
 void CMaterial::GetMaterialMatrix( CMatrix& m )
@@ -70,4 +85,13 @@ void CMaterial::SetShader( IShader* pShader )
 {
 	//m_pTexture->SetShader( pShader );
 	m_pShader = pShader;
+}
+
+void CMaterial::SetAdditionalColor(float r, float g, float b, float a)
+{
+	m_vAdditionalColor.push_back(r);
+	m_vAdditionalColor.push_back(g);
+	m_vAdditionalColor.push_back(b);
+	m_vAdditionalColor.push_back(a);
+	m_bUseAdditionalColor = true;
 }

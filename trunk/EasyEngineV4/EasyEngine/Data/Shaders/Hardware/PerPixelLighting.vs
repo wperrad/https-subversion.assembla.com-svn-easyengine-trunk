@@ -22,5 +22,6 @@ void main()
 	
 	Texcoord    = gl_MultiTexCoord0.xy;
 	
-	gl_Position = vViewVertexPos; //ftransform();
+	//gl_Position = vec4(0, 0, 0, 1); // vViewVertexPos; //ftransform();
+	gl_Position = vViewVertexPos;
 }

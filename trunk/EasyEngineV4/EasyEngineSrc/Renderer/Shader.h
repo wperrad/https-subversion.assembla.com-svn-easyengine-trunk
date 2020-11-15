@@ -37,6 +37,7 @@ public:
 	void 			DetachShader( const char* pShaderFileName );
 	void 			Link();
 	void 			Enable( bool bEnable );
+	void			Reload(IFileSystem& oFileSystem);
 	void 			SendUniformValues( const std::string& sVariableName, int i ) const;
 	void			SendUniformValues( const std::string& sVariableName, float f ) const;
 	void			SendUniformVec3f( std::string sVariableName, float x, float y, float z );
@@ -46,13 +47,17 @@ public:
 	void 			SendVector4Array( const std::string& sVariableName, std::vector< float >& vVector );
 	void 			SendVector4Array( const std::string& sVariableName, std::vector< int >& vVector );
 	void			SendUniformVec2Array( const std::string& sVariableName, std::vector< float >& vArray );
+	void 			SendUniformMatrix4(const std::string& sVariableName, const CMatrix& oMatrix, bool bTranspose = false);
 	void 			SendUniformMatrix4Array( const std::string& sVariableName, std::vector< CMatrix >& vMatrix, bool bTranspose = false );
 	
 	unsigned int	EnableVertexAttribArray( const std::string& sAttribName );
 	void			DisableVertexAttribArray( unsigned int nAttribID );
 	void 			VertexAttributePointerf( unsigned int id, int nSize, int nPos );
 	int				GetAttributeID( const std::string& sVariableName );
-	void			GetName( string& sName );
+	void			GetName(string& path);
+	void			GetFilePath(string& path);
+	int				GetID();
+	void			DeleteShadersAndProgram();
 
 	//void			Test();
 	
