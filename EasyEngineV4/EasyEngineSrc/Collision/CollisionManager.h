@@ -14,6 +14,7 @@ class IFileSystem;
 class CBox;
 class ISphere;
 class ISegment2D;
+class IEntity;
 
 class CCollisionManager : public ICollisionManager
 {
@@ -24,17 +25,68 @@ class CCollisionManager : public ICollisionManager
 	CVector					m_oOriginBackgroundColor;
 	int						m_nHeightMapPrecision;
 	IGeometryManager&		m_oGeometryManager;
+	IEntity*				m_pScene;
+	IMesh*					m_pGround;
+	vector<IEntity*>		m_vCollideObjects;
+	string					m_sCustomName;
+	float					m_fCustomValue;
+	IEntity*				m_pSphere;
+	float					m_fGroundWidth;
+	float					m_fGroundHeight;
+	float					m_fScreenRatio;
+	float					m_fMaxLenght;
+	int						m_nScreenWidth;
+	int						m_nScreenHeight;
+	int						m_subdivisionCount;
+	
+	// Collision map
+	float						m_fGroundMapWidth;
+	float						m_fGroundMapHeight;
+	float						m_fWorldToScreenScaleFactor;
+	float						m_fGridBoxSize;
+	float						m_fGridHeight;
+	char**						m_pCollisionGrid;
+	vector<IEntity*>			m_vGridElements;
+	ILoader::CTextureInfos		m_oCollisionMap;
 
-	bool			IsSegmentInsideSegment( float fS1Center, float fS1Radius, float fS2Center, float fS2Radius );
-	bool			TestBoxesCollisionIntoFirstBoxBase( const IBox& oB1, const IBox& oB2 );
-	static IMesh*	s_pMesh;
-	static void		Update( IRenderer* pRenderer );
+	// temp
+	IEntityManager*				m_pEntityManager;
+	// fin temp
+	
+	
+	static IMesh*			s_pMesh;
+	
+	static void		OnRenderHeightMap( IRenderer* pRenderer );
+
+	static void OnRenderCollisionMapCallback(IRenderer*);
+	void OnRenderCollisionMap();
+	void GetOriginalShaders(const vector<IEntity*>& staticObjects, vector<IShader*>& vBackupStaticObjectShader);
+	void SetCollisionShaders(const vector<IEntity*>& staticObjects, IShader* pCollisionShader);
+	void RestoreOriginalShaders(const vector<IShader*>& vBackupStaticObjectShader, vector<IEntity*>& staticObjects);
+	void RenderCollisionGeometry(IShader* pCollisionShader, const CMatrix& groundModel, const IBox* const pBox);
+	bool IsSegmentInsideSegment(float fS1Center, float fS1Radius, float fS2Center, float fS2Radius);
+	bool TestBoxesCollisionIntoFirstBoxBase(const IBox& oB1, const IBox& oB2);
+	void ComputeGroundMapDimensions();
+
+	// Collision map
+	void MarkBox(int row, int column, float r, float g, float b, IEntityManager* pEntityManager);
+	void MarkMapBox(int iRow, int iColumn, int r, int g, int b);
+	void MarkObstacles(IEntityManager* pEntityManager);
+	void GetBoxCoordFromPosition(float x, float y, int& row, int& column);
+	void GetBoxPositionFromBoxCoord(int row, int column, float& x, float& y);
+	void ComputeRowAndColumnCount(int& rowCount, int& columnCount);
+	bool TestBoxObstacle(int iRow, int iColumn);
+	float WorldToPixel(float worldLenght);
+	void ConvertLinearToCoord(int pixelNumber, int& x, int& y);
+
+	// Path finding
+	void FindPath(float fromX, float fromY, float toX, float toY, IEntityManager* pEntityManager);
 
 public:	
 
 	CCollisionManager( const Desc& oDesc );
 	//void CreateHeightMap( IMesh* pMesh, vector< unsigned char >& vPixels, IRenderer::TPixelFormat format = IRenderer::T_RGB );
-	void	CreateHeightMap( IMesh* pMesh, ILoader::CTextureInfos& ti , IRenderer::TPixelFormat format = IRenderer::T_RGB );
+	void	CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos& ti , IRenderer::TPixelFormat format = IRenderer::T_RGB );	
 	int		LoadHeightMap( string sFileName, IMesh* pMesh );
 	void	LoadHeightMap( string sFileName, vector< vector< unsigned char > >& vPixels  );
 	float	GetMapHeight( int nHeightMapID, float x, float z );
@@ -50,6 +102,19 @@ public:
 	void	Get2DLineIntersection( const CVector2D& oLine1First, const CVector2D& oLine1Last, const CVector2D& oLine2First, const CVector2D& oLine2Last, CVector2D& oIntersection );
 	bool	IsSegmentRectIntersect( const ISegment2D& s, float fRectw, float fRecth, const CMatrix2X2& oRectTM );
 	bool	IsSegmentRectIntersect( const CVector2D& S1, const CVector2D& S2, float fRectw, float fRecth, const CMatrix2X2& oRectTM );
+
+	// Collision map
+	void	CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IEntity*> collides, IEntity* pScene, IRenderer::TPixelFormat format = IRenderer::T_RGB);
+	void	LoadCollisionMap(string sFileName, IEntity* pScene);
+	void	SendCustomUniformValue(string name, float value);
+	void	DisplayCollisionMap();
+	void	StopDisplayCollisionMap();
+	void	DisplayGrid();
+
+	// temp
+	void	Test(IEntityManager* pEntityManager);
+	void	Test2();
+	void	SetEntityManager(IEntityManager* pEntityManager);
 };
 
 extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc );

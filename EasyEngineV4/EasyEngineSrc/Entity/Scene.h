@@ -62,6 +62,7 @@ public:
 	void					Clear();
 	float					GetHeight( float x, float z );
 	void					SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false );
+	void					CreateCollisionMap();
 	//CFightSystem&			GetFightSystem();
 };
 

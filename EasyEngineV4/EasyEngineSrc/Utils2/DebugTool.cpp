@@ -7,7 +7,7 @@ using namespace std;
 CDebugTool::CDebugTool():
 m_nNumberPrecision( 5 ),
 m_fCap( 0 ),
-m_nWidth( 0 )
+m_nWidth( 10 )
 {
 }
 

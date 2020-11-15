@@ -14,6 +14,7 @@
 #include "define.h"
 #include "../Utils2/RenderUtils.h"
 #include "IGeometry.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -162,7 +163,11 @@ void CMesh::Update()
 		
 	unsigned int nVertexWeightID = -1;
 	unsigned int nWeightedVertexID = -1;
-	if ( m_bSkinned )
+	string shaderName;
+	m_pShader->GetName(shaderName);
+	transform(shaderName.begin(), shaderName.end(), shaderName.begin(), tolower);
+	
+	if (shaderName=="skinning")
 	{
 		nVertexWeightID = m_pShader->EnableVertexAttribArray( "vVertexWeight" );
 		GetRenderer().BindVertexBuffer( m_nVertexWeightBufferID );
@@ -214,7 +219,7 @@ void CMesh::Update()
 		GetRenderer().DrawGeometry( m_pBuffer );
 	}
 
-	if ( m_bSkinned )
+	if (shaderName == "skinning")
 	{
 		m_pShader->DisableVertexAttribArray( nVertexWeightID );
 		m_pShader->DisableVertexAttribArray( nWeightedVertexID );
@@ -300,4 +305,14 @@ void CMesh::SetCurrentAnimationBoundingBox( string AnimationName )
 CVector& CMesh::GetOrgMaxPosition()
 {
 	return m_oOrgMaxPosition;
+}
+
+void CMesh::Colorize(float r, float g, float b, float a)
+{
+	if (m_mMaterials.size() == 1)
+	{
+		map< int, CMaterial* >::iterator itMat = m_mMaterials.begin();
+		itMat->second->SetAdditionalColor(r, g, b, a);
+	}
+	m_bUseAdditionalColor = true;
 }

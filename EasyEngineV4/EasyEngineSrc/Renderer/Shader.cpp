@@ -7,6 +7,7 @@
 #include "Renderer.h"
 #include "Math/Matrix.h"
 #include "Utils2/StringUtils.h"
+#include "Exception.h"
 
 
 #include <map>
@@ -26,12 +27,7 @@ m_oRenderer( oRenderer )
 
 CShader::~CShader()
 {
-	if ( m_nPixelShader != 0 )
-		m_oRenderer.DeleteShader( m_nPixelShader );
-	if ( m_nVertexShader != 0)
-		m_oRenderer.DeleteShader( m_nVertexShader );
-	if ( m_nProgram ==0 )
-		m_oRenderer.DeleteProgram( m_nProgram );
+	DeleteShadersAndProgram();
 }
 
 void CShader::Attach( string sShaderFileName, IRenderer::TShaderType type, IFileSystem& oFileSystem )
@@ -99,6 +95,26 @@ void CShader::Enable( bool bEnable )
 		m_oRenderer.UseProgram( 0 );
 }
 
+void CShader::Reload(IFileSystem& oFileSystem)
+{
+	for (map<string, GLuint>::iterator it = m_mShaderName.begin(); it != m_mShaderName.end(); it++) {
+		string path = it->first;
+		char* pSource = LoadSource(path, oFileSystem);
+		int id = it->second;
+		m_oRenderer.SetShaderSource(id, pSource);
+		try {
+			m_oRenderer.CompileShader(id);
+			m_oRenderer.AttachShaderToProgram(m_nProgram, id);
+		}
+		catch (exception e) {
+			string msg = "Erreur lors de la compilation de \"" + path + "\" : \n" + e.what();
+			CEException e2(msg);
+			throw e2;
+		}
+		delete pSource;
+	}
+}
+
 int CShader::GetUniformID( const std::string& sVariableName ) const
 {
 	m_oRenderer.UseProgram( m_nProgram );
@@ -125,6 +141,27 @@ int CShader::GetAttributeID( const std::string& sVariableName )
 void CShader::GetName( string& sName )
 {
 	sName = m_sName;
+}
+
+void CShader::GetFilePath(string& path)
+{
+	int idx = m_mShaderName.begin()->first.find(".");
+	path = m_mShaderName.begin()->first.substr(0, idx);
+}
+
+int CShader::GetID()
+{
+	return m_mShaderName.begin()->second;
+}
+
+void CShader::DeleteShadersAndProgram()
+{
+	if (m_nPixelShader != 0)
+		m_oRenderer.DeleteShader(m_nPixelShader);
+	if (m_nVertexShader != 0)
+		m_oRenderer.DeleteShader(m_nVertexShader);
+	if (m_nProgram != 0)
+		m_oRenderer.DeleteProgram(m_nProgram);
 }
 
 void CShader::SendUniformVec3f( std::string sVariableName, float x, float y, float z )
@@ -171,6 +208,14 @@ void CShader::SendVector4Array( const string& sVariableName, vector< int >& vVec
 {
 	int id = GetUniformID( sVariableName );
 	m_oRenderer.SendUniform4iv( id, (int)vVector.size() / 4, vVector );
+}
+
+void CShader::SendUniformMatrix4(const std::string& sVariableName, const CMatrix& oMatrix, bool bTranspose)
+{
+	int id = GetUniformID(sVariableName);
+	vector< float > vArray;
+	oMatrix.Get(vArray);
+	m_oRenderer.SendUniformMatrix4fv(id, 1, bTranspose, vArray);
 }
 
 void CShader::SendUniformMatrix4Array( const string& sVariableName, vector< CMatrix >& vMatrix, bool bTranspose )

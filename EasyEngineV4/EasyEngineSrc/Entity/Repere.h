@@ -7,4 +7,5 @@ class CRepere : public CShape
 public:
 	CRepere( IRenderer& oRenderer );
 	void			Update();
+	void			Colorize(float r, float g, float b, float a) {}
 };

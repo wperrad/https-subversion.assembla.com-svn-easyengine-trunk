@@ -26,17 +26,18 @@ using namespace std;
 #define VBO_RENDER
 
 
-CRenderer::CRenderer( const Desc& oDesc ) :
-IRenderer( oDesc ),
-m_Mode(MODE_3D),
-m_hRC( 0 ),
-m_oWindow( oDesc.m_oWindow ),
-m_nCurrentBufferID( -1 ),
-m_oFileSystem( oDesc.m_oFileSystem ),
-m_nCurrentBufferOffset( 0 ),
-m_eCurrentRenderType( eFill ),
-m_bMustChangeFov( false ),
-m_fFov( 40.f )
+CRenderer::CRenderer(const Desc& oDesc) :
+	IRenderer(oDesc),
+	m_Mode(MODE_3D),
+	m_hRC(0),
+	m_oWindow(oDesc.m_oWindow),
+	m_nCurrentBufferID(-1),
+	m_oFileSystem(oDesc.m_oFileSystem),
+	m_nCurrentBufferOffset(0),
+	m_eCurrentRenderType(eFill),
+	m_bMustChangeFov(false),
+	m_fFov(40.f),
+	m_bCameraLocked(false)
 {
 	m_mDrawStyle[ T_LINES ] = GL_LINES;
 	m_mDrawStyle[ T_POINTS ] = GL_POINTS;
@@ -59,7 +60,7 @@ m_fFov( 40.f )
 	InitOpengl();
 	m_sDefaultShader = oDesc.m_sDefaultShader;
 	m_sShadersDirectory = oDesc.m_sShaderDirectory;
-	LoadShaderDirectory( m_sShadersDirectory + "\\Hardware", m_oFileSystem );
+	LoadShaderDirectory( m_sShadersDirectory + "\\Hardware");
 	TurnOffAllLight();
 }
 
@@ -203,6 +204,22 @@ void CRenderer::GetProjectionMatrix( CMatrix& oMatrix )
 {
 	oMatrix = m_oProjectionMatrix;
 }
+
+void CRenderer::GetModelViewMatrix(CMatrix& oMatrix)
+{
+	float m[16];
+	glGetFloatv(GL_MODELVIEW_MATRIX, m);
+	oMatrix.Set(m);
+}
+
+void CRenderer::GetModelViewProjectionMatrix(CMatrix& oMatrix)
+{
+	CMatrix proj, mv;
+	GetProjectionMatrix(proj);
+	GetModelViewMatrix(mv);
+	oMatrix = mv*proj;
+}
+
 
 void CRenderer::ResizeScreen( int nWidth, int nHeight )
 {
@@ -495,7 +512,8 @@ void CRenderer::SetProjectionMatrix( const CMatrix& oMatrix )
 
 void CRenderer::SetCameraMatrix( const CMatrix& oMatrix )
 {
-	oMatrix.GetInverse( m_oCameraMatrixInv );
+	if(!m_bCameraLocked)
+		oMatrix.GetInverse( m_oCameraMatrixInv );
 }
 
 void CRenderer::SetObjectMatrix( const CMatrix& oMatrix )
@@ -853,24 +871,32 @@ void CRenderer::SetLightSpotDirection(unsigned int nLightID, float x, float y ,f
 }
 
 
-void CRenderer::LoadShaderDirectory( const string& sShaderDirectory, IFileSystem& oFileSystem )
+void CRenderer::LoadShaderDirectory( const string& sShaderDirectory)
 {
 	WIN32_FIND_DATAA data;
 	HANDLE hFile;
+	m_sShaderDirectory = sShaderDirectory;
 	string sVertexShaderDir = sShaderDirectory + "\\*.vs";
-	hFile = oFileSystem.FindFirstFile_EE( sVertexShaderDir, data );
+	hFile = m_oFileSystem.FindFirstFile_EE( sVertexShaderDir, data );
 	if ( hFile != INVALID_HANDLE_VALUE )
 	{
 		do
 		{
-			string sShaderName = data.cFileName;
-			CShader* pShader = new CShader( *this );
-			string sShaderPath = sShaderDirectory + "\\" + data.cFileName;
-			pShader->Attach( sShaderPath, IRenderer::T_VERTEX_SHADER, oFileSystem );
+			string sShaderName = data.cFileName;			
+			string sShaderPath = sShaderDirectory + "\\" + data.cFileName;			
 			string sShaderNameWithoutExt = sShaderName.substr( 0, sShaderName.size() - 3 );
 			string sShaderNameWithoutExtLower = sShaderNameWithoutExt;
-			transform( sShaderNameWithoutExt.begin(), sShaderNameWithoutExt.end(), sShaderNameWithoutExtLower.begin(), tolower );
-			m_mShader[ sShaderNameWithoutExtLower ] = pShader;
+			transform(sShaderNameWithoutExt.begin(), sShaderNameWithoutExt.end(), sShaderNameWithoutExtLower.begin(), tolower);
+
+			CShader* pShader = NULL;
+			map<string, CShader*>::iterator itShader = m_mShader.find(sShaderNameWithoutExtLower);
+			if (itShader == m_mShader.end()) {
+				pShader = new CShader(*this);
+				m_mShader[sShaderNameWithoutExtLower] = pShader;
+			}
+			else
+				pShader = itShader->second;
+			pShader->Attach(sShaderPath, IRenderer::T_VERTEX_SHADER, m_oFileSystem);
 		}
 		while ( FindNextFileA( hFile, &data ) == TRUE );
 	}
@@ -895,7 +921,7 @@ void CRenderer::LoadShaderDirectory( const string& sShaderDirectory, IFileSystem
 			else
 				pShader = itShader->second;
 			string sShaderPath = sShaderDirectory + "\\" + data.cFileName;
-			pShader->Attach( sShaderPath, IRenderer::T_PIXEL_SHADER, oFileSystem );
+			pShader->Attach( sShaderPath, IRenderer::T_PIXEL_SHADER, m_oFileSystem );
 		}
 		while ( FindNextFileA( hFile, &data ) == TRUE );
 	}
@@ -904,6 +930,52 @@ void CRenderer::LoadShaderDirectory( const string& sShaderDirectory, IFileSystem
 		itShader->second->Link();
 }
 
+void CRenderer::ReloadShaders(IEventDispatcher& oEventDispatcher)
+{
+	oEventDispatcher.StopDispatcher();
+	for (map< string, CShader* >::iterator itShader = m_mShader.begin(); itShader != m_mShader.end(); itShader++) {
+		CShader* pShader = (itShader->second);
+		pShader->DeleteShadersAndProgram();
+	}
+	LoadShaderDirectory(m_sShaderDirectory);
+	oEventDispatcher.StartDispatcher();
+}
+
+void CRenderer::ReloadShader(string shaderName)
+{
+	map< string, CShader* >::iterator itShader = m_mShader.find(shaderName);
+	if(itShader != m_mShader.end())	{
+		CShader* pShader = (itShader->second);
+		pShader->DeleteShadersAndProgram();
+		string path;
+		pShader->GetFilePath(path);
+		pShader->Attach(path + ".vs", IRenderer::T_VERTEX_SHADER, m_oFileSystem);
+		pShader->Attach(path + ".ps", IRenderer::T_PIXEL_SHADER, m_oFileSystem);
+	}
+}
+
+bool CRenderer::IsCullingEnabled()
+{
+	GLboolean enabled;
+	glGetBooleanv(GL_CULL_FACE, &enabled);
+	return (enabled != 0);
+}
+
+void CRenderer::CullFace(bool enable)
+{
+	if (enable)
+		glEnable(GL_CULL_FACE);
+	else
+		glDisable(GL_CULL_FACE);
+}
+
+void CRenderer::EnableDepthTest(bool enable)
+{
+	if(enable)
+		glEnable(GL_DEPTH_TEST);
+	else
+		glDisable(GL_DEPTH_TEST);
+}
 
 IShader* CRenderer::GetShader( string sShaderName )
 {
@@ -958,7 +1030,7 @@ void CRenderer::SetShaderSource( unsigned int nShaderID, const char* pSource ) c
 	glShaderSource( nShaderID, 1, (const GLchar**)&pSource, NULL );
 }
 
-void CRenderer::LoadShader( string sShaderName, IFileSystem& oFileSystem )
+void CRenderer::LoadShader( string sShaderName)
 {
 	CShader* pShader = NULL;
 	vector< string > vShaderExt;
@@ -974,7 +1046,7 @@ void CRenderer::LoadShader( string sShaderName, IFileSystem& oFileSystem )
 		{
 			if( !pShader )
 				pShader = new CShader( *this );
-			pShader->Attach( sShaderPath, IRenderer::T_VERTEX_SHADER, oFileSystem );
+			pShader->Attach( sShaderPath, IRenderer::T_VERTEX_SHADER, m_oFileSystem );
 			string sShaderNameWithoutExt = sShaderName.substr( 0, sShaderName.size() - 3 );
 			string sShaderNameWithoutExtLower = sShaderNameWithoutExt;
 			transform( sShaderNameWithoutExt.begin(), sShaderNameWithoutExt.end(), sShaderNameWithoutExtLower.begin(), tolower );
@@ -1256,6 +1328,16 @@ void CRenderer::ReadPixels( int x, int y, int nWidth, int nHeight, vector< unsig
 	vPixels.resize( nWidth * nHeight * size );
 	glPixelStorei(GL_PACK_ALIGNMENT, 1 );	
 	glReadPixels( x, y, nWidth, nHeight, m_mPixelFormat[ format ], GL_UNSIGNED_BYTE, &vPixels[ 0 ]);
+}
+
+void CRenderer::LockCamera(bool lock)
+{
+	m_bCameraLocked = lock;
+}
+
+void CRenderer::SetLineWidth(int width)
+{
+	glLineWidth(width);
 }
 
 extern "C" _declspec(dllexport) IRenderer* CreateRenderer( const IRenderer::Desc& oDesc )

@@ -11,8 +11,10 @@
 
 class CPlugin
 {
-	CPlugin*								m_pParent;
-	std::map< std::string, CPlugin* >		m_mChild;
+	CPlugin*									m_pParent;
+	std::map< std::string, CPlugin* >			m_mChild;
+
+	static std::map<std::string, CPlugin*>		s_mPlugins;
 
 public:
 	void AddChildPlugin( const std::string& sName, CPlugin* pChild )
@@ -41,6 +43,13 @@ public:
 
 	virtual	~CPlugin(){}
 
+	static CPlugin* GetPlugin(std::string name)
+	{
+		std::map<std::string, CPlugin*>::iterator itPlugin = s_mPlugins.find(name);
+		if (itPlugin != s_mPlugins.end())
+			return itPlugin->second;
+	}
+
 	virtual void UpdateChildPlugins()
 	{
 		for ( std::map< std::string, CPlugin* >::iterator itPlugin = m_mChild.begin(); itPlugin != m_mChild.end(); itPlugin++ )
@@ -50,7 +59,7 @@ public:
 		}
 	}
 
-	CPlugin* GetPlugin( const std::string& sPluginName )
+	CPlugin* GetChildPlugin( const std::string& sPluginName )
 	{
 		CPlugin* pPlugin = NULL;
 		std::map< std::string, CPlugin* >::iterator itPlugin = m_mChild.find( sPluginName );
@@ -75,8 +84,12 @@ public:
 			std::exception e( sMessage.c_str() );
 			throw e;
 		}
-		return pCreate( oDesc );
+		CPlugin* plugin = pCreate(oDesc);
+		s_mPlugins[oDesc.m_sName] = plugin;
+		return plugin;
 	}
+
+	virtual void EnableRenderEvent(bool enable) {}
 	
 };
 

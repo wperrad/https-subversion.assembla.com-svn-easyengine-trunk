@@ -107,6 +107,7 @@ public:
 	void 			SetMaterialSpecular( float* fSpecular );
 	void 			SetMaterialEmissive( float* fEmissive );
 	void 			SetMaterialShininess( float fShininess );
+	void			LoadShader(string sShaderName);
 };
 
 extern "C" _declspec(dllexport) IRenderer* CreateSoftRenderer( IRenderer::Desc& oDesc );

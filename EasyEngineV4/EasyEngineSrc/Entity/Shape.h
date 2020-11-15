@@ -49,6 +49,7 @@ public:
 	float			GetBoundingSphereRadius() const{ return 0.f; }
 	void			Goto( const CVector& oPosition, float fSpeed ){ throw 1; }
 	void			SetEntityName( string sName ){ throw 1; }
+	void			ReloadShader();
 };
 
 #endif // SHAPE_H

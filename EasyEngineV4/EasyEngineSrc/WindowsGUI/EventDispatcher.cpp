@@ -3,7 +3,8 @@
 using namespace std;
 
 CEventDispatcher::CEventDispatcher( const IEventDispatcher::Desc& oDesc ) :
-IEventDispatcher( oDesc )
+IEventDispatcher( oDesc ),
+m_bDispatcherWorking(true)
 {
 }
 
@@ -52,13 +53,26 @@ void CEventDispatcher::DispatchMouseEvent( TMouseEvent e, int x, int y )
 
 void CEventDispatcher::DispatchWindowEvent( TWindowEvent e, int nWidth, int nHeight )
 {
-	for ( unsigned int i = 0; i < m_vWindowAbonnedPlugins.size(); i++ )
-	{
-		CPlugin* pPlugin = m_vWindowAbonnedPlugins[ i ].first;
-		IEventDispatcher::TWindowCallback callback = m_vWindowAbonnedPlugins[ i ].second;
-		callback( pPlugin,e, nWidth, nHeight );
+	if (m_bDispatcherWorking) {
+		for (unsigned int i = 0; i < m_vWindowAbonnedPlugins.size(); i++)
+		{
+			CPlugin* pPlugin = m_vWindowAbonnedPlugins[i].first;
+			IEventDispatcher::TWindowCallback callback = m_vWindowAbonnedPlugins[i].second;
+			callback(pPlugin, e, nWidth, nHeight);
+		}
 	}
 }
+
+void CEventDispatcher::StartDispatcher()
+{
+	m_bDispatcherWorking = true;
+}
+
+void CEventDispatcher::StopDispatcher()
+{
+	m_bDispatcherWorking = false;
+}
+
 
 extern "C" _declspec(dllexport) IEventDispatcher* CreateEventDispatcher( const IEventDispatcher::Desc& oDesc )
 {

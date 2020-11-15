@@ -110,6 +110,13 @@ void CSceneManager::ClearScene( IEntity* pScene )
 		pCastScene->Clear();
 }
 
+void CSceneManager::CreateCollisionMap(IEntity* pScene)
+{
+	CScene* pCastScene = GetScene(pScene);
+	if (pCastScene)
+		pCastScene->CreateCollisionMap();
+}
+
 extern "C" _declspec(dllexport) ISceneManager* CreateSceneManager( const ISceneManager::Desc& oDesc )
 {
 	return new CSceneManager( oDesc );

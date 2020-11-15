@@ -45,9 +45,10 @@ CScene::~CScene()
 void CScene::SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate )
 {
 	CEntity::SetRessource( sFileName, oRessourceManager, oRenderer, bDuplicate );
-	int nDotPos = (int)sFileName.find( '.' );
-	string sHMFileName = string( "hm_" ) + sFileName.substr( 0, nDotPos ) + ".bmp";
-	IMesh* pMesh = static_cast< IMesh* >( m_pRessource );
+	int nDotPos = (int)sFileName.find('.');
+	string sHMFileName = string("hm_") + sFileName.substr(0, nDotPos) + ".bmp";
+	IMesh* pMesh = static_cast< IMesh* >(m_pRessource);
+
 	try
 	{
 		m_nHeightMapID = m_oCollisionManager.LoadHeightMap( sHMFileName, pMesh );
@@ -62,6 +63,34 @@ void CScene::SetRessource( string sFileName, IRessourceManager& oRessourceManage
 		string sTextureFileName = string( "HM_" ) + sFileNameWithoutExt + ".bmp";
 		m_oLoaderManager.Export( sTextureFileName, ti );
 		m_nHeightMapID = m_oCollisionManager.LoadHeightMap( sHMFileName, pMesh );
+	}
+	
+	nDotPos = (int)sFileName.find('.');
+	string sCollisionFileName = string("collision_") + sFileName.substr(0, nDotPos) + ".bmp";
+	m_oCollisionManager.LoadCollisionMap(sCollisionFileName, this);
+}
+
+void CScene::CreateCollisionMap()
+{
+	IMesh* pGroundMesh = dynamic_cast<IMesh*>(GetRessource());
+	if(pGroundMesh){
+		vector<IEntity*> collides;
+		IEntity* pCollideEntity = m_pEntityManager->GetFirstCollideEntity();
+		while (pCollideEntity) {
+				collides.push_back(pCollideEntity);
+			pCollideEntity = m_pEntityManager->GetNextCollideEntity();
+		}
+		ILoader::CTextureInfos ti;
+		m_oCollisionManager.CreateCollisionMap(ti, collides, this, IRenderer::T_BGR);
+		ti.m_ePixelFormat = ILoader::eBGR;
+		string sGroundName;
+		pGroundMesh->GetName(sGroundName);
+		string sTextureFileName = string("Collision_") + sGroundName + ".bmp";
+		m_oLoaderManager.Export(sTextureFileName, ti);
+	}
+	else {
+		CEException e("Erreur : La scène ne possède pas de map");
+		throw e;
 	}
 }
 

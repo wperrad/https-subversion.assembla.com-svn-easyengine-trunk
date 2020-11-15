@@ -9,6 +9,10 @@
 // Math
 #include "Math/matrix.h"
 
+// Interfaces
+#include "IEventDispatcher.h"
+
+
 using namespace std;
 
 class IBuffer;
@@ -141,7 +145,7 @@ public:
 
 	virtual IShader*		GetShader( std::string sShaderName ) = 0;
 	virtual void			GetDefaultShader( std::string& sDefaultShader ) = 0;
-	virtual void			LoadShader( string sShaderName, IFileSystem& oFileSystem ) = 0;
+	virtual void			LoadShader(string sShaderName) = 0;
 
 	virtual void			SetDebugString( std::string ) = 0;
 	virtual void			GetDebugString( std::string& ) const = 0;
@@ -157,6 +161,14 @@ public:
 	virtual void			AbonneToRenderEvent( TRenderEventCallback callback ) = 0;
 	virtual void			DesabonneToRenderEvent( TRenderEventCallback callback ) = 0;
 
+	virtual void			LockCamera(bool lock) = 0;
+	virtual void			GetModelViewProjectionMatrix(CMatrix& oMatrix) = 0;
+	virtual void			ReloadShaders(IEventDispatcher& oEventDispatcher) = 0;
+	virtual void			ReloadShader(string shaderName) = 0;
+	virtual void			CullFace(bool enable) = 0;
+	virtual void			EnableDepthTest(bool enable) = 0;
+	virtual void			SetLineWidth(int width) = 0;
+	virtual bool			IsCullingEnabled() = 0;
 
 	virtual void			Test( int nShader ) = 0;
 };

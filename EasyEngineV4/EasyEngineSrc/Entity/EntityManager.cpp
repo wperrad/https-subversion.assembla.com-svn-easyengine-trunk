@@ -321,7 +321,9 @@ IFighterEntity* CEntityManager::GetNextFighterEntity()
 
 IEntity* CEntityManager::CreateLineEntity( const CVector& first, const CVector& last )
 {
-	return new CLineEntity( m_oRenderer, first, last );
+	CLineEntity* line = new CLineEntity(m_oRenderer, first, last);
+	AddEntity(line, "LineEntity");
+	return line;
 }
 
 IEntity* CEntityManager::CreateCylinder( float fRadius, float fHeight )

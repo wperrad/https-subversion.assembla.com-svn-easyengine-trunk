@@ -24,6 +24,8 @@ class CMaterial : public IRessource
 	float						m_fShininess;
 	ITexture*					m_pTexture;
 	IShader*					m_pShader;
+	vector<float>				m_vAdditionalColor;
+	bool						m_bUseAdditionalColor;
 
 public:
 	enum TMaterialType
@@ -51,6 +53,7 @@ public:
 	void						GetMaterialMatrix( CMatrix& );
 	void						SetShader( IShader* pShader );
 	IShader*					GetCurrentShader() const { return m_pShader; }
+	void						SetAdditionalColor(float r, float g, float b, float a);
 };
 
 

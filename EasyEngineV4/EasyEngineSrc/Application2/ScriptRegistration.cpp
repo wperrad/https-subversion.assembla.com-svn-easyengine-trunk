@@ -188,8 +188,10 @@ void CreateSphere( IScriptState* pState )
 	IEntity* pSphereEntity = m_pEntityManager->CreateSphere( pRadius->m_fValue );
 	pSphereEntity->Link( m_pScene );
 	ostringstream oss;
-	oss << "La sphere a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pSphereEntity ) << ".";
+	int id = m_pEntityManager->GetEntityID(pSphereEntity);
+	oss << "La sphere a été créée avec l'identifiant " << id << ".";
 	m_pConsole->Println( oss.str() );
+	pState->SetReturnValue(id);
 }
 
 void CreateRepere( IScriptState* pState )
@@ -202,8 +204,12 @@ void CreateRepere( IScriptState* pState )
 
 void Test( IScriptState* pState )
 {
-	m_pConsole->Println("Test de retour de valeur");
-	pState->SetReturnValue(28);
+	m_pCollisionManager->Test(m_pEntityManager);
+}
+
+void Test2(IScriptState* pState)
+{
+	m_pCollisionManager->Test2();
 }
 
 void ChangeBase( IScriptState* pState )
@@ -649,6 +655,24 @@ void CreateMobileEntity( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
+void GetVec3DFromArg(IScriptState* pState, int argIdx, CVector& v)
+{
+	v.m_x = ((CScriptFuncArgFloat*)pState->GetArg(argIdx))->m_fValue;
+	v.m_y = ((CScriptFuncArgFloat*)pState->GetArg(argIdx + 1))->m_fValue;
+	v.m_z = ((CScriptFuncArgFloat*)pState->GetArg(argIdx + 2))->m_fValue;
+}
+
+void CreateLineEntity(IScriptState* pState)
+{
+	CVector first, last;
+	GetVec3DFromArg(pState, 0, first);
+	GetVec3DFromArg(pState, 3, last);
+	IEntity* pLine = m_pEntityManager->CreateLineEntity(first, last);
+	int id = m_pEntityManager->GetEntityID(pLine);
+	pLine->Link(m_pScene);
+	pState->SetReturnValue(id);	
+}
+
 void CreateNPC( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
@@ -1037,7 +1061,7 @@ void PlayCurrentAnimation( IScriptState* pState )
 void LoadShader( IScriptState* pState )
 {
 	CScriptFuncArgString* pShaderName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	m_pRenderer->LoadShader( pShaderName->m_sValue, *m_pFileSystem );
+	m_pRenderer->LoadShader( pShaderName->m_sValue );
 }
 
 void DisplayShaderName( IScriptState* pState )
@@ -1090,6 +1114,17 @@ void DisplayHM( IScriptState* pState )
 	else
 		m_pConsole->Println("Erreur : ressource non valide");
 }
+
+void DisplayCollisionMap(IScriptState* pState)
+{
+	m_pCollisionManager->DisplayCollisionMap();
+}
+
+void StopDisplayCollisionMap(IScriptState* pState)
+{
+	m_pCollisionManager->StopDisplayCollisionMap();
+}
+
 
 void DisplaySceneChilds( IScriptState* pState )
 {
@@ -1440,6 +1475,21 @@ void CreateHM( IScriptState* pState )
 	}
 	else
 		m_pConsole->Println( "Une erreur s'est produite lors de la création de l'entité" );
+}
+
+void CreateCollisionMap(IScriptState* pState)
+{
+	try
+	{
+		m_pSceneManager->CreateCollisionMap(m_pScene);
+	}
+	catch (CEException& e)
+	{
+		string sError;
+		e.GetErrorMessage(sError);
+		string s = string("Erreur : ") + sError;
+		m_pConsole->Println(s);
+	}
 }
 
 void ScreenCapture( IScriptState* pState )
@@ -1901,9 +1951,158 @@ void Unlink( IScriptState* pState )
 		pEntity->Unlink();
 }
 
+void SetCameraMatrix(IScriptState* pState)
+{
+	m_pRenderer->LockCamera(false);
+	vector<float> v;
+	for (int i = 0; i < 16; i++) {
+		CScriptFuncArgFloat* a = (CScriptFuncArgFloat*)pState->GetArg(i);
+		v.push_back(a->m_fValue);
+	}
+
+	CMatrix m;
+	m.Set(&v[0]);
+	m_pRenderer->SetCameraMatrix(m);
+	m_pRenderer->LockCamera(true);
+}
+
+void LockCamera(IScriptState* pState)
+{
+	CScriptFuncArgInt* pLock = (CScriptFuncArgInt*)pState->GetArg(0);
+	m_pRenderer->LockCamera(pLock->m_nValue);
+}
+
+void DisplayMatrix(CMatrix m)
+{
+	string s;
+	m_pDebugTool->SerializeMatrix(m, 0.f, s);
+	m_pConsole->Println(s);
+}
+
+void DisplayModelViewProjectionMatrix(IScriptState* pState)
+{
+	CMatrix m;
+	m_pRenderer->GetModelViewProjectionMatrix(m);
+	DisplayMatrix(m);
+}
+
+void DisplayProjectionMatrix(IScriptState* pState)
+{
+	CMatrix m;
+	m_pRenderer->GetProjectionMatrix(m);
+	DisplayMatrix(m);
+}
+
+void SetProjectionMatrixType(IScriptState* pState)
+{
+	CScriptFuncArgString* pType = (CScriptFuncArgString*)pState->GetArg(0);
+
+	CMatrix m;
+	if (pType->m_sValue == "2d") {
+		m.SetIdentity();
+		int nWidth, nHeight;
+		m_pRenderer->GetResolution(nWidth, nHeight);
+		m.m_00 = (float)nHeight / (float)nWidth;
+		m_pRenderer->SetProjectionMatrix(m);
+	}
+	else if (pType->m_sValue == "3d") {
+		m_pRenderer->SetFov(60.f);
+	}
+}
+
+void testCollisionShader(IScriptState* pState)
+{
+	CScriptFuncArgString* pMode = (CScriptFuncArgString*)(pState->GetArg(0));
+	if (pMode) {
+		string mode = pMode->m_sValue;
+		IMesh* pGroundMesh = dynamic_cast<IMesh*>(m_pScene->GetRessource());
+		if (mode == "collision") {
+			IShader* pCollisionShader = m_pRenderer->GetShader("collision");
+			pCollisionShader->Enable(true);
+			pGroundMesh->SetShader(pCollisionShader);
+		}
+		else if (mode == "normal") {
+			IShader* pCollisionShader = m_pRenderer->GetShader("PerPixelLighting");
+			pCollisionShader->Enable(true);
+			pGroundMesh->SetShader(pCollisionShader);
+		}
+	}
+}
+
+void ReloadShader(IScriptState* pState)
+{
+	try {
+		CScriptFuncArgString* pArg = (CScriptFuncArgString*)pState->GetArg(0);
+		m_pRenderer->ReloadShader(pArg->m_sValue);
+	}
+	catch (exception e)
+	{
+		m_pConsole->Println(e.what());
+	}
+}
+
+void CullFace(IScriptState* pState)
+{
+ 	CScriptFuncArgInt* pArg = (CScriptFuncArgInt*)pState->GetArg(0);
+	m_pRenderer->CullFace(pArg->m_nValue == 0 ? false : true);
+}
+
+void EnableRenderCallback(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = (CScriptFuncArgString*)pState->GetArg(0);
+	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(1);
+	CPlugin* plugin = CPlugin::GetPlugin(pName->m_sValue);
+	if (plugin) {
+		plugin->EnableRenderEvent(pEnable->m_nValue == 0 ? false : true);
+	}
+	else
+		m_pConsole->Println("Plugin \"" + pName->m_sValue + "\" not found");
+}
+
+void SendCustomUniformValue(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = (CScriptFuncArgString*)pState->GetArg(0);
+	CScriptFuncArgFloat* pValue = (CScriptFuncArgFloat*)pState->GetArg(1);
+	m_pCollisionManager->SendCustomUniformValue(pName->m_sValue, pValue->m_fValue);
+}
+
+void SetLineWidth(IScriptState* pState)
+{
+	CScriptFuncArgInt* pWidth = (CScriptFuncArgInt*)pState->GetArg(0);
+	m_pRenderer->SetLineWidth(pWidth->m_nValue);
+}
+
+void DisplayGrid(IScriptState* pState)
+{
+	m_pCollisionManager->DisplayGrid();
+}
+
+void SetCurrentCollisionMap(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = (CScriptFuncArgString*)pState->GetArg(0);
+	m_pCollisionManager->LoadCollisionMap(pName->m_sValue, m_pScene);
+}
+
 void RegisterAllFunctions( IScriptManager* pScriptManager )
 {
 	vector< TFuncArgType > vType;
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("SetCurrentCollisionMap", SetCurrentCollisionMap, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayGrid", DisplayGrid, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayCollisionMap", DisplayCollisionMap, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("StopDisplayCollisionMap", StopDisplayCollisionMap, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("SetLineWidth", SetLineWidth, vType);	
 
 	vType.clear();
 	vType.push_back( eInt );
@@ -2032,6 +2231,9 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back( eString );
 	m_pScriptManager->RegisterFunction( "CreateHM", CreateHM, vType );
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("CreateCollisionMap", CreateCollisionMap, vType);
 
 	vType.clear();
 	vType.push_back( eString );
@@ -2309,6 +2511,9 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "Test", Test, vType );
 
 	vType.clear();
+	m_pScriptManager->RegisterFunction("Test2", Test2, vType);
+
+	vType.clear();
 	vType.push_back( eFloat );
 	vType.push_back( eFloat );
 	vType.push_back( eFloat );
@@ -2358,4 +2563,69 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("GetCameraID", GetCameraID, vType);
+
+
+	vType.clear();
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("SetCameraMatrix", SetCameraMatrix, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("LockCamera", LockCamera, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("SetProjectionMatrixType", SetProjectionMatrixType, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayProjectionMatrix", DisplayProjectionMatrix, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayModelViewProjectionMatrix", DisplayModelViewProjectionMatrix, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("testCollisionShader", testCollisionShader, vType);
+	
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("ReloadShader", ReloadShader, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("CullFace", CullFace, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("EnableRenderCallback", EnableRenderCallback, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("SendCustomUniformValue", SendCustomUniformValue, vType);
+
+	vType.clear();
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("CreateLineEntity", CreateLineEntity, vType);
 }

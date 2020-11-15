@@ -34,7 +34,8 @@ m_pBBox( NULL ),
 m_oGeometryManager( oGeometryManager ),
 m_bDrawAnimationBoundingBox( false ),
 m_oCollisionManager( oCollisionManager ),
-m_pfnCollisionCallback( NULL )
+m_pfnCollisionCallback( NULL ),
+m_bUseAdditionalColor(false)
 {
 }
 
@@ -55,7 +56,8 @@ m_pBBox( NULL ),
 m_oGeometryManager( oGeometryManager ),
 m_bDrawAnimationBoundingBox( false ),
 m_oCollisionManager( oCollisionManager ),
-m_pfnCollisionCallback( NULL )
+m_pfnCollisionCallback( NULL ),
+m_bUseAdditionalColor(false)
 {
 	if( sFileName.size() > 0 )
 	{
@@ -265,6 +267,8 @@ void CEntity::Update()
 		{
 			pMesh->SetRenderingType( m_eRenderType );
 			pMesh->DrawAnimationBoundingBox( m_bDrawAnimationBoundingBox );
+			if (m_bUseAdditionalColor)
+				pMesh->Colorize(m_oAdditionalColor.m_x, m_oAdditionalColor.m_y, m_oAdditionalColor.m_z, m_oAdditionalColor.m_w);
 		}
 		m_pRessource->Update();
 		if( pMesh )
@@ -582,4 +586,16 @@ void CEntity::SetEntityName( string sName )
 void CEntity::GetEntityName( string& sName )
 {
 	sName = m_sEntityName;
+}
+
+void CEntity::Colorize(float r, float g, float b, float a)
+{
+	IMesh* pMesh = dynamic_cast<IMesh*>(m_pRessource);
+	if (pMesh) {
+		m_bUseAdditionalColor = true;
+		m_oAdditionalColor.m_x = r;
+		m_oAdditionalColor.m_y = g;
+		m_oAdditionalColor.m_z = b;
+		m_oAdditionalColor.m_w = a;
+	}
 }
