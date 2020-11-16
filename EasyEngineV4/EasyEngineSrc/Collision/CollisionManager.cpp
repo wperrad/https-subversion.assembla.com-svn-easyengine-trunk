@@ -182,20 +182,10 @@ void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IE
 	oProj.m_00 = 1.f / m_fScreenRatio;
 	const IBox* pBox = m_pGround->GetBBox();
 
-	/*
-	m_fMaxLenght = pBox->GetDimension().m_x;
-	if (m_fMaxLenght < pBox->GetDimension().m_z)
-	{
-		m_fMaxLenght = pBox->GetDimension().m_z;
-		m_fGroundMapWidth = (pBox->GetDimension().m_x * (float)m_nScreenWidth) / (m_fMaxLenght * m_fScreenRatio);
-		m_fGroundMapHeight = (float)m_nScreenHeight;
-	}
-	else
-	{
-		m_fGroundMapWidth = (float)m_nScreenWidth;
-		m_fGroundMapHeight = pBox->GetDimension().m_z * (float)m_nScreenHeight / m_fMaxLenght;
-	}*/
 	ComputeGroundMapDimensions();
+	int subdivisionCount = 30;
+
+	int cellMapSize = m_fGroundMapWidth / subdivisionCount;
 
 	m_fGroundMapWidth = ((int)m_fGroundMapWidth / 4) * 4;
 	m_fGroundMapHeight = ((int)m_fGroundMapHeight / 4) * 4;
@@ -205,10 +195,8 @@ void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IE
 
 	m_fGroundWidth = pBox->GetDimension().m_x;
 	m_fGroundHeight = pBox->GetDimension().m_z;
-
-	int subdivisionCount = 30;
+	
 	m_fGridBoxSize = m_fGroundWidth / subdivisionCount;
-
 
 	DisplayGrid();
 
@@ -269,41 +257,6 @@ void CCollisionManager::LoadCollisionMap(string sFileName, IEntity* pScene)
 		m_fGridBoxSize = m_fGroundWidth / m_subdivisionCount;
 		ComputeGroundMapDimensions();
 	}
-
-	// test
-	for (int iRow = 0; iRow < 10; iRow++) {
-		for (int iColumn = 0; iColumn < 20; iColumn++) {
-			char red[] = { 0, 0, 255 };
-			memcpy(&m_oCollisionMap.m_vTexels[3 * (iRow * m_oCollisionMap.m_nWidth +  iColumn)], red, 3);
-		}
-	}
-	m_oLoaderManager.Export(sFileName, m_oCollisionMap);
-	// fin test
-	
-#ifdef TEST_REMPLISSAGE
-	int subdivisionCount = 30;
-	m_fGroundHeight = m_fMaxLenght = 30000;
-	m_fGroundWidth = 29700;
-	m_fGridBoxSize = m_fGroundWidth / subdivisionCount;
-	int mapBoxSize = WorldToPixel(m_fGridBoxSize);
-	int rowCount = m_oCollisionMap.m_nHeight / mapBoxSize;
-	int columnCount = m_oCollisionMap.m_nWidth / mapBoxSize;
-	
-	for (int k = 0; k < rowCount + 1; k++) {
-		for (int j = 0; j < columnCount + 1; j++) {
-			for (int i = 0; i < mapBoxSize; i++) {
-				int index = 3 * (j * mapBoxSize + i * m_oCollisionMap.m_nWidth + k * m_oCollisionMap.m_nWidth * mapBoxSize);
-				int fillSize = 3 * mapBoxSize;
-				if (j == columnCount) {
-					fillSize = (m_oCollisionMap.m_nWidth * 3) - j * 3 * mapBoxSize;
-				}
-				if(index < m_oCollisionMap.m_vTexels.size())
-					ZeroMemory(&m_oCollisionMap.m_vTexels[index], fillSize);
-			}
-		}
-	}
- 	m_oLoaderManager.Export("Collision_terrain-exported.bmp", m_oCollisionMap);
-#endif // 0
 }
 
 void CCollisionManager::SetHeightMapPrecision( int nPrecision )
@@ -775,13 +728,21 @@ void CCollisionManager::MarkMapBox(int row, int column, int r, int g, int b)
 	float mapX1 = WorldToPixel(x1);
 
 	int subdivisionCount = 30;
-	int mapBoxSize = mapX1 - mapX0;
+	float fmapBoxSize = mapX1 - mapX0;
+	int mapBoxSize = fmapBoxSize;
 	int rowCount = m_oCollisionMap.m_nHeight / mapBoxSize;
 	int columnCount = m_oCollisionMap.m_nWidth / mapBoxSize;
 
 	bool isObstacle = false;
+
+	float fx = (float)column * fmapBoxSize;
+	int ix = (int)fx;
+	float fy = (float)row * fmapBoxSize;
+	int iy = (int)fy;
+
 	for (int i = 0; i < mapBoxSize; i++) {
-		int index = 3 * (column * mapBoxSize + i * m_oCollisionMap.m_nWidth + row * m_oCollisionMap.m_nWidth * mapBoxSize);
+
+		int index = 3 * (ix + i * m_oCollisionMap.m_nWidth + iy * m_oCollisionMap.m_nWidth);
 		int fillSize = 3 * mapBoxSize;
 		if (column == columnCount) {
 			fillSize = (m_oCollisionMap.m_nWidth * 3) - column * 3 * mapBoxSize;
@@ -833,12 +794,18 @@ bool CCollisionManager::TestBoxObstacle(int row, int column)
 
 	int subdivisionCount = 30;
 	int mapBoxSize = mapX1 - mapX0;
+	float fmapBoxSize = mapX1 - mapX0;
 	int rowCount = m_oCollisionMap.m_nHeight / mapBoxSize;
 	int columnCount = m_oCollisionMap.m_nWidth / mapBoxSize;
 
+	float fx = (float)column * fmapBoxSize;
+	int ix = (int)fx;
+	float fy = (float)row * fmapBoxSize;
+	int iy = (int)fy;
+
 	bool isObstacle = false;
 	for (int i = 0; i < mapBoxSize; i++) {
-		int index = 3 * (column * mapBoxSize + i * m_oCollisionMap.m_nWidth + row * m_oCollisionMap.m_nWidth * mapBoxSize);
+		int index = 3 * (ix + i * m_oCollisionMap.m_nWidth + iy * m_oCollisionMap.m_nWidth);
 		int fillSize = 3 * mapBoxSize;
 		if (column == columnCount) {
 			fillSize = (m_oCollisionMap.m_nWidth * 3) - column * 3 * mapBoxSize;
@@ -854,9 +821,7 @@ bool CCollisionManager::TestBoxObstacle(int row, int column)
 				return true;
 		}
 	}
-
 	return false;
-
 }
 
 float CCollisionManager::WorldToPixel(float worldLenght)
@@ -877,7 +842,6 @@ float CCollisionManager::WorldToPixel(float worldLenght)
 
 void CCollisionManager::MarkObstacles(IEntityManager* pEntityManager)
 {
-	
 	float originX = -m_fGroundWidth / 2;
 	float originY = -m_fGroundHeight / 2;
 	int firstRow = 0, firstColumn = 0;
@@ -903,7 +867,7 @@ void CCollisionManager::MarkObstacles(IEntityManager* pEntityManager)
 			}
 		}
 	}
-	m_oLoaderManager.Export("Collision_terrain-exported.bmp", m_oCollisionMap);
+	m_oLoaderManager.Export("CollisionFinal_terrain.bmp", m_oCollisionMap);
 }
 
 void CCollisionManager::FindPath(float fromX, float fromY, float toX, float toY, IEntityManager* pEntityManager)

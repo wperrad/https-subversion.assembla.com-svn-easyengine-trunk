@@ -151,7 +151,6 @@ void InitScene( ISceneManager* pSceneManager )
 		}
 		else
 			m_pConsole->Println( "Fichier start introuvable." );
-
 	}
 	catch( CEException& e )
 	{

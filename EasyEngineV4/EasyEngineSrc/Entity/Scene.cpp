@@ -66,8 +66,14 @@ void CScene::SetRessource( string sFileName, IRessourceManager& oRessourceManage
 	}
 	
 	nDotPos = (int)sFileName.find('.');
-	string sCollisionFileName = string("collision_") + sFileName.substr(0, nDotPos) + ".bmp";
-	m_oCollisionManager.LoadCollisionMap(sCollisionFileName, this);
+	m_sCollisionFileName = string("collision_") + sFileName.substr(0, nDotPos) + ".bmp";
+	try{
+		m_oCollisionManager.LoadCollisionMap(m_sCollisionFileName, this);
+	}
+	catch (CFileNotFoundException& e) {
+		e = e;
+	}
+	
 }
 
 void CScene::CreateCollisionMap()
@@ -77,7 +83,7 @@ void CScene::CreateCollisionMap()
 		vector<IEntity*> collides;
 		IEntity* pCollideEntity = m_pEntityManager->GetFirstCollideEntity();
 		while (pCollideEntity) {
-				collides.push_back(pCollideEntity);
+			collides.push_back(pCollideEntity);
 			pCollideEntity = m_pEntityManager->GetNextCollideEntity();
 		}
 		ILoader::CTextureInfos ti;
@@ -85,8 +91,8 @@ void CScene::CreateCollisionMap()
 		ti.m_ePixelFormat = ILoader::eBGR;
 		string sGroundName;
 		pGroundMesh->GetName(sGroundName);
-		string sTextureFileName = string("Collision_") + sGroundName + ".bmp";
-		m_oLoaderManager.Export(sTextureFileName, ti);
+		m_oLoaderManager.Export(m_sCollisionFileName, ti);
+		m_oCollisionManager.LoadCollisionMap(m_sCollisionFileName, this);
 	}
 	else {
 		CEException e("Erreur : La scène ne possède pas de map");

@@ -26,6 +26,7 @@ class CScene : public CEntity
 	ILoaderManager&				m_oLoaderManager;
 	ICollisionManager&			m_oCollisionManager;
 	int							m_nHeightMapID;
+	string						m_sCollisionFileName;
 	//CFightSystem				m_oFightSystem;
 
 	void						GetInfos( ILoader::CSceneInfos& si );
@@ -63,6 +64,7 @@ public:
 	float					GetHeight( float x, float z );
 	void					SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false );
 	void					CreateCollisionMap();
+	bool					IsCollisionMapFound();
 	//CFightSystem&			GetFightSystem();
 };
 
