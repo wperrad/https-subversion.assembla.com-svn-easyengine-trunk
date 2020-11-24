@@ -19,33 +19,33 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F08FC9B7-2CFB-48FC-9019-66D778C474BD}</ProjectGuid>
+    <ProjectGuid>{B29A8320-2A6C-47C4-890E-977FCD9A8552}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Application</RootNamespace>
+    <RootNamespace>IA</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -87,7 +87,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;IA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -100,15 +100,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\Interfaces;..\..\..\utils\;..</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;IA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\Interfaces</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>math.lib;Utils.lib;Utils2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\utils\x64\$(Configuration);..\x64\$(Configuration)</AdditionalLibraryDirectories>
       <OutputFile>..\..\EasyEngine\$(ConfigurationName)\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalLibraryDirectories>..\..\..\utils\x64\$(Configuration);..\x64\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>math.lib;Utils2.lib;Utils.lib;glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -119,7 +119,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;IA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,8 +136,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\Interfaces;..\..\..\utils\;..</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;IA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\Interfaces</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -146,46 +146,14 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\EasyEngine\$(ConfigurationName)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\utils\x64\$(Configuration);..\x64\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>math.lib;Utils.lib;Utils2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>math.lib;Utils2.lib;Utils.lib;glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Interfaces\define.h" />
-    <ClInclude Include="..\..\Interfaces\eeplugin.h" />
-    <ClInclude Include="..\..\Interfaces\Event.h" />
-    <ClInclude Include="..\..\Interfaces\Exception.h" />
-    <ClInclude Include="..\..\Interfaces\IActionManager.h" />
-    <ClInclude Include="..\..\Interfaces\ICamera.h" />
-    <ClInclude Include="..\..\Interfaces\ICameraManager.h" />
-    <ClInclude Include="..\..\Interfaces\ICollisionManager.h" />
-    <ClInclude Include="..\..\Interfaces\IConsole.h" />
-    <ClInclude Include="..\..\Interfaces\ICore.h" />
-    <ClInclude Include="..\..\Interfaces\IDrawTool.h" />
-    <ClInclude Include="..\..\Interfaces\IEntity.h" />
-    <ClInclude Include="..\..\Interfaces\IEventDispatcher.h" />
-    <ClInclude Include="..\..\Interfaces\IFileSystem.h" />
-    <ClInclude Include="..\..\Interfaces\IGeometry.h" />
-    <ClInclude Include="..\..\Interfaces\IGUIManager.h" />
-    <ClInclude Include="..\..\Interfaces\IPathFinder.h" />
-    <ClInclude Include="..\..\Interfaces\IInputManager.h" />
-    <ClInclude Include="..\..\Interfaces\ILoader.h" />
-    <ClInclude Include="..\..\Interfaces\INode.h" />
-    <ClInclude Include="..\..\Interfaces\IRenderer.h" />
-    <ClInclude Include="..\..\Interfaces\IRessource.h" />
-    <ClInclude Include="..\..\Interfaces\IScriptManager.h" />
-    <ClInclude Include="..\..\Interfaces\IShader.h" />
-    <ClInclude Include="..\..\Interfaces\ISystems.h" />
-    <ClInclude Include="..\..\Interfaces\ITestMesh.h" />
-    <ClInclude Include="..\..\Interfaces\ITestShaderManager.h" />
-    <ClInclude Include="..\..\Interfaces\IWidget.h" />
-    <ClInclude Include="..\..\Interfaces\IWindow.h" />
-    <ClInclude Include="..\..\Interfaces\IXMLParser.h" />
-    <ClInclude Include="PluginCreation.h" />
-    <ClInclude Include="ScriptRegistration.h" />
+    <ClInclude Include="PathFinder.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="ScriptRegistration.cpp" />
+    <ClCompile Include="PathFinder.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
