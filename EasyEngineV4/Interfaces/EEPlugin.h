@@ -48,6 +48,7 @@ public:
 		std::map<std::string, CPlugin*>::iterator itPlugin = s_mPlugins.find(name);
 		if (itPlugin != s_mPlugins.end())
 			return itPlugin->second;
+		return NULL;
 	}
 
 	virtual void UpdateChildPlugins()

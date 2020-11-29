@@ -143,6 +143,19 @@
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="WinError2.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="Convertissor.h" />
+    <ClInclude Include="CSVReader.h" />
+    <ClInclude Include="Database2.h" />
+    <ClInclude Include="istorage.h" />
+    <ClInclude Include="NetworkManager.h" />
+    <ClInclude Include="OGLRenderer.h" />
+    <ClInclude Include="Server.h" />
+    <ClInclude Include="Socket.h" />
+    <ClInclude Include="Widget.h" />
+    <ClInclude Include="WinError2.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

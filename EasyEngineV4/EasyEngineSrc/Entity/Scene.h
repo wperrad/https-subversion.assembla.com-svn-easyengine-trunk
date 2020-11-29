@@ -16,6 +16,7 @@ class CFreeCamera;
 class ICamera;
 class IEntityManager;
 class ICollisionManager;
+class IPathFinder;
 
 using namespace std;
 
@@ -25,8 +26,11 @@ class CScene : public CEntity
 	ICameraManager&				m_oCameraManager;
 	ILoaderManager&				m_oLoaderManager;
 	ICollisionManager&			m_oCollisionManager;
+	IPathFinder&				m_oPathFinder;
 	int							m_nHeightMapID;
 	string						m_sCollisionFileName;
+	bool						m_bCollisionMapCreated;
+	IGrid*						m_pCollisionGrid;
 	//CFightSystem				m_oFightSystem;
 
 	void						GetInfos( ILoader::CSceneInfos& si );
@@ -34,6 +38,7 @@ class CScene : public CEntity
 	void						LoadSceneObject( const ILoader::CSceneObjInfos* pSceneObjInfos, IEntity* pParent );
 	void						GetSkeletonEntities( CNode* pRoot, vector< IEntity* >& vEntity, string sFileFilter );
 	ILoader::CSceneObjInfos*	GetEntityInfos( IEntity* pEntity );
+	void						CreateCollisionGrid();	
 
 public:
 	struct Desc
@@ -47,8 +52,10 @@ public:
 		ILoaderManager&		m_oLoaderManager;
 		ICollisionManager&	m_oCollisionManager;
 		IGeometryManager&	m_oGeometryManager;
+		IPathFinder&		m_oPathFinder;
 		Desc(	IRessourceManager& oRessourceManager, IRenderer& pRenderer, IEntityManager* pEntityManager, 
-				ICamera* pCamera, ICameraManager& oCameraManager, ILoaderManager& oLoaderManager, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager );
+				ICamera* pCamera, ICameraManager& oCameraManager, ILoaderManager& oLoaderManager, 
+				ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager, IPathFinder& oPathFinder);
 	};
 
 	CScene( const Desc& desc );
@@ -63,8 +70,9 @@ public:
 	void					Clear();
 	float					GetHeight( float x, float z );
 	void					SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false );
+	IGrid*					GetCollisionGrid();
 	void					CreateCollisionMap();
-	bool					IsCollisionMapFound();
+	
 	//CFightSystem&			GetFightSystem();
 };
 

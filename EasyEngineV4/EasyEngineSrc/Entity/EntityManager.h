@@ -14,6 +14,7 @@ class CEntityManager : public IEntityManager
 	map< IEntity*, int >::const_iterator	m_itCurrentParsedEntity;
 	IRessourceManager&						m_oRessourceManager;
 	IGeometryManager&						m_oGeometryManager;
+	IPathFinder&							m_oPathFinder;
 	IRenderer&								m_oRenderer;
 	map< int, IEntity* >					m_mIDEntities;	
 	map< IEntity*, int >					m_mEntitiesID;

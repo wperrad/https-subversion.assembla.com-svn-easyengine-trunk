@@ -11,6 +11,7 @@
 #include "ILoader.h"
 #include "Math/matrix.h"
 #include "IRessource.h"
+#include "IPathFinder.h"
 
 
 class IRessourceManager;
@@ -109,13 +110,16 @@ public:
 		IFileSystem&			m_oFileSystem;
 		ICollisionManager&		m_oCollisionManager;
 		IGeometryManager&		m_oGeometryManager;
-		Desc( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IFileSystem& oFileSystem, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager ) : 
+		IPathFinder&			m_oPathFinder;
+		Desc( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IFileSystem& oFileSystem, ICollisionManager& oCollisionManager, 
+			IGeometryManager& oGeometryManager, IPathFinder& oPathFinder ) : 
 			CPlugin::Desc( NULL, "" ),
 			m_oRessourceManager( oRessourceManager ),
 			m_oRenderer(oRenderer),
 			m_oFileSystem( oFileSystem ),
 			m_oCollisionManager( oCollisionManager ),
-			m_oGeometryManager( oGeometryManager ){}
+			m_oGeometryManager( oGeometryManager ),
+			m_oPathFinder(oPathFinder){}
 	};
 	IEntityManager( const Desc& oDesc ) : CPlugin( NULL, "" ){}
 	virtual IEntity*			CreateEntity( std::string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate = false ) = 0;
@@ -181,7 +185,7 @@ public:
 			m_oCollisionManager( oCollisionManager ){}
 	};
 
-	virtual IEntity*	CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager ) = 0;
+	virtual IEntity*	CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager, IPathFinder& oPathFinder ) = 0;
 	virtual IEntity*	GetScene( std::string sSceneName ) = 0;
 	virtual IEntity*	Merge( IEntity* pScene, const std::string& sRessourceName, string sEntityType, float x = 0, float y = 0, float z = 0, bool bIsAnimated = false ) = 0;
 	virtual IEntity*	Merge( IEntity* pScene, string sRessourceName, string sEntityType, CMatrix& oXForm ) = 0;

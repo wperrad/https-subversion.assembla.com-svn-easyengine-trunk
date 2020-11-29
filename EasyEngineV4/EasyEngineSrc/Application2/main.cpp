@@ -33,6 +33,7 @@
 #include "ICollisionManager.h"
 #include "ISystems.h"
 #include "IGeometry.h"
+#include "IPathFinder.h"
 
 #define CATCH_EXCEPTION
 
@@ -71,6 +72,7 @@ ISystemsManager*		m_pSystemsManager = NULL;
 IEventDispatcher*		m_pEventDispatcher = NULL;
 IXMLParser*				m_pXMLParser = NULL;
 IGeometryManager*		m_pGeometryManager = NULL;
+IPathFinder*			m_pPathFinder = NULL;
 
 IEntity* m_pRepere = NULL;
 
@@ -131,7 +133,7 @@ void SetGUIMode( bool bGUI )
 
 void InitScene( ISceneManager* pSceneManager )
 {
-	IEntity* pScene = pSceneManager->CreateScene( "Game", "", *m_pGeometryManager );
+	IEntity* pScene = pSceneManager->CreateScene( "Game", "", *m_pGeometryManager, *m_pPathFinder );
 	m_pScene = pScene;
 	
 	m_pRepere = m_pEntityManager->CreateRepere( *m_pRenderer );
@@ -288,6 +290,10 @@ void InitPlugins( string sCmdLine )
 
 	CGFXOption oOption;
 	GetOptionsByCommandLine( sCmdLine, oOption );
+
+	IPathFinder::Desc oPathFinderDesc(NULL, "PathFinder");
+	m_pPathFinder = static_cast<IPathFinder*>(CPlugin::Create(oPathFinderDesc, sDirectoryName + "IA.dll", "CreatePathFinder"));
+
 		
 	IFileSystem::Desc oFileSystemDesc( NULL, "FileSystem" );
 	m_pFileSystem = static_cast< IFileSystem* > ( CPlugin::Create( oFileSystemDesc, sDirectoryName + "FileUtils.dll", "CreateFileSystem" ) );
@@ -336,7 +342,7 @@ void InitPlugins( string sCmdLine )
 	oCollisionManagerDesc.m_pFileSystem = m_pFileSystem;
 	m_pCollisionManager = static_cast< ICollisionManager* >( CPlugin::Create( oCollisionManagerDesc, "Collision.dll", "CreateCollisionManager" ) );
 
-	IEntityManager::Desc oEntityManagerDesc( *m_pRessourceManager, *m_pRenderer, *m_pFileSystem, *m_pCollisionManager, *m_pGeometryManager );
+	IEntityManager::Desc oEntityManagerDesc( *m_pRessourceManager, *m_pRenderer, *m_pFileSystem, *m_pCollisionManager, *m_pGeometryManager, *m_pPathFinder );
 	m_pEntityManager = static_cast< IEntityManager* >( CPlugin::Create( oEntityManagerDesc, sDirectoryName + "Entity.dll", "CreateEntityManager" ) );
 
 	m_pCollisionManager->SetEntityManager(m_pEntityManager);

@@ -5,15 +5,11 @@
 
 class CNPCEntity : public CMobileEntity, public IAEntity
 {
-
-	void				Turn( float fAngle );
-
-protected:
-	static void 		OnCollision( IEntity* pEntity );
-
 public:
 
-	CNPCEntity( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager, IFileSystem* pFileSystem, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager );
+	CNPCEntity( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, 
+		IEntityManager* pEntityManager, IFileSystem* pFileSystem, ICollisionManager& oCollisionManager, 
+		IGeometryManager& oGeometryManager, IPathFinder& oPathFinder );
 	int						GetLife();
 	void					SetLife( int nLife );
 	void					IncreaseLife( int nLife );
@@ -33,8 +29,17 @@ public:
 	void					Stand();
 	void					Goto( const CVector& oPosition, float fSpeed );
 	IBox*					GetFirstCollideBox();
-	IBox*					GetNextCollideBox();
+	IBox*					GetNextCollideBox();	
+	void					ComputePathFind2D( const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints );
 
-	// temporaire
-	void	ComputePathFind2D( const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints );
+protected:
+	static void 			OnCollision(IEntity* pEntity);
+	void					ComputePathFind2D_V1(const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints);
+	void					ComputePathFind2DAStar(const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints, bool saveGrid = false);
+	void					SaveAStarGrid(IGrid* pGrid);
+
+private:
+	void					Turn(float fAngle);
+
+	IPathFinder&			m_oPathFinder;
 };

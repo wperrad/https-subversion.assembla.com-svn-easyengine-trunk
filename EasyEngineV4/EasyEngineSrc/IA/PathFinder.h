@@ -26,12 +26,16 @@ public:
 		int ComputeCoast(int x, int y);
 		int ComputeCoastToParent();
 		void Update(CCell* parent, CCell* destination);
+		void SetParent(CCell* parent);
 		bool IsInTheSameCell(CCell& cell);
 		void GetCoordinates(int& row, int& column) const;
-		void SetCellCoordinates(int row, int column);
+		void SetCoordinates(int row, int column);
 		TCell GetCellType() const;
 		void Init(CCell& cell);
 		void Reset();
+		void ResetAllExceptObstacles();
+		CCell& operator >> (ofstream& stream);
+		CCell& operator << (ifstream& stream);
 		
 	private:
 		int m_column;
@@ -62,13 +66,18 @@ public:
 	int GetNodeInOpenList(int row, int column);
 	void UpdateOpenList(CCell& cell);
 	void Reset();
+	void ResetAllExceptObstacles();
+	void Save(string sFileName);
+	void Load(string sFileName);
+	void SetManualMode(bool manual);
+	bool GetManualMode();
 
 private:
 
 	void InsertToOpen(CCell* b);
 	void InsertToOpenV2(CCell* b);
-
 	void InsertToClose(CCell* b);
+	void Init();
 
 	CCell** m_grid;
 	int m_nRowCount;
@@ -78,6 +87,7 @@ private:
 	vector<CGrid::ICell*> m_vOpenList;
 	vector<CGrid::ICell*> m_vCloseList;
 	vector<CGrid::ICell*> m_vPath;
+	bool m_bManualMode;
 };
 
 class CPathFinder : public IPathFinder
