@@ -21,12 +21,13 @@ CSceneManager::~CSceneManager()
 		delete itScene->second;
 }
 
-IEntity* CSceneManager::CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager )
+IEntity* CSceneManager::CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager, IPathFinder& oPathFinder)
 {
 	map< string, CScene* >::iterator itScene = m_mStringScene.find( sSceneName );
 	if ( itScene == m_mStringScene.end() )
 	{
-		CScene::Desc oSceneDesc( m_oRessourceManager, m_oRenderer, &m_oEntityManager, m_oCameraManager.GetActiveCamera(), m_oCameraManager, m_oLoaderManager, m_oCollisionManager, oGeometryManager );
+		CScene::Desc oSceneDesc( m_oRessourceManager, m_oRenderer, &m_oEntityManager, m_oCameraManager.GetActiveCamera(), m_oCameraManager, 
+			m_oLoaderManager, m_oCollisionManager, oGeometryManager, oPathFinder);
 		oSceneDesc.m_sFileName = sMeshFileName;
 		CScene* pScene = new CScene( oSceneDesc );
 		m_mStringScene[ sSceneName ] = pScene;

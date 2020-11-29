@@ -18,7 +18,8 @@ m_nLastEntityID( -1 ),
 m_pPerso( NULL ),
 m_oFileSystem( oDesc.m_oFileSystem ),
 m_oCollisionManager( oDesc.m_oCollisionManager ),
-m_oGeometryManager( oDesc.m_oGeometryManager )
+m_oGeometryManager( oDesc.m_oGeometryManager ),
+m_oPathFinder(oDesc.m_oPathFinder)
 {
 	m_itCurrentParsedEntity = m_mCollideEntities.end();
 	m_itCurrentIAEntity = m_mIAEntities.end();
@@ -148,7 +149,7 @@ IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFil
 
 IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem )
 {
-	IEntity* pEntity = new CNPCEntity( sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager );
+	IEntity* pEntity = new CNPCEntity( sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager, m_oPathFinder );
 	CreateEntity( pEntity );
 	return pEntity;
 }

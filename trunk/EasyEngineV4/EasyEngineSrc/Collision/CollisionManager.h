@@ -72,10 +72,10 @@ class CCollisionManager : public ICollisionManager
 	void MarkBox(int row, int column, float r, float g, float b, IEntityManager* pEntityManager);
 	void MarkMapBox(int iRow, int iColumn, int r, int g, int b);
 	void MarkObstacles(IEntityManager* pEntityManager);
-	void GetBoxCoordFromPosition(float x, float y, int& row, int& column);
-	void GetBoxPositionFromBoxCoord(int row, int column, float& x, float& y);
+	void GetCellCoordFromPosition(float x, float y, int& row, int& column);
+	void GetPositionFromCellCoord(int row, int column, float& x, float& y);
 	void ComputeRowAndColumnCount(int& rowCount, int& columnCount);
-	bool TestBoxObstacle(int iRow, int iColumn);
+	bool TestCellObstacle(int iRow, int iColumn);
 	float WorldToPixel(float worldLenght);
 	void ConvertLinearToCoord(int pixelNumber, int& x, int& y);
 

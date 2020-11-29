@@ -10,17 +10,21 @@
 #include "ISystems.h"
 #include "Utils2/StringUtils.h"
 #include "Utils2/TimeManager.h"
+#include "IPathFinder.h"
 
 using namespace std;
 
-CScene::Desc::Desc( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager, ICamera* pCamera, ICameraManager& oCameraManager, ILoaderManager& oLoaderManager, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager ):
+CScene::Desc::Desc( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager, 
+	ICamera* pCamera, ICameraManager& oCameraManager, ILoaderManager& oLoaderManager, 
+	ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager, IPathFinder& oPathFinder ):
 m_oRessourceManager( oRessourceManager ),
 m_oRenderer( oRenderer ),
 m_pCamera( pCamera ),
 m_oCameraManager( oCameraManager ),
 m_oLoaderManager( oLoaderManager ),
 m_oCollisionManager( oCollisionManager ),
-m_oGeometryManager( oGeometryManager )
+m_oGeometryManager( oGeometryManager ),
+m_oPathFinder(oPathFinder)
 {
 	m_pEntityManager = pEntityManager;
 }
@@ -31,7 +35,10 @@ m_pCamera( oDesc.m_pCamera ),
 m_oCameraManager( oDesc.m_oCameraManager ),
 m_oLoaderManager( oDesc.m_oLoaderManager ),
 m_oCollisionManager( oDesc.m_oCollisionManager ),
-m_nHeightMapID( -1 )
+m_oPathFinder(oDesc.m_oPathFinder),
+m_nHeightMapID( -1 ),
+m_bCollisionMapCreated(true),
+m_pCollisionGrid(NULL)
 {
 	SetName( "Scene" );
 	m_pRessource = NULL;
@@ -69,11 +76,17 @@ void CScene::SetRessource( string sFileName, IRessourceManager& oRessourceManage
 	m_sCollisionFileName = string("collision_") + sFileName.substr(0, nDotPos) + ".bmp";
 	try{
 		m_oCollisionManager.LoadCollisionMap(m_sCollisionFileName, this);
+		m_bCollisionMapCreated = true;
+		CreateCollisionGrid();
 	}
 	catch (CFileNotFoundException& e) {
-		e = e;
-	}
-	
+		m_bCollisionMapCreated = false;
+	}	
+}
+
+IGrid* CScene::GetCollisionGrid()
+{
+	return m_pCollisionGrid;
 }
 
 void CScene::CreateCollisionMap()
@@ -100,6 +113,21 @@ void CScene::CreateCollisionMap()
 	}
 }
 
+void CScene::CreateCollisionGrid()
+{
+	int rowCount, columnCount;
+	m_oCollisionManager.ComputeRowAndColumnCount(rowCount, columnCount);
+	m_pCollisionGrid = m_oPathFinder.CreateGrid(rowCount, columnCount);
+
+	for (int iRow = 0; iRow < rowCount; iRow++) {
+		for (int iColumn = 0; iColumn < columnCount; iColumn++) {
+			bool obstacle = m_oCollisionManager.TestCellObstacle(iRow, iColumn);
+			if (obstacle)
+				m_pCollisionGrid->AddObstacle(iRow, iColumn);
+		}
+	}
+}
+
 IEntity* CScene::Merge( string sRessourceName, string sEntityType, float x, float y, float z )
 {
 	IEntity* pEntity = m_pEntityManager->CreateEntity( sRessourceName, sEntityType, m_oRenderer );
@@ -118,6 +146,11 @@ IEntity* CScene::Merge( string sRessourceName, string sEntityType, CMatrix& oXFo
 
 void CScene::Update()
 {
+	static int counter = 0;
+	if (!m_bCollisionMapCreated && counter++ == 10) {
+		CreateCollisionMap();
+		CreateCollisionGrid();
+	}
 	CTimeManager::Instance()->Update();
 	CMatrix oCamMatrix;
 	m_oCameraManager.GetActiveCamera()->Update();

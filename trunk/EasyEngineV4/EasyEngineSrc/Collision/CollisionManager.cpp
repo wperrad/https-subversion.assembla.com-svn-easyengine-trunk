@@ -708,7 +708,7 @@ void CCollisionManager::DisplayGrid()
 void CCollisionManager::MarkBox(int row, int column, float r, float g, float b, IEntityManager* pEntityManager)
 {
 	float x, z;
-	GetBoxPositionFromBoxCoord(row, column, x, z);
+	GetPositionFromCellCoord(row, column, x, z);
 	IEntity* pSphere = pEntityManager->CreateSphere(m_fGridBoxSize*3. / 8.);
 	IShader* pColorShader = m_oRenderer.GetShader("color");
 	pSphere->SetShader(pColorShader);
@@ -721,8 +721,8 @@ void CCollisionManager::MarkBox(int row, int column, float r, float g, float b, 
 void CCollisionManager::MarkMapBox(int row, int column, int r, int g, int b)
 {
 	float x0, y0, x1, y1;
-	GetBoxPositionFromBoxCoord(row, column, x0, y0);
-	GetBoxPositionFromBoxCoord(row + 1, column + 1, x1, y1);
+	GetPositionFromCellCoord(row, column, x0, y0);
+	GetPositionFromCellCoord(row + 1, column + 1, x1, y1);
 
 	float mapX0 = WorldToPixel(x0);
 	float mapX1 = WorldToPixel(x1);
@@ -757,15 +757,15 @@ void CCollisionManager::MarkMapBox(int row, int column, int r, int g, int b)
 	}
 }
 
-void CCollisionManager::GetBoxPositionFromBoxCoord(int row, int column, float& x, float& y)
+void CCollisionManager::GetPositionFromCellCoord(int row, int column, float& x, float& y)
 {
 	int rowCount, columnCount;
 	ComputeRowAndColumnCount(rowCount, columnCount);
-	x = (column - columnCount / 2) * m_fGridBoxSize;
-	y = (row - rowCount / 2) * m_fGridBoxSize;
+	x = (0.5f + (float)column - (float)columnCount / 2.f) * m_fGridBoxSize;
+	y = (0.5f + (float)row - (float)rowCount / 2.f) * m_fGridBoxSize;
 }
 
-void CCollisionManager::GetBoxCoordFromPosition(float x, float y, int& row, int& column)
+void CCollisionManager::GetCellCoordFromPosition(float x, float y, int& row, int& column)
 {
 	row = (int)( (x + m_fGroundWidth / 2) / m_fGridBoxSize);
 	column = (int)( (y + m_fGroundHeight / 2) / m_fGridBoxSize);
@@ -783,11 +783,11 @@ void CCollisionManager::ConvertLinearToCoord(int pixelNumber, int& x, int& y)
 	y = pixelNumber / (3 * m_oCollisionMap.m_nWidth);
 }
 
-bool CCollisionManager::TestBoxObstacle(int row, int column)
+bool CCollisionManager::TestCellObstacle(int row, int column)
 {
 	float x0, y0, x1, y1;
-	GetBoxPositionFromBoxCoord(row, column, x0, y0);
-	GetBoxPositionFromBoxCoord(row + 1, column + 1, x1, y1);
+	GetPositionFromCellCoord(row, column, x0, y0);
+	GetPositionFromCellCoord(row + 1, column + 1, x1, y1);
 
 	float mapX0 = WorldToPixel(x0);
 	float mapX1 = WorldToPixel(x1);
@@ -846,7 +846,7 @@ void CCollisionManager::MarkObstacles(IEntityManager* pEntityManager)
 	float originY = -m_fGroundHeight / 2;
 	int firstRow = 0, firstColumn = 0;
 	int rowCount, columnCount;
-	GetBoxCoordFromPosition(originX, originY, firstRow, firstColumn);
+	GetCellCoordFromPosition(originX, originY, firstRow, firstColumn);
 	ComputeRowAndColumnCount(rowCount, columnCount);
 	
 	m_pCollisionGrid = new char*[rowCount];
@@ -856,7 +856,7 @@ void CCollisionManager::MarkObstacles(IEntityManager* pEntityManager)
 
 	for (int iRow = firstRow; iRow < firstRow + rowCount; iRow++) {
 		for (int iColumn = firstColumn; iColumn < firstColumn + columnCount; iColumn++) {
-			bool obstacle = TestBoxObstacle(iRow, iColumn);
+			bool obstacle = TestCellObstacle(iRow, iColumn);
 			if (obstacle) {
 				m_pCollisionGrid[iRow][iColumn] = 'o';
 				MarkBox(iRow, iColumn, 1, 0, 0, pEntityManager);

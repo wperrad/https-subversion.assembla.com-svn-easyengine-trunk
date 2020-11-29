@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -50,6 +52,11 @@ void CGrid::CCell::Update(CCell* parent, CCell* destination)
 	m_nFCost = m_nGCost + m_nHCost;
 }
 
+void CGrid::CCell::SetParent(CCell* parent)
+{
+	m_pParent = parent;
+}
+
 bool CGrid::CCell::IsInTheSameCell(CCell& cell)
 {
 	return (m_column == cell.m_column) && (m_row == cell.m_row);
@@ -61,7 +68,7 @@ void CGrid::CCell::GetCoordinates(int& row, int& column) const
 	row = m_row;
 }
 
-void CGrid::CCell::SetCellCoordinates(int row, int column)
+void CGrid::CCell::SetCoordinates(int row, int column)
 {
 	m_column = column;
 	m_row = row;
@@ -92,6 +99,38 @@ void CGrid::CCell::Reset()
 	m_nFCost = 0;
 }
 
+void CGrid::CCell::ResetAllExceptObstacles()
+{
+	if (m_eCellType != eObstacle) {
+		m_eCellType = eUninitialized;
+		m_pParent = NULL;
+		m_nGCost = 0;
+		m_nHCost = 0;
+		m_nFCost = 0;
+	}
+}
+
+CGrid::CCell& CGrid::CCell::operator >> (ofstream& stream)
+{
+	int cellType = (m_eCellType & ~eOpen) & ~eClose;
+	stream.write((char*)&cellType, sizeof(int));
+	stream.write((char*)&m_nGCost, sizeof(int));
+	stream.write((char*)&m_nHCost, sizeof(int));
+	stream.write((char*)&m_nFCost, sizeof(int));
+	return *this;
+}
+
+CGrid::CCell& CGrid::CCell::operator << (ifstream& stream)
+{
+	int cellType = eUninitialized;
+	stream.read((char*)&cellType, sizeof(int));
+	stream.read((char*)&m_nGCost, sizeof(int));
+	stream.read((char*)&m_nHCost, sizeof(int));
+	stream.read((char*)&m_nFCost, sizeof(int));
+	m_eCellType = (TCell)cellType;
+	return *this;
+}
+
 int CGrid::CCell::GetFCost() const
 {
 	return m_nFCost;
@@ -111,16 +150,21 @@ CGrid::CGrid(int rowCount, int columnCount) :
 m_nRowCount(rowCount),
 m_nColumnCount(columnCount),
 m_pDepart(NULL),
-m_pDestination(NULL)
+m_pDestination(NULL),
+m_bManualMode(false)
+{
+	Init();
+}
+
+void CGrid::Init()
 {
 	m_grid = new CCell*[m_nRowCount];
-	for (int row = 0; row < m_nRowCount; row++) {
+	for (int row = 0; row < m_nRowCount; row++)
 		m_grid[row] = new CCell[m_nColumnCount];
-	}
 
-	for(int row = 0; row < m_nRowCount; row++)
+	for (int row = 0; row < m_nRowCount; row++)
 		for (int column = 0; column < m_nColumnCount; column++)
-			m_grid[row][column].SetCellCoordinates(row, column);
+			m_grid[row][column].SetCoordinates(row, column);
 }
 
 void CGrid::Reset()
@@ -137,6 +181,99 @@ void CGrid::Reset()
 	m_pDestination = NULL;
 }
 
+void CGrid::ResetAllExceptObstacles()
+{
+	m_vOpenList.clear();
+	m_vCloseList.clear();
+	m_vPath.clear();
+
+	for (int row = 0; row < m_nRowCount; row++)
+		for (int column = 0; column < m_nColumnCount; column++)
+			m_grid[row][column].ResetAllExceptObstacles();
+
+	m_pDepart = NULL;
+	m_pDestination = NULL;
+}
+
+
+void CGrid::Save(string sFileName)
+{
+	/* format
+	 row_count(int), 
+	 column_count(int),
+	 originRow(int),
+	 originColumn,	 
+	 destinationRow(int),
+	 destinationColumn(int),
+	 Foreach row{
+		Foreach column{
+			type(int),
+			GCost(int),
+			HCost(int),
+			FCost(int)
+		}
+	 } */
+
+	ofstream file;
+	file.open(sFileName.c_str(), ios::out | ios::binary);
+	int originRow, originColumn, destinationRow, destinationColumn;
+	m_pDepart->GetCoordinates(originRow, originColumn);
+	m_pDestination->GetCoordinates(destinationRow, destinationColumn);
+	file.write((char*)&m_nRowCount, sizeof(int));
+	file.write((char*)&m_nColumnCount, sizeof(int));
+	file.write((char*)&originRow, sizeof(int));
+	file.write((char*)&originColumn, sizeof(int));
+	file.write((char*)&destinationRow, sizeof(int));
+	file.write((char*)&destinationColumn, sizeof(int));
+	for (int row = 0; row < m_nRowCount; row++)
+		for (int column = 0; column < m_nColumnCount; column++)
+			m_grid[row][column] >> file;
+	file.close();
+}
+
+void CGrid::Load(string sFileName)
+{
+	for (int row = 0; row < m_nRowCount; row++)
+		delete m_grid[row];
+	delete[] m_grid;
+	m_vOpenList.clear();
+	m_vCloseList.clear();
+	m_vPath.clear();
+	m_pDepart = NULL;
+	m_pDestination = NULL;
+
+	ifstream file;
+	file.open(sFileName.c_str(), ios::in | ios::binary);
+	int originRow, originColumn, destinationRow, destinationColumn;
+	file.read((char*)&m_nRowCount, sizeof(int));
+	file.read((char*)&m_nColumnCount, sizeof(int));
+	file.read((char*)&originRow, sizeof(int));
+	file.read((char*)&originColumn, sizeof(int));
+	file.read((char*)&destinationRow, sizeof(int));
+	file.read((char*)&destinationColumn, sizeof(int));
+
+	Init();
+
+	SetDepart(originColumn, originRow);
+	SetDestination(destinationColumn, destinationRow);
+
+	for (int row = 0; row < m_nRowCount; row++)
+		for (int column = 0; column < m_nColumnCount; column++)
+			m_grid[row][column] << file;
+
+	file.close();
+}
+
+void CGrid::SetManualMode(bool manual)
+{
+	m_bManualMode = manual;
+}
+
+bool CGrid::GetManualMode()
+{
+	return m_bManualMode;
+}
+
 void CGrid::AddObstacle(int row, int column)
 {
 	m_grid[row][column].AddNodeFlag(CCell::eObstacle);
@@ -147,20 +284,20 @@ void CGrid::RemoveObstacle(int row, int column)
 	m_grid[row][column].RemoveNodeFlag(CCell::eObstacle);
 }
 
-void CGrid::SetDepart(int x, int y)
+void CGrid::SetDepart(int column, int row)
 {
 	if(m_pDepart)
 		m_pDepart->RemoveNodeFlag(CCell::eDepart);
-	m_pDepart = &m_grid[y][x];
+	m_pDepart = &m_grid[row][column];
 	m_pDepart->AddNodeFlag(CCell::eDepart);
 	
 }
 
-void CGrid::SetDestination(int x, int y)
+void CGrid::SetDestination(int column, int row)
 {
 	if(m_pDestination)
 		m_pDestination->RemoveNodeFlag(CCell::eArrivee);
-	m_pDestination = &m_grid[y][x];
+	m_pDestination = &m_grid[row][column];
 	m_pDestination->AddNodeFlag(CCell::eArrivee);
 	
 }
@@ -255,6 +392,9 @@ void CGrid::ProcessNode(int row, int column)
 		}
 	}
 
+	if (m_bManualMode)
+		return;
+
 	vector<ICell*>::iterator itBest = m_vOpenList.begin();
 	ICell* cell = *itBest;
 	m_vCloseList.push_back(cell);
@@ -268,7 +408,7 @@ void CGrid::BuildPath()
 {
 	ICell* cell = m_pDestination;
 	while (cell) {
-		m_vPath.push_back(cell);
+		m_vPath.insert(m_vPath.begin(), cell);
 		cell = cell->GetParent();
 	}
 }

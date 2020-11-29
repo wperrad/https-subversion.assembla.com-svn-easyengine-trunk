@@ -24,7 +24,7 @@ public:
 	CSceneManager( const ISceneManager::Desc& oDesc );
 	~CSceneManager();
 
-	IEntity*	CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager );
+	IEntity*	CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager, IPathFinder& oPathFinder);
 	IEntity*	GetScene( std::string sSceneName );
 	IEntity*	Merge( IEntity* pScene, string sRessourceName, string sEntityType, CMatrix& oXForm );
 	IEntity*	Merge( IEntity* pScene, const std::string& sRessourceName, string sEntityType, float x = 0, float y = 0, float z = 0, bool bIsAnimated = false );

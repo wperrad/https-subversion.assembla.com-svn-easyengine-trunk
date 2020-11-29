@@ -58,6 +58,10 @@ public:
 	virtual void	CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IEntity*> collides, IEntity* pScene, IRenderer::TPixelFormat format = IRenderer::T_RGB) = 0;
 	virtual void	LoadCollisionMap(string sFileName, IEntity* pScene) = 0;
 	virtual void	DisplayGrid() = 0;
+	virtual void	ComputeRowAndColumnCount(int& rowCount, int& columnCount) = 0;
+	virtual void	GetCellCoordFromPosition(float x, float y, int& row, int& column) = 0;
+	virtual void	GetPositionFromCellCoord(int row, int column, float& x, float& y) = 0;
+	virtual bool	TestCellObstacle(int iRow, int iColumn) = 0;
 
 	// temp
 	virtual void	Test(IEntityManager* pEntityManager) = 0;

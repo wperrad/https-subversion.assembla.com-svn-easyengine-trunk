@@ -7,6 +7,7 @@
 #include "IPathFinder.h"
 #include <map>
 #include <string>
+#include <commdlg.h>
 
 using namespace std;
 
@@ -22,7 +23,8 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-
+INT_PTR CALLBACK	OnDialogRowColumnEvent(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+void				UpdateScrollRange(HWND hWnd);
 
 enum TGameState
 {
@@ -33,11 +35,11 @@ enum TGameState
 
 // variables
 IGrid* grid = NULL;
-int rowCount = 15; // 5;
-int columnCount = 15; // 7;
+int g_nRowCount = 5;
+int g_nColumnCount = 7;
 const int CellSize = 50;
-int leftCorner = 10;
-int topCorner = 10;
+int leftMargin = 10;
+int topMargin = 10;
 TGameState g_currentState = eInitDepDest;
 vector<IGrid::ICell*> g_vObstacles;
 IPathFinder* g_pPathFinder = NULL;
@@ -130,8 +132,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_HSCROLL | WS_VSCROLL,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+
+   EnableScrollBar(hWnd, SB_BOTH, ESB_ENABLE_BOTH);
 
    if (!hWnd)
    {
@@ -144,11 +148,23 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
+void InitObstacles()
+{
+	g_vObstacles.clear();
+	for (int row = 0; row < grid->RowCount(); row++) {
+		for (int column = 0; column < grid->ColumnCount(); column++) {
+			IGrid::ICell& cell = grid->GetCell(row, column);
+			if (cell.GetCellType() & IGrid::ICell::eObstacle)
+				g_vObstacles.push_back(&cell);
+		}
+	}
+}
+
 void GetRectFromBox(int column, int row, RECT& rect)
 {
-	rect.left = leftCorner + column * CellSize;
+	rect.left = leftMargin + column * CellSize;
 	rect.right = rect.left + CellSize;
-	rect.top = topCorner + row * CellSize;
+	rect.top = topMargin + row * CellSize;
 	rect.bottom = rect.top + CellSize;
 }
 
@@ -169,10 +185,15 @@ void LabelizeBox(HDC& hdc, char* text, int backgroundColor, int column, int row)
 	RECT rect;
 	GetRectFromBox(column, row, rect);
 	SetBkColor(hdc, backgroundColor);
-	HFONT font = (HFONT)GetCurrentObject(hdc, OBJ_FONT);	
 	TEXTMETRICA m;
 	GetTextMetricsA(hdc, &m);
+	
+	HFONT hFont = CreateFontA(12, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 2, 0, "SYSTEM_FIXED_FONT");
+	SelectObject(hdc, hFont);
+
 	TextOutA(hdc, rect.left + CellSize / 2 - m.tmAveCharWidth / 2, rect.top + CellSize / 2 - m.tmHeight / 2, text, strlen(text));
+	DeleteObject(hFont);
+	
 }
 
 void LabelizeBoxCost(HDC& hdc, IGrid::ICell* cell, int backgroundColor, int column, int row)
@@ -181,7 +202,6 @@ void LabelizeBoxCost(HDC& hdc, IGrid::ICell* cell, int backgroundColor, int colu
 	RECT rect;
 	GetRectFromBox(column, row, rect);
 	SetBkColor(hdc, backgroundColor);
-	HFONT font = (HFONT)GetCurrentObject(hdc, OBJ_FONT);
 	TEXTMETRICA m;
 	GetTextMetricsA(hdc, &m);
 	cell->GetGCost();
@@ -193,16 +213,21 @@ void LabelizeBoxCost(HDC& hdc, IGrid::ICell* cell, int backgroundColor, int colu
 	int hSize = strlen(h);
 	int totalHSize = CellSize - m.tmAveCharWidth * strlen(h) - margin;
 
+	HFONT hFont = CreateFontA(12, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 2, 0, "SYSTEM_FIXED_FONT");
+	SelectObject(hdc, hFont);
+
 	TextOutA(hdc, rect.left + margin, rect.top + margin, g, strlen(g));
 	TextOutA(hdc, rect.left + totalHSize, rect.top + margin, h, strlen(h));
 	TextOutA(hdc, rect.left + CellSize / 2 - strlen(f) * m.tmAveCharWidth/2, rect.top + CellSize - m.tmHeight, f, strlen(f));
+
+	DeleteObject(hFont);
 }
 
 void GetCellFromCoordinates(int x, int y, int& row, int& column)
 {
-	column = (x - leftCorner) / CellSize;
-	row = (y - topCorner) / CellSize;
-	if ((column >= columnCount) || row >= rowCount) {
+	column = (x - leftMargin) / CellSize;
+	row = (y - topMargin) / CellSize;
+	if ((column >= g_nColumnCount) || row >= g_nRowCount) {
 		row = column = -1;
 	}
 }
@@ -351,13 +376,13 @@ void DisplayGrid(HDC& hdc)
 {
 	// Draw grid
 	for (int i = 0; i < grid->ColumnCount() + 1; i++) {
-		MoveToEx(hdc, i * CellSize + leftCorner, topCorner, LPPOINT(NULL));
-		LineTo(hdc, i * CellSize + leftCorner, topCorner + CellSize * grid->RowCount());
+		MoveToEx(hdc, i * CellSize + leftMargin, topMargin, LPPOINT(NULL));
+		LineTo(hdc, i * CellSize + leftMargin, topMargin + CellSize * grid->RowCount());
 	}
 
 	for (int i = 0; i < grid->RowCount() + 1; i++) {
-		MoveToEx(hdc, leftCorner, topCorner + i * CellSize, LPPOINT(NULL));
-		LineTo(hdc, leftCorner + grid->ColumnCount() * CellSize, topCorner + i * CellSize);
+		MoveToEx(hdc, leftMargin, topMargin + i * CellSize, LPPOINT(NULL));
+		LineTo(hdc, leftMargin + grid->ColumnCount() * CellSize, topMargin + i * CellSize);
 	}
 
 	// Draw obstacles
@@ -465,12 +490,25 @@ void DisplayGrid(HDC& hdc)
 //  WM_DESTROY  - post a quit message and return
 //
 //
+
+void Reset(HWND hWnd, bool resetObstacles)
+{
+	if (resetObstacles) {
+		grid->Reset();
+		g_vObstacles.clear();
+	}
+	else
+		grid->ResetAllExceptObstacles();
+	g_currentState = eInitDepDest;
+	InvalidateRect(hWnd, NULL, TRUE);
+}
+
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int x, y, row, column;
-	RECT rect;
-    switch (message)
-    {
+	switch (message)
+	{
 	case WM_CREATE:
 	{
 		string sDirectoryName;
@@ -481,13 +519,103 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 		IPathFinder::Desc desc(NULL, "PathFinder");
 		g_pPathFinder = (IPathFinder*)CPlugin::Create(desc, sDirectoryName + "IA.dll", "CreatePathFinder");
-		grid = g_pPathFinder->CreateGrid(rowCount, columnCount);
+		grid = g_pPathFinder->CreateGrid(g_nRowCount, g_nColumnCount);
 		obstacleBrush = CreateSolidBrush(obstacleColor);
+		UpdateScrollRange(hWnd);
+		break;
+	}
+	case WM_VSCROLL:
+	{
+		int pos = 0, d = 0;
+		if (LOWORD(wParam) == SB_THUMBTRACK) {
+			pos = HIWORD(wParam);
+			int lastPos = GetScrollPos(hWnd, SB_VERT);
+			d = pos - lastPos;
+		}
+		else {
+			int d = 0;
+			int scrollPos;
+			switch (wParam) {
+			case SB_LINEUP:
+				d = -10;
+				break;
+			case SB_LINEDOWN:
+				d = 10;
+				break;
+			case SB_PAGEUP:
+				d = -50;
+				break;
+			case SB_PAGEDOWN:
+				d = 50;
+				break;
+			}
+
+			scrollPos = GetScrollPos(hWnd, SB_VERT);
+			int min, max;
+			pos = scrollPos + d;
+			GetScrollRange(hWnd, SB_VERT, &min, &max);
+			if (pos < min) {
+				pos = min;
+				d = min - scrollPos;
+			}
+			if (pos > max) {
+				pos = max;
+				d = max - scrollPos;
+			}
+		}
+		SetScrollPos(hWnd, SB_VERT, pos, TRUE);
+		ScrollWindow(hWnd, 0, -d, NULL, NULL);
+		InvalidateRect(hWnd, NULL, TRUE);
+		topMargin -= d;		
+		break;
+	}
+	case WM_HSCROLL: {
+		int pos = 0, d = 0;
+		if (LOWORD(wParam) == SB_THUMBTRACK) {
+			pos = HIWORD(wParam);
+			int lastPos = GetScrollPos(hWnd, SB_HORZ);
+			d = pos - lastPos;
+		}
+		else {
+			int d = 0;
+			int scrollPos;
+			switch (wParam) {
+			case SB_LINELEFT:
+				d = -10;
+				break;
+			case SB_LINERIGHT:
+				d = 10;
+				break;
+			case SB_PAGELEFT:
+				d = -50;
+				break;
+			case SB_PAGERIGHT:
+				d = 50;
+				break;
+			}
+
+			scrollPos = GetScrollPos(hWnd, SB_HORZ);
+			int min, max;
+			pos = scrollPos + d;
+			GetScrollRange(hWnd, SB_HORZ, &min, &max);
+			if (pos < min) {
+				pos = min;
+				d = min - scrollPos;
+			}
+			if (pos > max) {
+				pos = max;
+				d = max - scrollPos;
+			}
+		}
+		SetScrollPos(hWnd, SB_HORZ, pos, TRUE);
+		ScrollWindow(hWnd, 0, -d, NULL, NULL);
+		InvalidateRect(hWnd, NULL, TRUE);
+		leftMargin -= d;
 		break;
 	}
 	case WM_LBUTTONDOWN:
-		x = (lParam & 0x0000ffff);
-		y = lParam >> 16;
+		x = LOWORD(lParam);
+		y = HIWORD(lParam);
 
 		GetCellFromCoordinates(x, y, row, column);
 		if (row != -1 && column != -1) {
@@ -514,24 +642,109 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			case eStarted:
-				grid->Reset();
-				g_vObstacles.clear();
-				g_currentState = eInitDepDest;
+				if (grid->GetManualMode())
+					grid->ProcessNode(row, column);
 				break;
 			}
 			InvalidateRect(hWnd, NULL, TRUE);
 		}
-		
+
 		ShowWindow(hWnd, 10);
 		UpdateWindow(hWnd);
 		break;
 
+	case WM_RBUTTONDOWN:
+		grid->ResetAllExceptObstacles();
+		g_currentState = eInitDepDest;
+		InvalidateRect(hWnd, NULL, TRUE);
+		break;
+
+	case WM_MOUSEWHEEL:
+	{
+		int deltav = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+		deltav *= 20;
+		int scrollPos = GetScrollPos(hWnd, SB_VERT);
+		int min, max;
+		GetScrollRange(hWnd, SB_VERT, &min, &max);
+		int pos = scrollPos - deltav;
+
+		if (pos < min) {
+			pos = min;
+			deltav = scrollPos - pos;
+		}
+		if (pos > max) {
+			pos = max;
+			deltav = scrollPos - pos;
+		}
+		
+		SetScrollPos(hWnd, SB_VERT, pos, TRUE);
+		ScrollWindow(hWnd, 0, deltav, NULL, NULL);
+		topMargin += deltav;
+		InvalidateRect(hWnd, NULL, TRUE);
+		break;
+	}		
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
+			char szFile[256] = { 0 };
+			OPENFILENAMEA ofn;
+			ZeroMemory(&ofn, sizeof(ofn));
+			ofn.lpstrFile = szFile;
+			ofn.lStructSize = sizeof(ofn);
+			ofn.nMaxFile = sizeof(szFile);
+			ofn.hwndOwner = hWnd;
+			ofn.lpstrInitialDir = "..\\Data\\";
+			ofn.lpstrFilter = "*.bin";
             // Parse the menu selections:
             switch (wmId)
             {
+			case ID_FILE_SAVE:				
+				GetSaveFileNameA(&ofn);
+				strcat_s(szFile, ".bin");
+				grid->Save(szFile);
+				break;
+			case ID_FILE_LOAD:
+			{
+				GetOpenFileNameA(&ofn);
+				if (strlen(szFile) > 0) {
+					grid->Load(szFile);
+					UpdateScrollRange(hWnd);
+					InvalidateRect(hWnd, NULL, TRUE);
+					g_currentState = eInitObstacle;
+					g_nRowCount = grid->RowCount();
+					g_nColumnCount = grid->ColumnCount();
+					InitObstacles();
+				}
+				break;
+			}
+			case ID_GAME_RESTART:
+				Reset(hWnd, true);
+				break;
+			case ID_GAME_RESTARTEXCEPTOBSTACLES:
+				Reset(hWnd, false);
+				break;
+			case ID_OPTIONS_MANUAL: {
+				char name[MAX_PATH];
+				GetMenuStringA(GetMenu(hWnd), ID_OPTIONS_MANUAL, name, MAX_PATH, 0);
+				grid->SetManualMode(!grid->GetManualMode());
+				CheckMenuItem(GetMenu(hWnd), ID_OPTIONS_MANUAL, grid->GetManualMode() ? 0x8 : 0);
+				break;
+			}
+			case ID_OPTIONS_GRIDSIZE: {
+				int ret = DialogBoxParamA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(IDD_DIALOG_ROWCOLUMN), hWnd, OnDialogRowColumnEvent, 0);
+				if (ret) {
+					g_nRowCount = HIWORD(ret);
+					g_nColumnCount = LOWORD(ret);
+					delete grid;
+					grid = g_pPathFinder->CreateGrid(g_nRowCount, g_nColumnCount);
+					g_vObstacles.clear();
+
+					UpdateScrollRange(hWnd);
+					InvalidateRect(hWnd, NULL, TRUE);
+					g_currentState = eInitDepDest;
+				}
+				break;
+			}				
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
@@ -558,6 +771,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+}
+
+INT_PTR CALLBACK OnDialogRowColumnEvent(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	char sRowCount[16];
+	char sColumnCount[16];
+	int rowCount, columnCount, ret = 0;
+	HWND hEditRowCount, hEditColumnCount;
+	switch (msg) {
+	case WM_INITDIALOG:
+		SetFocus(GetDlgItem(hDlg, IDC_EDIT_ROWCOUNT));
+		SetDlgItemTextA(hDlg, IDC_ROWCOUNT, "Row count");
+		SetDlgItemTextA(hDlg, IDC_COLUMNCOUNT, "Column count");
+		EnableWindow(GetDlgItem(hDlg, IDOK), FALSE);
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDC_EDIT_ROWCOUNT:
+		case IDC_EDIT_COLUMNCOUNT:
+			GetDlgItemTextA(hDlg, IDC_EDIT_ROWCOUNT, sRowCount, 16);
+			GetDlgItemTextA(hDlg, IDC_EDIT_COLUMNCOUNT, sColumnCount, 16);
+			if(strlen(sRowCount) && strlen(sColumnCount))
+				EnableWindow(GetDlgItem(hDlg, IDOK), TRUE);
+			else
+				EnableWindow(GetDlgItem(hDlg, IDOK), FALSE);
+			break;
+		case IDOK:
+			GetDlgItemTextA(hDlg, IDC_EDIT_ROWCOUNT, sRowCount, 16);
+			GetDlgItemTextA(hDlg, IDC_EDIT_COLUMNCOUNT, sColumnCount, 16);
+			rowCount = atoi(sRowCount);
+			columnCount = atoi(sColumnCount);
+			ret = rowCount * 0x10000 + columnCount;
+		case IDCANCEL:
+			EndDialog(hDlg, ret);
+			break;
+		}
+		break;
+	}
+	return 0;
+}
+
+void UpdateScrollRange(HWND hWnd)
+{
+	RECT rect;
+	GetWindowRect(hWnd, &rect);
+	int max = grid->RowCount() * CellSize + rect.bottom - rect.top;
+	SetScrollRange(hWnd, SB_VERT, 0, max, TRUE);
+
+	max = grid->ColumnCount() * CellSize + rect.right - rect.left;
+	SetScrollRange(hWnd, SB_HORZ, 0, max, TRUE);
 }
 
 // Message handler for about box.
