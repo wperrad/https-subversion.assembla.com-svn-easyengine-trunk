@@ -40,6 +40,7 @@ PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = NULL;
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = NULL;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = NULL;
 PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
+PFNGLGENERATEMIPMAPPROC glGenerateMipmap = NULL;
 
 void InitExtensions()
 {
@@ -49,6 +50,7 @@ void InitExtensions()
 	glBufferData = reinterpret_cast<PFNGLBUFFERDATAARBPROC> (wglGetProcAddress("glBufferDataARB"));		
 	glGetBufferParameteriv = (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
 	glBufferSubData = (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
+	glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)wglGetProcAddress("glGenerateMipmap");
 
 
 	// shaders

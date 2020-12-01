@@ -122,6 +122,7 @@ public:
 	virtual void			DrawSphere(double dRadius, unsigned int nSliceCount, unsigned int nStackCount) = 0;
 	virtual int				CreateTexture1D( float* pTexelsArray, int nSize, TPixelFormat format ) = 0;
 	virtual int				CreateTexture2D( vector< unsigned char>& pTexelsArray, int nWidth, int nHeight, TPixelFormat format ) = 0;
+	virtual int				CreateMipmaps2D(vector< unsigned char>& vTexel, int nWidth, int nHeight, IRenderer::TPixelFormat format) = 0;
 	virtual void			BindTexture( int nTextureID, int nUnitTextureID, TTextureDimension texDim ) = 0;
 	virtual void			GetResolution( int& nWidth, int& nHeight ) = 0;
 	virtual void			EnableTextureBlend( bool bEnable ) = 0;

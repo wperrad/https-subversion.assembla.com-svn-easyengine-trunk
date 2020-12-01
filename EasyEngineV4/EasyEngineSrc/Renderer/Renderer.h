@@ -125,6 +125,7 @@ public:
 	void						DrawBox( const CVector& oMinPoint, const CVector& oDimension );
 	int							CreateTexture1D( float* pTexelsArray, int nSize, TPixelFormat format );
 	int							CreateTexture2D( vector< unsigned char >& pTexelsArray, int nWidth, int nWeight, TPixelFormat format );
+	int							CreateMipmaps2D(vector< unsigned char>& vTexel, int nWidth, int nHeight, IRenderer::TPixelFormat format);
 	void						Print(const char* szText,int nWidth , int nHeight);	
 	void						EnableLighting( bool bEnable );
 	void						RenderText(int nPosx, int nPosy, const char* szText);

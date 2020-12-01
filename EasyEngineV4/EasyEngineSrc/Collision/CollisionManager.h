@@ -37,13 +37,12 @@ class CCollisionManager : public ICollisionManager
 	float					m_fMaxLenght;
 	int						m_nScreenWidth;
 	int						m_nScreenHeight;
-	int						m_subdivisionCount;
 	
 	// Collision map
 	float						m_fGroundMapWidth;
 	float						m_fGroundMapHeight;
 	float						m_fWorldToScreenScaleFactor;
-	float						m_fGridBoxSize;
+	float						m_fGridCellSize;
 	float						m_fGridHeight;
 	char**						m_pCollisionGrid;
 	vector<IEntity*>			m_vGridElements;

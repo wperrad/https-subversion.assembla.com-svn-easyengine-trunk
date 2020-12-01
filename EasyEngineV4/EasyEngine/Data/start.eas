@@ -1,5 +1,5 @@
 SetBkgColor(0, 100, 255);
-SetSceneMap("terrain");
+SetSceneMap("ground005");
 
 l=AddLightw("omni", 4000);
 SetEntityPos(l, 0, 10000, 55000);
@@ -36,9 +36,10 @@ SetFov(60);
 c = GetCameraID("link");
 
 RollEntity(c, 180);
-PitchEntity(c, 80);
-LocalTranslate(c, 0, 120, 300);
+PitchEntity(c, 75);
+LocalTranslate(c, 0, 90, 450);
 
+SetCameraType("link");
 p = CreateNPC("testExport14");
 Stand(p);
 SetEntityPos(p, -200, 1000, 1000);
@@ -56,5 +57,3 @@ SetEntityPos(p, 2000, 5000, 2000);
 p = LoadEntity("maison");
 SetEntityWeight(p, 1);
 SetEntityPos(p, 13000, 2000, -4000);
-
-SetCameraType("free");

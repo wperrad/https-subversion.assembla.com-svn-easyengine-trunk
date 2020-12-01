@@ -38,6 +38,7 @@ m_oCollisionManager( oDesc.m_oCollisionManager ),
 m_oPathFinder(oDesc.m_oPathFinder),
 m_nHeightMapID( -1 ),
 m_bCollisionMapCreated(true),
+m_bHeightMapCreated(true),
 m_pCollisionGrid(NULL)
 {
 	SetName( "Scene" );
@@ -53,23 +54,16 @@ void CScene::SetRessource( string sFileName, IRessourceManager& oRessourceManage
 {
 	CEntity::SetRessource( sFileName, oRessourceManager, oRenderer, bDuplicate );
 	int nDotPos = (int)sFileName.find('.');
-	string sHMFileName = string("hm_") + sFileName.substr(0, nDotPos) + ".bmp";
+	m_sHMFileName = string("hm_") + sFileName.substr(0, nDotPos) + ".bmp";
 	IMesh* pMesh = static_cast< IMesh* >(m_pRessource);
 
 	try
 	{
-		m_nHeightMapID = m_oCollisionManager.LoadHeightMap( sHMFileName, pMesh );
+		m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pMesh );
 	}
 	catch( CFileNotFoundException& )
 	{
-		ILoader::CTextureInfos ti;
-		m_oCollisionManager.CreateHeightMap( pMesh, ti, IRenderer::T_BGR );
-		ti.m_ePixelFormat = ILoader::eBGR;
-		string sFileNameWithoutExt;
-		CStringUtils::GetFileNameWithoutExtension( sFileName, sFileNameWithoutExt );
-		string sTextureFileName = string( "HM_" ) + sFileNameWithoutExt + ".bmp";
-		m_oLoaderManager.Export( sTextureFileName, ti );
-		m_nHeightMapID = m_oCollisionManager.LoadHeightMap( sHMFileName, pMesh );
+		m_bHeightMapCreated = false;
 	}
 	
 	nDotPos = (int)sFileName.find('.');
@@ -106,11 +100,23 @@ void CScene::CreateCollisionMap()
 		pGroundMesh->GetName(sGroundName);
 		m_oLoaderManager.Export(m_sCollisionFileName, ti);
 		m_oCollisionManager.LoadCollisionMap(m_sCollisionFileName, this);
+		m_bCollisionMapCreated = true;
 	}
 	else {
 		CEException e("Erreur : La scène ne possède pas de map");
 		throw e;
 	}
+}
+
+void CScene::CreateHeightMap()
+{
+	IMesh* pMesh = static_cast< IMesh* >(m_pRessource);
+	ILoader::CTextureInfos ti;
+	m_oCollisionManager.CreateHeightMap(pMesh, ti, IRenderer::T_BGR);
+	ti.m_ePixelFormat = ILoader::eBGR;	
+	m_oLoaderManager.Export(m_sHMFileName, ti);
+	m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pMesh);
+	m_bHeightMapCreated = true;
 }
 
 void CScene::CreateCollisionGrid()
@@ -147,10 +153,15 @@ IEntity* CScene::Merge( string sRessourceName, string sEntityType, CMatrix& oXFo
 void CScene::Update()
 {
 	static int counter = 0;
-	if (!m_bCollisionMapCreated && counter++ == 10) {
+	if (m_bHeightMapCreated && !m_bCollisionMapCreated && counter++ == 10) {
 		CreateCollisionMap();
 		CreateCollisionGrid();
+	}	
+	
+	if (!m_bHeightMapCreated && counter++ == 20 ){
+		CreateHeightMap();
 	}
+
 	CTimeManager::Instance()->Update();
 	CMatrix oCamMatrix;
 	m_oCameraManager.GetActiveCamera()->Update();

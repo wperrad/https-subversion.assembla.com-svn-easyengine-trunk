@@ -204,7 +204,20 @@ void CreateRepere( IScriptState* pState )
 
 void Test( IScriptState* pState )
 {
-	m_pCollisionManager->Test(m_pEntityManager);
+	//m_pCollisionManager->Test(m_pEntityManager);
+
+	
+	CScriptFuncArgString* pBMEName = (CScriptFuncArgString*)pState->GetArg(0);
+	ILoader::CMeshInfos test;
+	try {
+		m_pLoaderManager->Load(pBMEName->m_sValue, test);
+	}
+	catch (exception& e) {
+		m_pConsole->Println(e.what());
+	}
+	
+	int i = 0;
+	i = i;
 }
 
 void Test2(IScriptState* pState)
@@ -519,6 +532,7 @@ void SetAnimationSpeed( IScriptState* pState )
 	IEntity* pEntity = m_pEntityManager->GetEntity( pEntityID->m_nValue );
 	if( pEntity )
 	{
+		transform(pAnimationName->m_sValue.begin(), pAnimationName->m_sValue.end(), pAnimationName->m_sValue.begin(), tolower);
 		IEntity::TAnimation eAnim = IEntity::eNone;
 		if( pAnimationName->m_sValue == "stand" )
 			eAnim = IEntity::eStand;
@@ -2083,9 +2097,37 @@ void SetCurrentCollisionMap(IScriptState* pState)
 	m_pCollisionManager->LoadCollisionMap(pName->m_sValue, m_pScene);
 }
 
+void PatchBMEMeshTextureName(IScriptState* pState)
+{
+	CScriptFuncArgString* pBMEName = (CScriptFuncArgString*)pState->GetArg(0);
+	CScriptFuncArgString* pTextureName = (CScriptFuncArgString*)pState->GetArg(1);
+
+	ILoader::CAnimatableMeshData mi;
+	ILoader::CAnimatableMeshData test;
+	m_pLoaderManager->Load(pBMEName->m_sValue, mi);
+	if (mi.m_vMeshes.size() == 1) {
+		ILoader::CMaterialInfos& matInfo = mi.m_vMeshes[0].m_oMaterialInfos;
+		matInfo.m_sDiffuseMapName = pTextureName->m_sValue;
+		matInfo.m_bExists = true;
+		for (int i = 0; i < 4; i++) {
+			matInfo.m_vAmbient.push_back(1.f);
+			matInfo.m_vDiffuse.push_back(1.f);
+			matInfo.m_vSpecular.push_back(1.f);
+		}
+		
+		m_pLoaderManager->Export(pBMEName->m_sValue, mi);
+	}
+}
+
 void RegisterAllFunctions( IScriptManager* pScriptManager )
 {
 	vector< TFuncArgType > vType;
+
+	vType.clear();
+	vType.push_back(eString);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("PatchBMEMeshTextureName", PatchBMEMeshTextureName, vType);
+
 
 	vType.clear();
 	vType.push_back(eString);
@@ -2508,6 +2550,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetPreferedKeyBBox", SetPreferedKeyBBox, vType );
 
 	vType.clear();
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction( "Test", Test, vType );
 
 	vType.clear();
