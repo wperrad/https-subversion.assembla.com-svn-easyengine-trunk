@@ -62,7 +62,8 @@ m_bUseAdditionalColor(false)
 	if( sFileName.size() > 0 )
 	{
 		SetRessource( sFileName, oRessourceManager, oRenderer );
-		m_fBoundingSphereRadius = m_pBBox->ComputeBoundingSphereRadius();
+		if(m_pBBox)
+			m_fBoundingSphereRadius = m_pBBox->ComputeBoundingSphereRadius();
 	}
 }
 

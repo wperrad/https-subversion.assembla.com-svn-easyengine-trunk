@@ -308,7 +308,8 @@ void CNPCEntity::ComputePathFind2DAStar(const CVector2D& oOrigin, const CVector2
 		m_oCollisionManager.GetPositionFromCellCoord(r, c, x, y);
 		vPoints.push_back(CVector2D(x, y));
 	}
-	vPoints.pop_back();
+	if(!vPoints.empty())
+		vPoints.pop_back();
 	vPoints.push_back(oDestination);
 	pGrid->ResetAllExceptObstacles();
 }

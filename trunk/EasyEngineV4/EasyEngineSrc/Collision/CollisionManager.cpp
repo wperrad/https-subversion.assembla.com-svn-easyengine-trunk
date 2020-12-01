@@ -24,13 +24,12 @@ m_sCustomName("a"),
 m_fCustomValue(0.f),
 m_fGroundWidth(0),
 m_fGroundHeight(0),
-m_fGridBoxSize(1000.f),
+m_fGridCellSize(500.f),
 m_fGridHeight(800.f),
 m_pCollisionGrid(NULL),
 m_pScene(NULL),
 m_fScreenRatio(m_fScreenRatio),
-m_pEntityManager(NULL),
-m_subdivisionCount(30)
+m_pEntityManager(NULL)
 {
 	g_pCurrentCollisionManager = this;
 	m_oRenderer.GetResolution(m_nScreenWidth, m_nScreenHeight);
@@ -146,20 +145,21 @@ void CCollisionManager::OnRenderCollisionMap()
 void CCollisionManager::ComputeGroundMapDimensions()
 {
 	IBox* pBox = m_pGround->GetBBox();
-	m_fMaxLenght = pBox->GetDimension().m_x;
-	if (m_fMaxLenght < pBox->GetDimension().m_z)
+	if (pBox->GetDimension().m_x <= pBox->GetDimension().m_z * m_fScreenRatio)
 	{
-		m_fMaxLenght = pBox->GetDimension().m_z;
-		m_fGroundMapWidth = (pBox->GetDimension().m_x * (float)m_nScreenWidth) / (m_fMaxLenght * m_fScreenRatio);
+		m_fGroundMapWidth = (pBox->GetDimension().m_x * (float)m_nScreenHeight) / pBox->GetDimension().m_z;
 		m_fGroundMapHeight = (float)m_nScreenHeight;
+		m_fWorldToScreenScaleFactor = pBox->GetDimension().m_z / 2.f;
 	}
 	else
 	{
-		m_fGroundMapWidth = (float)m_nScreenWidth;
-		m_fGroundMapHeight = pBox->GetDimension().m_z * (float)m_nScreenHeight / m_fMaxLenght;
+		m_fGroundMapHeight = (float)m_nScreenWidth;
+		m_fGroundMapHeight = pBox->GetDimension().m_z * (float)m_nScreenWidth / pBox->GetDimension().m_x;
+		m_fWorldToScreenScaleFactor = pBox->GetDimension().m_x / 2.f;
 	}
+	m_fGroundMapWidth = ((int)m_fGroundMapWidth / 4) * 4;
+	m_fGroundMapHeight = ((int)m_fGroundMapHeight / 4) * 4;
 }
-
 
 void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IEntity*> collides, IEntity* pScene, IRenderer::TPixelFormat format)
 {
@@ -177,8 +177,6 @@ void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IE
 	m_pGround->SetShader(pCollisionShader);
 
 	CMatrix model, oProj;
-	
-
 	oProj.m_00 = 1.f / m_fScreenRatio;
 	const IBox* pBox = m_pGround->GetBBox();
 
@@ -187,18 +185,11 @@ void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IE
 
 	int cellMapSize = m_fGroundMapWidth / subdivisionCount;
 
-	m_fGroundMapWidth = ((int)m_fGroundMapWidth / 4) * 4;
-	m_fGroundMapHeight = ((int)m_fGroundMapHeight / 4) * 4;
 	float fOriginMapX = ((float)m_nScreenWidth - m_fGroundMapWidth) / 2.f;
 	float fOriginMapY = ((float)m_nScreenHeight - m_fGroundMapHeight) / 2.f;
-	m_fWorldToScreenScaleFactor = (m_fMaxLenght / 2.f);
 
 	m_fGroundWidth = pBox->GetDimension().m_x;
 	m_fGroundHeight = pBox->GetDimension().m_z;
-	
-	m_fGridBoxSize = m_fGroundWidth / subdivisionCount;
-
-	DisplayGrid();
 
 	m_vCollideObjects = collides;
 
@@ -254,7 +245,6 @@ void CCollisionManager::LoadCollisionMap(string sFileName, IEntity* pScene)
 		IBox* pBox = m_pGround->GetBBox();
 		m_fGroundWidth = pBox->GetDimension().m_x;
 		m_fGroundHeight = pBox->GetDimension().m_z;
-		m_fGridBoxSize = m_fGroundWidth / m_subdivisionCount;
 		ComputeGroundMapDimensions();
 	}
 }
@@ -266,7 +256,9 @@ void CCollisionManager::SetHeightMapPrecision( int nPrecision )
 
 void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos& ti, IRenderer::TPixelFormat format )
 {
-	IShader* pOrgShader = pGround->GetCurrentShader();
+	if (!m_pGround)
+		m_pGround = pGround;
+ 	IShader* pOrgShader = pGround->GetCurrentShader();
 	IShader* pHMShader = m_oRenderer.GetShader("hm");
 	pHMShader->Enable(true);
 	pGround->SetShader(pHMShader);
@@ -278,27 +270,16 @@ void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos&
 	oProj.m_00 = 1.f / fScreenRatio;
 	const IBox* pBox = pGround->GetBBox();
 	float maxLenght = pBox->GetDimension().m_x;
-	float fMapWidth, fMapHeight;
 	if (maxLenght < pBox->GetDimension().m_z)
-	{
 		maxLenght = pBox->GetDimension().m_z;
-		fMapWidth = (pBox->GetDimension().m_x * (float)nWidth) / (maxLenght * fScreenRatio);
-		fMapHeight = (float)nHeight;
-	}
-	else
-	{
-		fMapWidth = (float)nWidth;
-		fMapHeight = pBox->GetDimension().m_z * (float)nHeight / maxLenght;
-	}
-	fMapWidth = ((int)fMapWidth / 4) * 4;
-	fMapHeight = ((int)fMapHeight / 4) * 4;
-	float fOriginMapX = ((float)nWidth - fMapWidth) / 2.f;
-	float fOriginMapY = ((float)nHeight - fMapHeight) / 2.f;
-	float scale = (maxLenght / 2.f);
+	
+	ComputeGroundMapDimensions();
+	float fOriginMapX = ((float)nWidth - m_fGroundMapWidth) / 2.f;
+	float fOriginMapY = ((float)nHeight - m_fGroundMapHeight) / 2.f;
 
 	pHMShader->SendUniformValues("h", pBox->GetDimension().m_y);
 	pHMShader->SendUniformValues("zMin", pBox->GetMinPoint().m_y);
-	pHMShader->SendUniformValues("scale", scale);
+	pHMShader->SendUniformValues("scale", m_fWorldToScreenScaleFactor);
 
 	CMatrix oBakProj;
 	m_oRenderer.GetProjectionMatrix(oBakProj);
@@ -308,9 +289,9 @@ void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos&
 	m_oRenderer.BeginRender();
 	pGround->Update();
 
-	m_oRenderer.ReadPixels(fOriginMapX, fOriginMapY, fMapWidth, fMapHeight, ti.m_vTexels, format);
-	ti.m_nWidth = (int)fMapWidth;
-	ti.m_nHeight = (int)fMapHeight;
+	m_oRenderer.ReadPixels(fOriginMapX, fOriginMapY, m_fGroundMapWidth, m_fGroundMapHeight, ti.m_vTexels, format);
+	ti.m_nWidth = (int)m_fGroundMapWidth;
+	ti.m_nHeight = (int)m_fGroundMapHeight;
 	m_oRenderer.EndRender();
 	m_oRenderer.CullFace(true);
 
@@ -342,7 +323,6 @@ void CCollisionManager::RestoreOriginalShaders(const vector<IShader*>& vBackupSt
 		(*it)->SetShader(vBackupStaticObjectShader[i++]);
 	}
 }
-
 
 void CCollisionManager::OnRenderHeightMap( IRenderer* pRenderer )
 {
@@ -662,11 +642,11 @@ void CCollisionManager::SendCustomUniformValue(string name, float value)
 void CCollisionManager::DisplayGrid()
 {
 	CVector first, last;
-	int rowCount = m_fGroundHeight / m_fGridBoxSize + 1;
-	int columnCount = m_fGroundWidth / m_fGridBoxSize + 1;
+	int rowCount = m_fGroundHeight / m_fGridCellSize + 1;
+	int columnCount = m_fGroundWidth / m_fGridCellSize + 1;
 	int w = m_fGroundWidth;
 	int h = m_fGroundHeight;
-	int s = m_fGridBoxSize;
+	int s = m_fGridCellSize;
 	if (w % s > 0)
 		columnCount++;
 	if (h % s > 0)
@@ -677,7 +657,7 @@ void CCollisionManager::DisplayGrid()
 
 	for (int i = 0; i < rowCount; i++) {
 		first.m_x = -m_fGroundWidth / 2;
-		first.m_z = -m_fGroundHeight / 2 + i * m_fGridBoxSize;
+		first.m_z = -m_fGroundHeight / 2 + i * m_fGridCellSize;
 
 		first.m_y = y;
 
@@ -691,7 +671,7 @@ void CCollisionManager::DisplayGrid()
 	}
 
 	for (int i = 0; i < columnCount; i++) {
-		first.m_x = -m_fGroundWidth / 2 + i * m_fGridBoxSize;
+		first.m_x = -m_fGroundWidth / 2 + i * m_fGridCellSize;
 		first.m_z = -m_fGroundHeight / 2;
 		
 		first.m_y = y;
@@ -709,11 +689,11 @@ void CCollisionManager::MarkBox(int row, int column, float r, float g, float b, 
 {
 	float x, z;
 	GetPositionFromCellCoord(row, column, x, z);
-	IEntity* pSphere = pEntityManager->CreateSphere(m_fGridBoxSize*3. / 8.);
+	IEntity* pSphere = pEntityManager->CreateSphere(m_fGridCellSize*3. / 8.);
 	IShader* pColorShader = m_oRenderer.GetShader("color");
 	pSphere->SetShader(pColorShader);
 	pSphere->Colorize(r, g, b, 0.5f);
-	pSphere->SetWorldPosition(x + m_fGridBoxSize / 2, m_fGridHeight , z + m_fGridBoxSize / 2);
+	pSphere->SetWorldPosition(x + m_fGridCellSize / 2, m_fGridHeight , z + m_fGridCellSize / 2);
 	pSphere->Link(m_pScene);
 	m_vGridElements.push_back(pSphere);
 }
@@ -761,20 +741,20 @@ void CCollisionManager::GetPositionFromCellCoord(int row, int column, float& x, 
 {
 	int rowCount, columnCount;
 	ComputeRowAndColumnCount(rowCount, columnCount);
-	x = (0.5f + (float)column - (float)columnCount / 2.f) * m_fGridBoxSize;
-	y = (0.5f + (float)row - (float)rowCount / 2.f) * m_fGridBoxSize;
+	x = (0.5f + (float)column - (float)columnCount / 2.f) * m_fGridCellSize;
+	y = (0.5f + (float)row - (float)rowCount / 2.f) * m_fGridCellSize;
 }
 
 void CCollisionManager::GetCellCoordFromPosition(float x, float y, int& row, int& column)
 {
-	row = (int)( (x + m_fGroundWidth / 2) / m_fGridBoxSize);
-	column = (int)( (y + m_fGroundHeight / 2) / m_fGridBoxSize);
+	row = (int)( (x + m_fGroundWidth / 2) / m_fGridCellSize);
+	column = (int)( (y + m_fGroundHeight / 2) / m_fGridCellSize);
 }
 
 void CCollisionManager::ComputeRowAndColumnCount(int& rowCount, int& columnCount)
 {
-	rowCount = m_fGroundHeight / m_fGridBoxSize;
-	columnCount = m_fGroundWidth / m_fGridBoxSize;
+	rowCount = m_fGroundHeight / m_fGridCellSize;
+	columnCount = m_fGroundWidth / m_fGridCellSize;
 }
 
 void CCollisionManager::ConvertLinearToCoord(int pixelNumber, int& x, int& y)
@@ -829,14 +809,12 @@ float CCollisionManager::WorldToPixel(float worldLenght)
 	float ret;
 	int nWidth, nHeight;
 	m_oRenderer.GetResolution(nWidth, nHeight);
-	if (m_fMaxLenght == m_fGroundHeight)
-	{
-		ret = ( (worldLenght * (float)nWidth) / (m_fMaxLenght * m_fScreenRatio) );
-	}
+
+	IBox* pBox = m_pGround->GetBBox();
+	if (pBox->GetDimension().m_x <= pBox->GetDimension().m_z * m_fScreenRatio)
+		ret = (worldLenght * (float)nHeight) / pBox->GetDimension().m_z;
 	else
-	{
-		ret = (float)nWidth;
-	}
+		ret = worldLenght * (float)nWidth / pBox->GetDimension().m_x;
 	return ret;
 }
 
@@ -879,8 +857,8 @@ void CCollisionManager::Test(IEntityManager* pEntityManager)
 {
 	float fromX = 2000.f;
 	float fromY = 0.f;
-	float toX = 2000.f;
-	float toY = 5000.f;
+	float toX = 1900.f;
+	float toY = 6000.f;
 	FindPath(fromX, fromY, toX, toY, pEntityManager);
 }
 

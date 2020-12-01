@@ -119,3 +119,4 @@ void SendCustomUniformValue(IScriptState* pState);
 void SetLineWidth(IScriptState* pState);
 void DisplayGrid(IScriptState* pState);
 void SetCurrentCollisionMap(IScriptState* pState);
+void PatchBMEMeshTextureName(IScriptState* pState);

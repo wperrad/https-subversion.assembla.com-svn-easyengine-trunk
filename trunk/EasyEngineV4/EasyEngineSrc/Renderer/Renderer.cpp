@@ -687,6 +687,33 @@ int CRenderer::CreateTexture2D( vector< unsigned char>& vTexel, int nWidth, int 
 	return nTextureID;
 }
 
+int CRenderer::CreateMipmaps2D(vector< unsigned char>& vTexel, int nWidth, int nHeight, IRenderer::TPixelFormat format)
+{
+	unsigned int nTextureID;
+	glGenTextures(1, &nTextureID);
+	glBindTexture(GL_TEXTURE_2D, nTextureID);
+	GLint nInternalFormat;
+	if (format == T_RGB || format == T_BGR)
+		nInternalFormat = 3;
+	if (format == T_RGBA || format == T_BGRA)
+		nInternalFormat = 4;
+	if (nWidth * nHeight * nInternalFormat != vTexel.size())
+	{
+		CRenderException e("La texture que vous essayez de créer ne contient pas suffisamment de données par rapport à sa taille et son format");
+		throw e;
+	}
+
+	GLenum glFormat = m_mPixelFormat[format];
+	glTexImage2D(GL_TEXTURE_2D, 0, nInternalFormat, (GLsizei)nWidth, (GLsizei)nHeight, 0, glFormat, GL_UNSIGNED_BYTE, &vTexel[0]);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	return nTextureID;
+}
+
+
 void CRenderer::EnableFog()
 {
 	glEnable(GL_FOG);

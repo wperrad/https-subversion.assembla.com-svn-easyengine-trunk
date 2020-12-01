@@ -130,20 +130,21 @@ void IAEntity::Goto( const CVector& oDestination, float fSpeed )
 	GetPosition( oPos );
 	CVector2D oDestination2D( oDestination.m_x, oDestination.m_z ), oPos2D( oPos.m_x, oPos.m_z );
 	ComputePathFind2D( oPos2D, oDestination2D, m_vCurrentPath );
+	if (!m_vCurrentPath.empty()) {
+		if (m_vCurrentPath.size() > 1)
+			m_fDestinationDeltaRadius = 50.f;
+		else
+			m_fDestinationDeltaRadius = 100.f;
+		m_nCurrentPathPointNumber = 0;
+		//m_oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
+		oDestination2D = m_vCurrentPath[m_nCurrentPathPointNumber];
+		m_oDestination = CVector(oDestination2D.m_x, 0.f, oDestination2D.m_y);
+		m_fAngleRemaining = GetDestinationAngleRemaining();
 
-	if( m_vCurrentPath.size() > 1 )
-		m_fDestinationDeltaRadius = 50.f;
-	else
-		m_fDestinationDeltaRadius  = 100.f;
-	m_nCurrentPathPointNumber = 0;
-	//m_oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
-	oDestination2D = m_vCurrentPath[ m_nCurrentPathPointNumber ];
-	m_oDestination = CVector( oDestination2D.m_x, 0.f, oDestination2D.m_y );
-	m_fAngleRemaining = GetDestinationAngleRemaining();
-
-	//LookAt( m_fAngleRemaining );
-	Run();
-	m_bArriveAtDestination = false;
+		//LookAt( m_fAngleRemaining );
+		Run();
+		m_bArriveAtDestination = false;
+	}
 }
 
 

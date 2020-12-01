@@ -101,7 +101,8 @@ m_nReponse( -1 )
 	}
 	m_nWidth = oDesc.m_nWidth;
 	m_nHeight = oDesc.m_nHeight;
-	m_nID = GetRenderer().CreateTexture2D( oDesc.m_vTexels, m_nWidth, m_nHeight, oDesc.m_eFormat );
+	//m_nID = GetRenderer().CreateTexture2D( oDesc.m_vTexels, m_nWidth, m_nHeight, oDesc.m_eFormat );
+	m_nID = GetRenderer().CreateMipmaps2D(oDesc.m_vTexels, m_nWidth, m_nHeight, oDesc.m_eFormat);
 }
 
 IShader* CTexture2D::GetCurrentShader() const

@@ -29,7 +29,9 @@ class CScene : public CEntity
 	IPathFinder&				m_oPathFinder;
 	int							m_nHeightMapID;
 	string						m_sCollisionFileName;
+	string						m_sHMFileName;
 	bool						m_bCollisionMapCreated;
+	bool						m_bHeightMapCreated;
 	IGrid*						m_pCollisionGrid;
 	//CFightSystem				m_oFightSystem;
 
@@ -38,7 +40,8 @@ class CScene : public CEntity
 	void						LoadSceneObject( const ILoader::CSceneObjInfos* pSceneObjInfos, IEntity* pParent );
 	void						GetSkeletonEntities( CNode* pRoot, vector< IEntity* >& vEntity, string sFileFilter );
 	ILoader::CSceneObjInfos*	GetEntityInfos( IEntity* pEntity );
-	void						CreateCollisionGrid();	
+	void						CreateCollisionGrid();
+	void						CreateHeightMap();
 
 public:
 	struct Desc

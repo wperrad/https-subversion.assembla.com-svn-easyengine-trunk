@@ -13,6 +13,7 @@
 #define BINARYMESHPLUGIN_CLASS_ID	Class_ID(0x85548e0c, 0x4a26450d)
 
 CBinaryMeshMaxExporter* CBinaryMeshMaxExporter::s_pCurrentInstance = NULL;
+map<string, CPlugin*> CPlugin::s_mPlugins;
 
 
 void* CBinaryMeshMaxExporterClassDesc::Create( BOOL loading )
@@ -340,7 +341,7 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	}
 
 
-	if( m_bExportBoundingBox && pWeightTable->GetVertexCount() > 0 )
+	if( m_bExportBoundingBox && pWeightTable && pWeightTable->GetVertexCount() > 0 )
 		GetBonesBoundingBoxes( oMesh, *pWeightTable, oTM, m_mBoneBox );
 
 	oMesh.buildNormals();
@@ -406,11 +407,16 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	GetNormals( oMesh, mi.m_vNormalFace, mi.m_vNormalVertex );
 	if ( bIsTextured )
 	{
+		Texmap* pTexmap = pMaterial ? pMaterial->GetSubTexmap(1) : NULL;
+		BitmapTex *bmt = (BitmapTex*)pTexmap;
+		StdUVGen *uv = bmt->GetUVGen();
+		int utile = uv->GetUScl(0);
+		int vtile = uv->GetVScl(0);
 		for ( int iTVertex = 0; iTVertex < oMesh.getNumTVerts(); iTVertex++ )
 		{					
 			UVVert& oTVert = oMesh.getTVert( iTVertex );
-			mi.m_vUVVertex.push_back( oTVert.x );
-			mi.m_vUVVertex.push_back( oTVert.y );
+			mi.m_vUVVertex.push_back( oTVert.x * utile );
+			mi.m_vUVVertex.push_back( oTVert.y * vtile);
 		}				
 		for ( int iTFace = 0; iTFace < oMesh.getNumFaces(); iTFace++ )
 			for ( int iTIndex = 0; iTIndex < 3; iTIndex++ )

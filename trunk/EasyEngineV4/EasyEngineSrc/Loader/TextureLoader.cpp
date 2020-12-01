@@ -65,6 +65,8 @@ void CBMPLoader::ReadBMP(string sFileName, vector< unsigned char >& vData, int& 
 	fread(&zero, sizeof(int), 1, pFile);
 
 	// Pixel data
+	if (nImageSize == 0)
+		nImageSize = nWidth * nHeight * nBitPerPixel / 8;
 	vData.resize(nImageSize);
 	fread(&vData[0], sizeof(unsigned char), nImageSize, pFile);
 

@@ -46,7 +46,13 @@ void CBMELoader::Load(string sFileName, ILoader::IRessourceInfos& ri, IFileSyste
 		}
 	}
 
-	CAnimatableMeshData* pData = static_cast<CAnimatableMeshData*>(&ri);
+	CAnimatableMeshData* pData = dynamic_cast<CAnimatableMeshData*>(&ri);
+	if (!pData)
+	{
+		string sMessage = string("Erreur :  CBMELoader::Load(\"") + sFileName + "\") requiert un conteneur de type CAnimatableMeshData";
+		exception e(sMessage.c_str());
+		throw e;
+	}
 	pData->m_bMultiMaterialActivated = false;
 	m_nFileOffset = 0;
 	FILE* pFile = oFileSystem.OpenFile(sFileName, "rb");
