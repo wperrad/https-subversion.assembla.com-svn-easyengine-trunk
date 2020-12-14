@@ -74,10 +74,11 @@ public:
 	void											Open( bool bOpen );
 	void											Print(string s);
 	void											Println(string s);
+	void											Print2D(string s);
 	void											SetBlink( bool blink );
 	int												GetConsoleShortCut();
 	void											SetConsoleShortCut(int key);
-	void											EnableInput(bool enable);
+	void											EnableInput(bool enable);	
 };
 
 extern "C" _declspec(dllexport) IConsole* CreateConsole( IConsole::Desc& oDesc );

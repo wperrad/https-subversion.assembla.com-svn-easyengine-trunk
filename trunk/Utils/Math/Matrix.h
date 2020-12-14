@@ -60,7 +60,8 @@ public:
 	CMatrix				GetTranspose() const;
 	void				GetInverse( CMatrix& oMat ) const;
 	CMatrix				GetRotation();
-	CVector				GetPosition();
+	CVector				GetPosition() const;
+	void				GetPosition(float &x, float &y, float &z) const;
 	CMatrix				GetxRotation();
 	CMatrix				GetyRotation();
 	CMatrix				GetzRotation();
@@ -90,12 +91,13 @@ public:
 	static void			GetInterpolationMatrix( const CMatrix& oLast, const CMatrix& oNext, CMatrix& oResult, float t );
 	//static void		  SlerpInvariantAxis( const CMatrix& oInitial, const CMatrix& oFinal, float t, CMatrix& oResult );
 
-	void Store( CBinaryFileStorage& store ) const;
-	void Load( CBinaryFileStorage& store );
-	void Store( CAsciiFileStorage& store ) const;
-	void Load( CAsciiFileStorage& store );
-	void Store( CStringStorage& store ) const;
-	void Load( CStringStorage& store );
+	const IPersistantObject& operator >> (CBinaryFileStorage& store) const;
+	IPersistantObject& operator << (CBinaryFileStorage& store);
+	const IPersistantObject& operator >> (CAsciiFileStorage& store) const;
+	IPersistantObject& operator << (CAsciiFileStorage& store);
+	const IPersistantObject& operator >> (CStringStorage& store) const;
+	IPersistantObject& operator << (CStringStorage& store);
+
 	void Afficher() const;
 };	
 

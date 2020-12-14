@@ -148,11 +148,13 @@
   <ItemGroup>
     <ClInclude Include="ActionManager.h" />
     <ClInclude Include="Console.h" />
+    <ClInclude Include="Hud.h" />
     <ClInclude Include="InputManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ActionManager.cpp" />
     <ClCompile Include="Console.cpp" />
+    <ClCompile Include="Hud.cpp" />
     <ClCompile Include="InputManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

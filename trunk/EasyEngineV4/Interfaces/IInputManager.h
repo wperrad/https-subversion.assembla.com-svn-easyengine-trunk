@@ -37,7 +37,8 @@ public:
 	{
 		eMouseButtonNone = 0,
 		eMouseButtonLeft,
-		eMouseButtonRight
+		eMouseButtonRight,
+		eMouseWheel
 	};
 
 	enum TMouseButtonState

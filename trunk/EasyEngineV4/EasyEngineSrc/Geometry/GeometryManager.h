@@ -16,7 +16,8 @@ public:
 	ISphere*		CreateSphere();
 	ISphere*		CreateSphere( CVector& oCenter, float fRadius );
 	ISegment*		CreateSegment( const CVector& first, const CVector& last );
-	ICylinder*		CreateCylinder( const CVector& oBase, float fRadius, float fHeight );
+	ICylinder*		CreateCylinder( const CMatrix& oTM, float fRadius, float fHeight );
+	ICylinder*		CreateCylinder();
 	ICircle*		CreateCircle( const CVector2D& oCenter, float fRadius );
 	ISegment2D*		CreateSegment2D( const CVector2D& first, const CVector2D& last );
 };

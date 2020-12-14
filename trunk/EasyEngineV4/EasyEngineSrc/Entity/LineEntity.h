@@ -9,7 +9,7 @@ public:
 
 	CLineEntity( IRenderer& oRenderer );
 	CLineEntity( IRenderer& oRenderer, const CVector& first, const CVector& last );
-	void	Set( const CVector& first, const CVector& last );
-	void	Update();
-	void	Colorize(float r, float g, float b, float a) {}
+	void				Set( const CVector& first, const CVector& last );
+	void				Update();
+	void				Colorize(float r, float g, float b, float a) {}
 };

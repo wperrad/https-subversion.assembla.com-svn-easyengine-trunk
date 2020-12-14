@@ -389,10 +389,18 @@ CMatrix CMatrix::GetTranslation()
 						0.f	,	0.f	,	0.f	,	  1		);
 }
 
-CVector CMatrix::GetPosition()
+CVector CMatrix::GetPosition() const
 {
 	return CVector( m_03,m_13,m_23,m_33 );
 }
+
+void CMatrix::GetPosition(float &x, float &y, float &z) const
+{
+	x = m_03;
+	y = m_13; 
+	z = m_23;
+}
+
 
 void CMatrix::SetPosition( float x, float y, float z )
 {
@@ -780,44 +788,49 @@ void CMatrix::GetInterpolationMatrix( const CMatrix& oLast, const CMatrix& oNext
 	oResult = oLast * Pt;
 }
 
-void CMatrix::Store( CBinaryFileStorage& store ) const
+const IPersistantObject& CMatrix::operator >> (CBinaryFileStorage& store) const
 {
 	vector< float > vData;
-	this->Get( vData );
+	this->Get(vData);
 	store << vData;
+	return *this;
 }
 
-void CMatrix::Load( CBinaryFileStorage& store )
+IPersistantObject& CMatrix::operator << (CBinaryFileStorage& store)
 {
 	vector< float > vData;
 	store >> vData;
-	this->Set( vData );
+	this->Set(vData);
+	return *this;
 }
 
-void CMatrix::Store( CAsciiFileStorage& store ) const
+const IPersistantObject& CMatrix::operator >> (CAsciiFileStorage& store) const
 {
-	//int nWidth = store.GetWidth();
 	CStringStorage oString;
-	oString.SetCap( store.GetCap() );
-	oString.SetPrecision( store.GetPrecision() );
-	oString.SetWidth( 15 );
+	oString.SetCap(store.GetCap());
+	oString.SetPrecision(store.GetPrecision());
+	oString.SetWidth(15);
 	oString << m_00 << m_01 << m_02 << m_03 << "\n";
 	oString << m_10 << m_11 << m_12 << m_13 << "\n";
 	oString << m_20 << m_21 << m_22 << m_23 << "\n";
 	oString << m_30 << m_31 << m_32 << m_33 << "\n";
 	store << oString.GetValue();
+	return *this;
 }
 
-void CMatrix::Load( CAsciiFileStorage& store )
+IPersistantObject& CMatrix::operator << (CAsciiFileStorage& store)
 {
+	return *this;
 }
 
-void CMatrix::Store( CStringStorage& store ) const
+const IPersistantObject& CMatrix::operator >> (CStringStorage& store) const
 {
+	return *this;
 }
 
-void CMatrix::Load( CStringStorage& store )
+IPersistantObject& CMatrix::operator << (CStringStorage& store)
 {
+	return *this;
 }
 
 CMatrix2X2::CMatrix2X2()

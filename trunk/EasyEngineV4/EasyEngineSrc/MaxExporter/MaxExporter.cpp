@@ -3,6 +3,11 @@
 #include <sstream>
 #include "Utils2/StringUtils.h"
 
+// Interface
+#include "ILoader.h"
+#include "IFileSystem.h"
+#include "IGeometry.h"
+
 using namespace std;
 
 HINSTANCE hInstance;
@@ -49,8 +54,15 @@ TCHAR *GetString(int id)
 }
 
 CMaxExporter::CMaxExporter():
-g_bInterruptExport( false )
+g_bInterruptExport( false ),
+m_bOpenglCoord(true)
 {
+	IGeometryManager::Desc oGMDesc(NULL, "");
+	m_pGeometryManager = static_cast< IGeometryManager* >(CPlugin::Create(oGMDesc, "stdplugs\\EasyEngine\\Geometry.dll", "CreateGeometryManager"));
+	IFileSystem::Desc oFSDesc(NULL, "");
+	m_pFileSystem = static_cast< IFileSystem* >(CPlugin::Create(oFSDesc, "stdplugs\\EasyEngine\\FileUtils.dll", "CreateFileSystem"));
+	ILoaderManager::Desc oLDesc(*m_pFileSystem, *m_pGeometryManager);
+	m_pLoaderManager = static_cast< ILoaderManager* >(CPlugin::Create(oLDesc, "stdplugs\\EasyEngine\\Loader.dll", "CreateLoaderManager"));
 }
 
 CMaxExporter::~CMaxExporter()
@@ -174,6 +186,25 @@ void CMaxExporter::EngineMatrixToMaxMatrix( const CMatrix& oEngine, Matrix3& mMa
 	mMax.SetRow( 3, Point3( oEngine.m_03, oEngine.m_13, oEngine.m_23 ) );
 }
 
+Mesh& CMaxExporter::GetMeshFromNode(INode* pMesh)
+{
+	Object* pObject = pMesh->EvalWorldState(0).obj;
+	TriObject* pTriObject = static_cast< TriObject* > (pObject->ConvertToType(0, Class_ID(TRIOBJ_CLASS_ID, 0)));
+	return pTriObject->GetMesh();
+}
+
+void CMaxExporter::GetVertexArrayFromMesh(Mesh& mesh, vector<float>& vertex)
+{
+	Matrix3 oTM;
+	mesh.getBoundingBox();
+	for (int iVertex = 0; iVertex < mesh.getNumVerts(); iVertex++)
+	{
+		Point3& oVertex = oTM * mesh.verts[iVertex];
+		vertex.push_back(oVertex.x);
+		vertex.push_back(oVertex.y);
+		vertex.push_back(oVertex.z);
+	}
+}
 
 void CMaxExporter::GetAnimation( Interface* pInterface, const map< int, INode* >& mBone, map< int, vector< CKey > >& mBones )
 {

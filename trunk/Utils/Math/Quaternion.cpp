@@ -175,37 +175,39 @@ CQuaternion CQuaternion::operator+( const CQuaternion& q ) const
 	return CQuaternion( m_x + q.m_x, m_y + q.m_y, m_z + q.m_z, m_w + q.m_w );
 }
 
-void CQuaternion::Store( CBinaryFileStorage& store ) const
+const IPersistantObject& CQuaternion::operator >> (CBinaryFileStorage& store) const
 {
 	store << m_x << m_y << m_z << m_w << m_vPosition;
+	return *this;
 }
 
-void CQuaternion::Load( CBinaryFileStorage& store )
+IPersistantObject& CQuaternion::operator << (CBinaryFileStorage& store)
 {
 	store >> m_x >> m_y >> m_z >> m_w >> m_vPosition;
+	return *this;
 }
 
-void CQuaternion::Store( CAsciiFileStorage& store ) const
+const IPersistantObject& CQuaternion::operator >> (CAsciiFileStorage& store) const
 {
-	/*ostringstream oss;
-	oss << "Rotation = (" << m_x << ",  " << m_y << ",  " << m_z << ",  " << m_w << ")    "
-		<< "Position = (" << m_vPosition.m_x << ",  " << m_vPosition.m_y << ",  " << m_vPosition.m_z << ",  " << m_vPosition.m_w << ")";
-	store << oss.str();*/
 	CStringStorage oString;
 	oString << *this;
 	store << oString.GetValue();
+	return *this;
 }
 
-void CQuaternion::Load( CAsciiFileStorage& store )
+IPersistantObject& CQuaternion::operator << (CAsciiFileStorage& store)
 {
+	return *this;
 }
 
-void CQuaternion::Store( CStringStorage& store ) const
+const IPersistantObject& CQuaternion::operator >> (CStringStorage& store) const
 {
 	store << "Rotation = (" << m_x << ",  " << m_y << ",  " << m_z << ",  " << m_w << ")    "
 		<< "Position = (" << m_vPosition.m_x << ",  " << m_vPosition.m_y << ",  " << m_vPosition.m_z << ",  " << m_vPosition.m_w << ")";
+	return *this;
 }
 
-void CQuaternion::Load( CStringStorage& store )
+IPersistantObject& CQuaternion::operator << (CStringStorage& store)
 {
+	return *this;
 }

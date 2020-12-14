@@ -3,7 +3,7 @@
 
 float m_fGravity = 1000.f;
 
-float CBody::s_fEpsilonError = 0.0001f * m_fGravity * m_fGravity;
+float CBody::s_fEpsilonError = 0.0001f * m_fGravity * m_fGravity / 1000.f;
 float CBody::s_fZCollisionError = 10.f;
 
 float GetGravity()

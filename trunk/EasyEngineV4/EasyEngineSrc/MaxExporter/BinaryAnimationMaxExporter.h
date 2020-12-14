@@ -3,7 +3,7 @@
 // stl
 #include <map>
 
-class CFileStorage;
+class IFileStorage;
 
 class CBinaryAnimationMaxExporterClassDesc : public CMaxExporterClassDesc
 {
@@ -19,7 +19,7 @@ class CBinaryAnimationMaxExporter : public CMaxExporter
 	void			GetBoneByID( const std::map< std::string, INode* >& mBoneByName, const std::map< std::string, int >& mBoneIDByName, std::map< int, INode* >& mBoneByID );
 	void			DumpAnimation( std::string sFilePath, const std::map< int, std::vector< CKey > >& vBones );
 	
-	static void		DumpAngleAxis( CFileStorage& fs, const AngAxis& a );
+	static void		DumpAngleAxis( IFileStorage& fs, const AngAxis& a );
 	static void		GetSkeleton( INode* pRoot, std::map< std::string, INode* >& mBone );
 
 	static INT_PTR CALLBACK OnExportAnim(HWND, UINT, WPARAM, LPARAM );

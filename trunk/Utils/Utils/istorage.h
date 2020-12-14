@@ -27,7 +27,7 @@ public:
 	
 };
 
-class CFileStorage : public IBaseStorage
+class IFileStorage : public IBaseStorage
 {
 protected:
 	FILE*	m_pFile;
@@ -38,13 +38,13 @@ public:
 		eWrite
 	};
 
-	CFileStorage();
-	~CFileStorage();
+	IFileStorage();
+	~IFileStorage();
 	virtual bool	OpenFile( string sFileName, TOpenMode mode) = 0;
 	virtual void	CloseFile();
 };
 
-class CBinaryFileStorage : public CFileStorage
+class CBinaryFileStorage : public IFileStorage
 {
 public:
 
@@ -69,7 +69,7 @@ public:
 	IBaseStorage& 	operator>>( IPersistantObject& object );
 };
 
-class CAsciiFileStorage : public CFileStorage 
+class CAsciiFileStorage : public IFileStorage
 {
 	string	m_sCurrentMapKeyName;
 	string	m_sCurrentMapValueName;
@@ -261,12 +261,12 @@ CStringStorage& CStringStorage::operator<<( const vector< T >& vData )
 class IPersistantObject
 {
 public:
-	virtual void Store( CBinaryFileStorage& store ) const = 0;
-	virtual void Load( CBinaryFileStorage& store ) = 0;
-	virtual void Store( CAsciiFileStorage& store ) const = 0;
-	virtual void Load( CAsciiFileStorage& store ) = 0;
-	virtual void Store( CStringStorage& store ) const = 0;
-	virtual void Load( CStringStorage& store ) = 0;
+	virtual const IPersistantObject& operator >> (CBinaryFileStorage& store) const = 0;
+	virtual IPersistantObject& operator << (CBinaryFileStorage& store) = 0;
+	virtual const IPersistantObject& operator >> (CAsciiFileStorage& store) const = 0;
+	virtual IPersistantObject& operator << (CAsciiFileStorage& store) = 0;
+	virtual const IPersistantObject& operator >> (CStringStorage& store) const = 0;
+	virtual IPersistantObject& operator << (CStringStorage& store) = 0;
 };
 
 #endif // ISTORAGE_H

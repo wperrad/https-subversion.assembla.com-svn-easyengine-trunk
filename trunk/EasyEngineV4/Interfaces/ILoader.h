@@ -16,6 +16,7 @@ class CNode;
 class ITexture;
 class IBox;
 class IGeometryManager;
+class IGeometry;
 
 using namespace std;
 
@@ -173,6 +174,11 @@ public:
 		string						m_sPersoName;
 	};
 
+	struct CCollisionModelInfos : public IRessourceInfos
+	{
+		vector<IGeometry*> m_vPrimitives;
+	};
+
 	enum TObjScene
 	{
 		eEntity = 0,
@@ -217,7 +223,6 @@ public:
 	virtual ILoader*		GetLoader( std::string sExtension ) = 0;
 	virtual void			LoadTexture( string sFileName, ILoader::CTextureInfos& ti ) = 0;
 	virtual void			Load( string sFileName, ILoader::IRessourceInfos& ri ) = 0;
-	//virtual void			ExportBME( string sFileName, const ILoader::CMeshInfos& mi ) = 0;
 	virtual void			Export( string sFileName, const ILoader::IRessourceInfos& ri ) = 0;
 	virtual void			CreateBMPFromData( const vector< unsigned char >& vData, int nWidth, int nHeight, int nBitPerPixel, string sFileName ) = 0;
 };

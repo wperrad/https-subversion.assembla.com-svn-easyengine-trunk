@@ -67,10 +67,7 @@ void CBMELoader::Load(string sFileName, ILoader::IRessourceInfos& ri, IFileSyste
 	//string sBMEVersion;
 
 	CBinaryFileStorage fs;
-	string dir;
-	oFileSystem.GetRootDirectory(dir);
-	string sFilePath = dir.empty() ? sFileName : dir + "\\" + sFileName;
-	if (fs.OpenFile(sFilePath, CBinaryFileStorage::eRead)) {
+	if (fs.OpenFile(sFileName, CBinaryFileStorage::eRead)) {
 		fs >> pData->m_sFileVersion;
 		if (m_sExportPluginVersion != pData->m_sFileVersion)
 		{
@@ -107,6 +104,12 @@ void CBMELoader::LoadMesh( CBinaryFileStorage& fs, CMeshInfos& mi )
 
 	LoadGeometry( fs, mi );
 	mi.m_pBoundingBox = m_oGeometryManager.CreateBox();
+	int geomType;
+	fs >> geomType;
+	if (geomType != IGeometry::eBox) {
+		CEException e("CBMELoader::LoadMesh() : Bad file format, box type expected");
+		throw e;
+	}
 	fs >> *mi.m_pBoundingBox;
 	LoadVertexWeight( fs, mi );
 	LoadKeyBoundingBoxes( fs, mi );
@@ -125,6 +128,8 @@ void CBMELoader::LoadBonesBoundingBoxes( CBinaryFileStorage& fs, map< int, IBox*
 	{
 		int nBoneID = 0;
 		fs >> nBoneID;
+		int geomType;
+		fs >> geomType;
 		IBox* pBox = m_oGeometryManager.CreateBox();
 		fs >> *pBox;
 		mBonesBoundingBoxes[ nBoneID ] = pBox;
@@ -226,7 +231,7 @@ void CBMELoader::Export( string sFileName, const IRessourceInfos& ri )
 	if( sExt == "bme" )
 	{
 		CBinaryFileStorage* pStorage = new CBinaryFileStorage;
-		if( !pStorage->OpenFile( sFileName, CFileStorage::eWrite ) )
+		if( !pStorage->OpenFile( sFileName, IFileStorage::eWrite ) )
 		{
 			CFileNotFoundException e( sFileName );
 			throw e;
@@ -235,7 +240,7 @@ void CBMELoader::Export( string sFileName, const IRessourceInfos& ri )
 	}
 	else {
 		CAsciiFileStorage* pStorage = new CAsciiFileStorage;
-		if (!pStorage->OpenFile(sFileName, CFileStorage::eWrite))
+		if (!pStorage->OpenFile(sFileName, IFileStorage::eWrite))
 		{
 			CFileNotFoundException e(sFileName);
 			throw e;

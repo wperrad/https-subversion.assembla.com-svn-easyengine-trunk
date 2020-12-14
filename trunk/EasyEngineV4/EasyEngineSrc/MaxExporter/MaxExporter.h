@@ -24,6 +24,10 @@ using namespace std;
 
 TCHAR* GetString(int id);
 
+class IFileSystem;
+class IGeometryManager;
+class ILoaderManager;
+
 struct CKey
 {
 	enum TKey{ eRotKey = 0, ePosKey };
@@ -44,6 +48,10 @@ class CMaxExporter : public SceneExport
 protected:
 	vector< wstring >	m_vNonTCBBoneNames;
 	bool				g_bInterruptExport;
+	bool				m_bOpenglCoord;
+	IFileSystem*		m_pFileSystem;
+	IGeometryManager*	m_pGeometryManager;
+	ILoaderManager*		m_pLoaderManager;
 
 	static bool			IsBone( Object* pObject );
 	static bool			IsBone( INode* pNode );
@@ -51,6 +59,8 @@ protected:
 	static void			EngineMatrixToMaxMatrix( const CMatrix& oEngine, Matrix3& mMax );
 
 	void				GetAnimation( Interface* pInterface, const std::map< int, INode* >& mBone, std::map< int, std::vector< CKey > >& vBones );
+	Mesh&				GetMeshFromNode(INode* pMesh);
+	void				GetVertexArrayFromMesh(Mesh& mesh, vector<float>& vertex);
 
 public:
 	CMaxExporter();

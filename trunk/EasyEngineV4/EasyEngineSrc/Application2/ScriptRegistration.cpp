@@ -16,6 +16,7 @@
 #include "IShader.h"
 #include "ISystems.h"
 #include "IGeometry.h"
+#include "IHud.h"
 #include "../Utils2/RenderUtils.h"
 #include "../Utils2/DebugTool.h"
 
@@ -34,6 +35,7 @@ extern IRenderer*			m_pRenderer;
 extern ICameraManager*		m_pCameraManager;
 extern ISceneManager*		m_pSceneManager;
 extern IGUIManager*			m_pGUIManager;
+extern IHud*				m_pHud;
 extern ICollisionManager*	m_pCollisionManager;
 extern IRessourceManager*	m_pRessourceManager;
 extern IFileSystem*			m_pFileSystem;
@@ -204,20 +206,16 @@ void CreateRepere( IScriptState* pState )
 
 void Test( IScriptState* pState )
 {
-	//m_pCollisionManager->Test(m_pEntityManager);
-
-	
-	CScriptFuncArgString* pBMEName = (CScriptFuncArgString*)pState->GetArg(0);
-	ILoader::CMeshInfos test;
-	try {
-		m_pLoaderManager->Load(pBMEName->m_sValue, test);
-	}
-	catch (exception& e) {
-		m_pConsole->Println(e.what());
-	}
-	
-	int i = 0;
-	i = i;
+	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)pState->GetArg(0);
+	IEntity* pEntity = m_pEntityManager->GetEntity(pId->m_nValue);
+	CMatrix m;
+	pEntity->GetLocalMatrix(m);	
+	CVector v;
+	m.GetAffinePart(v);
+	CMatrix m2 = CMatrix::GetxRotation(-90.f);
+	m2.SetAffinePart(v);
+	pEntity->SetLocalMatrix(m2);
+	//pEntity->Pitch(-90.f);
 }
 
 void Test2(IScriptState* pState)
@@ -1758,8 +1756,8 @@ void SetEntityPos( IScriptState* pState )
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 3 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
-	if( pEntity )
-		pEntity->SetWorldPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
+	if (pEntity)
+		pEntity->SetWorldPosition(px->m_fValue, py->m_fValue, pz->m_fValue);
 	else
 		m_pConsole->Println("Identifiant invalide");
 }
@@ -1816,10 +1814,9 @@ void LoadEntity( IScriptState* pState )
 		oss << "\"" << sName << "\" : Mauvais format de fichier, essayez de le réexporter";
 		m_pConsole->Println( oss.str() );
 	}
-	catch( CEException )
+	catch( CEException& e )
 	{
-		string sMessage = string( "\"" ) + sName + "\" introuvable";
-		m_pConsole->Println( sMessage );
+		m_pConsole->Println( e.what() );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 }
@@ -2119,15 +2116,30 @@ void PatchBMEMeshTextureName(IScriptState* pState)
 	}
 }
 
+void OpenConsole(IScriptState* pState)
+{
+	CScriptFuncArgInt* pOpen = static_cast<CScriptFuncArgInt*>(pState->GetArg(0));
+	m_pConsole->Open(pOpen->m_nValue != 0);
+}
+
+void ResetFreeCamera(IScriptState* pState)
+{
+	ICamera* pFreeCamera = m_pCameraManager->GetCameraFromType(ICameraManager::T_FREE_CAMERA);
+	CMatrix m;
+	pFreeCamera->SetLocalMatrix(m);
+}
+
 void RegisterAllFunctions( IScriptManager* pScriptManager )
 {
-	vector< TFuncArgType > vType;
+	vector< TFuncArgType > vType;	
 
 	vType.clear();
 	vType.push_back(eString);
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("PatchBMEMeshTextureName", PatchBMEMeshTextureName, vType);
 
+	vType.clear();
+	m_pScriptManager->RegisterFunction("ResetFreeCamera", ResetFreeCamera, vType);
 
 	vType.clear();
 	vType.push_back(eString);
@@ -2550,7 +2562,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetPreferedKeyBBox", SetPreferedKeyBBox, vType );
 
 	vType.clear();
-	vType.push_back(eString);
+	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction( "Test", Test, vType );
 
 	vType.clear();
@@ -2671,4 +2683,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eFloat);
 	vType.push_back(eFloat);
 	m_pScriptManager->RegisterFunction("CreateLineEntity", CreateLineEntity, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("OpenConsole", OpenConsole, vType);
+
+
 }

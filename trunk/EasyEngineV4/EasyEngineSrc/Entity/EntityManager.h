@@ -8,10 +8,11 @@ class IRenderer;
 class IGeometryManager;
 class CMobileEntity;
 class IAEntity;
+class CEntity;
 
 class CEntityManager : public IEntityManager
 {
-	map< IEntity*, int >::const_iterator	m_itCurrentParsedEntity;
+	map< CEntity*, int >::const_iterator	m_itCurrentParsedEntity;
 	IRessourceManager&						m_oRessourceManager;
 	IGeometryManager&						m_oGeometryManager;
 	IPathFinder&							m_oPathFinder;
@@ -25,13 +26,14 @@ class CEntityManager : public IEntityManager
 	IFileSystem&							m_oFileSystem;
 	ICollisionManager&						m_oCollisionManager;
 	void									CreateEntity( IEntity* pEntity, string sName = "noname" );
-	map< IEntity*, int >					m_mCollideEntities;
+	map< CEntity*, int >					m_mCollideEntities;
 	map< IAEntity*, int >					m_mIAEntities;
 	map< IAEntity*, int >::iterator			m_itCurrentIAEntity;
 	map< IEntity*, int >					m_mMobileEntity;
 	map< IEntity*, int >::iterator			m_itCurrentMobileEntity;
 	map< IFighterEntity*, int >				m_mFighterEntities;
 	map< IFighterEntity*, int >::iterator	m_itCurrentFighterEntity;
+	IGUIManager*							m_pGUIManager;
 
 public:
 	CEntityManager( const Desc& oDesc );
@@ -60,9 +62,9 @@ public:
 	IBox&				GetBox( IEntity* pBoxEntity );
 	void				AddCollideEntity( IEntity* pEntity );
 	void				RemoveCollideEntity( IEntity* pEntity );
-	IEntity*			GetFirstCollideEntity();
-	IEntity*			GetNextCollideEntity();
-	int					GetCollideEntityID( IEntity* pEntity );
+	CEntity*			GetFirstCollideEntity();
+	CEntity*			GetNextCollideEntity();
+	int					GetCollideEntityID( CEntity* pEntity );
 	IAEntity*			GetFirstIAEntity();
 	IAEntity*			GetNextIAEntity();
 	IFighterEntity*		GetFirstFighterEntity();
@@ -71,6 +73,8 @@ public:
 	IEntity*			GetNextMobileEntity();
 	IEntity*			CreateLineEntity( const CVector& first, const CVector& last );
 	IEntity*			CreateCylinder( float fRadius, float fHeight );
+	void				SetGUIManager(IGUIManager* pGUIManager);
+	IGUIManager* 		GetGUIManager();
 	
 };
 

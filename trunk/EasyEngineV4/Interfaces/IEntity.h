@@ -25,6 +25,7 @@ class IGeometryManager;
 class ISphere;
 class IAEntity;
 class IFighterEntity;
+class IGUIManager;
 
 using namespace std;
 
@@ -60,6 +61,7 @@ public:
 		eRun,
 		eHitLeftFoot,
 		eHitReceived,
+		eJump,
 		eAnimationCount
 	};
 
@@ -69,35 +71,35 @@ public:
 		eSetChildToParentTM
 	};
 
-	virtual void			Update() = 0;
-	virtual void			DrawBoundingBox( bool bDraw ) = 0;
-	virtual void			SetShader( IShader* pShader ) = 0;
-	virtual IBox*			GetBBox() = 0;
-	virtual IRessource*		GetRessource() = 0;
-	virtual void			SetWeight( float fWeight ) = 0;
-	virtual float			GetWeight() = 0;
-	virtual void			SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false ) = 0;
-	virtual void			AddAnimation( std::string sAnimationFile ) = 0;
-	virtual void			SetCurrentAnimation( std::string sAnimation ) = 0;
-	virtual IAnimation*		GetCurrentAnimation() = 0;
-	virtual bool			HasAnimation( string sAnimationName ) = 0;
-	virtual void			DetachCurrentAnimation() = 0;
-	virtual IBone*			GetSkeletonRoot() = 0;
-	virtual void			Hide( bool bHide ) = 0;
-	virtual void			RunAction( string sAction, bool bLoop ) = 0;
-	virtual void			LinkEntityToBone( IEntity* pChild, IBone* pParentBone, TLinkType = ePreserveChildRelativeTM ) = 0;
-	virtual void			SetAnimationSpeed( TAnimation eAnimationType, float fSpeed ) = 0;
-	virtual TAnimation		GetCurrentAnimationType() const = 0;
-	virtual void			GetTypeName( string& sName ) = 0;
-	virtual void			SetScaleFactor( float x, float y, float z ) = 0;
-	virtual void			SetRenderingType( IRenderer::TRenderType t ) = 0;
-	virtual void			DrawBoundingSphere( bool bDraw ) = 0;
-	virtual void			DrawBoneBoundingSphere( int nID, bool bDraw ) = 0;
-	virtual void			DrawAnimationBoundingBox( bool bDraw ) = 0;
-	virtual float			GetBoundingSphereRadius() const = 0;
-	virtual void			Goto( const CVector& oPosition, float fSpeed ) = 0;
-	virtual void			SetEntityName( string sName ) = 0;
-	virtual void			Colorize(float r, float g, float b, float a) = 0;
+	virtual void				Update() = 0;
+	virtual void				DrawBoundingBox( bool bDraw ) = 0;
+	virtual void				SetShader( IShader* pShader ) = 0;
+	virtual IBox*				GetBBox() = 0;
+	virtual IRessource*			GetRessource() = 0;
+	virtual void				SetWeight( float fWeight ) = 0;
+	virtual float				GetWeight() = 0;
+	virtual void				SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false ) = 0;
+	virtual void				AddAnimation( std::string sAnimationFile ) = 0;
+	virtual void				SetCurrentAnimation( std::string sAnimation ) = 0;
+	virtual IAnimation*			GetCurrentAnimation() = 0;
+	virtual bool				HasAnimation( string sAnimationName ) = 0;
+	virtual void				DetachCurrentAnimation() = 0;
+	virtual IBone*				GetSkeletonRoot() = 0;
+	virtual void				Hide( bool bHide ) = 0;
+	virtual void				RunAction( string sAction, bool bLoop ) = 0;
+	virtual void				LinkEntityToBone( IEntity* pChild, IBone* pParentBone, TLinkType = ePreserveChildRelativeTM ) = 0;
+	virtual void				SetAnimationSpeed( TAnimation eAnimationType, float fSpeed ) = 0;
+	virtual TAnimation			GetCurrentAnimationType() const = 0;
+	virtual void				GetTypeName( string& sName ) = 0;
+	virtual void				SetScaleFactor( float x, float y, float z ) = 0;
+	virtual void				SetRenderingType( IRenderer::TRenderType t ) = 0;
+	virtual void				DrawBoundingSphere( bool bDraw ) = 0;
+	virtual void				DrawBoneBoundingSphere( int nID, bool bDraw ) = 0;
+	virtual void				DrawAnimationBoundingBox( bool bDraw ) = 0;
+	virtual float				GetBoundingSphereRadius() const = 0;
+	virtual void				Goto( const CVector& oPosition, float fSpeed ) = 0;
+	virtual void				SetEntityName( string sName ) = 0;
+	virtual void				Colorize(float r, float g, float b, float a) = 0;
 };
 
 class IEntityManager : public CPlugin
@@ -145,9 +147,6 @@ public:
 	virtual IBox&				GetBox( IEntity* pBoxEntity ) = 0;
 	virtual void				AddCollideEntity( IEntity* pEntity ) = 0;
 	virtual void				RemoveCollideEntity( IEntity* pEntity ) = 0;
-	virtual IEntity*			GetFirstCollideEntity() = 0;
-	virtual IEntity*			GetNextCollideEntity() = 0;
-	virtual int					GetCollideEntityID( IEntity* pEntity ) = 0;
 	virtual void				SetZCollisionError( float e ) = 0;
 	virtual IAEntity*			GetFirstIAEntity() = 0;
 	virtual IAEntity*			GetNextIAEntity() = 0;
@@ -157,6 +156,9 @@ public:
 	virtual IEntity*			GetNextMobileEntity() = 0;
 	virtual IEntity*			CreateLineEntity( const CVector& first, const CVector& last ) = 0;
 	virtual IEntity*			CreateCylinder( float fRadius, float fHeight ) = 0;
+
+	virtual IGUIManager* 		GetGUIManager() = 0;
+	virtual void				SetGUIManager(IGUIManager* pGUIManager) = 0;
 };
 
 class ISceneManager : public CPlugin

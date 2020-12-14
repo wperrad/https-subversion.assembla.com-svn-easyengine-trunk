@@ -16,6 +16,7 @@
 #include "BMELoader.h"
 #include "BKELoader.h"
 #include "BSELoader.h"
+#include "ColLoader.h"
 #include "IFileSystem.h"
 
 using namespace std;
@@ -31,6 +32,7 @@ m_oFileSystem( oDesc.m_oFileSystem )
 	m_mLoaderByExtension[ "bme" ] = new CBMELoader( oDesc.m_oFileSystem, oDesc.m_oGeometryManager );
 	m_mLoaderByExtension[ "bke" ] = new CBKELoader( oDesc.m_oFileSystem );
 	m_mLoaderByExtension[ "bse" ] = new CBSELoader( oDesc.m_oFileSystem );
+	m_mLoaderByExtension[ "col" ] = new CColLoader(oDesc.m_oGeometryManager);
 }
 
 CLoaderManager::~CLoaderManager()
@@ -75,7 +77,10 @@ void CLoaderManager::Load( string sFileName, ILoader::IRessourceInfos& ri )
 	map< string, ILoader* >::iterator itLoader = m_mLoaderByExtension.find( sExtension );
 	if ( itLoader != m_mLoaderByExtension.end() )
 	{
-		itLoader->second->Load( sFileName, ri, m_oFileSystem );
+		string dir;
+		m_oFileSystem.GetRootDirectory(dir);
+		string sFilePath = dir.empty() ? sFileName : dir + "\\" + sFileName;
+		itLoader->second->Load(sFilePath, ri, m_oFileSystem );
 		ri.m_sFileName = sFileName;
 	}
 	else

@@ -1,6 +1,7 @@
 #include "dllInterface.h"
 #include "BinaryAnimationMaxExporter.h"
 #include "BinaryMeshMaxExporter.h"
+#include "CollisionModelExporter.h"
 
 // MAX
 #include "plugapi.h"
@@ -14,8 +15,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,ULONG fdwReason,LPVOID lpvReserved)
 {
 	CBinaryMeshMaxExporterClassDesc* pMeshDesc = new CBinaryMeshMaxExporterClassDesc;
 	CBinaryAnimationMaxExporterClassDesc* pAnimationDesc = new CBinaryAnimationMaxExporterClassDesc;
+	CollisionModelExporterClassDesc* pCollisionDesc = new CollisionModelExporterClassDesc;
 	CMaxExporter::m_vLibClassDesc.push_back(pMeshDesc);
 	CMaxExporter::m_vLibClassDesc.push_back(pAnimationDesc);
+	CMaxExporter::m_vLibClassDesc.push_back(pCollisionDesc);
 	
 
 	if( fdwReason == DLL_PROCESS_ATTACH )

@@ -29,7 +29,6 @@ class CBinaryMeshMaxExporter : public CMaxExporter
 	bool								m_bMultipleSmGroup;
 	int									m_nCurrentSmGroup;
 	bool								m_bFlipNormals;
-	bool								m_bOpenglCoord;
 	int									m_nMaterialCount;
 	map< string, int >					m_mBoneIDByName;
 	bool								m_bLog;
@@ -38,7 +37,6 @@ class CBinaryMeshMaxExporter : public CMaxExporter
 	bool								m_bExportBBoxAtKey;
 	FILE*								m_pLogFile;
 	map< int, IBox* >					m_mBoneBox;
-	IGeometryManager*					m_pGeometryManager;
 
 	static CBinaryMeshMaxExporter*		s_pCurrentInstance;
 

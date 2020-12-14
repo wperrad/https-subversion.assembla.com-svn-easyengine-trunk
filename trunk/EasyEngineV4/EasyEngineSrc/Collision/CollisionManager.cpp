@@ -142,9 +142,9 @@ void CCollisionManager::OnRenderCollisionMap()
 	m_oRenderer.SetProjectionMatrix(oBakProj);
 }
 
-void CCollisionManager::ComputeGroundMapDimensions()
+void CCollisionManager::ComputeGroundMapDimensions(IMesh* pMesh)
 {
-	IBox* pBox = m_pGround->GetBBox();
+	IBox* pBox = pMesh->GetBBox();
 	if (pBox->GetDimension().m_x <= pBox->GetDimension().m_z * m_fScreenRatio)
 	{
 		m_fGroundMapWidth = (pBox->GetDimension().m_x * (float)m_nScreenHeight) / pBox->GetDimension().m_z;
@@ -153,7 +153,7 @@ void CCollisionManager::ComputeGroundMapDimensions()
 	}
 	else
 	{
-		m_fGroundMapHeight = (float)m_nScreenWidth;
+		m_fGroundMapWidth = (float)m_nScreenWidth;
 		m_fGroundMapHeight = pBox->GetDimension().m_z * (float)m_nScreenWidth / pBox->GetDimension().m_x;
 		m_fWorldToScreenScaleFactor = pBox->GetDimension().m_x / 2.f;
 	}
@@ -180,7 +180,7 @@ void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IE
 	oProj.m_00 = 1.f / m_fScreenRatio;
 	const IBox* pBox = m_pGround->GetBBox();
 
-	ComputeGroundMapDimensions();
+	ComputeGroundMapDimensions(m_pGround);
 	int subdivisionCount = 30;
 
 	int cellMapSize = m_fGroundMapWidth / subdivisionCount;
@@ -245,7 +245,7 @@ void CCollisionManager::LoadCollisionMap(string sFileName, IEntity* pScene)
 		IBox* pBox = m_pGround->GetBBox();
 		m_fGroundWidth = pBox->GetDimension().m_x;
 		m_fGroundHeight = pBox->GetDimension().m_z;
-		ComputeGroundMapDimensions();
+		ComputeGroundMapDimensions(m_pGround);
 	}
 }
 
@@ -273,7 +273,7 @@ void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos&
 	if (maxLenght < pBox->GetDimension().m_z)
 		maxLenght = pBox->GetDimension().m_z;
 	
-	ComputeGroundMapDimensions();
+	ComputeGroundMapDimensions(pGround);
 	float fOriginMapX = ((float)nWidth - m_fGroundMapWidth) / 2.f;
 	float fOriginMapY = ((float)nHeight - m_fGroundMapHeight) / 2.f;
 
@@ -401,7 +401,7 @@ bool CCollisionManager::IsSegmentInsideSegment( float fS1Center, float fS1Radius
 bool CCollisionManager::IsIntersection( const IBox& b, const ISphere& s )
 {
 	CMatrix invBoxWorldMatrix, oWorldMatrix;
-	b.GetWorldMatrix( oWorldMatrix );
+	b.GetTM( oWorldMatrix );
 	oWorldMatrix.GetInverse( invBoxWorldMatrix );
 	CVector vBoxBaseSphereCenter = invBoxWorldMatrix * s.GetCenter();
 	bool bInsideX = IsSegmentInsideSegment( 0, b.GetDimension().m_x / 2.f, vBoxBaseSphereCenter.m_x, s.GetRadius() ); //vBoxBaseSphereCenter.m_x - s.GetRadius() < b.GetDimension().m_x / 2.f && vBoxBaseSphereCenter.m_x + s.GetRadius() > - b.GetDimension().m_x / 2.f;
@@ -479,8 +479,8 @@ float GetMaxz( const vector< CVector >& vPoints )
 bool CCollisionManager::TestBoxesCollisionIntoFirstBoxBase( const IBox& b1, const IBox& b2 )
 {
 	CMatrix b1Mat, b2Mat;
-	b1.GetWorldMatrix( b1Mat );
-	b2.GetWorldMatrix( b2Mat );
+	b1.GetTM( b1Mat );
+	b2.GetTM( b2Mat );
 	CMatrix b1MatInv;
 	b1Mat.GetInverse( b1MatInv );
  	CMatrix b2MatBaseB1 = b1MatInv * b2Mat;

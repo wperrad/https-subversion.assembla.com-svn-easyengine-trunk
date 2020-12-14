@@ -11,6 +11,7 @@
 #include "Utils2/StringUtils.h"
 #include "Utils2/TimeManager.h"
 #include "IPathFinder.h"
+#include "EntityManager.h"
 
 using namespace std;
 
@@ -43,7 +44,7 @@ m_pCollisionGrid(NULL)
 {
 	SetName( "Scene" );
 	m_pRessource = NULL;
-	m_pEntityManager = oDesc.m_pEntityManager;
+	m_pEntityManager = static_cast<CEntityManager*>(oDesc.m_pEntityManager);
 }
 
 CScene::~CScene()

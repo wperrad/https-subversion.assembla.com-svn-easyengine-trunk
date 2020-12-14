@@ -9,7 +9,6 @@
 // Engine 
 #include "../Utils2/Node.h"
 #include "../Utils2/DebugTool.h"
-#include "ICore.h"
 #include "IInputManager.h"
 #include "IGUIManager.h"
 #include "IRenderer.h"
@@ -24,6 +23,7 @@
 #include "ICameraManager.h"
 #include "IActionManager.h"
 #include "IConsole.h"
+#include "IHud.h"
 #include "IScriptManager.h"
 #include "IEntity.h"
 #include "../Utils2/Chunk.h"
@@ -51,7 +51,6 @@ void  OnWindowEvent( CPlugin* pPlugin, IEventDispatcher::TWindowEvent e, int nWi
 void UpdateCamera();
 void GetOptionsByCommandLine( string sCommandArguments, CGFXOption& oOption );
 
-ICore*					m_pCore = NULL;
 IDrawTool*				m_pDrawTool = NULL;
 IWindow*				m_pWindow = NULL;
 ILoaderManager*			m_pLoaderManager = NULL;
@@ -63,6 +62,7 @@ IEntityManager* 		m_pEntityManager = NULL;
 IInputManager*			m_pInputManager = NULL;
 IScriptManager* 		m_pScriptManager = NULL;
 IGUIManager*			m_pGUIManager = NULL;
+IHud*					m_pHud = NULL;
 IFileSystem*			m_pFileSystem = NULL;
 IConsole*				m_pConsole = NULL;
 ISceneManager*			m_pSceneManager  = NULL;
@@ -215,7 +215,11 @@ void UpdatePerso()
 			IInputManager::KEY_STATE eStateWalk = m_pActionManager->GetKeyActionState( "AvancerPerso");
 			if( eStateWalk == IInputManager::JUST_PRESSED || eStateWalk == IInputManager::PRESSED )
 			{
-				pPerso->RunAction( "run", true );
+				if(m_pInputManager->GetKeyState(VK_SHIFT) == IInputManager::JUST_PRESSED || m_pInputManager->GetKeyState(VK_SHIFT) == IInputManager::PRESSED)
+					pPerso->RunAction("walk", true);
+				else
+					pPerso->RunAction( "run", true );
+					
 				m_pActionManager->ForceActionState( "AvancerPerso", IInputManager::PRESSED );
 			}
 			else if( eStateWalk == IInputManager::JUST_RELEASED )
@@ -223,6 +227,13 @@ void UpdatePerso()
 				pPerso->RunAction( "stand", true );
 				m_pActionManager->ForceActionState( "AvancerPerso", IInputManager::RELEASED );
 			}
+			IInputManager::KEY_STATE eStateJump = m_pActionManager->GetKeyActionState("SautPerso");
+			if (eStateJump == IInputManager::JUST_PRESSED)
+			{
+				pPerso->RunAction("jump", true);
+				m_pActionManager->ForceActionState("SautPerso", IInputManager::PRESSED);
+			}
+
 			IInputManager::TMouseButtonState eStatePiedG = m_pActionManager->GetMouseActionState( "HitLeftFoot");
 			if( eStatePiedG == IInputManager::eMouseButtonStateJustDown )
 			{
@@ -234,6 +245,7 @@ void UpdatePerso()
 				m_pInputManager->GetOffsetMouse( x, y );
 				float s = m_pInputManager->GetMouseSensitivity();
 				pPerso->Roll( - x * s );
+				m_pCameraManager->GetActiveCamera()->Pitch((float)-y/30.f);
 			}
 		}
 	}
@@ -363,6 +375,12 @@ void InitPlugins( string sCmdLine )
 	IGUIManager::Desc oGUIManagerDesc( *m_pRenderer, *m_pRessourceManager, *m_pXMLParser, *m_pInputManager );
 	m_pGUIManager = static_cast< IGUIManager* >( CPlugin::Create( oGUIManagerDesc, sDirectoryName + "GUI.dll", "CreateGUIManager" ) );
 
+	m_pEntityManager->SetGUIManager(m_pGUIManager);
+
+	//IHud::Desc oHudDesc(*m_pGUIManager);
+	//m_pHud = static_cast< IHud* >(CPlugin::Create(oGUIManagerDesc, sDirectoryName + "GUI.dll", "CreateHud"));
+
+
 	IScriptManager::Desc oScriptManagerDesc( *m_pFileSystem );
 	m_pScriptManager = static_cast< IScriptManager* >( CPlugin::Create( oScriptManagerDesc, sDirectoryName + "Script.dll", "CreateScriptManager" ) );
 	RegisterAllFunctions( m_pScriptManager );
@@ -406,6 +424,7 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 		m_pActionManager->AddGUIAction("CursorY" , AXIS_V);
 
 		m_pActionManager->AddKeyAction( "AvancerPerso", 'T' );
+		m_pActionManager->AddKeyAction("SautPerso", ' ');
 		m_pActionManager->AddMouseAction( "HitLeftFoot", IInputManager::eMouseButtonLeft, IInputManager::eMouseButtonStateJustDown );
 
 		m_pEventDispatcher->AbonneToWindowEvent( NULL, OnWindowEvent );
@@ -416,7 +435,6 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 		m_pRenderer->DestroyContext();
 
 		delete m_pDebugTool;
-		delete m_pCore;
 		delete m_pConsole;
 		delete m_pScriptManager;
 		delete m_pGUIManager;
