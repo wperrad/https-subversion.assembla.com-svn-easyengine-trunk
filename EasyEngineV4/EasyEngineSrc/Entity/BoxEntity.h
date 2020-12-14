@@ -8,7 +8,7 @@ class CBoxEntity : public CShape
 
 public:
 	CBoxEntity( IRenderer& oRenderer, IBox& oBox );
-	void	Update();
-	IBox&	GetBox();
-	void	Colorize(float r, float g, float b, float a) {}
+	void				Update();
+	IBox&				GetBox();
+	void				Colorize(float r, float g, float b, float a) {}
 };

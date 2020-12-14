@@ -185,7 +185,7 @@ void CBinaryAnimationMaxExporter::DumpAnimation( string sFilePath, const map< in
 
 	CBinaryFileStorage fs;
 	
-	if ( !fs.OpenFile( sFilePath, CFileStorage::eWrite ) )
+	if ( !fs.OpenFile( sFilePath, IFileStorage::eWrite ) )
 	{
 		string sMessage = string( "Erreur à l'ouverture du fichier " ) + sFilePath;
 		exception e( sMessage.c_str() );
@@ -212,7 +212,7 @@ void CBinaryAnimationMaxExporter::DumpAnimation( string sFilePath, const map< in
 }
 
 #pragma message( "supprimer l'appel à CBinaryAnimationMaxExporter::DumpAngleAxis" )
-void CBinaryAnimationMaxExporter::DumpAngleAxis( CFileStorage& fs, const AngAxis& a )
+void CBinaryAnimationMaxExporter::DumpAngleAxis( IFileStorage& fs, const AngAxis& a )
 {
 	fs << (float)a.angle << (float)a.axis.x << (float)a.axis.y << (float)a.axis.z;
 }

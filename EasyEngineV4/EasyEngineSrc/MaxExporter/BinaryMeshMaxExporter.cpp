@@ -30,7 +30,6 @@ CBinaryMeshMaxExporter::CBinaryMeshMaxExporter() :
 m_bMultipleSmGroup( false ),
 m_nCurrentSmGroup( -1 ),
 m_bFlipNormals( false ),
-m_bOpenglCoord( false ),
 m_nMaterialCount( 0 ),
 m_bLog( false ),
 m_bExportSkinning( true ),
@@ -49,7 +48,7 @@ CBinaryMeshMaxExporter::~CBinaryMeshMaxExporter()
 
 int CBinaryMeshMaxExporter::ExtCount()
 {
-	return (int)m_vExtension.size();;
+	return (int)m_vExtension.size();
 }
 
 const TCHAR* CBinaryMeshMaxExporter::Ext( int n )
@@ -111,9 +110,6 @@ int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Inter
 {
 	try
 	{
-		IGeometryManager::Desc oGMDesc( NULL, "" );
-		m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGMDesc, "stdplugs\\EasyEngine\\Geometry.dll", "CreateGeometryManager" ) );
-		
 		wstring wFileName = pName;
 		int nDotPos = (int)wFileName.find_last_of( L"." );
 		wstring sExtension = wFileName.substr( nDotPos + 1, wFileName.size() - nDotPos - 1 );
@@ -316,9 +312,8 @@ void CBinaryMeshMaxExporter::GetBonesBoundingBoxes( const Mesh& oMesh, const IWe
 void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode* pMesh, ILoader::CMeshInfos& mi )
 {	
 	WriteLog( "\nCBinaryMeshMaxExporter::StoreMeshToChunk() : debut" );
-	Object* pObject = pMesh->EvalWorldState( 0 ).obj;
-	TriObject* pTriObject = static_cast< TriObject* > ( pObject->ConvertToType( 0, Class_ID( TRIOBJ_CLASS_ID, 0 ) ) );
-	Mesh& oMesh = pTriObject->GetMesh();
+
+	Mesh& oMesh = GetMeshFromNode(pMesh);
 	wstring wName(pMesh->GetName());
 	string sName(wName.begin(), wName.end());
 	mi.m_sName = sName;
@@ -592,19 +587,14 @@ void CBinaryMeshMaxExporter::UpdateVersionFile( string sVersion )
 	fclose( pVersionFile );
 }
 
-bool CBinaryMeshMaxExporter::DumpModels( const string& sFilePath, ILoader::CAnimatableMeshData& ami )
+bool CBinaryMeshMaxExporter::DumpModels( const string& sFilePath, ILoader::CAnimatableMeshData& amd )
 {
 	bool bRet = true;
 	wstring wVersion = OtherMessage1();
 	string sVersion(wVersion.begin(), wVersion.end());
 	UpdateVersionFile( sVersion );
-	ami.m_sFileVersion = sVersion;
-
-	IFileSystem::Desc oFSDesc( NULL, "" );
-	IFileSystem* pFileSystem = static_cast< IFileSystem* >( CPlugin::Create( oFSDesc, "stdplugs\\EasyEngine\\FileUtils.dll", "CreateFileSystem" ) );
-	ILoaderManager::Desc oLDesc( *pFileSystem, *m_pGeometryManager );
-	ILoaderManager* pLoaderManager = static_cast< ILoaderManager* >(  CPlugin::Create( oLDesc, "stdplugs\\EasyEngine\\Loader.dll", "CreateLoaderManager" ) );
-	pLoaderManager->Export( sFilePath, ami );
+	amd.m_sFileVersion = sVersion;
+	m_pLoaderManager->Export( sFilePath, amd );
 	return bRet;
 }
 

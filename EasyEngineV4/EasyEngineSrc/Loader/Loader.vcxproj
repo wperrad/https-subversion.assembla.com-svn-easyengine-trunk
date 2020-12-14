@@ -156,6 +156,7 @@
     <ClInclude Include="BKELoader.h" />
     <ClInclude Include="BMELoader.h" />
     <ClInclude Include="BSELoader.h" />
+    <ClInclude Include="ColLoader.h" />
     <ClInclude Include="LightLoader.h" />
     <ClInclude Include="Loader.h" />
     <ClInclude Include="Loader2API.h" />
@@ -170,6 +171,7 @@
     <ClCompile Include="BKELoader.cpp" />
     <ClCompile Include="BMELoader.cpp" />
     <ClCompile Include="BSELoader.cpp" />
+    <ClCompile Include="ColLoader.cpp" />
     <ClCompile Include="ILoader.cpp" />
     <ClCompile Include="LightLoader.cpp" />
     <ClCompile Include="LoaderManager.cpp" />

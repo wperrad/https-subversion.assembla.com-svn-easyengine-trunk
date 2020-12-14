@@ -270,17 +270,17 @@ IEntity* CEntityManager::CreateSphere( float fSize )
 void CEntityManager::AddCollideEntity( IEntity* pEntity )
 {
 	int nID = (int)m_mCollideEntities.size();
-	m_mCollideEntities[ pEntity ] = nID;
+	m_mCollideEntities[ (CEntity*)pEntity ] = nID;
 }
 
 void CEntityManager::RemoveCollideEntity( IEntity* pEntity )
 {
-	map< IEntity*, int >::iterator itEntity = m_mCollideEntities.find( pEntity );
+	map< CEntity*, int >::iterator itEntity = m_mCollideEntities.find( (CEntity*)pEntity );
 	if( itEntity != m_mCollideEntities.end() )
 		m_mCollideEntities.erase( itEntity );
 }
 
-IEntity* CEntityManager::GetFirstCollideEntity()
+CEntity* CEntityManager::GetFirstCollideEntity()
 {
 	m_itCurrentParsedEntity = m_mCollideEntities.begin();
 	if( m_itCurrentParsedEntity != m_mCollideEntities.end() )
@@ -288,7 +288,7 @@ IEntity* CEntityManager::GetFirstCollideEntity()
 	return NULL;
 }
 
-IEntity* CEntityManager::GetNextCollideEntity()
+CEntity* CEntityManager::GetNextCollideEntity()
 {
 	m_itCurrentParsedEntity++;
 	if( m_itCurrentParsedEntity != m_mCollideEntities.end() )
@@ -296,9 +296,9 @@ IEntity* CEntityManager::GetNextCollideEntity()
 	return NULL;
 }
 
-int CEntityManager::GetCollideEntityID( IEntity* pEntity )
+int CEntityManager::GetCollideEntityID( CEntity* pEntity )
 {
-	map< IEntity*, int >::iterator itEntityID = m_mCollideEntities.find( pEntity );
+	map< CEntity*, int >::iterator itEntityID = m_mCollideEntities.find( pEntity );
 	if( itEntityID != m_mCollideEntities.end() )
 		return itEntityID->second;
 	return -1;
@@ -330,6 +330,16 @@ IEntity* CEntityManager::CreateLineEntity( const CVector& first, const CVector& 
 IEntity* CEntityManager::CreateCylinder( float fRadius, float fHeight )
 {
 	return new CCylinderEntity( m_oGeometryManager, m_oRenderer, m_oRessourceManager, m_oCollisionManager, fRadius, fHeight );
+}
+
+void CEntityManager::SetGUIManager(IGUIManager* pGUIManager)
+{
+	m_pGUIManager = pGUIManager;
+}
+
+IGUIManager* CEntityManager::GetGUIManager()
+{
+	return m_pGUIManager;
 }
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& oDesc )

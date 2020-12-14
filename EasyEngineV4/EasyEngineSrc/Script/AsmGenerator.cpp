@@ -167,7 +167,7 @@ void CAsmGenerator::GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CIn
 {
 	if( oTree.m_Lexem.IsOperation() )
 	{
-		if( oTree.m_vChild[ 0 ].m_vChild.size() == 0 && oTree.m_vChild[ 1 ].m_vChild.size() == 0 )
+		if(oTree.m_vChild.size() > 0 && oTree.m_vChild[ 0 ].m_vChild.size() == 0 && oTree.m_vChild[ 1 ].m_vChild.size() == 0 )
 			GenOperation( oTree.m_Lexem.m_eType, oTree.m_vChild[ 0 ], oTree.m_vChild[ 1 ], vAssembler );
 		else 
 		{

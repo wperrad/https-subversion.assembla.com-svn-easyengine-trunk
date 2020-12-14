@@ -40,12 +40,12 @@ public:
 	void	Normalize();
 	void	Fill( float x, float y, float z, float w );
 
-	void Store( CBinaryFileStorage& store ) const;
-	void Load( CBinaryFileStorage& store );
-	void Store( CAsciiFileStorage& store ) const;
-	void Load( CAsciiFileStorage& store );
-	void Store( CStringStorage& store ) const;
-	void Load( CStringStorage& store );
+	const IPersistantObject& operator >> (CBinaryFileStorage& store) const;
+	IPersistantObject& operator << (CBinaryFileStorage& store);
+	const IPersistantObject& operator >> (CAsciiFileStorage& store) const;
+	IPersistantObject& operator << (CAsciiFileStorage& store);
+	const IPersistantObject& operator >> (CStringStorage& store) const;
+	IPersistantObject& operator << (CStringStorage& store);
 
 
 	static void Lerp( const CVector& v1, const CVector& v2, float t, CVector& vOut );

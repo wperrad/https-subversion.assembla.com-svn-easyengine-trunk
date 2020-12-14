@@ -25,7 +25,6 @@ class CTextureBase;
 class CMesh;
 class CMaterial;
 class CLight;
-class IFileSystem;
 class CHierarchyMesh;
 class CLoaderManager;
 class IRenderer;
@@ -55,8 +54,9 @@ class CRessourceManager : public IRessourceManager
 
 	//static void										SetLocalTMByWorldTM( CNode* pNode );
 	static IRessource*								CreateMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
+	static IRessource*								CreateCollisionMesh(string sFileName, CRessourceManager* pRessouceManager, IRenderer& oRenderer);
 	static IRessource*								CreateAnimation( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
-	static IRessource*								CreateHierarchyMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
+	//static IRessource*								CreateHierarchyMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
 	static IRessource*								CreateTexture( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
 	static IRessource*								CreateLight( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
 	static void										CollectMaterials( const ILoader::CMaterialInfos& oMaterialInfos, IRenderer& oRenderer, IShader* pShader, IRessourceManager* pRessourceManager, std::map< int, CMaterial* >& vMaterials );
@@ -95,6 +95,8 @@ public:
 	void				PopErrorMessage( string& sMessage );
 	void				DestroyAllRessources();
 };
+
+
 
 extern "C" _declspec(dllexport) IRessourceManager* CreateRessourceManager( IRessourceManager::Desc& oDesc );
 

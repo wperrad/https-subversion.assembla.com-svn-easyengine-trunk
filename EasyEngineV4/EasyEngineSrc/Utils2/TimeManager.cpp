@@ -8,6 +8,7 @@ CTimeManager::CTimeManager():
 m_nCurrentTime( 0 ),
 m_nTimeElapsedSinceLastUpdate( 0 )
 {
+	m_nCurrentTime = GetTickCount();
 }
 
 void CTimeManager::Update()

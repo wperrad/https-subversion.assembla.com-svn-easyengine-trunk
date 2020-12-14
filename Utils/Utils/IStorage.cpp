@@ -6,19 +6,19 @@
 
 using namespace std;
 
-CFileStorage::CFileStorage():
+IFileStorage::IFileStorage():
 m_pFile( NULL )
 {
 }
 
 
-void CFileStorage::CloseFile()
+void IFileStorage::CloseFile()
 {
 	fclose( m_pFile );
 	m_pFile = NULL;
 }
 
-CFileStorage::~CFileStorage()
+IFileStorage::~IFileStorage()
 {
 	if( m_pFile )
 	{
@@ -96,13 +96,13 @@ IBaseStorage& CBinaryFileStorage::operator>>( string& s )
 
 IBaseStorage& CBinaryFileStorage::operator<<( const IPersistantObject& object )
 {
-	object.Store( *this );
+	object >> *this;
 	return *this;
 }
 
 IBaseStorage& CBinaryFileStorage::operator>>( IPersistantObject& object )
 {
-	object.Load( *this );
+	object << *this;
 	return *this;
 }
 
@@ -248,12 +248,13 @@ IBaseStorage& CAsciiFileStorage::operator>>( string& )
 
 IBaseStorage& CAsciiFileStorage::operator<<( const IPersistantObject& object )
 {
-	object.Store( *this );
+	object >> *this;
 	return *this;
 }
 
 IBaseStorage& CAsciiFileStorage::operator>>( IPersistantObject& object )
 {
+	object << *this;
 	return *this;
 }
 
@@ -349,12 +350,12 @@ IBaseStorage& CStringStorage::operator>>( string& sValue )
 
 IBaseStorage& CStringStorage::operator<<( const IPersistantObject& object )
 {
-	object.Store( *this );
+	object >> *this;
 	return *this;
 }
 
 IBaseStorage& CStringStorage::operator>>( IPersistantObject& object )
 {
-	object.Load( *this );
+	object << *this;
 	return *this;
 }

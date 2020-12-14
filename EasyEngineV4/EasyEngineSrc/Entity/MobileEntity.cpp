@@ -6,9 +6,10 @@
 #include "IGeometry.h"
 #include "Utils2/TimeManager.h"
 #include "Scene.h"
+#include "EntityManager.h"
+#include "IGUIManager.h"
 
 map< string, IEntity::TAnimation >			CMobileEntity::s_mAnimationStringToType;
-map< IEntity::TAnimation, IAnimation* >		CMobileEntity::s_mAnimationTypeToAnimation;
 map< IEntity::TAnimation, float > 			CMobileEntity::s_mOrgAnimationSpeedByType;
 map< string, CMobileEntity::TAction >				CMobileEntity::s_mActions;
 vector< CMobileEntity* >							CMobileEntity::s_vHumans;
@@ -34,6 +35,7 @@ m_nLife( 1000 )
 		s_mAnimationStringToType[ "run" ] = eRun;
 		s_mAnimationStringToType[ "stand" ] = eStand;
 		s_mAnimationStringToType[ "HitLeftFoot" ] = eHitLeftFoot;
+		s_mAnimationStringToType["jump"] = eJump;
 		s_mOrgAnimationSpeedByType[ eWalk ] = -1.6f;
 		s_mOrgAnimationSpeedByType[ eStand ] = 0.f;
 		//s_mOrgAnimationSpeedByType[ eRun ] = -250.f;
@@ -46,12 +48,14 @@ m_nLife( 1000 )
 		s_mActions[ "stand" ] = Stand;
 		s_mActions[ "HitLeftFoot" ] = HitLeftFoot;
 		s_mActions[ "PlayReceiveHit" ] = PlayReceiveHit;
+		s_mActions[ "jump"] = Jump;
 	}
 	for( int i = 0; i < eAnimationCount; i++ )
 		m_mAnimationSpeedByType[ (TAnimation)i ] = s_mOrgAnimationSpeedByType[ (TAnimation)i ];
 
 	m_oBody.m_fWeight = 1.f;
 	Pitch( -90.f );
+	CMatrix trans = CMatrix::GetxRotation(-90.f);
 	int nDotPos = (int)sFileName.find( "." );
 	m_sFileNameWithoutExt = sFileName.substr( 0, nDotPos );
 	string sMask = m_sFileNameWithoutExt + "*" + ".bke";
@@ -67,7 +71,7 @@ m_nLife( 1000 )
 			transform( sFileNameFound.begin(), sFileNameFound.end(), sFileNameLow.begin(), tolower );
 			AddAnimation( sFileNameLow );
 			string sAnimationType = sFileNameLow.substr( m_sFileNameWithoutExt.size() + 1, sFileNameLow.size() - m_sFileNameWithoutExt.size() - 5 );
-			s_mAnimationTypeToAnimation[ s_mAnimationStringToType[ sAnimationType ] ] = m_mAnimation[ sFileNameLow ] ;
+			m_mAnimations[ s_mAnimationStringToType[ sAnimationType ] ] = m_mAnimation[ sFileNameLow ] ;
 		}
 		while( FindNextFileA( hFirst, &oData ) );
 	}
@@ -75,6 +79,54 @@ m_nLife( 1000 )
 	m_pLeftEye = dynamic_cast< IEntity* >( m_pSkeletonRoot->GetChildBoneByName( "OeilG" ) );
 	m_pRightEye = dynamic_cast< IEntity* >( m_pSkeletonRoot->GetChildBoneByName( "OeilD" ) );
 	m_pNeck = m_pSkeletonRoot->GetChildBoneByName( "Cou" );
+
+	m_pfnCollisionCallback = OnCollision;
+}
+
+
+void CMobileEntity::OnCollision(CEntity* pThis, CEntity* pEntity)
+{
+	IMesh* pMesh = static_cast<IMesh*>(pThis->GetRessource());
+	ICollisionMesh* pCollisionMesh = pEntity ? pEntity->GetCollisionMesh() : NULL;
+	if (pCollisionMesh) {
+		CMatrix tm, tmInv, tmMobile;
+		pEntity->GetWorldMatrix(tm);
+		tm.GetInverse(tmInv);
+		pThis->GetWorldMatrix(tmMobile);
+		pThis->SetLocalMatrix(tmInv * tmMobile );
+		pThis->Link(pEntity);
+	}
+}
+
+void CMobileEntity::UpdateCollision()
+{
+	m_oBody.Update();
+	if (m_oBody.m_fWeight > 0.f)
+	{
+		if (m_pScene)
+		{
+			CVector oBase;
+			m_pBoundingGeometry->GetBase(oBase);
+			CVector oTransformedBoxPosition = m_oLocalMatrix.GetRotation() * m_oScaleMatrix * oBase;
+			float h = GetHeight();
+			float x , y, z;
+
+			if (!m_bUsePositionKeys)
+				m_oLocalMatrix.GetPosition(x, y, z);
+			else
+			{
+				CMatrix oSkeletonRootMatrix;
+				m_pSkeletonRoot->GetLocalMatrix(oSkeletonRootMatrix);
+				CMatrix oSkeletonOffset = m_oFirstAnimationFrameSkeletonMatrixInv * oSkeletonRootMatrix;
+				CMatrix oComposedMatrix = oSkeletonOffset * m_oLocalMatrix;
+				x = oComposedMatrix.m_03;
+				z = oComposedMatrix.m_23;
+			}
+
+			int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
+			LocalTranslate(0.f, 0.f, m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f);
+		}
+	}
 }
 
 void CMobileEntity::SetCurrentPerso( bool bPerso )
@@ -107,16 +159,11 @@ void CMobileEntity::SetPredefinedAnimation( string s, bool bLoop )
 
 void CMobileEntity::Walk( bool bLoop )
 {
-	SetPredefinedAnimation( "walk", bLoop );
-	if( !m_bUsePositionKeys )
-		ConstantLocalTranslate( CVector( 0, m_mAnimationSpeedByType[ eWalk ], 0 ) );
-	else
+	if (m_eCurrentAnimationType != eWalk)
 	{
-		m_pCurrentAnimation->AddCallback( OnAnimationCallback, this );
-
-		CKey oKey;
-		m_pSkeletonRoot->GetKeyByIndex( m_pSkeletonRoot->GetKeyCount() - 1, oKey );
-		m_oSkeletonOffset = m_oFirstAnimationFrameSkeletonMatrixInv * oKey.m_oLocalTM;
+		SetPredefinedAnimation("walk", bLoop);
+		if (!m_bUsePositionKeys)
+			ConstantLocalTranslate(CVector(0.f, m_mAnimationSpeedByType[eWalk], 0.f));
 	}
 }
 
@@ -136,6 +183,18 @@ void CMobileEntity::Run( bool bLoop )
 			ConstantLocalTranslate( CVector( 0.f, m_mAnimationSpeedByType[ eRun ], 0.f ) );
 	}
 }
+
+void CMobileEntity::Jump(bool bLoop)
+{
+	if (m_eCurrentAnimationType != eJump)
+	{
+		//SetPredefinedAnimation("jump", bLoop);
+		//if (!m_bUsePositionKeys)
+		//ConstantLocalTranslate(CVector(0.f, m_mAnimationSpeedByType[eJump], 0.f));
+		m_oBody.m_oSpeed.m_y = 2000;
+	}
+}
+
 
 void CMobileEntity::HitLeftFoot( bool bLoop )
 {
@@ -185,6 +244,11 @@ void CMobileEntity::Run( CMobileEntity* pHuman, bool bLoop  )
 	pHuman->Run( bLoop );
 }
 
+void CMobileEntity::Jump(CMobileEntity* pHuman, bool bLoop)
+{
+	pHuman->Jump(bLoop);
+}
+
 void CMobileEntity::HitLeftFoot( CMobileEntity* pHuman, bool bLoop  )
 {
 	pHuman->HitLeftFoot( bLoop );
@@ -192,7 +256,7 @@ void CMobileEntity::HitLeftFoot( CMobileEntity* pHuman, bool bLoop  )
 
 void CMobileEntity::SetAnimationSpeed( IEntity::TAnimation eAnimationType, float fSpeed )
 {
-	s_mAnimationTypeToAnimation[ eAnimationType ]->SetSpeed( fSpeed );
+	m_mAnimations[ eAnimationType ]->SetSpeed(fSpeed);
 	m_mAnimationSpeedByType[ eAnimationType ] = s_mOrgAnimationSpeedByType[ eAnimationType ] * fSpeed;
 }
 
@@ -220,6 +284,13 @@ ISphere* CMobileEntity::GetBoneSphere( string sBoneName )
 	pBone->GetWorldPosition( oBoneLocalPosition );
 	oBoneWorldPosition = m_oWorldMatrix * oBoneLocalPosition;
 	return m_oGeometryManager.CreateSphere( oBoneWorldPosition, fBoneRadius / 2.f );
+}
+
+void CMobileEntity::AddSpeed(float x, float y, float z)
+{
+	m_oBody.m_oSpeed.m_x += x;
+	m_oBody.m_oSpeed.m_y += y;
+	m_oBody.m_oSpeed.m_z += z;
 }
 
 IBone* CMobileEntity::GetPreloadedBone( string sName )

@@ -11,6 +11,8 @@ class IRessource;
 class IAnimation;
 class IGeometryManager;
 class CScene;
+class CEntityManager;
+class IGUIManager;
 
 typedef std::map< std::string, std::map< int, const CNode* > > AnimationBonesMap;
 
@@ -18,12 +20,12 @@ class CEntity : public IEntity
 {
 protected:
 
-	typedef void (*TCollisionCallback)( IEntity*);
+	typedef void (*TCollisionCallback)( CEntity*, CEntity*);
 
 	IRessource*								m_pRessource;
 	IRenderer&								m_oRenderer;
 	IRessourceManager&						m_oRessourceManager;
-	IEntityManager*							m_pEntityManager;
+	CEntityManager*							m_pEntityManager;
 	IGeometryManager&						m_oGeometryManager;
 	ICollisionManager&						m_oCollisionManager;
 	CBody									m_oBody;
@@ -35,7 +37,6 @@ protected:
 	IBone*									m_pSkeletonRoot;
 	bool									m_bHidden;
 	CEntity*								m_pEntityRoot;
-	IBox*									m_pBBox;
 	float									m_fBoundingSphereRadius;
 	CMatrix									m_oFirstAnimationFrameSkeletonMatrixInv;
 	bool									m_bUsePositionKeys;
@@ -50,12 +51,20 @@ protected:
 	CScene*									m_pScene;
 	bool									m_bUseAdditionalColor;
 	CVector									m_oAdditionalColor;
+	ICollisionMesh*							m_pCollisionMesh;
+	IGeometry*								m_pBoundingGeometry;
+	float									m_fMaxStepHeight;
 
 
 	void				SetNewBonesMatrixArray( std::vector< CMatrix >& vMatBones );
 	void				GetBonesMatrix( CNode* pInitRoot, CNode* pCurrentRoot, std::vector< CMatrix >& vMatrix );
-	void				UpdateGroundCollision();
-	IEntity*			GetEntityCollision();
+	virtual void		UpdateCollision();
+	CEntity*			GetEntityCollision();
+	void				CreateAndLinkCollisionChildren(string sFileName);
+	float				GetBoundingSphereDistance(CEntity* pEntity);
+
+	bool				TestGroundCollision(const CMatrix& olastLocalTM);
+
 	static void			OnAnimationCallback( IAnimation::TEvent e, void* );
 
 public:
@@ -101,6 +110,11 @@ public:
 	void				SetEntityName( string sName );
 	void				GetEntityName( string& sName );
 	void				Colorize(float r, float g, float b, float a);
+	ICollisionMesh*		GetCollisionMesh();
+	void				ForceAssignBoundingGeometry(IGeometry* pBoundingGeometry);
+	IGeometry*			GetBoundingGeometry();
+	float				GetHeight();
+	void				SetGUIManager(IGUIManager* pGUIManager);
 };
 
 #endif // ENTITY_H

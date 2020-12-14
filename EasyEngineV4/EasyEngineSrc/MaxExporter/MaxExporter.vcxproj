@@ -84,6 +84,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\..\..\..\..\..\..\..\..\Program Files\Autodesk\3ds Max 2016\stdplugs\EasyEngine</OutDir>
+    <TargetExt>.dlu</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -117,7 +119,7 @@
       <AdditionalLibraryDirectories>C:\Program Files\Autodesk\3ds Max 2016 SDK\maxsdk\lib\x64\Release;%(AdditionalLibraryDirectories);..\..\..\utils\x64\$(Configuration);..\x64\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy ..\..\EasyEngine\debug\*.dll "C:\Program Files\Autodesk\3ds Max 2016\stdplugs\EasyEngine" /y</Command>
+      <Command>copy ..\..\EasyEngine\$(Configuration)\*.dll "C:\Program Files\Autodesk\3ds Max 2016\stdplugs\EasyEngine" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -147,17 +149,24 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;MAXEXPORTER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\3ds Max 2016 SDK\maxsdk\include;C:\Program Files\Autodesk\3ds Max 2016 SDK\maxsdk\include\IGame;..\..\..\Utils;..\..\Interfaces;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Program Files\Autodesk\3ds Max 2016 SDK\maxsdk\lib\x64\Release;%(AdditionalLibraryDirectories);..\..\..\utils\x64\$(Configuration);..\x64\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>core.lib;igame.lib;geom.lib;maxutil.lib;mesh.lib;Utils2.lib;Math.lib;Utils.lib;RenderUtil.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy ..\..\EasyEngine\$(Configuration)\*.dll "C:\Program Files\Autodesk\3ds Max 2016\stdplugs\EasyEngine" /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BinaryAnimationMaxExporter.h" />
     <ClInclude Include="BinaryMeshMaxExporter.h" />
+    <ClInclude Include="CollisionModelExporter.h" />
     <ClInclude Include="dllInterface.h" />
     <ClInclude Include="MaxExporter.h" />
     <ClInclude Include="resource.h" />
@@ -165,6 +174,7 @@
   <ItemGroup>
     <ClCompile Include="BinaryAnimationMaxExporter.cpp" />
     <ClCompile Include="BinaryMeshMaxExporter.cpp" />
+    <ClCompile Include="ColllisionModelExporter.cpp" />
     <ClCompile Include="DllInterface.cpp" />
     <ClCompile Include="MaxExporter.cpp" />
   </ItemGroup>

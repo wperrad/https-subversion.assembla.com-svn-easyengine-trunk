@@ -28,7 +28,29 @@ public:
 	
 };
 
-class IBox : public IPersistantObject
+class IBox;
+
+class IGeometry : public IPersistantObject
+{
+public:
+	enum Type
+	{
+		eBox = 1,
+		eCylinder
+	};
+	
+	virtual bool				IsIntersect(const IBox& box) = 0;
+	virtual void				GetTM(CMatrix& m) const = 0;
+	virtual const CMatrix&		GetTM() const = 0;
+	virtual void				GetBase(CVector& oBase) = 0;	
+	virtual float				ComputeBoundingSphereRadius() const = 0;
+	virtual IGeometry*			Duplicate() = 0;
+	virtual float				GetHeight() const = 0;
+	virtual void				Transform(const CMatrix& tm) = 0;
+	virtual float				GetDistance(const IGeometry& oGeometry) const = 0;
+};
+
+class IBox : public IGeometry
 {
 public:
 
@@ -40,10 +62,7 @@ public:
 	};
 
 	virtual const CVector&		GetMinPoint() const = 0;
-	virtual void				GetWorldMatrix( CMatrix& m ) const = 0;
-	virtual const CMatrix&		GetWorldMatrix() const = 0;
 	virtual const CVector&		GetDimension() const = 0;
-	virtual float				ComputeBoundingSphereRadius()const = 0;
 	virtual float				ComputeBoundingCylinderRadius( TAxis eGeneratorAxis ) const = 0;
 	virtual float				GetBoundingSphereRadius() const = 0;
 	virtual void				AddPoint( const CVector& p ) = 0;
@@ -53,6 +72,16 @@ public:
 	virtual void				GetPoints( vector< CVector >& vPoints ) = 0;
 	virtual void				GetCenter( CVector& oCenter ) const = 0;
 };
+
+class ICylinder : public IGeometry
+{
+public:
+	virtual float		GetRadius() const = 0;
+	virtual void		Set(const CMatrix& oBase, float fRadius, float fHeight) = 0;
+	virtual void		ComputeTangent(const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft) = 0;
+	virtual bool		IsPointIntoCylinder(const CVector& oPoint) const = 0;
+};
+
 
 class ISegment
 {
@@ -73,17 +102,6 @@ public:
 	virtual float	ComputeDistanceToPoint( const CVector2D& oPoint ) = 0;
 	virtual void	ComputeLineEquation( float& a, float& b, float& c ) const = 0;
 	virtual void	GetPoints( CVector2D& p1, CVector2D& p2 ) const = 0;
-};
-
-class ICylinder
-{
-public:
-	virtual CVector&	GetBase() = 0;
-	virtual float		GetRadius() = 0;
-	virtual float		GetHeight() = 0;
-	virtual void		Set( const CVector& oBase, float fRadius, float fHeight ) = 0;
-	virtual void		ComputeTangent( const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft ) = 0;
-	virtual bool		IsPointIntoCylinder( const CVector& oPoint ) const = 0;
 };
 
 class ICircle
@@ -107,7 +125,8 @@ public:
 	virtual ISphere*		CreateSphere( CVector& oCenter, float fRadius ) = 0;
 	virtual ISegment*		CreateSegment( const CVector& first, const CVector& last ) = 0;
 	virtual ISegment2D*		CreateSegment2D( const CVector2D& first, const CVector2D& last ) = 0;
-	virtual ICylinder*		CreateCylinder( const CVector& oBase, float fRadius, float fHeight ) = 0;
+	virtual ICylinder*		CreateCylinder() = 0;
+	virtual ICylinder*		CreateCylinder(const CMatrix& oTM, float fRadius, float fHeight) = 0;
 	virtual ICircle*		CreateCircle( const CVector2D& oCenter, float fRadius ) = 0;
 	virtual int				GetLastCreateBoxID() = 0;
 	virtual IBox*			GetBox( int nID ) const = 0;

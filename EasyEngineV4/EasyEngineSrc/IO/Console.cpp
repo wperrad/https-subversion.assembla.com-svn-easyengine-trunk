@@ -196,6 +196,14 @@ void CConsole::OnPressEnter()
 		AddString( "Erreur : " );
 		AddString( e.what() );
 	}
+	catch (CEException& e) {
+		string msg;
+		e.GetErrorMessage(msg);
+		Println(msg);
+	}
+	catch (exception& e) {
+		Println(e.what());
+	}
 
 
 }

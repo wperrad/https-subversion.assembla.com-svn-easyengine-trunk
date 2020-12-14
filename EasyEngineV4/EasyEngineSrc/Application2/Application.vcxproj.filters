@@ -48,9 +48,6 @@
     <ClInclude Include="..\..\Interfaces\IConsole.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Interfaces\ICore.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Interfaces\IDrawTool.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
@@ -112,6 +109,9 @@
       <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Interfaces\IPathFinder.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Interfaces\IHud.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,8 +10,8 @@ class CFreeCamera : public CCamera
 
 public:
 	CFreeCamera( float fFov );
-	void	Move( float fOffsetYaw, float fOffsetPitch, float fOffsetRoll, float fAvanceOffet, float fLeftOffset, float fUpOffset );
-	void	Colorize(float r, float g, float b, float a) {}
+	void				Move( float fOffsetYaw, float fOffsetPitch, float fOffsetRoll, float fAvanceOffet, float fLeftOffset, float fUpOffset );
+	void				Colorize(float r, float g, float b, float a) {}
 };
 
 

@@ -10,16 +10,20 @@
 #include "../Utils2/Dimension.h"
 #include "../Utils2/StringUtils.h"
 
+// Ressources
 #include "Mesh.h"
 #include "AnimatableMesh.h"
 #include "Animation.h"
 #include "Material.h"
 #include "Texture.h"
 #include "Light.h"
-#include "HierarchyMesh.h"
+#include "CollisionMesh.h"
 #include "Exception.h"
+
+// Interfaces
 #include "ILoader.h"
 #include "ISystems.h"
+#include "IGeometry.h"
 
 // stl
 #include <algorithm>
@@ -42,7 +46,7 @@ m_oSystemManager( oDesc.m_oSystemManager )
 	m_mRessourceCreation[ "ale" ] = CreateLight;
 	m_mRessourceCreation[ "tga" ] = CreateTexture;
 	m_mRessourceCreation[ "bmp" ] = CreateTexture;
-	m_mRessourceCreation[ "aho" ] = CreateHierarchyMesh;
+	m_mRessourceCreation[ "col" ] = CreateCollisionMesh;
 }
 
 
@@ -87,7 +91,7 @@ IRessource* CRessourceManager::GetRessource( const string& sRessourceFileName, I
 		pRessource = itFind->second;		
 	}
 	else
-	{		
+	{
 		pRessource = GetRessourceByExtension( sRessourceFileName, oRenderer );
 		if ( pRessource )
 		{
@@ -237,6 +241,14 @@ IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oD
 	return pAMesh;
 }
 
+IRessource* CRessourceManager::CreateCollisionMesh(string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer)
+{
+	ILoader::CCollisionModelInfos cmi;
+	pRessourceManager->m_oLoaderManager.Load(sFileName, cmi);
+	CCollisionMesh::Desc oDesc(oRenderer, cmi);
+	return new CCollisionMesh(oDesc);
+}
+
 IBone* CRessourceManager::LoadSkeleton( ILoader::CAnimatableMeshData& oData )
 {
 	IBone* pRoot = NULL;
@@ -361,18 +373,6 @@ IRessource* CRessourceManager::CreateAnimation( string sFileName, CRessourceMana
 	return static_cast< IAnimation* > ( pAnimation );
 }
 
-IRessource* CRessourceManager::CreateHierarchyMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer )
-{
-	CChunk chunk;
-	chunk.Add( &sFileName, "RessourceFileName" );
-	ILoader::CAnimationInfos ai;
-	pRessourceManager->m_oLoaderManager.Load( sFileName, ai );
-	CNode* pNode = static_cast<CNode*> (chunk.Get("RootNode"));
-	CHierarchyMesh::Desc desc( oRenderer, NULL );
-	desc.pRootNode = pNode;
-	CHierarchyMesh* pMesh = new CHierarchyMesh( desc );
-	return pMesh;
-}
 
 IRessource* CRessourceManager::CreateTexture( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer )
 {

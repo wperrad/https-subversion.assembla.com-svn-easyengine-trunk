@@ -159,13 +159,13 @@
     <ClInclude Include="..\..\Interfaces\ICameraManager.h" />
     <ClInclude Include="..\..\Interfaces\ICollisionManager.h" />
     <ClInclude Include="..\..\Interfaces\IConsole.h" />
-    <ClInclude Include="..\..\Interfaces\ICore.h" />
     <ClInclude Include="..\..\Interfaces\IDrawTool.h" />
     <ClInclude Include="..\..\Interfaces\IEntity.h" />
     <ClInclude Include="..\..\Interfaces\IEventDispatcher.h" />
     <ClInclude Include="..\..\Interfaces\IFileSystem.h" />
     <ClInclude Include="..\..\Interfaces\IGeometry.h" />
     <ClInclude Include="..\..\Interfaces\IGUIManager.h" />
+    <ClInclude Include="..\..\Interfaces\IHud.h" />
     <ClInclude Include="..\..\Interfaces\IPathFinder.h" />
     <ClInclude Include="..\..\Interfaces\IInputManager.h" />
     <ClInclude Include="..\..\Interfaces\ILoader.h" />

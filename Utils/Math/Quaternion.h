@@ -37,12 +37,12 @@ public:
 	CQuaternion		operator*=( float f ) const;
 	CQuaternion		operator/=( float f ) const;
 
-	void Store( CBinaryFileStorage& store ) const;
-	void Load( CBinaryFileStorage& store );
-	void Store( CAsciiFileStorage& store ) const;
-	void Load( CAsciiFileStorage& store );
-	void Store( CStringStorage& store ) const;
-	void Load( CStringStorage& store );
+	const IPersistantObject& operator >> (CBinaryFileStorage& store) const;
+	IPersistantObject& operator << (CBinaryFileStorage& store);
+	const IPersistantObject& operator >> (CAsciiFileStorage& store) const;
+	IPersistantObject& operator << (CAsciiFileStorage& store);
+	const IPersistantObject& operator >> (CStringStorage& store) const;
+	IPersistantObject& operator << (CStringStorage& store);
 
 	static void Slerp( const CQuaternion& qInitial, const CQuaternion& qFinal, float t, CQuaternion& qResult );
 	//static void	SlerpInvariantAxis( const CQuaternion& qInitial, const CQuaternion& qFinal, float t, CQuaternion& qResult );

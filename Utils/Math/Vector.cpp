@@ -182,35 +182,41 @@ void CVector::Lerp( const CVector& v1, const CVector& v2, float t, CVector& vOut
 	vOut.m_z = v1.m_z + ( v2.m_z - v1.m_z ) * t;
 }
 
-void CVector::Store( CBinaryFileStorage& store ) const
+const IPersistantObject& CVector::operator >> (CBinaryFileStorage& store) const
 {
 	store << m_x << m_y << m_z << m_w;
+	return *this;
 }
 
-void CVector::Load( CBinaryFileStorage& store )
+IPersistantObject& CVector::operator << (CBinaryFileStorage& store)
 {
 	store >> m_x >> m_y >> m_z >> m_w;
+	return *this;
 }
 
-void CVector::Store( CAsciiFileStorage& store ) const
+const IPersistantObject& CVector::operator >> (CAsciiFileStorage& store) const
 {
 	CStringStorage oString;
-	oString.SetWidth( 10 );
+	oString.SetWidth(10);
 	oString << *this;
 	store << oString.GetValue();
+	return *this;
 }
 
-void CVector::Load( CAsciiFileStorage& store )
+IPersistantObject& CVector::operator << (CAsciiFileStorage& store)
 {
+	return *this;
 }
 
-void CVector::Store( CStringStorage& store ) const
+const IPersistantObject& CVector::operator >> (CStringStorage& store) const
 {
 	store << "( " << m_x << ", " << m_y << ", " << m_z << ", " << m_w << " )";
+	return *this;
 }
 
-void CVector::Load( CStringStorage& store )
+IPersistantObject& CVector::operator << (CStringStorage& store)
 {
+	return *this;
 }
 
 CVector2D::CVector2D():

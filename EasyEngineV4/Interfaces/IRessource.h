@@ -139,6 +139,16 @@ public:
 };
 
 
+class ICollisionMesh : public IRessource
+{
+public:
+	ICollisionMesh(const IRessource::Desc& oDesc) : IRessource(oDesc) {}
+	virtual bool		IsCollide(IBox* pBox) = 0;
+	virtual IGeometry*	GetGeometry(int index) = 0;
+	virtual int			GetGeometryCount() const = 0;
+};
+
+
 class IRessourceManager : public CPlugin
 {
 protected:

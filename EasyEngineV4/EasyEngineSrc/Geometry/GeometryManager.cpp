@@ -62,9 +62,14 @@ ISegment* CGeometryManager::CreateSegment( const CVector& first, const CVector& 
 	return new CSegment( first, last );
 }
 
-ICylinder* CGeometryManager::CreateCylinder( const CVector& oBase, float fRadius, float fHeight )
+ICylinder* CGeometryManager::CreateCylinder()
 {
-	return new CCylinder( oBase, fRadius, fHeight );
+	return new CCylinder;
+}
+
+ICylinder* CGeometryManager::CreateCylinder( const CMatrix& oTM, float fRadius, float fHeight )
+{
+	return new CCylinder(oTM, fRadius, fHeight );
 }
 
 ICircle* CGeometryManager::CreateCircle( const CVector2D& oCenter, float fRadius )
