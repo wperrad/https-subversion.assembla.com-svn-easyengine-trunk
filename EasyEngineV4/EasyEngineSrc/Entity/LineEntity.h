@@ -4,6 +4,7 @@ class CLineEntity : public CShape
 {
 	CVector		m_oFirst;
 	CVector		m_oLast;
+	string		m_sEntityName;
 
 public:
 
@@ -12,4 +13,5 @@ public:
 	void				Set( const CVector& first, const CVector& last );
 	void				Update();
 	void				Colorize(float r, float g, float b, float a) {}
+	void				GetEntityName(string& sName);
 };

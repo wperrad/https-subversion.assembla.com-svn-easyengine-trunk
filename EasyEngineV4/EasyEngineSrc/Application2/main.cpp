@@ -35,7 +35,7 @@
 #include "IGeometry.h"
 #include "IPathFinder.h"
 
-#define CATCH_EXCEPTION
+//#define CATCH_EXCEPTION
 
 using namespace std;
 
@@ -100,20 +100,6 @@ CMatrix ident;
 bool m_bRenderScene = true;
 bool bCapture = false;
 
-//void TestScript()
-//{
-//	char pBuffer[ 256 ];
-//	FILE* pFile = m_pFileSystem->OpenFile( "script.txt", "r" );
-//	if( !pFile )
-//		MessageBox( NULL, "Fichier \"script.txt\" introuvable", "", MB_ICONERROR );
-//	else
-//	{
-//		unsigned int nSize = (unsigned int)fread( pBuffer, 1, 256, pFile );
-//		pBuffer[ nSize ] = 0;
-//		fclose( pFile );
-//		m_pScriptManager->ExecuteCommand( pBuffer );
-//	}
-//}
 
 void SetGUIMode( bool bGUI )
 {
@@ -239,6 +225,18 @@ void UpdatePerso()
 			{
 				pPerso->RunAction( "HitLeftFoot", false );
 			}
+
+			
+			ICamera* pLinkedCamera = m_pCameraManager->GetCameraFromType(ICameraManager::T_LINKED_CAMERA);
+			if (pLinkedCamera) {
+				IInputManager::TMouseButtonState eStateZoom = m_pActionManager->GetMouseActionState("Zoom");
+				if (eStateZoom == IInputManager::eMouseWheelUp)
+					pLinkedCamera->Zoom(1);
+				IInputManager::TMouseButtonState eStateUnzoom = m_pActionManager->GetMouseActionState("Unzoom");
+				if(eStateUnzoom == IInputManager::eMouseWheelDown)
+					pLinkedCamera->Zoom(-1);
+			}
+			
 			if( m_pCameraManager->GetCameraType( m_pCameraManager->GetActiveCamera() ) == ICameraManager::T_LINKED_CAMERA )
 			{
 				int x, y;
@@ -426,6 +424,8 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 		m_pActionManager->AddKeyAction( "AvancerPerso", 'T' );
 		m_pActionManager->AddKeyAction("SautPerso", ' ');
 		m_pActionManager->AddMouseAction( "HitLeftFoot", IInputManager::eMouseButtonLeft, IInputManager::eMouseButtonStateJustDown );
+		m_pActionManager->AddMouseAction("Zoom", IInputManager::eMouseWheel, IInputManager::eMouseWheelUp);
+		m_pActionManager->AddMouseAction("Unzoom", IInputManager::eMouseWheel, IInputManager::eMouseWheelDown);
 
 		m_pEventDispatcher->AbonneToWindowEvent( NULL, OnWindowEvent );
 		m_pInputManager->AbonneToKeyEvent( NULL, OnKeyAction );

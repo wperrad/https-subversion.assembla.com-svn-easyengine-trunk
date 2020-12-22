@@ -799,8 +799,6 @@ void CRenderer::EnableLight(unsigned int LightID)
 
 void CRenderer::DrawLine( const CVector& p1, const CVector& p2, const CVector& color )
 {
-	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentObjectMatrix;
-	LoadMatrix( oModelView );
 	glColor3f( color.m_x, color.m_y, color.m_z );
 	glBegin( GL_LINES );
 	glVertex3f( p1.m_x, p1.m_y, p1.m_z );
@@ -810,6 +808,9 @@ void CRenderer::DrawLine( const CVector& p1, const CVector& p2, const CVector& c
 
 void CRenderer::DrawBox( const CVector& oMinPoint, const CVector& oDimension )
 {
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentObjectMatrix;
+	LoadMatrix(oModelView);
+
 	CVector p0 = oMinPoint;
 	CVector p1 = oMinPoint + CVector( oDimension.m_x , 0, 0 );
 	CVector p2 = oMinPoint + CVector( oDimension.m_x , oDimension.m_y, 0 );

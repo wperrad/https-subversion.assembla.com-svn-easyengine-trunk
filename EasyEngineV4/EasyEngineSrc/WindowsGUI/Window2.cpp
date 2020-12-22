@@ -268,6 +268,12 @@ void CWindow2::CallCallback( CallbackArgs& args )
 			m_oEventDispatcher.DispatchMouseEvent( IEventDispatcher::T_MOVE, p.x, p.y );
 			break;
 		}
+	case WM_MOUSEWHEEL: 
+		{
+			int value = GET_WHEEL_DELTA_WPARAM(args.m_wParam) / WHEEL_DELTA;
+			m_oEventDispatcher.DispatchMouseEvent(IEventDispatcher::T_WHEEL, value, 0);
+		}
+		break;
 	case WM_CLOSE:
 		m_oEventDispatcher.DispatchWindowEvent( IEventDispatcher::T_WINDOWCLOSE, LOWORD( args.m_lParam ), HIWORD( args.m_lParam ) );
 		break;

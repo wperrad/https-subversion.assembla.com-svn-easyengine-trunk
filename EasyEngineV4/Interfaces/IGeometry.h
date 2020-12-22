@@ -7,6 +7,7 @@
 
 using namespace std;
 
+class IRenderer;
 
 class IWeightTable
 {
@@ -39,15 +40,17 @@ public:
 		eCylinder
 	};
 	
-	virtual bool				IsIntersect(const IBox& box) = 0;
+	virtual bool				IsIntersect(const IGeometry& oGeometry) const = 0;
 	virtual void				GetTM(CMatrix& m) const = 0;
 	virtual const CMatrix&		GetTM() const = 0;
-	virtual void				GetBase(CVector& oBase) = 0;	
+	//virtual void				GetBase(CVector& oBase) = 0;	
+	virtual const CVector&		GetBase() const = 0;
 	virtual float				ComputeBoundingSphereRadius() const = 0;
 	virtual IGeometry*			Duplicate() = 0;
 	virtual float				GetHeight() const = 0;
 	virtual void				Transform(const CMatrix& tm) = 0;
 	virtual float				GetDistance(const IGeometry& oGeometry) const = 0;
+	virtual void				Draw(IRenderer& oRenderer) const = 0;
 };
 
 class IBox : public IGeometry
@@ -70,7 +73,7 @@ public:
 	virtual void				Set( const CVector& oMinPoint, const CVector& oDimension ) = 0;
 	virtual void				SetWorldMatrix( const CMatrix& oMatrix ) = 0;
 	virtual void				GetPoints( vector< CVector >& vPoints ) = 0;
-	virtual void				GetCenter( CVector& oCenter ) const = 0;
+	virtual void				GetCenter( CVector& oCenter ) const = 0;	
 };
 
 class ICylinder : public IGeometry

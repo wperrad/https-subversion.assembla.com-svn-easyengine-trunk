@@ -57,10 +57,7 @@ public:
 	void			GetName(string& path);
 	void			GetFilePath(string& path);
 	int				GetID();
-	void			DeleteShadersAndProgram();
-
-	//void			Test();
-	
+	void			DeleteShadersAndProgram();	
 };
 
 #endif // SHADER_H

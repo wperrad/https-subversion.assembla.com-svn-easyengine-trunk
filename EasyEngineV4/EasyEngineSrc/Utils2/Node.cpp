@@ -10,7 +10,6 @@ m_nParentID( -1 ),
 m_bUpdateConstantLocalTranslate( false ),
 m_bUpdateConstantLocalRotate( false )
 {
-	m_sName = "Noname";
 }
 
 CNode::~CNode()
@@ -70,7 +69,7 @@ void CNode::Update()
   	 	CNode* pNode = m_vChild[i];
   		pNode->Update();
   	}
-}
+	}
 
 void CNode::UpdateWithoutChildren()
 {
@@ -179,7 +178,7 @@ void CNode::Roll(float fAngle)
 	m_oLocalMatrix = m_oLocalMatrix * CMatrix::GetzRotation( fAngle );
 }
 
-void CNode::SetWorldPosition( float x, float y, float z )
+void CNode::SetLocalPosition( float x, float y, float z )
 {
   	m_oLocalMatrix.m_03 = x;
   	m_oLocalMatrix.m_13 = y;
@@ -188,7 +187,22 @@ void CNode::SetWorldPosition( float x, float y, float z )
 
 void CNode::SetWorldPosition( const CVector& vPos )
 {
-	SetWorldPosition( vPos.m_x, vPos.m_y, vPos.m_z );
+	CMatrix invParent;
+	m_pParent->GetWorldMatrix().GetInverse(invParent);
+	CVector localPos = invParent * vPos;
+	m_oLocalMatrix.m_03 = localPos.m_x;
+	m_oLocalMatrix.m_13 = localPos.m_y;
+	m_oLocalMatrix.m_23 = localPos.m_z;
+}
+
+void CNode::SetWorldPosition(float x, float y, float z)
+{
+	SetWorldPosition(CVector(x, y, z));
+}
+
+void CNode::SetLocalPosition(const CVector& vPos)
+{
+	SetLocalPosition(vPos.m_x, vPos.m_y, vPos.m_z);
 }
 
 void CNode::GetWorldPosition( CVector& vPosition ) const
@@ -199,6 +213,20 @@ void CNode::GetWorldPosition( CVector& vPosition ) const
 	vPosition.m_w = m_oWorldMatrix.m_33;
 }
 
+float CNode::GetX()
+{
+	return m_oWorldMatrix.m_03;
+}
+
+float CNode::GetY()
+{
+	return m_oWorldMatrix.m_13;
+}
+
+float CNode::GetZ()
+{
+	return m_oWorldMatrix.m_23;
+}
 
 void CNode::SetName( const string& sName )
 {

@@ -27,8 +27,10 @@ public:
 	virtual void	Freeze( bool bFreeze ) = 0;
 	virtual void	Move( float fOffsetYaw, float fOffsetPitch, float fOffsetRoll, float fAvanceOffet, float fLeftOffset, float fUpOffset ) = 0;
 	virtual float	GetFov() = 0;
+	virtual void	Zoom(int value) = 0;
 
 #ifdef ENTITYCAMERA
+	/*
 	void				Update(){ CNode::Update(); }
 	void				DrawBoundingBox( bool bDraw ){}
 	void				SetShader( IShader* pShader ){}
@@ -55,8 +57,7 @@ public:
 	void				DrawBoneBoundingSphere( int nID, bool bDraw ){}
 	void				DrawAnimationBoundingBox( bool bDraw ){}
 	float				GetBoundingSphereRadius() const{ return 0.f; }
-	void				Goto( const CVector& oPosition, float fSpeed ){ throw 1; }
-	void				SetEntityName( string sName ){ throw 1; }
+	void				Goto( const CVector& oPosition, float fSpeed ){ throw 1; }	*/
 
 #endif // ENTITYCAMERA
 	

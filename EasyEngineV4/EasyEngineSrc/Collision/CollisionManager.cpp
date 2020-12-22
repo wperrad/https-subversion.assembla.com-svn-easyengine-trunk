@@ -663,7 +663,7 @@ void CCollisionManager::DisplayGrid()
 
 		IEntity* line = m_pEntityManager->CreateCylinder(lineWidth, m_fGroundWidth);
 		line->Link(m_pScene);
-		line->SetWorldPosition(first);
+		line->SetLocalPosition(first);
 		line->Roll(-90.f);
 		line->LocalTranslate(0, m_fGroundWidth / 2, 0);
 		line->Colorize(1, 0, 0, 1);
@@ -678,7 +678,7 @@ void CCollisionManager::DisplayGrid()
 
 		IEntity* line = m_pEntityManager->CreateCylinder(lineWidth, m_fGroundWidth);
 		line->Link(m_pScene);
-		line->SetWorldPosition(first);
+		line->SetLocalPosition(first);
 		line->Pitch(90.f);
 		line->LocalTranslate(0, m_fGroundWidth / 2, 0);
 		m_vGridElements.push_back(line);
@@ -693,7 +693,7 @@ void CCollisionManager::MarkBox(int row, int column, float r, float g, float b, 
 	IShader* pColorShader = m_oRenderer.GetShader("color");
 	pSphere->SetShader(pColorShader);
 	pSphere->Colorize(r, g, b, 0.5f);
-	pSphere->SetWorldPosition(x + m_fGridCellSize / 2, m_fGridHeight , z + m_fGridCellSize / 2);
+	pSphere->SetLocalPosition(x + m_fGridCellSize / 2, m_fGridHeight , z + m_fGridCellSize / 2);
 	pSphere->Link(m_pScene);
 	m_vGridElements.push_back(pSphere);
 }

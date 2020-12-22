@@ -19,3 +19,8 @@ IBox& CBoxEntity::GetBox()
 {
 	return m_oBox;
 }
+
+void CBoxEntity::GetEntityName(string& sName)
+{
+	sName = m_sEntityName;
+}

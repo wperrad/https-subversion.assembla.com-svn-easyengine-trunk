@@ -42,6 +42,7 @@ private:
 	bool													m_bEditionMode;
 	vector< int >											m_vLastKeyEvent;
 	map< int, bool >										m_mKeyPressed;
+	bool													m_bWheelConsumed;
 
 
 
@@ -50,6 +51,7 @@ private:
 	void													OnKeyRelease( unsigned int key );	
 	void													OnMouseMove( int x, int y );
 	void													OnMouseClick( TMouseButton b, TMouseButtonState s );
+	void													OnMouseWheel(int value);
 
 	static void					OnKeyEventCallback( CPlugin*, IEventDispatcher::TKeyEvent, int nKeyCode );
 	static void					OnMouseEventCallback( CPlugin*, IEventDispatcher::TMouseEvent e, int x, int y );

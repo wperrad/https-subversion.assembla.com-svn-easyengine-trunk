@@ -61,6 +61,7 @@ private:
 	int						GenStringFromRegExpr(std::string sExpr, std::string& sOut);
 	int						GenHookRegExpr(string sExpr, string& sOut);
 	void					InitStringToLexemTypeArray();
+	static void				ReadUntilEndComment(string sScript, unsigned int& startIndex, int& line);
 
 
 public:

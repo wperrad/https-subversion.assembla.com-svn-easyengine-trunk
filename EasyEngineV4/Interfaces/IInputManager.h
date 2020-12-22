@@ -46,7 +46,10 @@ public:
 		eMouseButtonStateNone = 0,
 		eMouseButtonStateUp,
 		eMouseButtonStateDown,
-		eMouseButtonStateJustDown
+		eMouseButtonStateJustDown,
+		eMouseWheelUp,
+		eMouseWheelDown,
+		eMouseWheelNone
 	};
 
 	typedef void( *TKeyCallback )( CPlugin*, unsigned int, KEY_STATE );

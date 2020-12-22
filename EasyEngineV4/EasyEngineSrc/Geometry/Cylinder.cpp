@@ -1,6 +1,8 @@
 #include "Cylinder.h"
 #include <math.h>
 #include "math/matrix.h"
+#include "Box.h"
+#include "IRenderer.h"
 
 CCylinder::CCylinder() :
 	m_fHeight(0),
@@ -67,7 +69,16 @@ bool CCylinder::IsPointIntoCylinder( const CVector& oPoint ) const
 	return true;
 }
 
-bool CCylinder::IsIntersect(const IBox& pBox)
+bool CCylinder::IsIntersect(const IGeometry& oGeometry) const
+{
+	const CBox* pBox = dynamic_cast<const CBox*>(&oGeometry);
+	if (pBox)
+		return IsIntersect(*pBox);
+	throw 1;
+	return false;
+}
+
+bool CCylinder::IsIntersect(const CBox& pBox) const
 {
 	throw 1;
 	return false;
@@ -120,9 +131,9 @@ float CCylinder::ComputeBoundingSphereRadius() const
 	return sqrtf(pow(m_fHeight / 2.f, 2) + pow(m_fRadius, 2));
 }
 
-void CCylinder::GetBase(CVector& oBase)
+const CVector& CCylinder::GetBase() const
 {
-	oBase = m_oTM.GetPosition();
+	return m_oTM.GetPosition();
 }
 
 IGeometry* CCylinder::Duplicate()
@@ -155,4 +166,9 @@ float CCylinder::GetDistance(const IBox& oBox) const
 float CCylinder::GetDistance(const ICylinder& oBox) const
 {
 	return -1.f;
+}
+
+void CCylinder::Draw(IRenderer& oRenderer) const
+{
+	throw 1;
 }

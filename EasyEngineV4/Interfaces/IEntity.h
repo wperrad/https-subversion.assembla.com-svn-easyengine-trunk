@@ -74,7 +74,7 @@ public:
 	virtual void				Update() = 0;
 	virtual void				DrawBoundingBox( bool bDraw ) = 0;
 	virtual void				SetShader( IShader* pShader ) = 0;
-	virtual IBox*				GetBBox() = 0;
+	virtual IGeometry*			GetBoundingGeometry() = 0;
 	virtual IRessource*			GetRessource() = 0;
 	virtual void				SetWeight( float fWeight ) = 0;
 	virtual float				GetWeight() = 0;
@@ -98,6 +98,7 @@ public:
 	virtual void				DrawAnimationBoundingBox( bool bDraw ) = 0;
 	virtual float				GetBoundingSphereRadius() const = 0;
 	virtual void				Goto( const CVector& oPosition, float fSpeed ) = 0;
+	virtual void				GetEntityName(string& sName) = 0;
 	virtual void				SetEntityName( string sName ) = 0;
 	virtual void				Colorize(float r, float g, float b, float a) = 0;
 };

@@ -43,6 +43,7 @@ m_bHeightMapCreated(true),
 m_pCollisionGrid(NULL)
 {
 	SetName( "Scene" );
+	SetEntityName("Scene");
 	m_pRessource = NULL;
 	m_pEntityManager = static_cast<CEntityManager*>(oDesc.m_pEntityManager);
 }
@@ -139,7 +140,7 @@ IEntity* CScene::Merge( string sRessourceName, string sEntityType, float x, floa
 {
 	IEntity* pEntity = m_pEntityManager->CreateEntity( sRessourceName, sEntityType, m_oRenderer );
 	pEntity->Link( this );
-	pEntity->SetWorldPosition( x, y, z );
+	pEntity->SetLocalPosition( x, y, z );
 	return pEntity;
 }
 
@@ -397,7 +398,8 @@ void CScene::Clear()
 
 float CScene::GetHeight( float x, float z )
 {
+	const float margin = 10.f;
 	if( m_nHeightMapID != -1 )
-		return m_oCollisionManager.GetMapHeight( m_nHeightMapID, x, z );
+		return m_oCollisionManager.GetMapHeight( m_nHeightMapID, x, z ) + margin;
 	return -1000000.f;
 }

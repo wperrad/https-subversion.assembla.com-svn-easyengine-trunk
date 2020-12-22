@@ -21,6 +21,7 @@ public:
 		T_LBUTTONUP,
 		T_RBUTTONDOWN,
 		T_RBUTTONUP,
+		T_WHEEL
 	};
 	enum TWindowEvent
 	{

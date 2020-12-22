@@ -182,6 +182,8 @@ void CBMELoader::LoadKeyBoundingBoxes( CBinaryFileStorage& fs, CMeshInfos& mi )
 		{
 			int iKeyIndex;
 			fs >> iKeyIndex;
+			int type = 0;
+			fs >> type;
 			IBox* pBox = m_oGeometryManager.CreateBox();
 			fs >> *pBox;
 			mi.m_oKeyBoundingBoxes[ sAnimationName ][ iKeyIndex ] = pBox;

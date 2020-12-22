@@ -1,4 +1,5 @@
 #include "box.h"
+#include "IRenderer.h"
 
 CBox::CBox():
 m_bInitialized( false )
@@ -89,9 +90,9 @@ float CBox::ComputeBoundingCylinderRadius( TAxis eGeneratorAxis ) const
 	return fRadius;
 }
 
-void CBox::GetBase(CVector& oBase)
+const CVector& CBox::GetBase() const
 {
-	oBase = m_oMinPoint;
+	return m_oMinPoint;
 }
 
 IGeometry* CBox::Duplicate()
@@ -113,7 +114,7 @@ void CBox::Transform(const CMatrix& tm)
 }
 
 
-bool CBox::TestBoxesCollisionIntoFirstBoxBase(const IBox& b1, const IBox& b2)
+bool CBox::TestBoxesCollisionIntoFirstBoxBase(const IBox& b1, const IBox& b2) const
 {
 	CMatrix b1Mat, b2Mat;
 	b1.GetTM(b1Mat);
@@ -389,9 +390,23 @@ float CBox::GetMaxz(const vector< CVector >& vPoints) const
 	return fMax;
 }
 
-bool CBox::IsIntersect(const IBox& box)
+bool CBox::IsIntersect(const CBox& box) const
 {
 	if (TestBoxesCollisionIntoFirstBoxBase(*this, box))
 		return TestBoxesCollisionIntoFirstBoxBase(box, *this);
 	return false;
+}
+
+bool CBox::IsIntersect(const IGeometry& box) const
+{
+	const CBox* pBox = dynamic_cast<const CBox*>(&box);
+	if (pBox)
+		return IsIntersect(*pBox);
+	throw 1;
+	return false;
+}
+
+void CBox::Draw(IRenderer& oRenderer) const
+{
+	oRenderer.DrawBox(m_oMinPoint, m_oDimension);
 }

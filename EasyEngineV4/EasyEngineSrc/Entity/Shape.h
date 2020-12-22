@@ -24,7 +24,7 @@ public:
 	void			GetRessourceFileName( string& sFileName );
 	void			DrawBoundingBox( bool bDraw );
 	void			SetShader( IShader* pShader );
-	IBox*			GetBBox(){ return NULL; }
+	IGeometry*		GetBoundingGeometry() { return NULL; }
 	IRessource*		GetRessource(){ return NULL; }
 	void			SetWeight( float fWeight ){}
 	float			GetWeight(){ return 0.f; }

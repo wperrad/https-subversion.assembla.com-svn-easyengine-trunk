@@ -62,6 +62,7 @@ public:
 	CMatrix				GetRotation();
 	CVector				GetPosition() const;
 	void				GetPosition(float &x, float &y, float &z) const;
+	void				GetPosition(CVector& pos) const;
 	CMatrix				GetxRotation();
 	CMatrix				GetyRotation();
 	CMatrix				GetzRotation();

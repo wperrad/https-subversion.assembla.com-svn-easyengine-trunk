@@ -40,7 +40,8 @@ m_bBlink( false ),
 m_nStaticTextID( -1 ),
 m_nConsoleShortCut( 0 ),
 m_bHasToUpdateStaticTest(false),
-m_bInputEnabled(true)
+m_bInputEnabled(true),
+m_nAutoCompletionLastIndexFound(-1)
 {
 	m_oInputManager.AbonneToKeyEvent( static_cast< CPlugin* > ( this ), OnKeyAction );
 	m_xPos = oDesc.xPos;
@@ -57,7 +58,6 @@ void CConsole::GetClipboardContent(string& text)
 {
 	// Try opening the clipboard
 	if (OpenClipboard(nullptr)) {
-
 		// Get handle of clipboard object for ANSI text
 		HANDLE hData = GetClipboardData(CF_TEXT);
 		if (hData != nullptr) {				
@@ -204,8 +204,12 @@ void CConsole::OnPressEnter()
 	catch (exception& e) {
 		Println(e.what());
 	}
+}
 
-
+void CConsole::InitCompletion()
+{
+	m_sCompletionPrefix = "";
+	m_nAutoCompletionLastIndexFound = -1;
 }
 
 void CConsole::OnKeyPress( unsigned char key )
@@ -216,6 +220,7 @@ void CConsole::OnKeyPress( unsigned char key )
 	string& sLine = m_vLines[ m_vLines.size() - 1 ];
 	if ( key == VK_BACK )
 	{
+		InitCompletion();
 		if ( sLine.size() > 0 && m_nCursorPos > 0 )
 		{
 			sLine.erase( sLine.begin() + m_nCursorPos - 1 );
@@ -226,6 +231,7 @@ void CConsole::OnKeyPress( unsigned char key )
 		OnPressEnter();
 	else if( key == VK_ESCAPE )
 	{
+		InitCompletion();
 		m_nCursorPos = 0;
 		sLine.clear();
 	}
@@ -267,6 +273,7 @@ void CConsole::OnKeyPress( unsigned char key )
 	}
 	else if( key == VK_DELETE )
 	{
+		InitCompletion();
 		sLine.erase( sLine.begin() + m_nCursorPos );
 	}
 	else if ( key != VK_SHIFT && key != VK_CONTROL && key != VK_MENU && key != m_nConsoleShortCut)
@@ -274,7 +281,7 @@ void CConsole::OnKeyPress( unsigned char key )
 		IInputManager::KEY_STATE LCtrlPressed = m_oInputManager.GetKeyState( VK_CONTROL );
 		unsigned char c = 0;
 		if (LCtrlPressed == IInputManager::JUST_PRESSED || LCtrlPressed == IInputManager::PRESSED) {
-			if (m_oInputManager.GetKeyState(VK_SPACE) == IInputManager::JUST_PRESSED)			
+			if (m_oInputManager.GetKeyState(VK_SPACE) == IInputManager::JUST_PRESSED)
 				ManageAutoCompletion();
 			else if (key == 'V') {
 				string text;
@@ -290,6 +297,7 @@ void CConsole::OnKeyPress( unsigned char key )
 			unsigned short ch;
 			ToAscii(key, MapVirtualKey(key, MAPVK_VK_TO_VSC), kbs, &ch, 0);
 			c = char(ch);
+			InitCompletion();
 		}
 		if ( c != 0 )
 		{
@@ -303,34 +311,35 @@ void CConsole::ManageAutoCompletion()
 {
 	vector< string > vFuncNames;
 	m_oScriptManager.GetRegisteredFunctions( vFuncNames );
-	string sBegin = m_vLines[ m_vLines.size() - 1 ];
-	string sBeginLow = sBegin;
-	transform( sBegin.begin(), sBegin.end(), sBeginLow.begin(), tolower );
+	if (m_sCompletionPrefix.empty()) {
+		string sBegin = m_vLines[m_vLines.size() - 1];
+		string sBeginLow = sBegin;
+		transform(sBegin.begin(), sBegin.end(), sBeginLow.begin(), tolower);
+		m_sCompletionPrefix = sBeginLow;
+	}
 	bool bFind = false;
-	int nIndiceFind = -1;
-	for( int i = 0; i < vFuncNames.size(); i++ )
-	{
+	int i = m_nAutoCompletionLastIndexFound + 1;
+	for( i ; i < vFuncNames.size(); i++ ) {
 		string sFuncNameLow = vFuncNames[ i ];
 		transform( vFuncNames[ i ].begin(), vFuncNames[ i ].end(), sFuncNameLow.begin(), tolower );
-		if( sFuncNameLow.find( sBeginLow ) == 0 )
-		{
-			if( bFind )
-			{
+		if( sFuncNameLow.find(m_sCompletionPrefix) == 0 ) {
+			if( bFind )	{
 				bFind = false;
 				break;
 			}
-			else
-			{
+			else {
 				bFind = true;
-				nIndiceFind = i;
+				m_nAutoCompletionLastIndexFound = i;
+				break;
 			}
 		}
 	}
-	if( bFind )
-	{
-		m_vLines[ m_vLines.size() - 1 ] = vFuncNames[ nIndiceFind ];
+	if( bFind )	{
+		m_vLines[ m_vLines.size() - 1 ] = vFuncNames[m_nAutoCompletionLastIndexFound];
 		m_nCursorPos = m_vLines[ m_vLines.size() - 1 ].size();
 	}
+	if (i == vFuncNames.size())
+		m_nAutoCompletionLastIndexFound = -1;
 }
 
 void CConsole::OnKeyRelease( unsigned char key )
@@ -403,12 +412,28 @@ void CConsole::Print( string s )
 	
 }
 
+void CConsole::Print(int i)
+{
+	ostringstream oss;
+	oss << i;
+	Println(oss.str());
+	Print(oss.str());
+}
+
 void CConsole::Println(string s)
 {
 	Print(s);
 	m_bHasToUpdateStaticTest = true;
 	NewLine();
 }
+
+void CConsole::Println(int i)
+{
+	ostringstream oss;
+	oss << i;
+	Println(oss.str());
+}
+
 
 int CConsole::GetConsoleShortCut()
 {

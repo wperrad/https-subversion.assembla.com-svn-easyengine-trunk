@@ -401,6 +401,12 @@ void CMatrix::GetPosition(float &x, float &y, float &z) const
 	z = m_23;
 }
 
+void CMatrix::GetPosition(CVector& pos) const
+{
+	pos.m_x = m_03;
+	pos.m_y = m_13;
+	pos.m_z = m_23;
+}
 
 void CMatrix::SetPosition( float x, float y, float z )
 {

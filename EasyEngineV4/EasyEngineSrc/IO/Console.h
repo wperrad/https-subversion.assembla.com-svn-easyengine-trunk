@@ -42,6 +42,10 @@ class CConsole : public IConsole
 	bool											m_bBlink;
 	int												m_nStaticTextID;
 	int												m_nConsoleShortCut;
+	bool											m_bHasToUpdateStaticTest;
+	bool											m_bInputEnabled;
+	int												m_nAutoCompletionLastIndexFound;
+	string											m_sCompletionPrefix;
 
 	void											OnKeyPress( unsigned char key );
 	void											OnKeyRelease( unsigned char key );
@@ -51,11 +55,9 @@ class CConsole : public IConsole
 	unsigned int									ComputePixelCursorPos();
 	void											ManageAutoCompletion();
 	void											UpdateBlink( int nFontHeight );
-	void											OnPressEnter();	
-	bool											m_bHasToUpdateStaticTest;
-	bool											m_bInputEnabled;
-
+	void											OnPressEnter();
 	void											GetClipboardContent(string& text);
+	void											InitCompletion();
 	
 	static void										OnKeyAction( CPlugin*, unsigned int key, IInputManager::KEY_STATE );	
 
@@ -73,7 +75,9 @@ public:
 	void											Cls();
 	void											Open( bool bOpen );
 	void											Print(string s);
+	void											Print(int i);
 	void											Println(string s);
+	void											Println(int i);
 	void											Print2D(string s);
 	void											SetBlink( bool blink );
 	int												GetConsoleShortCut();

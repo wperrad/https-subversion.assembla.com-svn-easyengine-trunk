@@ -50,8 +50,10 @@ public:
 	virtual void                LocalTranslate( const CVector& vTranslate );
 	virtual void				WorldTranslate( float dx , float dy , float dz );
 	virtual void				WorldTranslate( const CVector& vTranslate );
-  	void                		SetWorldPosition(float x, float y , float z);
-	void                		SetWorldPosition( const CVector& vPos );
+  	void                		SetLocalPosition(float x, float y , float z);
+	void                		SetLocalPosition( const CVector& vPos );
+	void                		SetWorldPosition(float x, float y, float z);
+	void                		SetWorldPosition(const CVector& vPos);
 	virtual void				GetWorldPosition( CVector& vPosition ) const;
 	virtual void				SetLocalMatrix( const CMatrix& oMat );
 	virtual void				SetWorldMatrix( const CMatrix& oMat );
@@ -77,6 +79,9 @@ public:
 	virtual void				ConstantLocalRotate( const CVector& vRotation );
 	virtual void				ConstantLocalTranslate( const CVector& vTranslate );
 	virtual float				GetDistance( CNode* pNode );
+	float						GetX();
+	float						GetY();
+	float						GetZ();
 };
 
 #endif  //NODE_H
