@@ -111,11 +111,8 @@ void SetFov( IScriptState* pState )
 
 void print(IScriptState* pState)
 {
-	CScriptFuncArgString* pVarName = (CScriptFuncArgString*)pState->GetArg(0);
-	int val = m_pScriptManager->GetVariableValue(pVarName->m_sValue);
-	char msg[16];
-	sprintf(msg, "%d", val);
-	m_pConsole->Println(msg);
+	CScriptFuncArgInt* pInt = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
+	m_pConsole->Println(pInt->m_nValue);
 }
 
 void SetEntityName( IScriptState* pState )
@@ -215,7 +212,8 @@ void Test( IScriptState* pState )
 	CMatrix m2 = CMatrix::GetxRotation(-90.f);
 	m2.SetAffinePart(v);
 	pEntity->SetLocalMatrix(m2);
-	//pEntity->Pitch(-90.f);
+
+	pEntity->SetLocalPosition(0, 2000, 6000);
 }
 
 void Test2(IScriptState* pState)
@@ -796,7 +794,86 @@ void SetZCollisionError( IScriptState* pState )
 	m_pEntityManager->SetZCollisionError( pEpsilon->m_fValue );
 }
 
-void Link( IScriptState* pState )
+void GetNodeId(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEntityId = (CScriptFuncArgInt*)pState->GetArg(0);
+	CScriptFuncArgString* pNodeName = (CScriptFuncArgString*)pState->GetArg(1);
+
+	IEntity* pEntity = m_pEntityManager->GetEntity(pEntityId->m_nValue);
+	if (pEntity && pEntity->GetSkeletonRoot()) {
+		IBone* pBone = dynamic_cast<IBone*>(pEntity->GetSkeletonRoot()->GetChildBoneByName(pNodeName->m_sValue));
+		if (pBone) {
+			pState->SetReturnValue(pBone->GetID());
+		}		
+	}
+}
+
+void LinkToName(IScriptState* pState)
+{
+	CScriptFuncArgInt* pIDEntity1 = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
+	CScriptFuncArgInt* pIDNode1 = static_cast< CScriptFuncArgInt* >(pState->GetArg(1));
+	CScriptFuncArgInt* pIDEntity2 = static_cast< CScriptFuncArgInt* >(pState->GetArg(2));
+	CScriptFuncArgString* pIDNode2 = static_cast< CScriptFuncArgString* >(pState->GetArg(3));
+	CScriptFuncArgString* pLinkType = static_cast< CScriptFuncArgString* >(pState->GetArg(4));
+
+	IEntity* pEntity1 = m_pEntityManager->GetEntity(pIDEntity1->m_nValue);
+	if (pEntity1)
+	{
+		CNode* pNode1 = NULL;
+		bool bEntity1 = false;
+		bool bBone2 = false;
+		IBone* pBone2 = NULL;
+		if (pIDNode1->m_nValue != -1)
+			pNode1 = pEntity1->GetSkeletonRoot()->GetChildBoneByID(pIDNode1->m_nValue);
+		else
+		{
+			pNode1 = pEntity1;
+			bEntity1 = true;
+		}
+
+		if (pIDEntity2->m_nValue == -1)
+			pNode1->Unlink();
+		else
+		{
+			IEntity* pEntity2 = m_pEntityManager->GetEntity(pIDEntity2->m_nValue);
+			CNode* pNode2 = NULL;
+			if (!pIDNode2->m_sValue.empty())
+			{
+				IBone* pSkeletonRoot = pEntity2->GetSkeletonRoot();
+				if (pSkeletonRoot)
+				{
+					pNode2 = pSkeletonRoot->GetChildBoneByName(pIDNode2->m_sValue);
+					pBone2 = dynamic_cast< IBone* >(pNode2);
+					if (pBone2)
+						bBone2 = true;
+				}
+				else
+				{
+					ostringstream oss;
+					oss << "Erreur : l'entité " << pIDEntity2->m_nValue << " ne possède pas de squelette";
+					m_pConsole->Println(oss.str());
+					return;
+				}
+			}
+			else
+				pNode2 = pEntity2;
+
+			if (bEntity1 && bBone2)
+			{
+				IEntity::TLinkType t;
+				if (pLinkType->m_sValue == "preserve")
+					t = IEntity::ePreserveChildRelativeTM;
+				else if (pLinkType->m_sValue == "settoparent")
+					t = IEntity::eSetChildToParentTM;
+				pEntity2->LinkEntityToBone(pEntity1, pBone2, t);
+			}
+			else
+				pNode1->Link(pNode2);
+		}
+	}
+}
+
+void LinkToId( IScriptState* pState )
 {
 	CScriptFuncArgInt* pIDEntity1 = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	CScriptFuncArgInt* pIDNode1 = static_cast< CScriptFuncArgInt* >( pState->GetArg( 1 ) );
@@ -1179,7 +1256,7 @@ void SetReperePos( IScriptState* pState )
 	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
-	m_pRepere->SetWorldPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
+	m_pRepere->SetLocalPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
 }
 
 void RunScript( string sFileName )
@@ -1635,31 +1712,16 @@ void SetEntityShader( IScriptState* pState )
 void DisplayNodeInfos( CNode* pNode, int nLevel = 0 )
 {
 	IEntity* pEntity = dynamic_cast< IEntity* >( pNode );
-	if( pEntity )
-	{
-		
-		ostringstream sLine;
+	if( pEntity ) {
+		ostringstream sLine;		
 		for( int j = 0; j < nLevel; j++ )
 			sLine << "\t";
 		string sEntityName;
-		pEntity->GetName( sEntityName );
-		sLine << "Entity name = " << sEntityName << ", ";
-		IRessource* pRessource = pEntity->GetRessource();
-		if( pRessource )
-		{
-			string sRessourceFileName;
-			pRessource->GetFileName( sRessourceFileName );
-			if( sRessourceFileName.size() > 0 )
-				sLine << sRessourceFileName;
-			sLine << ", ID = " << m_pEntityManager->GetEntityID( pEntity );
-			m_pConsole->Println( sLine.str() );
-		}
-		else
-		{
-			IEntity* pRepere = dynamic_cast< IEntity* >( pRessource );
-			if( pRepere )
-				m_pConsole->Println( "Repere" );
-		}
+		pEntity->GetEntityName(sEntityName);
+		if (sEntityName.empty())
+			pEntity->GetName(sEntityName);
+		sLine << "Entity name = " << sEntityName << ", ID = " << m_pEntityManager->GetEntityID(pEntity);
+		m_pConsole->Println(sLine.str());
 		CNode* pSkeleton = pEntity->GetSkeletonRoot();
 		if( pSkeleton )
 			DisplayNodeInfos( pSkeleton );
@@ -1700,16 +1762,17 @@ void DisplayBBox( IScriptState* pState )
 	pEntity->DrawBoundingBox( bDraw );
 }
 
-void DisplayBBoxInfos( IScriptState* pState )
+void DisplayBBoxInfos(IScriptState* pState)
 {
-	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
-	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
-	IBox* pBox = pEntity->GetBBox();
-	ostringstream oss;
-	oss << "Dimensions : ( " << pBox->GetDimension().m_x << ", " << pBox->GetDimension().m_y << ", " << pBox->GetDimension().m_z << ")  "
-		<< " min point : " << pBox->GetMinPoint().m_x << ", " << pBox->GetMinPoint().m_y << ", " << pBox->GetMinPoint().m_z << ")";
-	m_pConsole->Println( oss.str() );
-	delete pBox;
+	CScriptFuncArgInt* pID = static_cast<CScriptFuncArgInt*>(pState->GetArg(0));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pID->m_nValue);
+	IBox* pBox = dynamic_cast<IBox*>(pEntity->GetBoundingGeometry());
+	if (pBox) {
+		ostringstream oss;
+		oss << "Dimensions : ( " << pBox->GetDimension().m_x << ", " << pBox->GetDimension().m_y << ", " << pBox->GetDimension().m_z << ")  "
+			<< " min point : " << pBox->GetMinPoint().m_x << ", " << pBox->GetMinPoint().m_y << ", " << pBox->GetMinPoint().m_z << ")";
+		m_pConsole->Println(oss.str());
+	}
 }
 
 void DisplayBkgColor( IScriptState* pState )
@@ -1746,7 +1809,7 @@ void SetCamPos( IScriptState* pState )
 	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
-	m_pCameraManager->GetActiveCamera()->SetWorldPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
+	m_pCameraManager->GetActiveCamera()->SetLocalPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
 }
 
 void SetEntityPos( IScriptState* pState )
@@ -1757,7 +1820,7 @@ void SetEntityPos( IScriptState* pState )
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 3 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
 	if (pEntity)
-		pEntity->SetWorldPosition(px->m_fValue, py->m_fValue, pz->m_fValue);
+		pEntity->SetLocalPosition(px->m_fValue, py->m_fValue, pz->m_fValue);
 	else
 		m_pConsole->Println("Identifiant invalide");
 }
@@ -2438,7 +2501,15 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back( eInt );
 	vType.push_back( eInt );
 	vType.push_back( eString );
-	m_pScriptManager->RegisterFunction( "Link", Link, vType );
+	m_pScriptManager->RegisterFunction( "LinkToId", LinkToId, vType );
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eInt);
+	vType.push_back(eInt);
+	vType.push_back(eString);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("LinkToName", LinkToName, vType);
 
 	vType.clear();
 	vType.push_back( eFloat );
@@ -2612,7 +2683,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetFov", SetFov, vType );
 
 	vType.clear();
-	vType.push_back(eString);
+	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("print", print, vType);
 
 	vType.clear();
@@ -2688,5 +2759,8 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("OpenConsole", OpenConsole, vType);
 
-
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("GetNodeId", GetNodeId, vType);
 }

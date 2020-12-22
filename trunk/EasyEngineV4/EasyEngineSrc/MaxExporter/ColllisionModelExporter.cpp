@@ -118,16 +118,6 @@ void CollisionModelExporter::StoreCylinderInfos(INode* pMesh, ICylinder& cylinde
 	MaxMatrixToEngineMatrix(pMesh->GetObjectTM(0), tm);
 
 	cylinder.Set(tm, (box.Max().x - box.Min().x) / 2.f, box.Max().z - box.Min().z);
-	
-	/*
-	cylinder.m_fHeight = box.Max().z - box.Min().z;
-	cylinder.m_fRadius = (box.Max().x - box.Min().x) / 2.f;	
-	ci.m_oXForm = tm;*/
-
-	/*
-	Object* pObject = pMesh->EvalWorldState(0).obj;
-	GenCylinder* pCylinder = dynamic_cast< GenCylinder* > (pObject->ConvertToType(0, Class_ID(CYLINDER_CLASS_ID, 0)));
-	}*/
 }
 
 void ConvertPoint3ToCVector(const Point3& p, CVector& v)
@@ -143,9 +133,22 @@ void CollisionModelExporter::StoreBoxInfos(INode* pMesh, IBox& box)
 	Mesh& mesh = GetMeshFromNode(pMesh);
 	Box3 bbox = mesh.getBoundingBox();
 	CMatrix tm;
-	MaxMatrixToEngineMatrix(pMesh->GetObjectTM(0), tm);	
+	MaxMatrixToEngineMatrix(pMesh->GetObjectTM(0), tm);
+	CMatrix m = m_oMaxToOpenglMatrix * tm, mInv;
+	CVector boxMin(bbox.Min().x, bbox.Min().y, bbox.Min().z);
+	CVector boxDim;
+	ConvertPoint3ToCVector(bbox.Max() - bbox.Min(), boxDim);
+	
 	CVector dim;
-	ConvertPoint3ToCVector(bbox.Max() - bbox.Min(), dim);
-	box.Set(CVector(bbox.Min().x, bbox.Min().y, bbox.Min().z), dim);
+	dim.m_x = boxDim.m_x;
+	float h = boxDim.m_y;
+	dim.m_y = boxDim.m_z;
+	dim.m_z = h;
+	
+	CVector vMin(boxMin.m_x, boxMin.m_z - dim.m_y/2.f, boxMin.m_y);
+	box.Set(vMin, dim);
+	float temp = tm.m_13;
+	tm.m_13 = tm.m_23 + dim.m_y / 2.f;
+	tm.m_23 = temp;
 	box.SetWorldMatrix(tm);
 }

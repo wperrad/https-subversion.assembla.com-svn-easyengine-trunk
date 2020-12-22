@@ -125,7 +125,6 @@ void CRenderUtils::IndexGeometry( vector< unsigned int >& vIndexArray, vector< f
 					vWrongIndex.push_back( i );
 			}
 		}
-		int test = 0;
 		// fin test
 
 		std::copy( vIndexArray.begin(), vIndexArray.end(), vUVIndexArray.begin() );

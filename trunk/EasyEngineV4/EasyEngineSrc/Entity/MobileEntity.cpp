@@ -88,14 +88,8 @@ void CMobileEntity::OnCollision(CEntity* pThis, CEntity* pEntity)
 {
 	IMesh* pMesh = static_cast<IMesh*>(pThis->GetRessource());
 	ICollisionMesh* pCollisionMesh = pEntity ? pEntity->GetCollisionMesh() : NULL;
-	if (pCollisionMesh) {
-		CMatrix tm, tmInv, tmMobile;
-		pEntity->GetWorldMatrix(tm);
-		tm.GetInverse(tmInv);
-		pThis->GetWorldMatrix(tmMobile);
-		pThis->SetLocalMatrix(tmInv * tmMobile );
-		pThis->Link(pEntity);
-	}
+	if (pCollisionMesh)
+		pThis->LinkAndUpdateMatrices(pEntity);
 }
 
 void CMobileEntity::UpdateCollision()
@@ -103,29 +97,30 @@ void CMobileEntity::UpdateCollision()
 	m_oBody.Update();
 	if (m_oBody.m_fWeight > 0.f)
 	{
-		if (m_pScene)
+		CVector oTransformedBoxPosition = m_oLocalMatrix.GetRotation() * m_oScaleMatrix * m_pBoundingGeometry->GetBase();
+		float h = GetHeight();
+		float x , y, z;
+
+		if (!m_bUsePositionKeys)
+			m_oLocalMatrix.GetPosition(x, y, z);
+		else
 		{
-			CVector oBase;
-			m_pBoundingGeometry->GetBase(oBase);
-			CVector oTransformedBoxPosition = m_oLocalMatrix.GetRotation() * m_oScaleMatrix * oBase;
-			float h = GetHeight();
-			float x , y, z;
-
-			if (!m_bUsePositionKeys)
-				m_oLocalMatrix.GetPosition(x, y, z);
-			else
-			{
-				CMatrix oSkeletonRootMatrix;
-				m_pSkeletonRoot->GetLocalMatrix(oSkeletonRootMatrix);
-				CMatrix oSkeletonOffset = m_oFirstAnimationFrameSkeletonMatrixInv * oSkeletonRootMatrix;
-				CMatrix oComposedMatrix = oSkeletonOffset * m_oLocalMatrix;
-				x = oComposedMatrix.m_03;
-				z = oComposedMatrix.m_23;
-			}
-
-			int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
-			LocalTranslate(0.f, 0.f, m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f);
+			CMatrix oSkeletonRootMatrix;
+			m_pSkeletonRoot->GetLocalMatrix(oSkeletonRootMatrix);
+			CMatrix oSkeletonOffset = m_oFirstAnimationFrameSkeletonMatrixInv * oSkeletonRootMatrix;
+			CMatrix oComposedMatrix = oSkeletonOffset * m_oLocalMatrix;
+			x = oComposedMatrix.m_03;
+			z = oComposedMatrix.m_23;
 		}
+
+		int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
+		LocalTranslate(0.f, 0.f, m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f);
+		CEntity* pParentEntity = static_cast<CEntity*>(m_pParent);
+		if(!TestEntityCollision(pParentEntity)) {
+			CEntity* pEntity = static_cast<CEntity*>(m_pParent->GetParent());
+			if (pEntity)
+				LinkAndUpdateMatrices(pEntity);
+		}		
 	}
 }
 

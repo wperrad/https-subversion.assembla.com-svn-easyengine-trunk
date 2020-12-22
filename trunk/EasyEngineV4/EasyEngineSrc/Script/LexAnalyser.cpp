@@ -55,6 +55,9 @@ void CLexAnalyser::GetLexemArrayFromScript( string sScript, vector< CLexem >& vL
 		int nCurrentState = 0;
 		while ( !bFinalState )
 		{
+			if (sScript[i] == '/' && sScript[i + 1] == '*')
+				ReadUntilEndComment(sScript, i, iLine);
+
 			if( sScript[ i ] == '\n' )
 			{
 				iLine++;
@@ -109,6 +112,16 @@ void CLexAnalyser::GetLexemArrayFromScript( string sScript, vector< CLexem >& vL
 		if( bEnd )
 			return;
 	}
+}
+
+void CLexAnalyser::ReadUntilEndComment(string sScript, unsigned int& startIndex, int& line)
+{
+	while (startIndex < sScript.size() && !(sScript[startIndex] == '*' && sScript[startIndex + 1] == '/') ) {
+		startIndex++;
+		if(sScript[startIndex] == '\n')
+			line++;
+	}
+	startIndex += 2;
 }
 
 void CLexAnalyser::CalculStateCount( CCSVReader& r )

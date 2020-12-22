@@ -1,12 +1,14 @@
+OpenConsole(0);
+
 SetBkgColor(0, 100, 255);
 SetSceneMap("ground005");
 
-l=AddLightw("omni", 4000);
-SetEntityPos(l, 0, 10000, 55000);
+light=AddLightw("omni", 4000);
+SetEntityPos(light, 0, 45000, 20000);
+
 
 l=AddLightw("omni", 75000);
 SetEntityPos(l, 0, 75000, -260000);
-
 
 
 perso=CreateMobileEntity("testExport14");
@@ -17,21 +19,21 @@ SetAnimationSpeed(perso, "run", 1.5);
 
 
 a = LoadEntity("Armors\2\Armure2_cuirasse");
-Link(a, -1, perso, 3, "preserve");
+LinkToName(a, -1, perso, "Cervicales", "preserve");
 a = LoadEntity("Armors\2\Armure2_jupe");
-Link(a, -1, perso, 1, "preserve");
+LinkToName(a, -1, perso, "Bassin", "preserve");
 a = LoadEntity("Armors\2\Armure2_JambiereD");
-Link(a, -1, perso, 44, "preserve");
+LinkToName(a, -1, perso, "TibiasD", "preserve");
 a = LoadEntity("Armors\2\Armure2_JambiereG");
-Link(a, -1, perso, 49, "preserve");
+LinkToName(a, -1, perso, "TibiasG", "preserve");
 a = LoadEntity("Armors\2\Armure2_BrassiereD");
-Link(a, -1, perso, 9, "preserve");
+LinkToName(a, -1, perso, "AvantBrasD", "preserve");
 a = LoadEntity("Armors\2\Armure2_BrassiereG");
-Link(a, -1, perso, 27, "preserve");
+LinkToName(a, -1, perso, "AvantBrasG", "preserve");
 a = LoadEntity("Armors\2\Armure2_EpauletteD");
-Link(a, -1, perso, 7, "preserve");
+LinkToName(a, -1, perso, "EpauleD", "preserve");
 a = LoadEntity("Armors\2\Armure2_EpauletteG");
-Link(a, -1, perso, 25, "preserve");
+LinkToName(a, -1, perso, "EpauleG", "preserve");
 
 SetCameraType("link");
 SetFov(60);
@@ -40,30 +42,32 @@ c = GetCameraID("link");
 
 RollEntity(c, 180);
 PitchEntity(c, 75);
-LocalTranslate(c, 0, 90, 450);
+LocalTranslate(c, 0, 30, 350);
 
 
-p = CreateNPC("testExport14");
-Stand(p);
-SetEntityPos(p, -200, 1000, 1000);
-SetEntityName(p, "NPC1");
 
-p = CreateNPC("testExport14");
-Stand(p);
-SetEntityPos(p, 2000, 0, 0);
-SetEntityName(p, "NPC2");
+npc1 = CreateNPC("testExport14");
+Stand(npc1);
+SetEntityPos(npc1, -200, 1000, 1000);
+SetEntityName(npc1, "NPC1");
 
-p = LoadEntity("maison");
-SetEntityName(p, "maison1");
-SetEntityWeight(p, 1);
-SetEntityPos(p, 2000, 5000, 2000);
+npc2 = CreateNPC("testExport14");
+Stand(npc2);
+SetEntityPos(npc2, 2000, 0, 0);
+SetEntityName(npc2, "NPC2");
 
-p = LoadEntity("maison");
-SetEntityName(p, "maison2");
-SetEntityWeight(p, 1);
-SetEntityPos(p, 13000, 2000, -4000);
+maison1 = LoadEntity("maison");
+SetEntityName(maison1, "maison1");
+SetEntityWeight(maison1, 1);
+SetEntityPos(maison1, 2000, 5000, 2000);
 
-temple=LoadEntity("parthenon.bme");
+maison2 = LoadEntity("maison");
+SetEntityName(maison2, "maison2");
+SetEntityWeight(maison2, 1);
+SetEntityPos(maison2, 13000, 2000, -4000);
+
+
+temple=LoadEntity("parthenon2.bme");
 SetEntityPos(temple, 0, 5000, 10000);
 SetEntityWeight(temple, 10);
 SetEntityName(temple, "Parthenon");

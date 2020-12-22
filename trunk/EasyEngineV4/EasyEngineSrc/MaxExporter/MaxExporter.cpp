@@ -63,6 +63,8 @@ m_bOpenglCoord(true)
 	m_pFileSystem = static_cast< IFileSystem* >(CPlugin::Create(oFSDesc, "stdplugs\\EasyEngine\\FileUtils.dll", "CreateFileSystem"));
 	ILoaderManager::Desc oLDesc(*m_pFileSystem, *m_pGeometryManager);
 	m_pLoaderManager = static_cast< ILoaderManager* >(CPlugin::Create(oLDesc, "stdplugs\\EasyEngine\\Loader.dll", "CreateLoaderManager"));
+
+	m_oMaxToOpenglMatrix = CMatrix(-1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
 }
 
 CMaxExporter::~CMaxExporter()

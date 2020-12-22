@@ -26,3 +26,8 @@ void CLineEntity::Set( const CVector& first, const CVector& last )
 	m_oFirst = first;
 	m_oLast = last;
 }
+
+void CLineEntity::GetEntityName(string& sName)
+{
+	sName = m_sEntityName;
+}

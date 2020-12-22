@@ -5,6 +5,7 @@ CLightEntity::CLightEntity( IRessource* pLight, IRessourceManager& oRessourceMan
 CEntity( oRessourceManager, oRenderer, NULL, oGeometryManager, oCollisionManager )
 {	
 	m_pRessource = pLight;
+	SetEntityName("Light");
 }
 
 CLightEntity::~CLightEntity()

@@ -392,12 +392,7 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 				mi.m_vIndex.push_back( oMesh.faces[ iFace ].v[ iIndex ] );
 		}
 	}
-	if( m_bExportBBoxAtKey && pWeightTable && pWeightTable->GetVertexCount() > 0 )
-		//GetBoundingBoxAtKey( pInterface, mi.m_vVertex, mi.m_vIndex, *pWeightTable, mi.m_oKeyBoundingBoxes );
-	{
-		CEException e( "L'export des bounding box par clé d'animation n'est pas gérée par l'exporteur max, vous pouvez utiliser cette fonctionnalité dans EasyEngine." );
-		throw e;
-	}
+
 	GetFacesMtlArray( oMesh, mi.m_vFaceMaterialID );
 	GetNormals( oMesh, mi.m_vNormalFace, mi.m_vNormalVertex );
 	if ( bIsTextured )
@@ -505,6 +500,18 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	m_nMaterialCount = 0;
 	m_bMultipleSmGroup = false;
 	WriteLog( "\nCBinaryMeshMaxExporter::StoreMeshToChunk() : fin" );
+
+
+	if (m_bExportBBoxAtKey && pWeightTable && pWeightTable->GetVertexCount() > 0)
+	{
+		Box3 box;
+		pMesh->EvalWorldState(160).obj->GetDeformBBox(0, box);
+		IBox* pBox = m_pGeometryManager->CreateBox();
+		CVector dim = CVector(box.pmax.x - box.pmin.x, box.pmax.y - box.pmin.y, box.pmax.z - box.pmin.z);
+		CVector vmin(-dim.m_x / 2.f, -dim.m_y / 2.f, -dim.m_z / 2.f);
+		pBox->Set(vmin, dim);
+		mi.m_oKeyBoundingBoxes["stand"].insert(map< int, IBox* >::value_type(160, pBox));
+	}
 }
 
 void CBinaryMeshMaxExporter::GetFacesMtlArray( Mesh& oMesh, std::vector< unsigned short >& vMtlIDArray )

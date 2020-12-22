@@ -60,10 +60,13 @@ protected:
 	void				GetBonesMatrix( CNode* pInitRoot, CNode* pCurrentRoot, std::vector< CMatrix >& vMatrix );
 	virtual void		UpdateCollision();
 	CEntity*			GetEntityCollision();
+	void				GetEntitiesCollision(vector<CEntity*>& entities);
 	void				CreateAndLinkCollisionChildren(string sFileName);
 	float				GetBoundingSphereDistance(CEntity* pEntity);
-
-	bool				TestGroundCollision(const CMatrix& olastLocalTM);
+	void				UpdateBoundingBox();
+	bool				ManageGroundCollision(const CMatrix& olastLocalTM);
+	bool				TestEntityCollision(CEntity* pEntity);
+	bool				ManageBoxCollision(vector<CEntity*>& vCollideEntities, float dx, float dy, float dz, const CMatrix& oBackupMatrix);
 
 	static void			OnAnimationCallback( IAnimation::TEvent e, void* );
 
@@ -76,7 +79,6 @@ public:
 	void				SetShader( IShader* pShader );
 	void				CenterToworld();
 	int					CreateLightEntity( IRessource* pLight );
-	IBox*				GetBBox();
 	IRessource*			GetRessource();
 	float				GetWeight();
 	void				SetWeight( float fWeight );
@@ -115,6 +117,8 @@ public:
 	IGeometry*			GetBoundingGeometry();
 	float				GetHeight();
 	void				SetGUIManager(IGUIManager* pGUIManager);
+	float				GetGroundHeight(int x, int z);
+	void				LinkAndUpdateMatrices(CEntity* pEntity);
 };
 
 #endif // ENTITY_H

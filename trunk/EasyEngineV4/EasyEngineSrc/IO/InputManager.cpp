@@ -15,7 +15,8 @@ m_Bottom( oDesc.m_nResY ),
 m_fMouseSensitivity( 0.05f ),
 m_nCursorPosx( 0 ),
 m_nCursorPosy( 0 ),
-m_bEditionMode( false )
+m_bEditionMode( false ),
+m_bWheelConsumed(false)
 {
 	m_OffsetMousePos.x = 0;
 	m_OffsetMousePos.y = 0;
@@ -60,6 +61,17 @@ void CInputManager::OnUpdate()
 				break;
 		}
 	}
+
+	if (m_bWheelConsumed) {
+		map< TMouseButton, TMouseButtonState >::iterator itButton = m_mMouseButtonState.find(eMouseWheel);
+		if (itButton != m_mMouseButtonState.end())
+		{
+			if (itButton->second == eMouseWheelUp || itButton->second == eMouseWheelDown) {
+				itButton->second = eMouseWheelNone;
+				m_bWheelConsumed = false;
+			}
+		}
+	}
 }
 
 void CInputManager::SetEditionMode( bool bEdition )
@@ -80,7 +92,7 @@ void CInputManager::OnKeyEventCallback( CPlugin* pPlugin, IEventDispatcher::TKey
 
 void CInputManager::OnMouseEventCallback( CPlugin* pPlugin, IEventDispatcher::TMouseEvent e, int x, int y )
 {
-	IInputManager* pInputManager = static_cast< IInputManager* >( pPlugin );
+	CInputManager* pInputManager = static_cast< CInputManager* >( pPlugin );
 	TMouseButton b = eMouseButtonNone;
 	TMouseButtonState s = eMouseButtonStateNone;
 	switch( e )
@@ -107,14 +119,25 @@ void CInputManager::OnMouseEventCallback( CPlugin* pPlugin, IEventDispatcher::TM
 		b = eMouseButtonRight;
 		s = eMouseButtonStateUp;
 		break;
+	case IEventDispatcher::T_WHEEL:
+		b = eMouseWheel;
+		break;
 	}
-	if( b != eMouseButtonNone )
-		pInputManager->OnMouseClick( b, s );
+	if (b != eMouseButtonNone && (b != eMouseWheel)) {
+		pInputManager->OnMouseClick(b, s);
+	}
+	else if (b == eMouseWheel)
+		pInputManager->OnMouseWheel(x);
 }
 
 void CInputManager::OnMouseClick( TMouseButton b, TMouseButtonState s )
 {
 	m_mMouseButtonState[ b ] = s;
+}
+
+void CInputManager::OnMouseWheel(int value) 
+{
+	m_mMouseButtonState[eMouseWheel] = value > 0 ? eMouseWheelDown : (value < 0 ? eMouseWheelUp : eMouseWheelNone);
 }
 
 void CInputManager::OnKeyPress( unsigned int key )
@@ -294,6 +317,8 @@ IInputManager::TMouseButtonState CInputManager::GetMouseButtonState( IInputManag
 		TMouseButtonState s = itButton->second;
 		if( s == eMouseButtonStateJustDown )
 			itButton->second = eMouseButtonStateDown;
+		if (s == eMouseWheelUp || s == eMouseWheelDown)
+			m_bWheelConsumed = true;
 		return s;
 	}
 	return IInputManager::eMouseButtonStateNone;

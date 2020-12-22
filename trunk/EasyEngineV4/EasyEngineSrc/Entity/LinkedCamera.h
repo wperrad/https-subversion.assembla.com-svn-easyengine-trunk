@@ -11,6 +11,16 @@ public:
 	virtual ~CLinkedCamera();
 	void				Move( float fOffsetYaw, float fOffsetPitch, float fOffsetRoll, float fAvanceOffet, float fLeftOffset, float fUpOffset );
 	void				Colorize(float r, float g, float b, float a) {}
+	void				SetEntityName(string sName);
+	void				GetEntityName(string& sName);
+	void				Zoom(int value);
+	void                Link(CNode* pNode);
+	float				GetSpeed() { return 0.f; }
+	void				SetSpeed(float fSpeed) {}
+	void				Update();
+
+private:
+	string				m_sEntityName;
 };
 
 

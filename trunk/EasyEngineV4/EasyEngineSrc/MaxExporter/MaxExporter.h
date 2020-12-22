@@ -61,6 +61,7 @@ protected:
 	void				GetAnimation( Interface* pInterface, const std::map< int, INode* >& mBone, std::map< int, std::vector< CKey > >& vBones );
 	Mesh&				GetMeshFromNode(INode* pMesh);
 	void				GetVertexArrayFromMesh(Mesh& mesh, vector<float>& vertex);
+	CMatrix				m_oMaxToOpenglMatrix;
 
 public:
 	CMaxExporter();

@@ -213,6 +213,15 @@ IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oD
 		if( oData.m_bMultiMaterialActivated )
 			oDesc.m_vFaceMaterialID.swap( mi.m_vFaceMaterialID );
 
+		if (mi.m_oPreferedKeyBBox.size() == 0) {
+			string animationName = "stand";
+			map<string, map<int, IBox*>>::iterator it = mi.m_oKeyBoundingBoxes.find(animationName);
+			if (it != mi.m_oKeyBoundingBoxes.end()) {
+				map<int, IBox*>::iterator itBox = it->second.begin();
+				oDesc.m_mAnimationKeyBox[animationName] = itBox->second;
+			}
+		}
+
 		for( map< string, int >::iterator itPrefAnim = mi.m_oPreferedKeyBBox.begin(); itPrefAnim != mi.m_oPreferedKeyBBox.end(); itPrefAnim++ )
 		{
 			map< string, map< int, IBox* > >::const_iterator itAnimation = mi.m_oKeyBoundingBoxes.find( itPrefAnim->first );
@@ -228,7 +237,7 @@ IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oD
 				}
 			}
 		}
-
+		
 		oDesc.m_pShader = pShader;
 		oDesc.m_nParentBoneID = mi.m_nParentBoneID;
 		oDesc.m_sName = mi.m_sName;
