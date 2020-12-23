@@ -87,15 +87,7 @@ float CEntity::GetBoundingSphereRadius() const
 	return m_fBoundingSphereRadius;
 }
 
-void CEntity::SetEntityRoot( CEntity* pRoot )
-{
-	m_pEntityRoot = pRoot;
-}
 
-CEntity* CEntity::GetEntityRoot()
-{
-	return m_pEntityRoot;
-}
 
 void CEntity::SetRenderingType( IRenderer::TRenderType t )
 {
@@ -119,8 +111,10 @@ void CEntity::SetRessource( string sFileName, IRessourceManager& oRessourceManag
 			m_pRessource = pAMesh->GetMesh( 0 );
 			m_pRessource->GetName( m_sName );
 			m_pOrgSkeletonRoot = pAMesh->GetSkeleton();
-			if( m_pOrgSkeletonRoot )
-				m_pSkeletonRoot = static_cast< IBone* >( m_pOrgSkeletonRoot->DuplicateHierarchy() );
+			if (m_pOrgSkeletonRoot) {
+				m_pSkeletonRoot = static_cast<IBone*>(m_pOrgSkeletonRoot->DuplicateHierarchy());
+				m_pSkeletonRoot->Link(this);
+			}
 
 			for( unsigned int iMesh = 0; iMesh < pAMesh->GetMeshCount(); iMesh++ )
 			{
@@ -308,15 +302,7 @@ void CEntity::Update()
 		m_pEntityManager->GetGUIManager()->Print(oss.str(), 1000, 10);
 	}
 
-	if( m_pSkeletonRoot )
-		m_pSkeletonRoot->Update();
 
-	if( m_pEntityRoot )
-	{
-		CMatrix oRootMatrix;
-		m_pEntityRoot->GetWorldMatrix( oRootMatrix );
-		m_oWorldMatrix = oRootMatrix * m_oWorldMatrix;
-	}
 
 	if( m_pOrgSkeletonRoot )
 	{
@@ -495,9 +481,9 @@ void CEntity::LinkEntityToBone( IEntity* pChild, IBone* pParentBone, IEntity::TL
 	pParentBone->GetWorldMatrix( oParentWorld );
 	if( t == ePreserveChildRelativeTM )
 	{
-		CMatrix oParentWorldInv;		
-		oParentWorld.GetInverse( oParentWorldInv );
-		pChild->SetLocalMatrix( oParentWorldInv );
+		CMatrix oParentWorldInv;
+		oParentWorld.GetInverse(oParentWorldInv);
+		pChild->SetLocalMatrix(oParentWorldInv);
 	}
 	else if (  t = eSetChildToParentTM )
 	{
@@ -506,7 +492,6 @@ void CEntity::LinkEntityToBone( IEntity* pChild, IBone* pParentBone, IEntity::TL
 	}
 	pChild->Link( pParentBone );
 	CEntity* pChildEntity = static_cast< CEntity* >( pChild );
-	pChildEntity->SetEntityRoot( this );
 	IMesh* pMesh = dynamic_cast< IMesh* >( pChild->GetRessource() );
 	if(pMesh)
 		pChild->LocalTranslate( pMesh->GetOrgMaxPosition() );
@@ -538,9 +523,14 @@ void CEntity::GetBonesMatrix( CNode* pInitRoot, CNode* pCurrentRoot, vector< CMa
 	// m1 = base du node dans sa position actuelle
 	// m2 = matrice de passage de m0 à m1 (m2 = inv(m0)*m1)
 	CMatrix m0, m1, mPassage, m0i;
-	pInitRoot->GetWorldMatrix( m0 );
-	pCurrentRoot->GetWorldMatrix( m1 );
+	pInitRoot->GetWorldMatrix(m0);
+	pCurrentRoot->GetWorldMatrix(m1);
 	CMatrix::GetPassage( m0, m1, mPassage );
+	
+	CMatrix oWorldInverse;
+	m_oWorldMatrix.GetInverse(oWorldInverse);
+	mPassage = oWorldInverse * mPassage;	
+
 	vMatrix.push_back( mPassage );
 	for ( unsigned int i = 0; i < pInitRoot->GetChildCount(); i++ )
 	{

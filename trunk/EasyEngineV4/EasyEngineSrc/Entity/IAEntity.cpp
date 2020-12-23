@@ -69,7 +69,7 @@ void IAEntity::UpdateFightState()
 		break;
 	case eBeginWaitForNextAttack:
 		m_nBeginWaitTimeBeforeNextAttack = CTimeManager::Instance()->GetCurrentTimeInMillisecond();
-		m_eFightState = eBeginGoToEnemy;
+		m_eFightState = eWaitingForNextAttack;
 		break;
 	case eWaitingForNextAttack:
 		m_pCurrentEnemy->GetPosition( oEnemyPos );
@@ -77,13 +77,17 @@ void IAEntity::UpdateFightState()
 			m_eFightState = eBeginGoToEnemy;
 		else
 		{
+			FaceTo(oEnemyPos);
 			m_nCurrentWaitTimeBeforeNextAttack = CTimeManager::Instance()->GetCurrentTimeInMillisecond() - m_nBeginWaitTimeBeforeNextAttack;
 			if( m_nCurrentWaitTimeBeforeNextAttack > m_nRecuperationTime )
 				m_eFightState = eBeginLaunchAttack;
 		}
 		break;
 	case eEndFight:
-		Stand();
+		if(m_pCurrentEnemy->GetLife() > 0)
+			Stand();
+		else
+			m_pCurrentEnemy->Die();
 		m_eFightState = eNoFight;
 		break;
 	default:
@@ -123,6 +127,36 @@ void IAEntity::OnEndHitAnimation()
 	Stand();
 }
 
+void IAEntity::FaceTo(const CVector& target)
+{
+	m_oDestination = CVector(target.m_x, 0.f, target.m_z);
+	m_fAngleRemaining = GetDestinationAngleRemaining();
+	m_bFaceToTarget = false;
+}
+
+void IAEntity::UpdateFaceTo()
+{
+	if (!m_bFaceToTarget)
+	{
+		if (m_fAngleRemaining > 1)
+		{
+			const float fRotateSpeed = 2.f;
+			if (m_fAngleRemaining > fRotateSpeed || m_fAngleRemaining < -fRotateSpeed)
+			{
+				float fDelta = m_fAngleRemaining > 0 ? -fRotateSpeed : fRotateSpeed;
+				m_fAngleRemaining = m_fAngleRemaining + fDelta;
+				Turn(-fDelta);
+			}
+			else
+				m_fAngleRemaining = GetDestinationAngleRemaining();
+		}
+		else {
+			Turn(GetDestinationAngleRemaining());
+			m_bFaceToTarget = true;
+		}
+	}
+}
+
 void IAEntity::Goto( const CVector& oDestination, float fSpeed )
 {
 	m_vCurrentPath.clear();
@@ -136,7 +170,6 @@ void IAEntity::Goto( const CVector& oDestination, float fSpeed )
 		else
 			m_fDestinationDeltaRadius = 100.f;
 		m_nCurrentPathPointNumber = 0;
-		//m_oDestination = m_vCurrentPath[ m_nCurrentPathPointNumber ];
 		oDestination2D = m_vCurrentPath[m_nCurrentPathPointNumber];
 		m_oDestination = CVector(oDestination2D.m_x, 0.f, oDestination2D.m_y);
 		m_fAngleRemaining = GetDestinationAngleRemaining();
@@ -188,6 +221,7 @@ void IAEntity::UpdateGoto()
 
 void IAEntity::Update()
 {
+	UpdateFaceTo();
 	UpdateGoto();
 	UpdateFightState();
 }
@@ -207,21 +241,23 @@ float IAEntity::GetDestinationAngleRemaining()
 {
 	CVector v( 0, -1, 0, 1 ), oThisPosition, oTempPosition( m_oDestination.m_x, 0, m_oDestination.m_z );
 	CVector oBefore = GetWorldTM().GetRotation() * v;
-	
 	GetPosition( oThisPosition );
 	oThisPosition = CVector( oThisPosition.m_x, 0, oThisPosition.m_z );
 	CVector oDirection = oTempPosition - oThisPosition;
-	float n = ( oBefore.Norm() * oDirection.Norm() );
-	float cosAlpha = 1.f;
-	if( n != 0 )
-		cosAlpha  = ( oBefore * oDirection ) / n;
-	if( cosAlpha > 1.f ) cosAlpha = 1.f;
-	else if( cosAlpha < -1.f ) cosAlpha = -1.f;
+	return GetAngleBetween2Vectors(oBefore, oDirection);
+}
 
-	
-	float alpha = acosf( cosAlpha ) * 180.f / 3.1415927f;
-	CVector up = ( oBefore ^ oDirection ) / n;
-	if( up.m_y < 0 )
+float IAEntity::GetAngleBetween2Vectors(CVector& v1, CVector& v2)
+{
+	float n = (v1.Norm() * v2.Norm());
+	float cosAlpha;
+	if (n != 0)
+		cosAlpha = (v1 * v2) / n;
+	if (cosAlpha > 1.f) cosAlpha = 1.f;
+	else if (cosAlpha < -1.f) cosAlpha = -1.f;
+	float alpha = acosf(cosAlpha) * 180.f / 3.1415927f;
+	CVector up = (v1 ^ v2) / n;
+	if (up.m_y < 0)
 		alpha = -alpha;
 	return alpha;
 }

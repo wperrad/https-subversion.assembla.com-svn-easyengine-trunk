@@ -21,6 +21,8 @@ public:
 
 private:
 	string				m_sEntityName;
+	CNode*				m_pHeadNode;
+	CNode*				m_pBehindNode;
 };
 
 

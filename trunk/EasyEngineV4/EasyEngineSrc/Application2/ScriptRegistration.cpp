@@ -520,6 +520,26 @@ void DisplayNodeInfos( IScriptState* pState )
 	}
 }
 
+void SetCurrentAnimationSpeed(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEntityID = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
+	CScriptFuncArgFloat* pSpeed = static_cast< CScriptFuncArgFloat* >(pState->GetArg(1));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pEntityID->m_nValue);
+	if (pEntity)
+	{
+		IAnimation* pAnimation = pEntity->GetCurrentAnimation();
+		if (pAnimation) {
+			pEntity->GetCurrentAnimation()->SetSpeed(pSpeed->m_fValue);
+		}
+		else {
+			ostringstream oss;
+			oss << "Erreur, l'entité sélectionnée ne contient pas d'animation courante";
+			m_pConsole->Println(oss.str());
+		}
+	}
+	
+}
+
 void SetAnimationSpeed( IScriptState* pState )
 {
 	CScriptFuncArgInt* pEntityID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
@@ -535,8 +555,16 @@ void SetAnimationSpeed( IScriptState* pState )
 		else if( pAnimationName->m_sValue == "walk" )
 			eAnim = IEntity::eWalk;
 		else if( pAnimationName->m_sValue == "run" )
-			eAnim = IEntity::eRun;		
-		pEntity->SetAnimationSpeed( eAnim, pSpeed->m_fValue );
+			eAnim = IEntity::eRun;
+		else if (pAnimationName->m_sValue == "dying")
+			eAnim = IEntity::eDying;
+		else {
+			ostringstream oss;
+			oss << "Erreur, parametre \"" << pAnimationName->m_sValue << "\" incorrect, valeurs possibles : stand, walk, run, dying" ;
+			m_pConsole->Println(oss.str());
+			return;
+		}
+		pEntity->SetAnimationSpeed( eAnim, pSpeed->m_fValue );		
 	}
 	else
 	{
@@ -804,14 +832,17 @@ void GetNodeId(IScriptState* pState)
 		IBone* pBone = dynamic_cast<IBone*>(pEntity->GetSkeletonRoot()->GetChildBoneByName(pNodeName->m_sValue));
 		if (pBone) {
 			pState->SetReturnValue(pBone->GetID());
-		}		
+			return;
+		}
+		m_pConsole->Println("Node introuvable");
 	}
+	pState->SetReturnValue(-1);
 }
 
 void LinkToName(IScriptState* pState)
 {
 	CScriptFuncArgInt* pIDEntity1 = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
-	CScriptFuncArgInt* pIDNode1 = static_cast< CScriptFuncArgInt* >(pState->GetArg(1));
+	CScriptFuncArgString* pIDNode1 = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
 	CScriptFuncArgInt* pIDEntity2 = static_cast< CScriptFuncArgInt* >(pState->GetArg(2));
 	CScriptFuncArgString* pIDNode2 = static_cast< CScriptFuncArgString* >(pState->GetArg(3));
 	CScriptFuncArgString* pLinkType = static_cast< CScriptFuncArgString* >(pState->GetArg(4));
@@ -823,8 +854,8 @@ void LinkToName(IScriptState* pState)
 		bool bEntity1 = false;
 		bool bBone2 = false;
 		IBone* pBone2 = NULL;
-		if (pIDNode1->m_nValue != -1)
-			pNode1 = pEntity1->GetSkeletonRoot()->GetChildBoneByID(pIDNode1->m_nValue);
+		if (!pIDNode1->m_sValue.empty())
+			pNode1 = pEntity1->GetSkeletonRoot()->GetChildBoneByName(pIDNode1->m_sValue);
 		else
 		{
 			pNode1 = pEntity1;
@@ -865,6 +896,12 @@ void LinkToName(IScriptState* pState)
 					t = IEntity::ePreserveChildRelativeTM;
 				else if (pLinkType->m_sValue == "settoparent")
 					t = IEntity::eSetChildToParentTM;
+				else {
+					ostringstream oss;
+					oss << "Error : argument 5 \"" << pLinkType->m_sValue << "\" unexpected, you must choose \"preserve\" or \"settoparent\"";
+					m_pConsole->Println(oss.str());
+					return;
+				}
 				pEntity2->LinkEntityToBone(pEntity1, pBone2, t);
 			}
 			else
@@ -998,14 +1035,14 @@ void PauseAnimation( IScriptState* pState )
 void SelectBone( IScriptState* pState )
 {
 	CScriptFuncArgInt* pIDEntity = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
-	CScriptFuncArgInt* pIDBone = static_cast< CScriptFuncArgInt* >( pState->GetArg( 1 ) );
+	CScriptFuncArgString* pBoneName = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
 	IEntity* pEntity = m_pEntityManager->GetEntity( pIDEntity->m_nValue );
 	if( pEntity )
 	{
 		IBone* pSkeleton = pEntity->GetSkeletonRoot();
 		if( pSkeleton )
 		{
-			m_pSelectedNode = pSkeleton->GetChildBoneByID( pIDBone->m_nValue );
+			m_pSelectedNode = pSkeleton->GetChildBoneByName(pBoneName->m_sValue);
 			if( m_pSelectedNode )
 			{
 				m_eSelectionType = eBone;
@@ -1730,6 +1767,13 @@ void DisplayNodeInfos( CNode* pNode, int nLevel = 0 )
 		DisplayNodeInfos( pNode->GetChild( i ), nLevel + 1 );
 }
 
+
+void Kill(IScriptState* pState)
+{
+	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
+	m_pEntityManager->Kill(pId->m_nValue);
+}
+
 void DisplayEntities( IScriptState* pState )
 {
 	DisplayNodeInfos( m_pScene );
@@ -1820,7 +1864,7 @@ void SetEntityPos( IScriptState* pState )
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 3 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
 	if (pEntity)
-		pEntity->SetLocalPosition(px->m_fValue, py->m_fValue, pz->m_fValue);
+		pEntity->SetWorldPosition(px->m_fValue, py->m_fValue, pz->m_fValue);
 	else
 		m_pConsole->Println("Identifiant invalide");
 }
@@ -2197,6 +2241,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vector< TFuncArgType > vType;	
 
 	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("Kill", Kill, vType);
+
+	vType.clear();
 	vType.push_back(eString);
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("PatchBMEMeshTextureName", PatchBMEMeshTextureName, vType);
@@ -2458,7 +2506,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eInt );
-	vType.push_back( eInt );
+	vType.push_back( eString );
 	m_pScriptManager->RegisterFunction( "SelectBone", SelectBone, vType );
 
 	vType.clear();
@@ -2505,7 +2553,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eInt);
-	vType.push_back(eInt);
+	vType.push_back(eString);
 	vType.push_back(eInt);
 	vType.push_back(eString);
 	vType.push_back(eString);
@@ -2763,4 +2811,9 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eInt);
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("GetNodeId", GetNodeId, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("SetCurrentAnimationSpeed", SetCurrentAnimationSpeed, vType);
 }

@@ -75,6 +75,7 @@ public:
 	IEntity*			CreateCylinder( float fRadius, float fHeight );
 	void				SetGUIManager(IGUIManager* pGUIManager);
 	IGUIManager* 		GetGUIManager();
+	void				Kill(int entityId);
 	
 };
 

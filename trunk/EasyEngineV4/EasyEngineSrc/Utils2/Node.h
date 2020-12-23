@@ -60,6 +60,7 @@ public:
 	virtual void				GetLocalQuaternion( CQuaternion& oQuaternion );
 	virtual void				SetLocalQuaternion( const CQuaternion& oQuaternion );
 	virtual void				GetLocalMatrix( CMatrix& oMat ) const;
+	virtual const CMatrix&		GetLocalMatrix() const;
 	virtual void				SetName( const std::string& sName );
 	virtual void				GetName( std::string& sName ) const;
 	virtual CNode*				DuplicateHierarchy();

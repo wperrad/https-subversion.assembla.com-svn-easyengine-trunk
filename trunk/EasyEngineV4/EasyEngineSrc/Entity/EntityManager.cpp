@@ -342,6 +342,13 @@ IGUIManager* CEntityManager::GetGUIManager()
 	return m_pGUIManager;
 }
 
+void CEntityManager::Kill(int entityId)
+{
+	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
+	if (pEntity)
+		pEntity->Die();
+}
+
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& oDesc )
 {
 	return new CEntityManager( oDesc );
