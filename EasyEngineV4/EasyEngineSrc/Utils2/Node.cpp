@@ -246,7 +246,13 @@ void CNode::SetLocalMatrix( const CMatrix& oMat )
 
 void CNode::SetWorldMatrix( const CMatrix& oMat )
 {
-	m_oWorldMatrix = oMat;
+	if (m_pParent) {
+		CMatrix invParentWorld;
+		m_pParent->GetWorldMatrix().GetInverse(invParentWorld);
+		m_oLocalMatrix = invParentWorld * oMat;
+	}
+	else
+		m_oWorldMatrix = oMat;
 }
 
 void CNode::GetLocalQuaternion( CQuaternion& oQuaternion )
@@ -257,6 +263,11 @@ void CNode::GetLocalQuaternion( CQuaternion& oQuaternion )
 void CNode::GetLocalMatrix( CMatrix& oMat ) const
 {
 	oMat = m_oLocalMatrix;
+}
+
+const CMatrix& CNode::GetLocalMatrix() const
+{
+	return m_oLocalMatrix;
 }
 
 void CNode::ClearChilds()

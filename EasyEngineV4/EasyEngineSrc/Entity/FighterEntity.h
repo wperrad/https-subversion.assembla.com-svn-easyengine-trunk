@@ -43,6 +43,7 @@ protected:
 public:
 	virtual int					GetLife() = 0;
 	virtual void				GetPosition( CVector& v ) const = 0;
+	virtual void				Die() = 0;
 
 public: // temporaire, à mettre en privé ou protected par la suite
 	

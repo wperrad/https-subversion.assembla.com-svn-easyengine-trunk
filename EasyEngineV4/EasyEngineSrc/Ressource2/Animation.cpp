@@ -78,25 +78,27 @@ void CAnimation::SetSkeleton( IBone* pBone )
 void CAnimation::UpdateAnimationTime()
 {
 	int nCurrentTickCount = GetTickCount();
-	if ( m_nCurrentAnimationTime == -1 )
+	if (m_nCurrentAnimationTime == -1)
 	{
 		m_nCurrentAnimationTime = m_nStartAnimationTime;
 		m_nLastTickCount = nCurrentTickCount;
 	}
-	if ( m_bPause || !m_bStart )
+	if (m_bPause || !m_bStart)
 		m_nLastTickCount = GetTickCount();
-	
+
 	int nDeltaTickCount = nCurrentTickCount - m_nLastTickCount;
 	m_nLastTickCount = nCurrentTickCount;
-	m_nCurrentAnimationTime += (int)( (float)nDeltaTickCount * 4.f * m_fSpeed );
-	if ( m_nCurrentAnimationTime > m_nEndAnimationTime )
+	m_nCurrentAnimationTime += (int)((float)nDeltaTickCount * 4.f * m_fSpeed);
+	if (m_nCurrentAnimationTime > m_nEndAnimationTime)
 	{
-		CallCallbacks( eBeginRewind );
-		for(  map< int, IBone* >::iterator itBoneKeys = m_mBones.begin(); itBoneKeys != m_mBones.end(); ++itBoneKeys )
-			itBoneKeys->second->Rewind();
-		m_nCurrentAnimationTime = m_nStartAnimationTime;
-		if( !m_bLoop )
+		CallCallbacks(eBeginRewind);
+		if (!m_bLoop)
 			Stop();
+		else {
+			for (map< int, IBone* >::iterator itBoneKeys = m_mBones.begin(); itBoneKeys != m_mBones.end(); ++itBoneKeys)
+				itBoneKeys->second->Rewind();
+			m_nCurrentAnimationTime = m_nStartAnimationTime;
+		}
 	}
 }
 
@@ -129,8 +131,10 @@ void CAnimation::Pause( bool bPause )
 void CAnimation::Update()
 {
 	UpdateAnimationTime();
-	m_pSkeletonRoot->UpdateTime( (float)m_nCurrentAnimationTime );
-	CallCallbacks( eAfterUpdate );
+	if (!m_bPause) {
+		m_pSkeletonRoot->UpdateTime((float)m_nCurrentAnimationTime);
+		CallCallbacks(eAfterUpdate);
+	}
 }
 
 void CAnimation::SetAnimationTime( int nTime )
@@ -145,9 +149,6 @@ int CAnimation::GetAnimationTime()
 
 void CAnimation::Stop()
 {
-	m_nCurrentAnimationTime = m_nStartAnimationTime;
-	for( map< int, IBone* >::iterator itBoneKeys = m_mBones.begin(); itBoneKeys != m_mBones.end(); ++itBoneKeys )
-		itBoneKeys->second->Rewind();
 	m_bPause = true;
 }
 

@@ -27,6 +27,7 @@ public:
 	void					GetPosition( CVector& v );
 	void					ReceiveHit( IFighterEntity* pEnemy );
 	void					Stand();
+	void					Die();
 	void					Goto( const CVector& oPosition, float fSpeed );
 	IBox*					GetFirstCollideBox();
 	IBox*					GetNextCollideBox();	

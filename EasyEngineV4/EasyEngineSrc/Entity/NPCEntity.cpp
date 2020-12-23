@@ -125,6 +125,11 @@ void CNPCEntity::Stand()
 	CMobileEntity::Stand();
 }
 
+void CNPCEntity::Die()
+{
+	CMobileEntity::Die();
+}
+
 void CNPCEntity::Turn( float fAngle )
 {
 	Roll( fAngle );

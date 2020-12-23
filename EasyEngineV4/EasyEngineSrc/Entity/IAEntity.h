@@ -40,17 +40,21 @@ private:
 	CVector						m_oDestination;
 	float						m_fAngleRemaining;
 	bool						m_bArriveAtDestination;
+	bool						m_bFaceToTarget;
 	IFighterEntity*				m_pCurrentEnemy;
 	vector< CVector2D >			m_vCurrentPath;
 	int							m_nCurrentPathPointNumber;
 	float						m_fDestinationDeltaRadius;
 
 	void						UpdateGoto();
+	void						UpdateFaceTo();
 	void						UpdateFightState();
+	float						GetAngleBetween2Vectors(CVector& v1, CVector& v2);
 	float						GetDestinationAngleRemaining();
 	void						TurnFaceToDestination();
 	void						OnReceiveHit( IFighterEntity* pAgressor );
 	void						OnEndHitAnimation();
+	void						FaceTo(const CVector& point);
 	virtual void				ComputePathFind2D( const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints ) = 0;
 	virtual void				SetDestination( const CVector& oDestination );
 	virtual void				Turn( float fAngle ) = 0;

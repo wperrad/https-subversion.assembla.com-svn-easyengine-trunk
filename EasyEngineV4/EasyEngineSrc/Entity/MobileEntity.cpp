@@ -36,12 +36,13 @@ m_nLife( 1000 )
 		s_mAnimationStringToType[ "stand" ] = eStand;
 		s_mAnimationStringToType[ "HitLeftFoot" ] = eHitLeftFoot;
 		s_mAnimationStringToType["jump"] = eJump;
+		s_mAnimationStringToType["dying"] = eDying;
 		s_mOrgAnimationSpeedByType[ eWalk ] = -1.6f;
 		s_mOrgAnimationSpeedByType[ eStand ] = 0.f;
-		//s_mOrgAnimationSpeedByType[ eRun ] = -250.f;
-		s_mOrgAnimationSpeedByType[ eRun ] = -4.6f;
+		s_mOrgAnimationSpeedByType[eRun] = -7.f;
 		s_mOrgAnimationSpeedByType[ eHitLeftFoot ] = 0.f;
-		s_mOrgAnimationSpeedByType[ eHitReceived ] = 0.f;		
+		s_mOrgAnimationSpeedByType[ eHitReceived ] = 0.f;
+		s_mOrgAnimationSpeedByType[eDying] = 0.f;
 
 		s_mActions[ "walk" ] = Walk;
 		s_mActions[ "run" ] = Run;
@@ -49,6 +50,7 @@ m_nLife( 1000 )
 		s_mActions[ "HitLeftFoot" ] = HitLeftFoot;
 		s_mActions[ "PlayReceiveHit" ] = PlayReceiveHit;
 		s_mActions[ "jump"] = Jump;
+		s_mActions["dying"] = Dying;
 	}
 	for( int i = 0; i < eAnimationCount; i++ )
 		m_mAnimationSpeedByType[ (TAnimation)i ] = s_mOrgAnimationSpeedByType[ (TAnimation)i ];
@@ -190,6 +192,19 @@ void CMobileEntity::Jump(bool bLoop)
 	}
 }
 
+void CMobileEntity::Die()
+{
+	if (m_eCurrentAnimationType != eDying) {
+		SetPredefinedAnimation("dying", false);
+		m_pCurrentAnimation->AddCallback(OnDyingCallback, this);
+	}
+}
+
+void CMobileEntity::OnDyingCallback(IAnimation::TEvent e, void* pEntity)
+{
+	CMobileEntity* pMobileEntity = (CMobileEntity*)pEntity;
+	pMobileEntity->m_eCurrentAnimationType = eNone;
+}
 
 void CMobileEntity::HitLeftFoot( bool bLoop )
 {
@@ -244,6 +259,11 @@ void CMobileEntity::Jump(CMobileEntity* pHuman, bool bLoop)
 	pHuman->Jump(bLoop);
 }
 
+void CMobileEntity::Dying(CMobileEntity* pHuman, bool bLoop)
+{
+	pHuman->Die();
+}
+
 void CMobileEntity::HitLeftFoot( CMobileEntity* pHuman, bool bLoop  )
 {
 	pHuman->HitLeftFoot( bLoop );
@@ -275,9 +295,8 @@ ISphere* CMobileEntity::GetBoneSphere( string sBoneName )
 {
 	IBone* pBone = GetPreloadedBone ( sBoneName );
 	float fBoneRadius = pBone->GetBoundingBox()->GetBoundingSphereRadius();
-	CVector oBoneLocalPosition, oBoneWorldPosition;
-	pBone->GetWorldPosition( oBoneLocalPosition );
-	oBoneWorldPosition = m_oWorldMatrix * oBoneLocalPosition;
+	CVector oBoneWorldPosition;
+	pBone->GetWorldPosition(oBoneWorldPosition);	
 	return m_oGeometryManager.CreateSphere( oBoneWorldPosition, fBoneRadius / 2.f );
 }
 
@@ -305,6 +324,8 @@ int CMobileEntity::GetLife()
 void CMobileEntity::SetLife( int nLife )
 {
 	m_nLife = nLife;
+	if (m_nLife == 0)
+		Die();
 }
 
 void CMobileEntity::IncreaseLife( int nLife )

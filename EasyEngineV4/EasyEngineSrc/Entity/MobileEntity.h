@@ -44,7 +44,8 @@ protected:
 	void 					Jump(bool bLoop);
 	void					HitLeftFoot( bool bLoop );
 	void					PlayReceiveHit( bool bLoop );
-	void					ReceiveHit( IFighterEntity* pEnemy );
+	void					Stand();
+	void					ReceiveHit( IFighterEntity* pEnemy );	
 	void					TurnEyesH( float fValue );
 	void					TurnNeckH( float f );
 	IBone*					GetPreloadedBone( string sName );
@@ -57,7 +58,6 @@ protected:
 	IAnimation*				GetCurrentAnimation();
 	IFighterEntity*			GetFirstEnemy();
 	IFighterEntity*			GetNextEnemy();
-	void					Stand();
 	CMatrix&				GetWorldTM();
 	float					GetBoundingSphereRadius(){ return m_fBoundingSphereRadius; }
 	IBox*					GetBoundingBox();
@@ -72,8 +72,10 @@ protected:
 	static void 			Run( CMobileEntity*, bool bLoop );
 	static void				Jump(CMobileEntity* pHuman, bool bLoop);
 	static void				HitLeftFoot( CMobileEntity* pHuman, bool bLoop );
+	static void				Dying(CMobileEntity* pHuman, bool bLoop);
 	static void 			PlayReceiveHit( CMobileEntity* pHuman, bool bLoop );
 	static void 			OnCollision(CEntity* pThis, CEntity* pEntity);
+	static void				OnDyingCallback(IAnimation::TEvent e, void* data);
 
 
 public:
@@ -82,8 +84,8 @@ public:
 	void					SetAnimationSpeed( TAnimation eAnimationType, float fSpeed );
 	TAnimation				GetCurrentAnimationType() const;
 	void					RunAction( string sAction, bool bLoop );
-	void					SetCurrentPerso( bool bPerso );	
-	
+	void					SetCurrentPerso( bool bPerso );
+	void					Die();
 };
 
 #endif // MOBILEENTITY_H

@@ -29,30 +29,22 @@ void CLinkedCamera::GetEntityName(string& sName)
 
 void CLinkedCamera::Zoom(int value)
 {
-	float y = value * 10;
 	float z = value * 20;
-	LocalTranslate(0, y, z);
+	LocalTranslate(0, 0, z);
 }
 
 void CLinkedCamera::Link(CNode* pNode)
-{	
-	CNode::Link(pNode);
-	return;
+{
 	CMobileEntity* pPerso = dynamic_cast<CMobileEntity*>(pNode);
 	if (pPerso) {
-		 CNode* pTete = pPerso->GetSkeletonRoot()->GetChildBoneByName("Tete");
-		 if (pTete) {
-			 CNode::Link(pTete);
-			 CVector pos;
-			 pNode->GetWorldPosition(pos);
-			 SetWorldPosition(pos);
-
-			 /*
-			 Pitch(-90.f);
-			 Roll(180.f);
-			 LocalTranslate(0.f, 5.f, 0.f);
-			 LocalTranslate(0.f, 5.f, -10.f);*/
-		 }
+		CNode::Link(pPerso);
+		m_pHeadNode = pPerso->GetSkeletonRoot()->GetChildBoneByName("Tete");
+		CMatrix heandTM;
+		m_pHeadNode->GetWorldMatrix(heandTM);
+		SetWorldMatrix(heandTM);
+		Yaw(-90.f);
+		Pitch(10.f);
+		LocalTranslate(0.f, 10.f, -40.f);
 	}
 }
 

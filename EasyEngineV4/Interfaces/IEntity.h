@@ -62,6 +62,7 @@ public:
 		eHitLeftFoot,
 		eHitReceived,
 		eJump,
+		eDying,
 		eAnimationCount
 	};
 
@@ -157,6 +158,7 @@ public:
 	virtual IEntity*			GetNextMobileEntity() = 0;
 	virtual IEntity*			CreateLineEntity( const CVector& first, const CVector& last ) = 0;
 	virtual IEntity*			CreateCylinder( float fRadius, float fHeight ) = 0;
+	virtual void				Kill(int entityId) = 0;
 
 	virtual IGUIManager* 		GetGUIManager() = 0;
 	virtual void				SetGUIManager(IGUIManager* pGUIManager) = 0;
