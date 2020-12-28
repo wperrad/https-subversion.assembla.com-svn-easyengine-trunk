@@ -159,6 +159,8 @@ public:
 	virtual IEntity*			CreateLineEntity( const CVector& first, const CVector& last ) = 0;
 	virtual IEntity*			CreateCylinder( float fRadius, float fHeight ) = 0;
 	virtual void				Kill(int entityId) = 0;
+	virtual void				WearArmor(int entityId, string armorName) = 0;
+	virtual void				SerializeMobileEntities(CNode* pRoot, string& sText) = 0;
 
 	virtual IGUIManager* 		GetGUIManager() = 0;
 	virtual void				SetGUIManager(IGUIManager* pGUIManager) = 0;

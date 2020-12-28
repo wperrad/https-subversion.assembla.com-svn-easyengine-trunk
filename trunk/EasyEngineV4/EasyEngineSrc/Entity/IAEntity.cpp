@@ -3,6 +3,9 @@
 #include "ICollisionManager.h"
 #include "IGeometry.h"
 
+
+const float fRotateSpeed = 10.f;
+
 IAEntity::IAEntity():
 m_nRecuperationTime( 1500 ),
 m_bHitEnemy( false ),
@@ -140,7 +143,6 @@ void IAEntity::UpdateFaceTo()
 	{
 		if (m_fAngleRemaining > 1)
 		{
-			const float fRotateSpeed = 2.f;
 			if (m_fAngleRemaining > fRotateSpeed || m_fAngleRemaining < -fRotateSpeed)
 			{
 				float fDelta = m_fAngleRemaining > 0 ? -fRotateSpeed : fRotateSpeed;
@@ -187,8 +189,7 @@ void IAEntity::UpdateGoto()
 	{
 		float fDistance = GetDistanceTo2dPoint( m_oDestination );
 		if( fDistance > 200 )
-		{
-			const float fRotateSpeed = 2.f;
+		{			
 			if( m_fAngleRemaining > fRotateSpeed || m_fAngleRemaining < -fRotateSpeed )
 			{
 				float fDelta = m_fAngleRemaining > 0 ? -fRotateSpeed : fRotateSpeed;

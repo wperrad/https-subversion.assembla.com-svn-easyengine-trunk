@@ -76,7 +76,7 @@ bool IFighterEntity::IsHitIntersectEnemySphere( IFighterEntity* pEnemy )
 bool IFighterEntity::IsHitIntersectEnemyBox( IFighterEntity* pEnemy )
 {
 	IBox* pEnemyBox = pEnemy->GetBoundingBox();
-	pEnemyBox->SetWorldMatrix( pEnemy->GetWorldTM() );
+	pEnemyBox->SetTM( pEnemy->GetWorldTM() );
 	ISphere* pBoneSphere = GetBoneSphere( m_sCurrentHitBoneName );
 	return GetCollisionManager().IsIntersection( *pEnemyBox, *pBoneSphere );
 }

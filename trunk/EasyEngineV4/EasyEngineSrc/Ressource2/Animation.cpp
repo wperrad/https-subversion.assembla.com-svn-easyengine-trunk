@@ -56,7 +56,27 @@ void CAnimation::AddKey( int nBoneID, int nTimeValue, CKey::TKey eKeyType, const
 	oKey.m_nTimeValue = nTimeValue;
 	oKey.m_oQuat = q;
 	oKey.m_eType = eKeyType;
-	m_mBoneKeys[ nBoneID ].push_back( oKey );
+	if(m_mBoneKeys[nBoneID].empty())
+		m_mBoneKeys[nBoneID].push_back(oKey);
+	else {
+		for (vector< CKey >::iterator itKey = m_mBoneKeys[nBoneID].begin(); itKey != m_mBoneKeys[nBoneID].end(); itKey++) {
+			CKey& k0 = *itKey;
+			if (nTimeValue == k0.m_nTimeValue)
+				break;
+			vector< CKey  >::iterator itNextKey = itKey + 1;
+			if (itNextKey != m_mBoneKeys[nBoneID].end()) {
+				CKey& k1 = *itNextKey;
+				if (nTimeValue > k0.m_nTimeValue && nTimeValue < k1.m_nTimeValue) {
+					m_mBoneKeys[nBoneID].insert(itNextKey, oKey);
+					break;
+				}
+			}
+			else {
+				m_mBoneKeys[nBoneID].push_back(oKey);
+				break;
+			}
+		}
+	}
 }
 
 void CAnimation::SetSkeleton( IBone* pBone )

@@ -69,7 +69,7 @@ void CNode::Update()
   	 	CNode* pNode = m_vChild[i];
   		pNode->Update();
   	}
-	}
+}
 
 void CNode::UpdateWithoutChildren()
 {
@@ -188,7 +188,8 @@ void CNode::SetLocalPosition( float x, float y, float z )
 void CNode::SetWorldPosition( const CVector& vPos )
 {
 	CMatrix invParent;
-	m_pParent->GetWorldMatrix().GetInverse(invParent);
+	if(m_pParent)
+		m_pParent->GetWorldMatrix().GetInverse(invParent);
 	CVector localPos = invParent * vPos;
 	m_oLocalMatrix.m_03 = localPos.m_x;
 	m_oLocalMatrix.m_13 = localPos.m_y;

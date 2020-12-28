@@ -38,7 +38,7 @@ public:
 
 	float	Norm();
 	void	Normalize();
-	void	Fill( float x, float y, float z, float w );
+	void	Fill( float x, float y, float z, float w );	
 
 	const IPersistantObject& operator >> (CBinaryFileStorage& store) const;
 	IPersistantObject& operator << (CBinaryFileStorage& store);
@@ -48,7 +48,13 @@ public:
 	IPersistantObject& operator << (CStringStorage& store);
 
 
-	static void Lerp( const CVector& v1, const CVector& v2, float t, CVector& vOut );
+	static void		Lerp( const CVector& v1, const CVector& v2, float t, CVector& vOut );
+	static float	GetMinx(const vector< CVector >& vPoints);
+	static float	GetMiny(const vector< CVector >& vPoints);
+	static float	GetMinz(const vector< CVector >& vPoints);
+	static float	GetMaxx(const vector< CVector >& vPoints);
+	static float	GetMaxy(const vector< CVector >& vPoints);
+	static float	GetMaxz(const vector< CVector >& vPoints);
 };
 
 class CVector2D

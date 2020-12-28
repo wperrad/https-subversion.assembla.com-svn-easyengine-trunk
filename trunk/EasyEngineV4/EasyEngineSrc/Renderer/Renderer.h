@@ -70,7 +70,7 @@ protected:
 	string									m_sShaderDirectory;
 
 	CMatrix									m_oCameraMatrixInv;
-	CMatrix									m_oCurrentObjectMatrix;
+	CMatrix									m_oCurrentModelMatrix;
 	TRenderType								m_eCurrentRenderType;
 	bool									m_bMustChangeFov;
 	float									m_fFov;	
@@ -204,8 +204,10 @@ public:
 	void						DesabonneToRenderEvent( TRenderEventCallback callback );
 	void						SetModelViewMatrix( const CMatrix& mModelView );
 	void						SetProjectionMatrix( const CMatrix& oMatrix );
+	void						GetCameraMatrix(CMatrix& oMatrix) const;
 	void						SetCameraMatrix( const CMatrix& oMatrix );
-	void						SetObjectMatrix( const CMatrix& oMatrix );
+	void						GetModelMatrix(CMatrix& oMatrix);
+	void						SetModelMatrix( const CMatrix& oMatrix );
 
 	void						SetDebugString( std::string );
 	void						GetDebugString( std::string& s ) const;

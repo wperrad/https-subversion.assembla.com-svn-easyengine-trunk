@@ -476,46 +476,6 @@ float GetMaxz( const vector< CVector >& vPoints )
 	return fMax;
 }
 
-bool CCollisionManager::TestBoxesCollisionIntoFirstBoxBase( const IBox& b1, const IBox& b2 )
-{
-	CMatrix b1Mat, b2Mat;
-	b1.GetTM( b1Mat );
-	b2.GetTM( b2Mat );
-	CMatrix b1MatInv;
-	b1Mat.GetInverse( b1MatInv );
- 	CMatrix b2MatBaseB1 = b1MatInv * b2Mat;
-	IBox* pB2Temp = m_oGeometryManager.CreateBox( b2 );
-	pB2Temp->SetWorldMatrix( b2MatBaseB1 );
-	vector< CVector > vPoints2;
-	pB2Temp->GetPoints( vPoints2 );
-	float fMinx = GetMinx( vPoints2 );
-	if( fMinx > b1.GetMinPoint().m_x + b1.GetDimension().m_x )
-		return false;
-	float fMiny = GetMiny( vPoints2 );
-	if( fMiny > b1.GetMinPoint().m_y + b1.GetDimension().m_y )
-		return false;
-	float fMinz = GetMinz( vPoints2 );
-	if( fMinz > b1.GetMinPoint().m_z + b1.GetDimension().m_z )
-		return false;
-	float fMaxx = GetMaxx( vPoints2 );
-	if( fMaxx < b1.GetMinPoint().m_x )
-		return false;
-	float fMaxy = GetMaxy( vPoints2 );
-	if( fMaxy < b1.GetMinPoint().m_y )
-		return false;
-	float fMaxz = GetMaxz( vPoints2 );
-	if( fMaxz < b1.GetMinPoint().m_z )
-		return false;
-	return true;
-}
-
-bool CCollisionManager::IsIntersection( const IBox& b1, const IBox& b2 )
-{
-	if( TestBoxesCollisionIntoFirstBoxBase( b1, b2 ) )
-		return TestBoxesCollisionIntoFirstBoxBase( b2, b1 );
-	return false;
-}
-
 bool CCollisionManager::IsIntersection( const ISegment& s, const IBox& b2 )
 {
 	return true;

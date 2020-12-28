@@ -16,10 +16,14 @@ m_oLast( last )
 void CLineEntity::Update()
 {
 	CShape::Update();
-	if( !m_bHidden )
-		m_oRenderer.DrawLine( m_oFirst, m_oLast, CVector( 1.f, 1.f, 1.f ) );
+	if (!m_bHidden) {
+		CMatrix id, cam, camInv;
+		m_oRenderer.GetCameraMatrix(cam);
+		cam.GetInverse(camInv);
+		m_oRenderer.SetModelViewMatrix(cam);
+		m_oRenderer.DrawLine(m_oFirst, m_oLast, CVector(1.f, 1.f, 1.f));
+	}
 }
-
 
 void CLineEntity::Set( const CVector& first, const CVector& last )
 {
@@ -30,4 +34,10 @@ void CLineEntity::Set( const CVector& first, const CVector& last )
 void CLineEntity::GetEntityName(string& sName)
 {
 	sName = m_sEntityName;
+}
+
+void CLineEntity::GetPoints(CVector& first, CVector& last) const
+{
+	first = m_oFirst;
+	last = m_oLast;
 }

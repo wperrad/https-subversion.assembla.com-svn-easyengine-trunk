@@ -62,6 +62,7 @@ private:
 	int						GenHookRegExpr(string sExpr, string& sOut);
 	void					InitStringToLexemTypeArray();
 	static void				ReadUntilEndComment(string sScript, unsigned int& startIndex, int& line);
+	static void				ReadUntilEndLine(string sScript, unsigned int& startIndex);
 
 
 public:

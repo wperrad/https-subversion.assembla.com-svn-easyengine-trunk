@@ -301,3 +301,11 @@ void CMaxExporter::GetAnimation( Interface* pInterface, const map< int, INode* >
 	if ( bTCB == false )
 		MessageBoxA( NULL, "Votre animation ne comporte pas de controleurs TCB, elle n'a pas été exportée", "", MB_ICONWARNING );
 }
+
+void CMaxExporter::ConvertPoint3ToCVector(const Point3& p, CVector& v)
+{
+	v.m_x = p.x;
+	v.m_y = p.y;
+	v.m_z = p.z;
+	v.m_w = 1;
+}

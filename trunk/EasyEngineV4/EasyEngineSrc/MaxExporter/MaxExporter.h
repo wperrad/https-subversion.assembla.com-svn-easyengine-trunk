@@ -79,6 +79,7 @@ public:
 	unsigned int		Version();     // Version number * 100 (i.e. v3.01 = 301) 
 	void				ShowAbout(HWND hWnd);  // Show DLL's "About..." box
 	virtual int			DoExport(const TCHAR *name,ExpInterface *ei, Interface *i, BOOL suppressPrompts=FALSE, DWORD options = 0 ) = 0;
+	void				ConvertPoint3ToCVector(const Point3& p, CVector& v);
 
 	static std::vector<ClassDesc*>	m_vLibClassDesc;
 };

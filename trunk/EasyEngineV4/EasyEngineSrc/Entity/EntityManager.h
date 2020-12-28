@@ -76,6 +76,10 @@ public:
 	void				SetGUIManager(IGUIManager* pGUIManager);
 	IGUIManager* 		GetGUIManager();
 	void				Kill(int entityId);
+	void				WearArmor(int entityId, string armorName);
+	template<class T>
+	void				SerializeNodeInfos(CNode* pNode, ostringstream& sLine, int nLevel = 0);
+	void				SerializeMobileEntities(CNode* pRoot,  string& sText);
 	
 };
 

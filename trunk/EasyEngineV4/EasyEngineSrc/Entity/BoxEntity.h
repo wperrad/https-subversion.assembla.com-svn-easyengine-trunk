@@ -13,4 +13,5 @@ public:
 	IBox&				GetBox();
 	void				Colorize(float r, float g, float b, float a) {}
 	void				GetEntityName(string& sName);
+	IGeometry*			GetBoundingGeometry();
 };

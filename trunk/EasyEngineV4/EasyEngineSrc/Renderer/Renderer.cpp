@@ -429,7 +429,7 @@ void CRenderer::BindTexture( int nTextureID, int nUnitTextureID, TTextureDimensi
 
 void CRenderer::DrawGeometry( const IBuffer* pBuffer )
 {
-	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentObjectMatrix;
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
 	LoadMatrix( oModelView );
  	const CGeometryBuffer* pGeometryBuffer = static_cast< const CGeometryBuffer* >( pBuffer );
 	if (pGeometryBuffer->GetID() == -1)
@@ -460,7 +460,7 @@ void CRenderer::DrawGeometry( const IBuffer* pBuffer )
 
 void CRenderer::DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style )
 {
-	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentObjectMatrix;
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
 	LoadMatrix( oModelView );
 	const CIndexedGeometryBuffer* pIndexedBuffer = static_cast< const CIndexedGeometryBuffer* >( pBuffer );
 
@@ -509,6 +509,10 @@ void CRenderer::SetProjectionMatrix( const CMatrix& oMatrix )
 	glMatrixMode( GL_MODELVIEW );
 }
 
+void CRenderer::GetCameraMatrix(CMatrix& oMatrix) const
+{
+	oMatrix = m_oCameraMatrixInv;
+}
 
 void CRenderer::SetCameraMatrix( const CMatrix& oMatrix )
 {
@@ -516,9 +520,14 @@ void CRenderer::SetCameraMatrix( const CMatrix& oMatrix )
 		oMatrix.GetInverse( m_oCameraMatrixInv );
 }
 
-void CRenderer::SetObjectMatrix( const CMatrix& oMatrix )
+void CRenderer::GetModelMatrix(CMatrix& oMatrix)
 {
-	m_oCurrentObjectMatrix = oMatrix;
+	oMatrix = m_oCurrentModelMatrix;
+}
+
+void CRenderer::SetModelMatrix( const CMatrix& oMatrix )
+{
+	m_oCurrentModelMatrix = oMatrix;
 }
 
 unsigned int CRenderer::CreateVertexBuffer( const std::vector< float >& vData ) const
@@ -808,7 +817,7 @@ void CRenderer::DrawLine( const CVector& p1, const CVector& p2, const CVector& c
 
 void CRenderer::DrawBox( const CVector& oMinPoint, const CVector& oDimension )
 {
-	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentObjectMatrix;
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
 	LoadMatrix(oModelView);
 
 	CVector p0 = oMinPoint;
@@ -838,7 +847,7 @@ void CRenderer::DrawBox( const CVector& oMinPoint, const CVector& oDimension )
 
 void CRenderer::DrawSphere(double dRadius, unsigned int nSliceCount, unsigned int nStackCount)
 {
-	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentObjectMatrix;
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
 	LoadMatrix( oModelView );
 	gluSphere(m_pQuadricObj,dRadius,nSliceCount,nStackCount);	
 }
@@ -885,7 +894,7 @@ void CRenderer::SetLightSpotProp( unsigned int nLightID, float fCutoff, float fE
 
 void CRenderer::SetLightLocalPos(unsigned int nLightID, float x, float y, float z, float w)
 {
-	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentObjectMatrix;
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
 	LoadMatrix( oModelView );
 	GLfloat light_position[] = {x,y,z,w};
 	glLightfv((GLenum) nLightID , GL_POSITION , light_position);

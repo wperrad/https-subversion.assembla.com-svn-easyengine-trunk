@@ -122,7 +122,22 @@ void CMobileEntity::UpdateCollision()
 			CEntity* pEntity = static_cast<CEntity*>(m_pParent->GetParent());
 			if (pEntity)
 				LinkAndUpdateMatrices(pEntity);
-		}		
+		}
+	}
+}
+
+void CMobileEntity::WearArmor(string armorName)
+{
+	string path = "Armors\\" + armorName + "\\";
+	const int count = 8;
+	string arrayPiece[count] = {"cuirasse", "jupe", "JambiereD", "JambiereG", "BrassiereD", "BrassiereG", "EpauletteD", "EpauletteG" };
+	string arrayBone[count] = { "Cervicales", "Bassin", "TibiasD", "TibiasG", "AvantBrasD", "AvantBrasG", "EpauleD", "EpauleG" };
+
+	for (int i = 0; i < count; i++) {
+		CEntity* pArmorPiece = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity(path + arrayPiece[i] + ".bme", "", m_oRenderer));
+		IBone* pBone = dynamic_cast<IBone*>(m_pSkeletonRoot->GetChildBoneByName(arrayBone[i]));
+		if (pBone)
+			LinkEntityToBone(pArmorPiece, pBone, ePreserveChildRelativeTM);
 	}
 }
 
@@ -133,7 +148,8 @@ void CMobileEntity::SetCurrentPerso( bool bPerso )
 
 void CMobileEntity::RunAction( string sAction, bool bLoop )
 {
-	s_mActions[ sAction ]( this, bLoop );
+	if(m_nLife > 0)
+		s_mActions[ sAction ]( this, bLoop );
 }
 
 void CMobileEntity::SetPredefinedAnimation( string s, bool bLoop )
@@ -200,6 +216,24 @@ void CMobileEntity::Die()
 	}
 }
 
+void CMobileEntity::Yaw(float fAngle)
+{
+	if(m_nLife > 0)
+		CNode::Yaw(fAngle);
+}
+
+void CMobileEntity::Pitch(float fAngle)
+{
+	if (m_nLife > 0)
+		CNode::Pitch(fAngle);
+}
+
+void CMobileEntity::Roll(float fAngle)
+{
+	if (m_nLife > 0)
+		CNode::Roll(fAngle);
+}
+
 void CMobileEntity::OnDyingCallback(IAnimation::TEvent e, void* pEntity)
 {
 	CMobileEntity* pMobileEntity = (CMobileEntity*)pEntity;
@@ -227,7 +261,7 @@ void CMobileEntity::PlayReceiveHit( CMobileEntity* pEntity, bool bLoop )
 void CMobileEntity::ReceiveHit( IFighterEntity* pEnemy )
 {	
 	RunAction( "PlayReceiveHit", false );
-	m_nLife -= 20;
+	m_nLife -= 100;
 }
 
 void CMobileEntity::OnWalkAnimationCallback( IAnimation::TEvent e, void* pData )

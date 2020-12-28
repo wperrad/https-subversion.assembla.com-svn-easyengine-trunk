@@ -122,23 +122,20 @@ void CBone::GetInterpolatedMatrix( float fTime )
 		Ms.GetInverse( MsInv );
 		CMatrix T = MsInv * Mf;
 		CMatrix MI;
-		if( oLastKey.m_eType == CKey::ePosKey && oNextKey.m_eType == CKey::ePosKey )
-		{
-			CVector vs, vt, vi;
-			T.GetAffinePart( vt );
-			CVector::Lerp( vs, vt, t, vi );
-			MI.SetAffinePart( vi );
-		}
-		else
-		{
-			CQuaternion qr;
-			T.GetQuaternion(qr);
-			CVector vAxis;
-			float fAngle;
-			qr.GetAngleAxis(vAxis, fAngle);
-			CQuaternion qi( vAxis, fAngle * t );			
-			qi.GetMatrix(MI);
-		}
+
+		CQuaternion qr;
+		T.GetQuaternion(qr);
+		CVector vAxis;
+		float fAngle;
+		qr.GetAngleAxis(vAxis, fAngle);
+		CQuaternion qi(vAxis, fAngle * t);
+		qi.GetMatrix(MI);
+
+		CVector vs, vt, vi;
+		T.GetAffinePart(vt);
+		CVector::Lerp(vs, vt, t, vi);
+		MI.SetAffinePart(vi);
+
 		m_oLocalMatrix = Ms * MI;
 	}
 }
