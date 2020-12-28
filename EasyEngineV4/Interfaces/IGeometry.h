@@ -41,9 +41,9 @@ public:
 	};
 	
 	virtual bool				IsIntersect(const IGeometry& oGeometry) const = 0;
+	virtual void				SetTM(const CMatrix& m) = 0;
 	virtual void				GetTM(CMatrix& m) const = 0;
-	virtual const CMatrix&		GetTM() const = 0;
-	//virtual void				GetBase(CVector& oBase) = 0;	
+	virtual const CMatrix&		GetTM() const = 0;	
 	virtual const CVector&		GetBase() const = 0;
 	virtual float				ComputeBoundingSphereRadius() const = 0;
 	virtual IGeometry*			Duplicate() = 0;
@@ -51,6 +51,12 @@ public:
 	virtual void				Transform(const CMatrix& tm) = 0;
 	virtual float				GetDistance(const IGeometry& oGeometry) const = 0;
 	virtual void				Draw(IRenderer& oRenderer) const = 0;
+};
+
+class ILine
+{
+public:
+	virtual void			GetPoints(CVector& first, CVector& last) const = 0;
 };
 
 class IBox : public IGeometry
@@ -71,15 +77,17 @@ public:
 	virtual void				AddPoint( const CVector& p ) = 0;
 	virtual IBox&				operator=( const IBox& oBox ) = 0;
 	virtual void				Set( const CVector& oMinPoint, const CVector& oDimension ) = 0;
-	virtual void				SetWorldMatrix( const CMatrix& oMatrix ) = 0;
+	virtual void				SetTM(const CMatrix& m) = 0;
 	virtual void				GetPoints( vector< CVector >& vPoints ) = 0;
-	virtual void				GetCenter( CVector& oCenter ) const = 0;	
+	virtual void				GetCenter( CVector& oCenter ) const = 0;
+	virtual bool				GetReactionYAlignedPlane(const ILine& oDirectriceLine, float planeHeight, CVector& R) = 0;
 };
 
 class ICylinder : public IGeometry
 {
 public:
 	virtual float		GetRadius() const = 0;
+	virtual void		SetTM(const CMatrix& m) = 0;
 	virtual void		Set(const CMatrix& oBase, float fRadius, float fHeight) = 0;
 	virtual void		ComputeTangent(const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft) = 0;
 	virtual bool		IsPointIntoCylinder(const CVector& oPoint) const = 0;

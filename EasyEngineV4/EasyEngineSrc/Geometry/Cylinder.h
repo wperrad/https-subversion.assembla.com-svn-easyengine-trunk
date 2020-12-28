@@ -15,6 +15,7 @@ public:
 	CCylinder( const CMatrix& oTM, float fRadius, float fHeight );
 	float				GetRadius() const;
 	float				GetHeight() const;
+	void				SetTM(const CMatrix& m);
 	void				Set( const CMatrix& oBase, float fRadius, float fHeight );
 	void				ComputeTangent( const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft );	
 	bool				IsPointIntoCylinder( const CVector& oPoint ) const;

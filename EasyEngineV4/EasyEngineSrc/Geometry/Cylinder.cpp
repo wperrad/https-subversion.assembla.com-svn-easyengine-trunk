@@ -34,6 +34,11 @@ float CCylinder::GetHeight() const
 	return m_fHeight;
 }
 
+void CCylinder::SetTM(const CMatrix& m)
+{
+	m_oTM = m;
+}
+
 void CCylinder::Set( const CMatrix& oTM, float fRadius, float fHeight )
 {
 	m_oTM = oTM;
@@ -78,10 +83,73 @@ bool CCylinder::IsIntersect(const IGeometry& oGeometry) const
 	return false;
 }
 
-bool CCylinder::IsIntersect(const CBox& pBox) const
+bool CCylinder::IsIntersect(const CBox& box) const
 {
-	throw 1;
-	return false;
+	CMatrix cylMat, boxMat;
+	GetTM(cylMat);
+	box.GetTM(boxMat);
+	CMatrix cylMatInv;
+	cylMat.GetInverse(cylMatInv);
+	CMatrix boxMatInCylBase = cylMatInv * boxMat;
+
+	CBox boxTemp;
+	boxTemp.Set(box.GetMinPoint(), box.GetDimension());
+	boxTemp.SetWorldMatrix(boxMatInCylBase);
+
+	vector<CVector> points;
+	boxTemp.GetPoints(points);
+
+	float fMinx = -m_fRadius;
+	if(fMinx > CVector::GetMaxx(points))
+		return false;
+	float fMiny = -m_fHeight / 2.f;
+	if (fMiny > CVector::GetMaxy(points))
+		return false;
+	float fMinz = -m_fRadius;
+	if (fMinz > CVector::GetMaxz(points))
+		return false;
+	float fMaxx = m_fRadius;
+	if (fMaxx < CVector::GetMinx(points))
+		return false;
+	float fMaxy = m_fHeight / 2.f;
+	if (fMaxy < CVector::GetMiny(points))
+		return false;
+	float fMaxz = m_fRadius;
+	if (fMaxz < CVector::GetMinz(points))
+		return false;
+
+	return true;
+	
+	//Faire la meme chose en faisant le changement de base dans la base de la boite
+	CMatrix boxMatInv;
+	boxMat.GetInverse(boxMatInv);
+	CMatrix cylMatInBoxBase = boxMatInv * cylMat;
+	CVector cylBase = cylMatInBoxBase * CVector(0, 0, 0, 1);
+	
+	float dx1 = cylBase.m_x - m_fRadius / 2.f;
+	float dx2 = box.GetMinPoint().m_x + box.GetDimension().m_x;
+	if (dx1 > dx2)
+		return false;
+
+	float dy1 = cylBase.m_y - m_fRadius / 2.f;
+	float dy2 = box.GetMinPoint().m_y + box.GetDimension().m_y;
+	if (dy1 > dy2)
+		return false;
+
+	float dz1 = cylBase.m_z - m_fHeight / 2.f;
+	float dz2 = box.GetMinPoint().m_z + box.GetDimension().m_z;
+	if (dz1 > dz2)
+		return false;
+
+
+	if (cylBase.m_x + m_fRadius < box.GetMinPoint().m_x)
+		return false;
+	if (cylBase.m_y + m_fRadius < box.GetMinPoint().m_y)
+		return false;
+	if (cylBase.m_z + m_fHeight / 2.f < box.GetMinPoint().m_z)
+		return false;
+		
+	return true;
 }
 
 const IPersistantObject& CCylinder::operator >> (CBinaryFileStorage& store) const
@@ -143,9 +211,6 @@ IGeometry* CCylinder::Duplicate()
 
 void CCylinder::Transform(const CMatrix& tm)
 {
-	float temp = m_fHeight;
-	m_fHeight = m_fRadius * 2;
-	m_fRadius = temp;
 }
 
 float CCylinder::GetHeight()

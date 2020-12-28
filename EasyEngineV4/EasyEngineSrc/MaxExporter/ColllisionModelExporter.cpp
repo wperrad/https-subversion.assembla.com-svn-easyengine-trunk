@@ -113,19 +113,29 @@ void CollisionModelExporter::GetPrimitives(Interface* pInterface, vector<IGeomet
 void CollisionModelExporter::StoreCylinderInfos(INode* pMesh, ICylinder& cylinder)
 {
 	Mesh& mesh = GetMeshFromNode(pMesh);
-	Box3 box = mesh.getBoundingBox();
+	Box3 bbox = mesh.getBoundingBox();
 	CMatrix tm;
 	MaxMatrixToEngineMatrix(pMesh->GetObjectTM(0), tm);
+	CMatrix m = m_oMaxToOpenglMatrix * tm, mInv;
+	CVector boxMin(bbox.Min().x, bbox.Min().y, bbox.Min().z);
+	CVector boxDim;
+	ConvertPoint3ToCVector(bbox.Max() - bbox.Min(), boxDim);
 
-	cylinder.Set(tm, (box.Max().x - box.Min().x) / 2.f, box.Max().z - box.Min().z);
-}
+	CVector dim;
+	dim.m_x = boxDim.m_x;
+	float h = boxDim.m_y;
+	dim.m_y = boxDim.m_z;
+	dim.m_z = h;
 
-void ConvertPoint3ToCVector(const Point3& p, CVector& v)
-{
-	v.m_x = p.x;
-	v.m_y = p.y;
-	v.m_z = p.z;
-	v.m_w = 1;
+	CVector vMin(boxMin.m_x, boxMin.m_z - dim.m_y / 2.f, boxMin.m_y);
+
+	
+	float temp = tm.m_13;
+	tm.m_13 = tm.m_23 + dim.m_y / 2.f;
+	tm.m_23 = temp;
+
+	cylinder.Set(tm, dim.m_x / 2.f, dim.m_y);
+
 }
 
 void CollisionModelExporter::StoreBoxInfos(INode* pMesh, IBox& box)
@@ -150,5 +160,5 @@ void CollisionModelExporter::StoreBoxInfos(INode* pMesh, IBox& box)
 	float temp = tm.m_13;
 	tm.m_13 = tm.m_23 + dim.m_y / 2.f;
 	tm.m_23 = temp;
-	box.SetWorldMatrix(tm);
+	box.SetTM(tm);
 }

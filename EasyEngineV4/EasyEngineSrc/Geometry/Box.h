@@ -16,17 +16,11 @@ class CBox : public IBox
 	CVector		m_oDimension;
 
 	bool		TestBoxesCollisionIntoFirstBoxBase(const IBox& b1, const IBox& b2) const;
-	float		GetDistanceInBase(const IBox& oBox) const;
-	float		GetMinx(const vector< CVector >& vPoints) const;
-	float		GetMiny(const vector< CVector >& vPoints) const;
-	float		GetMinz(const vector< CVector >& vPoints) const;
-	float		GetMaxx(const vector< CVector >& vPoints) const;
-	float		GetMaxy(const vector< CVector >& vPoints) const;
-	float		GetMaxz(const vector< CVector >& vPoints) const;
-	
+	float		GetDistanceInBase(const IBox& oBox) const;	
 
 public:
 
+	void				SetTM(const CMatrix& m);
 	const CVector&		GetMinPoint() const;
 	void				GetTM( CMatrix& m ) const;
 	const CMatrix&		GetTM() const;
@@ -54,6 +48,7 @@ public:
 	bool			IsIntersect(const IGeometry& box) const;
 	bool			IsIntersect(const CBox& box) const;
 	void			Draw(IRenderer& oRenderer) const;
+	bool			GetReactionYAlignedPlane(const ILine& oDirectriceLine, float planeHeight, CVector& R);
 
 	const IPersistantObject& operator >> (CBinaryFileStorage& store) const;
 	IPersistantObject& operator << (CBinaryFileStorage& store);

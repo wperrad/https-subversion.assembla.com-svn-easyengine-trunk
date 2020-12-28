@@ -25,25 +25,22 @@ class CAnimation : public IAnimation
 		void*		m_pCallbackData;
 	};
 
-	map< int, IBone* >				m_mBones;
-	map< int, vector< CKey > >		m_mBoneKeys;
-	IBone*							m_pSkeletonRoot;
+	map< int, IBone* >							m_mBones;
+	map< int, vector< CKey  > >					m_mBoneKeys;
+	IBone*										m_pSkeletonRoot;
+	int											m_nLastTickCount;
+	int											m_nCurrentTickCount;
+	int											m_nCurrentAnimationTime;
+	bool										m_bLoop;
+	float										m_fSpeed;
+	bool										m_bPause;
+	bool										m_bStart;
+	int											m_nStartAnimationTime;
+	int											m_nEndAnimationTime;
+	vector< CCallback >							m_vCallback;	
 
-	int								m_nLastTickCount;
-	int								m_nCurrentTickCount;
-	int								m_nCurrentAnimationTime;
-	bool							m_bLoop;
-	float							m_fSpeed;
-	bool							m_bPause;
-	bool							m_bStart;
-	int								m_nStartAnimationTime;
-	int								m_nEndAnimationTime;
-	vector< CCallback >				m_vCallback;
-	
-
-	float							GetInterpolatedFactor( int nBoneID );
-	void							UpdateAnimationTime();
-	void							CallCallbacks( TEvent e );
+	void										UpdateAnimationTime();
+	void										CallCallbacks( TEvent e );
 	
 
 public:

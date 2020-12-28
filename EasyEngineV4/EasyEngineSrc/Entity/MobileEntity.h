@@ -86,6 +86,11 @@ public:
 	void					RunAction( string sAction, bool bLoop );
 	void					SetCurrentPerso( bool bPerso );
 	void					Die();
+	void					WearArmor(string armorName);
+
+	void					Yaw(float fAngle);
+	void					Pitch(float fAngle);
+	void					Roll(float fAngle);
 };
 
 #endif // MOBILEENTITY_H

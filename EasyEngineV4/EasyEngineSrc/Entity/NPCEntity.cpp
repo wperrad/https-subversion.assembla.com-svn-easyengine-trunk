@@ -117,7 +117,7 @@ void CNPCEntity::GetPosition( CVector& v )
 
 void CNPCEntity::ReceiveHit( IFighterEntity* pEnemy )
 {
-	RunAction( "PlayReceiveHit", false );
+	CMobileEntity::ReceiveHit(pEnemy);
 }
 
 void CNPCEntity::Stand()
@@ -163,7 +163,7 @@ IBox* CNPCEntity::GetFirstCollideBox()
 		else
 		{
 			IBox* pBox = m_oGeometryManager.CreateBox( *pMesh->GetBBox() );
-			pBox->SetWorldMatrix( pEntity->GetWorldMatrix() );
+			pBox->SetTM( pEntity->GetWorldMatrix() );
 			return pBox;
 		}
 	}
@@ -188,7 +188,7 @@ IBox* CNPCEntity::GetNextCollideBox()
 		else
 		{
 			IBox* pBox = m_oGeometryManager.CreateBox( *pMesh->GetBBox() );
-			pBox->SetWorldMatrix( pEntity->GetWorldMatrix() );
+			pBox->SetTM( pEntity->GetWorldMatrix() );
 			pBoxRet = pBox;
 		}
 	}

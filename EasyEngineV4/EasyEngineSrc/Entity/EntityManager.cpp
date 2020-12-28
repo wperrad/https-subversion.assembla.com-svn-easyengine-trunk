@@ -6,6 +6,7 @@
 #include "Exception.h"
 #include "SphereEntity.h"
 #include "IGeometry.h"
+#include "ISystems.h"
 #include "NPCEntity.h"
 #include "LineEntity.h"
 #include "CylinderEntity.h"
@@ -149,7 +150,10 @@ IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFil
 
 IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem )
 {
-	IEntity* pEntity = new CNPCEntity( sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager, m_oPathFinder );
+	string sName = sFileName;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	IEntity* pEntity = new CNPCEntity(sName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager, m_oPathFinder );
 	CreateEntity( pEntity );
 	return pEntity;
 }
@@ -347,6 +351,41 @@ void CEntityManager::Kill(int entityId)
 	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
 	if (pEntity)
 		pEntity->Die();
+}
+
+void CEntityManager::WearArmor(int entityId, string sArmorName)
+{
+	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
+	if (pEntity)
+		pEntity->WearArmor(sArmorName);
+}
+
+template<class T>
+void CEntityManager::SerializeNodeInfos(CNode* pNode, ostringstream& oss, int nLevel)
+{
+	IEntity* pEntity = dynamic_cast< T* >(pNode);
+	if (pEntity) {
+		
+		for (int j = 0; j < nLevel; j++)
+			oss << "\t";
+		string sEntityName;
+		pEntity->GetEntityName(sEntityName);
+		if (sEntityName.empty())
+			pEntity->GetName(sEntityName);
+		oss << "Entity name = " << sEntityName << ", ID = " << GetEntityID(pEntity) << "\n";
+		CNode* pSkeleton = pEntity->GetSkeletonRoot();
+		if (pSkeleton)
+			SerializeNodeInfos<T>(pSkeleton, oss);
+	}
+	for (unsigned int i = 0; i < pNode->GetChildCount(); i++)
+		SerializeNodeInfos<T>(pNode->GetChild(i), oss, nLevel + 1);
+}
+
+void CEntityManager::SerializeMobileEntities(CNode* pRoot, string& sText)
+{
+	ostringstream oss;
+	SerializeNodeInfos<CMobileEntity>(pRoot, oss, 0);
+	sText = oss.str();
 }
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& oDesc )

@@ -26,7 +26,7 @@ void CShape::Update()
 	if( !m_bHidden )
 	{
 		m_pShader->Enable( true );
-		m_oRenderer.SetObjectMatrix( m_oWorldMatrix );
+		m_oRenderer.SetModelMatrix( m_oWorldMatrix );
 	}
 }
 

@@ -39,7 +39,7 @@ void CFightSystem::OnHitAnimationCallback( IAnimation::TEvent e, void* pData )
 				string sAnimationName;
 				pEnemy->GetCurrentAnimation()->GetName( sAnimationName );
 				IBox* pEnemyBox = pMesh->GetAnimationBBox( sAnimationName );
-				pEnemyBox->SetWorldMatrix( pEnemy->GetWorldTM() );
+				pEnemyBox->SetTM( pEnemy->GetWorldTM() );
 				if( pThisFighter->GetCollisionManager().IsIntersection( *pEnemyBox, *pBoneSphere ) )
 				{
 					pEnemy->ReceiveHit( pThisFighter );

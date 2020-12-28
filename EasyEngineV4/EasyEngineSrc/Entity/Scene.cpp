@@ -170,7 +170,7 @@ void CScene::Update()
 	m_oCameraManager.GetActiveCamera()->GetWorldMatrix( oCamMatrix );
 	m_oRenderer.SetCameraMatrix( oCamMatrix );
 	CNode::Update();
-	m_oRenderer.SetObjectMatrix( m_oWorldMatrix );
+	m_oRenderer.SetModelMatrix( m_oWorldMatrix );
 	if ( m_pRessource )
 		m_pRessource->Update();
 }
@@ -398,7 +398,7 @@ void CScene::Clear()
 
 float CScene::GetHeight( float x, float z )
 {
-	const float margin = 10.f;
+	const float margin = 7.f;
 	if( m_nHeightMapID != -1 )
 		return m_oCollisionManager.GetMapHeight( m_nHeightMapID, x, z ) + margin;
 	return -1000000.f;

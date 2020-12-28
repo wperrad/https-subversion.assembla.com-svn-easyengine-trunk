@@ -44,7 +44,6 @@ public:
 	virtual void	ExtractHeightMapFromTexture( string sFileName, string sOutFileName ) = 0;
 	virtual	void	SetHeightMapPrecision( int nPrecision ) = 0;
 	virtual bool	IsIntersection( const IBox& b, const ISphere& s ) = 0;
-	virtual bool	IsIntersection( const IBox& b1, const IBox& b2 ) = 0;
 	virtual bool	IsIntersection( const ISegment& s, const IBox& b2 ) = 0;
 	virtual bool	IsIntersection( const ISegment& s, const CVector& oCircleCenter, float fCircleRadius ) = 0;
 	virtual void	Get2DLineIntersection( const CVector2D& oLine1First, const CVector2D& oLine1Last, const CVector2D& oLine2First, const CVector2D& oLine2Last, CVector2D& oIntersection ) = 0;

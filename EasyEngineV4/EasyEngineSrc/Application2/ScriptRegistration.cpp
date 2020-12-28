@@ -1,5 +1,8 @@
-#include "ScriptRegistration.h"
+// System
+#include <time.h>
 
+// Engine
+#include "ScriptRegistration.h"
 #include "IEntity.h"
 #include "IInputManager.h"
 #include "IConsole.h"
@@ -176,8 +179,10 @@ void CreateBox( IScriptState* pState )
 	IEntity* pBox = m_pEntityManager->CreateBox( *m_pRenderer, CVector( px->m_fValue, py->m_fValue, pz->m_fValue ) );
 	pBox->Link( m_pScene );
 	ostringstream oss;
-	oss << "La boite a été créée avec l'identifiant " << m_pEntityManager->GetEntityID( pBox ) << ".";
+	int id = m_pEntityManager->GetEntityID(pBox);
+	oss << "La boite a été créée avec l'identifiant " << id << ".";
 	m_pConsole->Println( oss.str() );
+	pState->SetReturnValue((float)id);
 }
 
 void CreateSphere( IScriptState* pState )
@@ -203,17 +208,31 @@ void CreateRepere( IScriptState* pState )
 
 void Test( IScriptState* pState )
 {
-	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)pState->GetArg(0);
-	IEntity* pEntity = m_pEntityManager->GetEntity(pId->m_nValue);
-	CMatrix m;
-	pEntity->GetLocalMatrix(m);	
-	CVector v;
-	m.GetAffinePart(v);
-	CMatrix m2 = CMatrix::GetxRotation(-90.f);
-	m2.SetAffinePart(v);
-	pEntity->SetLocalMatrix(m2);
+	CScriptFuncArgInt* pBoxId = (CScriptFuncArgInt*)pState->GetArg(0);
+	CScriptFuncArgInt* pLineId = (CScriptFuncArgInt*)pState->GetArg(1);
+	IEntity* pBoxEntity = m_pEntityManager->GetEntity(pBoxId->m_nValue);
+	IBox* pBox = dynamic_cast<IBox*>(pBoxEntity->GetBoundingGeometry());
+	IEntity* pLineEntity = m_pEntityManager->GetEntity(pLineId->m_nValue);
+	ILine* pLine = dynamic_cast<ILine*>(pLineEntity);
+	if (pLine) {
+		CVector first, last;
+		pLine->GetPoints(first, last);
 
-	pEntity->SetLocalPosition(0, 2000, 6000);
+		CVector firstNewBase, lastNewBase;
+		CMatrix boxTM, boxTMInv;
+		pBoxEntity->GetWorldMatrix(boxTM);
+		boxTM.GetInverse(boxTMInv);
+		firstNewBase = boxTMInv * first;
+		lastNewBase = boxTMInv * last;
+		
+		
+		CVector R;
+		if (pBox->GetReactionYAlignedPlane(*pLine, 170.f, R)) {
+			IEntity* s = m_pEntityManager->CreateSphere(10);
+			s->Link(m_pScene);
+			s->SetWorldPosition(R);
+		}
+	}
 }
 
 void Test2(IScriptState* pState)
@@ -629,6 +648,43 @@ void RunAction( IScriptState* pState )
 	}
 }
 
+
+
+void GenerateRandomNPC(IScriptState* pState)
+{
+	CScriptFuncArgString* pNPCFileName = (CScriptFuncArgString*)pState->GetArg(0);
+	CScriptFuncArgString* pArmorName = (CScriptFuncArgString*)pState->GetArg(1);
+	CScriptFuncArgInt* pNPCCount = (CScriptFuncArgInt*)pState->GetArg(2);
+	CScriptFuncArgInt* pPercentRadius = (CScriptFuncArgInt*)pState->GetArg(3);
+
+
+	srand((unsigned)time(NULL));
+
+	for (int i = 0; i < pNPCCount->m_nValue; i++) {
+		IEntity* pEntity = m_pEntityManager->CreateNPC(pNPCFileName->m_sValue, m_pFileSystem);
+		pEntity->Link(m_pScene);
+		int id = m_pEntityManager->GetEntityID(pEntity);
+		ostringstream oss;
+		oss << "L'entité \"" << pNPCFileName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
+		m_pConsole->Println(oss.str());
+
+		pEntity->Link(m_pScene);
+		IBox* pBox = static_cast<IBox*>(m_pScene->GetBoundingGeometry());
+		pBox->GetDimension();
+		float r = rand();
+		float factor = (float)pPercentRadius->m_nValue / 100.f;
+		float x = factor * pBox->GetDimension().m_x * (r - 0.5f * RAND_MAX) / RAND_MAX;
+		float y = 2000.f;
+		r = rand();
+		float z = factor * pBox->GetDimension().m_z * (r - 0.5f * RAND_MAX) / RAND_MAX;
+		pEntity->SetWorldPosition(x, y, z);
+		m_pEntityManager->WearArmor(id, "2");
+		pEntity->RunAction("stand", true);
+		float angle = 360 * r / RAND_MAX;
+		pEntity->Roll(angle);
+	}
+}
+
 void SetScale( IScriptState* pState )
 {
 	CScriptFuncArgInt* pEntityID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
@@ -708,7 +764,10 @@ void CreateLineEntity(IScriptState* pState)
 	IEntity* pLine = m_pEntityManager->CreateLineEntity(first, last);
 	int id = m_pEntityManager->GetEntityID(pLine);
 	pLine->Link(m_pScene);
-	pState->SetReturnValue(id);	
+	pState->SetReturnValue(id);
+	ostringstream oss;
+	oss << "La ligne a été créée avec l'identifiant " << id;
+	m_pConsole->Println(oss.str());
 }
 
 void CreateNPC( IScriptState* pState )
@@ -1767,16 +1826,29 @@ void DisplayNodeInfos( CNode* pNode, int nLevel = 0 )
 		DisplayNodeInfos( pNode->GetChild( i ), nLevel + 1 );
 }
 
-
 void Kill(IScriptState* pState)
 {
 	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
 	m_pEntityManager->Kill(pId->m_nValue);
 }
 
+void WearArmor(IScriptState* pState)
+{
+	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
+	CScriptFuncArgString* pArmor = (CScriptFuncArgString*)(pState->GetArg(1));
+	m_pEntityManager->WearArmor(pId->m_nValue, pArmor->m_sValue);
+}
+
 void DisplayEntities( IScriptState* pState )
 {
 	DisplayNodeInfos( m_pScene );
+}
+
+void DisplayMobileEntities(IScriptState* pState)
+{
+	string sText;
+	m_pEntityManager->SerializeMobileEntities(m_pScene, sText);
+	m_pConsole->Println(sText);
 }
 
 void GetEntityID( IScriptState* pState )
@@ -1871,13 +1943,17 @@ void SetEntityPos( IScriptState* pState )
 
 void DisplayEntityPosition( IScriptState* pState )
 {
+	ostringstream oss;
 	CScriptFuncArgInt* pInt = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pInt->m_nValue );
-	CVector vPos;
-	pEntity->GetWorldPosition( vPos );
-	ostringstream oss;
-	oss << vPos.m_x << " , " << vPos.m_y << " , " << vPos.m_z;
-	m_pConsole->Println( oss.str() );
+	if (pEntity) {
+		CVector vPos;
+		pEntity->GetWorldPosition(vPos);
+		oss << vPos.m_x << " , " << vPos.m_y << " , " << vPos.m_z;
+	}
+	else
+		oss << "Error : entity id " << pInt->m_nValue << " does not exists";
+	m_pConsole->Println(oss.str());
 }
 
 void Exit( IScriptState* pState )
@@ -2348,6 +2424,9 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	m_pScriptManager->RegisterFunction( "DisplayEntities", DisplayEntities, vType );
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayMobileEntities", DisplayMobileEntities, vType);
 	
 	vType.clear();
 	vType.push_back( eString );
@@ -2682,6 +2761,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eInt);
+	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction( "Test", Test, vType );
 
 	vType.clear();
@@ -2816,4 +2896,19 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eInt);
 	vType.push_back(eFloat);
 	m_pScriptManager->RegisterFunction("SetCurrentAnimationSpeed", SetCurrentAnimationSpeed, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("WearArmor", WearArmor, vType);
+
+
+	vType.clear();
+	vType.push_back(eString);
+	vType.push_back(eString);
+	vType.push_back(eInt);
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("GenerateRandomNPC", GenerateRandomNPC, vType);
+
+	
 }

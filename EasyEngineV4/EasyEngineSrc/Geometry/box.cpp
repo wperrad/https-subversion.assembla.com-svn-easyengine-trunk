@@ -1,5 +1,6 @@
 #include "box.h"
 #include "IRenderer.h"
+#include "Cylinder.h"
 
 CBox::CBox():
 m_bInitialized( false )
@@ -130,22 +131,22 @@ bool CBox::TestBoxesCollisionIntoFirstBoxBase(const IBox& b1, const IBox& b2) co
 	b2Temp.SetWorldMatrix(b2MatBaseB1);
 	vector< CVector > vPoints2;
 	b2Temp.GetPoints(vPoints2);
-	float fMinx = GetMinx(vPoints2);
+	float fMinx = CVector::GetMinx(vPoints2);
 	if (fMinx > b1.GetMinPoint().m_x + b1.GetDimension().m_x)
 		return false;
-	float fMiny = GetMiny(vPoints2);
+	float fMiny = CVector::GetMiny(vPoints2);
 	if (fMiny > b1.GetMinPoint().m_y + b1.GetDimension().m_y)
 		return false;
-	float fMinz = GetMinz(vPoints2);
+	float fMinz = CVector::GetMinz(vPoints2);
 	if (fMinz > b1.GetMinPoint().m_z + b1.GetDimension().m_z)
 		return false;
-	float fMaxx = GetMaxx(vPoints2);
+	float fMaxx = CVector::GetMaxx(vPoints2);
 	if (fMaxx < b1.GetMinPoint().m_x)
 		return false;
-	float fMaxy = GetMaxy(vPoints2);
+	float fMaxy = CVector::GetMaxy(vPoints2);
 	if (fMaxy < b1.GetMinPoint().m_y)
 		return false;
-	float fMaxz = GetMaxz(vPoints2);
+	float fMaxz = CVector::GetMaxz(vPoints2);
 	if (fMaxz < b1.GetMinPoint().m_z)
 		return false;
 	return true;
@@ -188,12 +189,12 @@ float CBox::GetDistanceInBase(const IBox& oBox) const
 	b2Temp.SetWorldMatrix(b2MatBaseB1);
 	vector< CVector > vPoints2;
 	b2Temp.GetPoints(vPoints2);
-	float fMinx = GetMinx(vPoints2);
+	float fMinx = CVector::GetMinx(vPoints2);
 
 	float distance = -1.f;
 	if (fMinx > GetMinPoint().m_x + GetDimension().m_x)
 		distance = fMinx - GetMinPoint().m_x + GetDimension().m_x;
-	float fMiny = GetMiny(vPoints2);
+	float fMiny = CVector::GetMiny(vPoints2);
 
 	if (fMiny > GetMinPoint().m_y + GetDimension().m_y) {
 		float d = fMiny - GetMinPoint().m_y + GetDimension().m_y;
@@ -201,28 +202,28 @@ float CBox::GetDistanceInBase(const IBox& oBox) const
 			distance = d;
 	}
 
-	float fMinz = GetMinz(vPoints2);
+	float fMinz = CVector::GetMinz(vPoints2);
 	if (fMinz > GetMinPoint().m_z + GetDimension().m_z) {
 		float d = fMinz - GetMinPoint().m_z + GetDimension().m_z;
 		if (d < distance)
 			distance = d;
 	}
 		
-	float fMaxx = GetMaxx(vPoints2);
+	float fMaxx = CVector::GetMaxx(vPoints2);
 	if (fMaxx < GetMinPoint().m_x){
 		float d = fMaxx - GetMinPoint().m_x;
 		if (d < distance)
 			distance = d;
 	}
 	
-	float fMaxy = GetMaxy(vPoints2);
+	float fMaxy = CVector::GetMaxy(vPoints2);
 	if (fMaxy < GetMinPoint().m_y) {
 		float d = fMaxy - GetMinPoint().m_y;
 		if (d < distance)
 			distance = d;
 	}
 		
-	float fMaxz = GetMaxz(vPoints2);
+	float fMaxz = CVector::GetMaxz(vPoints2);
 	if (fMaxz < GetMinPoint().m_z) {
 		float d = fMaxz - GetMinPoint().m_z;
 		if (d < distance)
@@ -286,6 +287,11 @@ const CMatrix& CBox::GetTM() const
 	return m_oTM;
 }
 
+void CBox::SetTM(const CMatrix& m)
+{
+	m_oTM = m;
+}
+
 const CVector& CBox::GetDimension() const
 {
 	return m_oDimension;
@@ -324,72 +330,6 @@ void CBox::GetPoints( vector< CVector >& vPoints )
 	}
 }
 
-float CBox::GetMinx(const vector< CVector >& vPoints) const
-{
-	float fMin = vPoints[0].m_x;
-	for (int i = 1; i < vPoints.size(); i++)
-	{
-		if (fMin > vPoints[i].m_x)
-			fMin = vPoints[i].m_x;
-	}
-	return fMin;
-}
-
-float CBox::GetMiny(const vector< CVector >& vPoints) const
-{
-	float fMin = vPoints[0].m_y;
-	for (int i = 1; i < vPoints.size(); i++)
-	{
-		if (fMin > vPoints[i].m_y)
-			fMin = vPoints[i].m_y;
-	}
-	return fMin;
-}
-
-float CBox::GetMinz(const vector< CVector >& vPoints) const
-{
-	float fMin = vPoints[0].m_z;
-	for (int i = 1; i < vPoints.size(); i++)
-	{
-		if (fMin > vPoints[i].m_z)
-			fMin = vPoints[i].m_z;
-	}
-	return fMin;
-}
-
-float CBox::GetMaxx(const vector< CVector >& vPoints) const
-{
-	float fMax = vPoints[0].m_x;
-	for (int i = 1; i < vPoints.size(); i++)
-	{
-		if (fMax < vPoints[i].m_x)
-			fMax = vPoints[i].m_x;
-	}
-	return fMax;
-}
-
-float CBox::GetMaxy(const vector< CVector >& vPoints) const
-{
-	float fMax = vPoints[0].m_y;
-	for (int i = 1; i < vPoints.size(); i++)
-	{
-		if (fMax < vPoints[i].m_y)
-			fMax = vPoints[i].m_y;
-	}
-	return fMax;
-}
-
-float CBox::GetMaxz(const vector< CVector >& vPoints) const
-{
-	float fMax = vPoints[0].m_z;
-	for (int i = 1; i < vPoints.size(); i++)
-	{
-		if (fMax < vPoints[i].m_z)
-			fMax = vPoints[i].m_z;
-	}
-	return fMax;
-}
-
 bool CBox::IsIntersect(const CBox& box) const
 {
 	if (TestBoxesCollisionIntoFirstBoxBase(*this, box))
@@ -402,11 +342,64 @@ bool CBox::IsIntersect(const IGeometry& box) const
 	const CBox* pBox = dynamic_cast<const CBox*>(&box);
 	if (pBox)
 		return IsIntersect(*pBox);
-	throw 1;
+	else {
+		const CCylinder* pCylinder = dynamic_cast<const CCylinder*>(&box);
+		if (pCylinder)
+			return pCylinder->IsIntersect(*this);
+	}
 	return false;
 }
 
 void CBox::Draw(IRenderer& oRenderer) const
 {
 	oRenderer.DrawBox(m_oMinPoint, m_oDimension);
+}
+
+bool CBox::GetReactionYAlignedPlane(const ILine& oDirectriceLine, float planeHeight, CVector& R)
+{
+	CBox temp(*this);
+	CMatrix m;
+	temp.SetWorldMatrix(m);
+	CMatrix oTMInv;
+	m_oTM.GetInverse(oTMInv);
+	CVector first, last;
+	oDirectriceLine.GetPoints(first, last);
+	CVector O = oTMInv * first;
+	CVector P = oTMInv * last;
+	bool collision = true;
+		
+	float dimx = m_oDimension.m_x / 2.f;
+	float dimy = m_oDimension.m_y / 2.f;
+	float dimz = m_oDimension.m_z / 2.f;
+
+	if (!(dimy < O.m_y || -dimy > O.m_y + planeHeight)) {
+		CVector A, B;
+		if (O.m_x > dimx && P.m_x < dimx) {
+			// collision sur le plan z positif
+			A = CVector(dimx, O.m_y, -dimz);
+			B = CVector(dimx, O.m_y, dimz);
+		}
+		else if (O.m_x < -dimx && P.m_x > -dimx) {
+			// collision sur le plan z négatif
+			A = CVector(-dimx, O.m_y, -dimz);
+			B = CVector(-dimx, O.m_y, dimz);
+		}
+		else if (O.m_z > dimz && P.m_z < dimz) {
+			// collision sur le plan x positif
+			A = CVector(-dimx, O.m_y, dimz);
+			B = CVector(dimx, O.m_y, dimz);
+		}
+		else if (O.m_z < -dimz && P.m_z > -dimz) {
+			// collision sur le plan x négatif
+			A = CVector(-dimx, O.m_y, -dimz);
+			B = CVector(dimx, O.m_y, -dimz);
+		}
+		else
+			collision = false;
+		if (collision) {
+			R = CVector(A.m_x, (O.m_y + P.m_y) / 2.f, P.m_z);
+			R = m_oTM * R;
+		}
+	}
+	return collision;
 }

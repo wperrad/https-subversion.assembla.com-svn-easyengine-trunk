@@ -138,8 +138,10 @@ public:
 
 	virtual void			SetModelViewMatrix( const CMatrix& oMatrix ) = 0;
 	virtual void			SetProjectionMatrix( const CMatrix& oMatrix ) = 0;
+	virtual void			GetCameraMatrix(CMatrix& oMatrix) const = 0;
 	virtual void			SetCameraMatrix( const CMatrix& oMatrix ) = 0;
-	virtual void			SetObjectMatrix( const CMatrix& oMatrix  ) = 0;
+	virtual void			GetModelMatrix(CMatrix& oMatrix) = 0;
+	virtual void			SetModelMatrix( const CMatrix& oMatrix  ) = 0;
 	virtual void			BeginRender() = 0;
 	virtual void			EndRender() = 0;
 	virtual void			DestroyContext() = 0;

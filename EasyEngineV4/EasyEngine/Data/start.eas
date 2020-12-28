@@ -10,7 +10,6 @@ SetEntityPos(light, 0, 45000, 20000);
 l=AddLightw("omni", 75000);
 SetEntityPos(l, 0, 75000, -260000);
 
-
 perso=CreateMobileEntity("testExport14");
 SetEntityName(perso, "perso");
 SetCurrentPerso(perso);
@@ -18,31 +17,34 @@ Stand(perso);
 SetAnimationSpeed(perso, "run", 2);
 
 
-a = LoadEntity("Armors\2\Armure2_cuirasse");
+
+
+
+/*
+a = LoadEntity("Armors\2\cuirasse");
 LinkToName(a, "", perso, "Cervicales", "preserve");
-a = LoadEntity("Armors\2\Armure2_jupe");
+a = LoadEntity("Armors\2\jupe");
 LinkToName(a, "", perso, "Bassin", "preserve");
-a = LoadEntity("Armors\2\Armure2_JambiereD");
+a = LoadEntity("Armors\2\JambiereD");
 LinkToName(a, "", perso, "TibiasD", "preserve");
-a = LoadEntity("Armors\2\Armure2_JambiereG");
+a = LoadEntity("Armors\2\JambiereG");
 LinkToName(a, "", perso, "TibiasG", "preserve");
-a = LoadEntity("Armors\2\Armure2_BrassiereD");
+a = LoadEntity("Armors\2\BrassiereD");
 LinkToName(a, "", perso, "AvantBrasD", "preserve");
-a = LoadEntity("Armors\2\Armure2_BrassiereG");
+a = LoadEntity("Armors\2\BrassiereG");
 LinkToName(a, "", perso, "AvantBrasG", "preserve");
-a = LoadEntity("Armors\2\Armure2_EpauletteD");
+a = LoadEntity("Armors\2\EpauletteD");
 LinkToName(a, "", perso, "EpauleD", "preserve");
-a = LoadEntity("Armors\2\Armure2_EpauletteG");
+a = LoadEntity("Armors\2\EpauletteG");
 LinkToName(a, "", perso, "EpauleG", "preserve");
+*/
+
 
 SetCameraType("link");
 SetFov(60);
 
 
 c = GetCameraID("link");
-
-
-
 
 npc1 = CreateNPC("testExport14");
 Stand(npc1);
@@ -64,8 +66,7 @@ SetEntityName(maison2, "maison2");
 SetEntityWeight(maison2, 1);
 SetEntityPos(maison2, 13000, 2000, -4000);
 
-
-temple=LoadEntity("parthenon2.bme");
+temple=LoadEntity("parthenon.bme");
 SetEntityPos(temple, 0, 5000, 10000);
 SetEntityWeight(temple, 10);
 SetEntityName(temple, "Parthenon");
@@ -74,3 +75,16 @@ socle=LoadEntity("socle.bme");
 SetEntityPos(socle, 5000, 5000, 12000);
 SetEntityWeight(socle, 10);
 SetEntityName(socle, "socle");
+
+box=CreateBox(1000, 300, 2000);
+SetEntityPos(box, 0, 230, 0);
+
+line = CreateLineEntity(-1100, 230, -900, 0, 230, 0);
+
+
+WearArmor(perso, "2");
+WearArmor(npc1, "2");
+WearArmor(npc2, "2");
+
+//GenerateRandomNPC("testExport14", "2", 100, 20);
+

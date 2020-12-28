@@ -225,15 +225,15 @@ bool CEntity::TestEntityCollision(CEntity* pEntity)
 {
 	if (GetBoundingSphereDistance(pEntity) < 0)
 	{
-		IBox* pCurrentGeometry = static_cast<IBox*>(GetBoundingGeometry()->Duplicate());
-		IBox* pOtherGeometry = static_cast<IBox*>(pEntity->GetBoundingGeometry()->Duplicate());
+		IGeometry* pCurrentGeometry = GetBoundingGeometry()->Duplicate();
+		IGeometry* pOtherGeometry = pEntity->GetBoundingGeometry()->Duplicate();
 
-		pCurrentGeometry->SetWorldMatrix(m_oWorldMatrix);
+		pCurrentGeometry->SetTM(m_oWorldMatrix);
 		CMatrix oOtherWorldMatrix;
 		pEntity->GetWorldMatrix(oOtherWorldMatrix);
-		pOtherGeometry->SetWorldMatrix(oOtherWorldMatrix);
+		pOtherGeometry->SetTM(oOtherWorldMatrix);
 
-		return (m_oCollisionManager.IsIntersection(*pCurrentGeometry, *pOtherGeometry));
+		return pCurrentGeometry->IsIntersect(*pOtherGeometry);
 	}
 	return false;
 }
@@ -279,7 +279,7 @@ float CEntity::GetBoundingSphereDistance(CEntity* pEntity)
 	CVector oThisPosition, oEntityWorldPosition;
 	GetWorldPosition(oThisPosition);
 	pEntity->GetWorldPosition(oEntityWorldPosition);
-	float fDistance = (oThisPosition - oEntityWorldPosition).Norm() - (m_fBoundingSphereRadius / 2.f) - (pEntity->GetBoundingSphereRadius() / 2.f);
+	float fDistance = (oThisPosition - oEntityWorldPosition).Norm() - (m_fBoundingSphereRadius) - (pEntity->GetBoundingSphereRadius());
 	return fDistance;
 }
 
@@ -302,8 +302,6 @@ void CEntity::Update()
 		m_pEntityManager->GetGUIManager()->Print(oss.str(), 1000, 10);
 	}
 
-
-
 	if( m_pOrgSkeletonRoot )
 	{
 		vector< CMatrix > vBoneMatrix;
@@ -311,7 +309,7 @@ void CEntity::Update()
 		SetNewBonesMatrixArray( vBoneMatrix );
 	}
 	m_oWorldMatrix *= m_oScaleMatrix;
-	m_oRenderer.SetObjectMatrix( m_oWorldMatrix );
+	m_oRenderer.SetModelMatrix( m_oWorldMatrix );
 	
 	if( !m_bHidden )
 	{
@@ -377,23 +375,29 @@ void CEntity::LocalTranslate(float dx, float dy, float dz)
 		CVector oThisPos, oEntityPos;
 		GetWorldPosition(oThisPos);
 
-		CEntity* pEntity = GetEntityCollision();
+		CEntity* pEntity = NULL;
 		vector<CEntity*> entities;
 		GetEntitiesCollision(entities);
 
 		CMatrix oTemp = m_oLocalMatrix;	
-		if(!entities.empty())
+		if (!entities.empty())
 		{
-			pEntity->GetWorldPosition(oEntityPos);
-			float fCurrentDistance = (oThisPos - oEntityPos).Norm();
-			CNode::LocalTranslate(dx, dy, dz);
-			CNode::UpdateWithoutChildren();
-			GetWorldPosition(oThisPos);
-			pEntity->GetWorldPosition(oEntityPos);
-			float fNextDistance = (oThisPos - oEntityPos).Norm();
-			if (fNextDistance < fCurrentDistance)
-				bCollision = ManageBoxCollision(entities, dx, dy, dz, oTemp);
-			else
+			for (int i = 0; i < entities.size(); i++) {
+				pEntity = entities[i];
+				pEntity->GetWorldPosition(oEntityPos);
+				float fCurrentDistance = (oThisPos - oEntityPos).Norm();
+				CNode::LocalTranslate(dx, dy, dz);
+				CNode::UpdateWithoutChildren();
+				GetWorldPosition(oThisPos);
+				pEntity->GetWorldPosition(oEntityPos);
+				float fNextDistance = (oThisPos - oEntityPos).Norm();
+				if (fNextDistance < fCurrentDistance) {
+					bCollision = ManageBoxCollision(entities, dx, dy, dz, oTemp);
+				}
+				if (bCollision)
+					break;
+			}
+			if(!bCollision)
 				ManageGroundCollision(oTemp);
 		}
 		else
@@ -425,14 +429,14 @@ bool CEntity::ManageBoxCollision(vector<CEntity*>& vCollideEntities, float dx, f
 	bool bCollision = false;
 	if (dx == 0 && dy == 0 && dz != 0) {
 		float h = GetHeight();
-		float collideEntityHeight = pCollideEntity->GetHeight() / 2.f + pCollideEntity->GetY();
+		float collideEntityHeight = pCollideEntity->GetY() + pCollideEntity->GetHeight() / 2.f;
 		if (collideEntityHeight < GetY() + m_fMaxStepHeight)
 		{
 			float newy = h / 2.f + collideEntityHeight;
 			for (int i = 1; i < vCollideEntities.size(); i++) {
 				pCollideEntity = vCollideEntities[i];
 				int collideEntityHeight2 = pCollideEntity->GetHeight() / 2.f + pCollideEntity->GetY();
-				if (collideEntityHeight2 > collideEntityHeight) {
+				if ( (collideEntityHeight2 > collideEntityHeight) && (collideEntityHeight2 < GetY() + m_fMaxStepHeight)) {
 					newy = h / 2.f + collideEntityHeight2;
 				}
 			}
@@ -442,9 +446,16 @@ bool CEntity::ManageBoxCollision(vector<CEntity*>& vCollideEntities, float dx, f
 			UpdateWithoutChildren();
 		}
 	}
-	else if (pCollideEntity->GetY() + pCollideEntity->GetHeight() > GetY() + stepHeight) {
-		m_oLocalMatrix = oBackupMatrix;
-		bCollision = true;
+	else {
+		for (int i = 0; i < vCollideEntities.size(); i++) {
+			pCollideEntity = vCollideEntities[i];
+			int collideEntityHeight = pCollideEntity->GetY() + pCollideEntity->GetHeight() / 2.f;
+			if (GetY() + stepHeight < collideEntityHeight) {
+				m_oLocalMatrix = oBackupMatrix;
+				bCollision = true;
+				break;
+			}
+		}
 	}
 	return bCollision;
 }
