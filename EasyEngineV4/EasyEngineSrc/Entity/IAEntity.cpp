@@ -240,7 +240,7 @@ void IAEntity::SetDestination( const CVector& oDestination )
 
 float IAEntity::GetDestinationAngleRemaining()
 {
-	CVector v( 0, -1, 0, 1 ), oThisPosition, oTempPosition( m_oDestination.m_x, 0, m_oDestination.m_z );
+	CVector v( 0, 0, 1, 1 ), oThisPosition, oTempPosition( m_oDestination.m_x, 0, m_oDestination.m_z );
 	CVector oBefore = GetWorldTM().GetRotation() * v;
 	GetPosition( oThisPosition );
 	oThisPosition = CVector( oThisPosition.m_x, 0, oThisPosition.m_z );

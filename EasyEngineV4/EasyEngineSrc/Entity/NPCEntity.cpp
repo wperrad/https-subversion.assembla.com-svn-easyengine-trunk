@@ -132,7 +132,7 @@ void CNPCEntity::Die()
 
 void CNPCEntity::Turn( float fAngle )
 {
-	Roll( fAngle );
+	Yaw( fAngle );
 }
 
 void CNPCEntity::OnCollision( CEntity* pThis, CEntity* pEntity )
