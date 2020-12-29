@@ -1758,7 +1758,7 @@ void AddLightw( IScriptState* pState )
 		type = IRessource::SPOT;
 	else
 	{
-		m_pConsole->Println( "Paramètre 4 invalide, vous devez entrer un type de lumière parmis les 3 suivants : \"omni\" , \"dir\" , \"spot\" " );
+		m_pConsole->Println( "Paramètre 1 invalide, vous devez entrer un type de lumière parmis les 3 suivants : \"omni\" , \"dir\" , \"spot\" " );
 		return;
 	}
 	IEntity* pEntity = m_pEntityManager->CreateLightEntity( Color, type, pIntensity->m_fValue );

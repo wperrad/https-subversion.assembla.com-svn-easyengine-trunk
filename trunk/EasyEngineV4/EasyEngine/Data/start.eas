@@ -3,55 +3,31 @@ OpenConsole(0);
 SetBkgColor(0, 100, 255);
 SetSceneMap("ground005");
 
-light=AddLightw("omni", 4000);
-SetEntityPos(light, 0, 45000, 20000);
+light1=AddLightw("omni", 4000);
+SetEntityPos(light1, 0, 20000, 50000);
 
 
-l=AddLightw("omni", 75000);
-SetEntityPos(l, 0, 75000, -260000);
+light2=AddLightw("omni", 75000);
+SetEntityPos(light2, 0, 75000, -260000);
 
-perso=CreateMobileEntity("testExport14");
+perso=CreateMobileEntity("testExport15");
 SetEntityName(perso, "perso");
 SetCurrentPerso(perso);
 Stand(perso);
 SetAnimationSpeed(perso, "run", 2);
 
 
-
-
-
-/*
-a = LoadEntity("Armors\2\cuirasse");
-LinkToName(a, "", perso, "Cervicales", "preserve");
-a = LoadEntity("Armors\2\jupe");
-LinkToName(a, "", perso, "Bassin", "preserve");
-a = LoadEntity("Armors\2\JambiereD");
-LinkToName(a, "", perso, "TibiasD", "preserve");
-a = LoadEntity("Armors\2\JambiereG");
-LinkToName(a, "", perso, "TibiasG", "preserve");
-a = LoadEntity("Armors\2\BrassiereD");
-LinkToName(a, "", perso, "AvantBrasD", "preserve");
-a = LoadEntity("Armors\2\BrassiereG");
-LinkToName(a, "", perso, "AvantBrasG", "preserve");
-a = LoadEntity("Armors\2\EpauletteD");
-LinkToName(a, "", perso, "EpauleD", "preserve");
-a = LoadEntity("Armors\2\EpauletteG");
-LinkToName(a, "", perso, "EpauleG", "preserve");
-*/
-
-
 SetCameraType("link");
 SetFov(60);
 
 
-c = GetCameraID("link");
-
-npc1 = CreateNPC("testExport14");
+npc1 = CreateNPC("testExport15");
 Stand(npc1);
-SetEntityPos(npc1, -200, 1000, 1000);
 SetEntityName(npc1, "NPC1");
+SetEntityPos(npc1, -200, 1000, 1000);
 
-npc2 = CreateNPC("testExport14");
+
+npc2 = CreateNPC("testExport15");
 Stand(npc2);
 SetEntityPos(npc2, 2000, 0, 0);
 SetEntityName(npc2, "NPC2");

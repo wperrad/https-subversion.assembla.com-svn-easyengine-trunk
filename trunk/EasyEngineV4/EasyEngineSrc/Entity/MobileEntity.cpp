@@ -56,8 +56,6 @@ m_nLife( 1000 )
 		m_mAnimationSpeedByType[ (TAnimation)i ] = s_mOrgAnimationSpeedByType[ (TAnimation)i ];
 
 	m_oBody.m_fWeight = 1.f;
-	Pitch( -90.f );
-	CMatrix trans = CMatrix::GetxRotation(-90.f);
 	int nDotPos = (int)sFileName.find( "." );
 	m_sFileNameWithoutExt = sFileName.substr( 0, nDotPos );
 	string sMask = m_sFileNameWithoutExt + "*" + ".bke";
@@ -99,8 +97,6 @@ void CMobileEntity::UpdateCollision()
 	m_oBody.Update();
 	if (m_oBody.m_fWeight > 0.f)
 	{
-		CVector oTransformedBoxPosition = m_oLocalMatrix.GetRotation() * m_oScaleMatrix * m_pBoundingGeometry->GetBase();
-		float h = GetHeight();
 		float x , y, z;
 
 		if (!m_bUsePositionKeys)
@@ -116,7 +112,7 @@ void CMobileEntity::UpdateCollision()
 		}
 
 		int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
-		LocalTranslate(0.f, 0.f, m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f);
+		LocalTranslate(0.f, m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f, 0.f);
 		CEntity* pParentEntity = static_cast<CEntity*>(m_pParent);
 		if(!TestEntityCollision(pParentEntity)) {
 			CEntity* pEntity = static_cast<CEntity*>(m_pParent->GetParent());
@@ -193,7 +189,7 @@ void CMobileEntity::Run( bool bLoop )
 	{
 		SetPredefinedAnimation( "run", bLoop );
 		if( !m_bUsePositionKeys )
-			ConstantLocalTranslate( CVector( 0.f, m_mAnimationSpeedByType[ eRun ], 0.f ) );
+			ConstantLocalTranslate( CVector( 0.f, 0.f, -m_mAnimationSpeedByType[eRun]) );
 	}
 }
 

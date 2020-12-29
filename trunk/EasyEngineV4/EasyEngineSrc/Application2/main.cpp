@@ -242,7 +242,7 @@ void UpdatePerso()
 				int x, y;
 				m_pInputManager->GetOffsetMouse( x, y );
 				float s = m_pInputManager->GetMouseSensitivity();
-				pPerso->Roll( - x * s );
+				pPerso->Yaw( - x * s );
 				m_pCameraManager->GetActiveCamera()->Pitch((float)-y/30.f);
 			}
 		}

@@ -35,7 +35,6 @@ private:
 	int							m_nBeginWaitTimeBeforeNextAttack;
 	int							m_nCurrentWaitTimeBeforeNextAttack;
 	bool						m_bHitEnemy;
-	map< string, IBone* >		m_mPreloadedBones;
 	string						m_sCurrentHitBoneName;
 	CVector						m_oDestination;
 	float						m_fAngleRemaining;

@@ -226,14 +226,15 @@ bool CEntity::TestEntityCollision(CEntity* pEntity)
 	if (GetBoundingSphereDistance(pEntity) < 0)
 	{
 		IGeometry* pCurrentGeometry = GetBoundingGeometry()->Duplicate();
-		IGeometry* pOtherGeometry = pEntity->GetBoundingGeometry()->Duplicate();
+		IGeometry* pOtherGeometry = pEntity->GetBoundingGeometry() ? pEntity->GetBoundingGeometry()->Duplicate() : NULL;
 
-		pCurrentGeometry->SetTM(m_oWorldMatrix);
-		CMatrix oOtherWorldMatrix;
-		pEntity->GetWorldMatrix(oOtherWorldMatrix);
-		pOtherGeometry->SetTM(oOtherWorldMatrix);
-
-		return pCurrentGeometry->IsIntersect(*pOtherGeometry);
+		if (pOtherGeometry) {
+			pCurrentGeometry->SetTM(m_oWorldMatrix);
+			CMatrix oOtherWorldMatrix;
+			pEntity->GetWorldMatrix(oOtherWorldMatrix);
+			pOtherGeometry->SetTM(oOtherWorldMatrix);
+			return pCurrentGeometry->IsIntersect(*pOtherGeometry);
+		}
 	}
 	return false;
 }
@@ -340,8 +341,6 @@ void CEntity::UpdateBoundingBox()
 float CEntity::GetHeight()
 {
 	IGeometry* pGeometry = m_pBoundingGeometry->Duplicate();
-	CMatrix tm = m_oLocalMatrix.GetRotation() * m_oScaleMatrix;
-	pGeometry->Transform(tm);
 	return pGeometry->GetHeight();
 }
 
@@ -427,7 +426,7 @@ bool CEntity::ManageBoxCollision(vector<CEntity*>& vCollideEntities, float dx, f
 	CEntity* pCollideEntity = vCollideEntities[0];
 	float stepHeight = dy != 0 ? 50.f : 0.f;
 	bool bCollision = false;
-	if (dx == 0 && dy == 0 && dz != 0) {
+	if (dx == 0 && dy != 0 && dz == 0) {
 		float h = GetHeight();
 		float collideEntityHeight = pCollideEntity->GetY() + pCollideEntity->GetHeight() / 2.f;
 		if (collideEntityHeight < GetY() + m_fMaxStepHeight)
