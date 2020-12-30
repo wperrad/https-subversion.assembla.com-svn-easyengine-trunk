@@ -18,15 +18,14 @@ private:
 		eNoFight = 0,
 		eBeginHitReceived,
 		eReceivingHit,
-		eEndReceivingHit,
 		eBeginGoToEnemy,
 		eGoingToEnemy,
 		eArrivedToEnemy,
 		eBeginLaunchAttack,
 		eLaunchingAttack,
 		eEndLaunchAttack,
-		eBeginWaitForNextAttack,
-		eWaitingForNextAttack,
+		eBeginPrepareForNextAttack,
+		ePreparingForNextAttack,
 		eEndFight
 	};
 

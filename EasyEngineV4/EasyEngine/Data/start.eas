@@ -67,6 +67,7 @@ line = CreateLineEntity(-1100, 230, -900, 0, 230, 0);
 WearArmor(perso, "2");
 WearArmor(npc1, "2");
 WearArmor(npc2, "2");
+WearArmor(test, "2");
 
 //GenerateRandomNPC("testExport14", "2", 100, 20);
 

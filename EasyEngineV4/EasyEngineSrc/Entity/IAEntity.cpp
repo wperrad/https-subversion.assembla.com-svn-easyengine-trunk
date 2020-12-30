@@ -33,11 +33,6 @@ void IAEntity::UpdateFightState()
 		else
 			m_eFightState = eReceivingHit;
 		break;
-	case eReceivingHit:
-		break;
-	case eEndReceivingHit:
-		m_eFightState = eBeginWaitForNextAttack;
-		break;
 	case eBeginGoToEnemy:
 		m_pCurrentEnemy->GetPosition( oEnemyPos );
 		Goto( oEnemyPos, -1.f );
@@ -54,7 +49,7 @@ void IAEntity::UpdateFightState()
 			m_eFightState = eArrivedToEnemy;
 		break;
 	case eArrivedToEnemy:
-		m_eFightState = eWaitingForNextAttack;
+		m_eFightState = ePreparingForNextAttack;
 		TurnFaceToDestination();
 		Stand();
 		break;
@@ -68,13 +63,14 @@ void IAEntity::UpdateFightState()
 		if( m_pCurrentEnemy->GetLife() <= 0 )
 			m_eFightState = eEndFight;
 		else
-			m_eFightState = eBeginWaitForNextAttack;
+			m_eFightState = eBeginPrepareForNextAttack;
 		break;
-	case eBeginWaitForNextAttack:
+	case eBeginPrepareForNextAttack:
+		Guard();
 		m_nBeginWaitTimeBeforeNextAttack = CTimeManager::Instance()->GetCurrentTimeInMillisecond();
-		m_eFightState = eWaitingForNextAttack;
+		m_eFightState = ePreparingForNextAttack;
 		break;
-	case eWaitingForNextAttack:
+	case ePreparingForNextAttack:
 		m_pCurrentEnemy->GetPosition( oEnemyPos );
 		if( GetDistanceTo2dPoint( oEnemyPos ) > 100.f )
 			m_eFightState = eBeginGoToEnemy;
@@ -93,17 +89,14 @@ void IAEntity::UpdateFightState()
 		m_eFightState = eNoFight;
 		break;
 	default:
-		throw 1;
+		break;
 	}
 }
 
 void IAEntity::OnReceiveHit( IFighterEntity* pAgressor )
 {
 	m_pCurrentEnemy = pAgressor;
-	if( m_eFightState == IAEntity::eNoFight )
-		m_eFightState = IAEntity::eBeginHitReceived;
-	else if( m_eFightState == IAEntity::eLaunchingAttack )
-		m_eFightState = IAEntity::eEndLaunchAttack;
+	m_eFightState = IAEntity::eBeginHitReceived;
 	GetCurrentAnimation()->AddCallback( OnHitReceivedCallback, this );
 }
 
@@ -115,7 +108,7 @@ void IAEntity::OnHitReceivedCallback( IAnimation::TEvent e, void* pData )
 	case IAnimation::eBeginRewind:
 		pThisFighter->GetCurrentAnimation()->RemoveCallback( OnHitReceivedCallback );
 		if( pThisFighter->m_eFightState == IAEntity::eReceivingHit )
-			pThisFighter->m_eFightState = IAEntity::eEndReceivingHit;
+			pThisFighter->m_eFightState = IAEntity::eBeginPrepareForNextAttack;
 		else if(pThisFighter->GetLife() > 0)
 			pThisFighter->Stand();
 		break;
