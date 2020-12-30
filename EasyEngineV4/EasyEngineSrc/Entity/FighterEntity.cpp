@@ -3,7 +3,8 @@
 #include "ICollisionManager.h"
 
 IFighterEntity::IFighterEntity():
-m_bHitEnemy( false )
+m_bHitEnemy( false ),
+m_nLife(1000)
 {
 }
 
@@ -42,6 +43,14 @@ void IFighterEntity::OnHit( IFighterEntity* pAgressor, string sHitBoneName )
 	pAgressor->GetCurrentAnimation()->AddCallback( OnHitAnimationCallback, pAgressor );
 }
 
+void IFighterEntity::Hit()
+{
+	if (GetLife() > 0) {
+		PlayHitAnimation();
+		OnHit(this, GetAttackBoneName());
+	}
+}
+
 void IFighterEntity::OnEndHitAnimation()
 {
 	Stand();
@@ -49,8 +58,36 @@ void IFighterEntity::OnEndHitAnimation()
 
 void IFighterEntity::OnReceiveHit( IFighterEntity* pEnemy )
 {
-	GetCurrentAnimation()->AddCallback( OnHitReceivedAnimationCallback, this );
+	GetCurrentAnimation()->AddCallback(OnHitReceivedAnimationCallback, this);
 }
+
+void IFighterEntity::ReceiveHit(IFighterEntity* pEnemy)
+{
+	IncreaseLife(-100);
+	if(GetLife() > 0)	
+		PlayReceiveHit();
+}
+
+
+int IFighterEntity::GetLife()
+{
+	return m_nLife;
+}
+
+void IFighterEntity::SetLife(int nLife)
+{
+	m_nLife = nLife;
+	if (m_nLife <= 0)
+		Die();
+}
+
+void IFighterEntity::IncreaseLife(int nLife)
+{
+	m_nLife += nLife;
+	if (m_nLife <= 0)
+		Die();
+}
+
 
 void IFighterEntity::OnHitReceivedAnimationCallback( IAnimation::TEvent e, void* pData )
 {
@@ -59,7 +96,8 @@ void IFighterEntity::OnHitReceivedAnimationCallback( IAnimation::TEvent e, void*
 	{
 	case IAnimation::eBeginRewind:
 		pThisEntity->GetCurrentAnimation()->RemoveAllCallback();
-		pThisEntity->Stand();
+		if(pThisEntity->GetLife() > 0)
+			pThisEntity->Stand();
 		break;
 	}
 }

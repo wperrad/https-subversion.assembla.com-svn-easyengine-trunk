@@ -7,13 +7,14 @@
 const float fRotateSpeed = 10.f;
 
 IAEntity::IAEntity():
-m_nRecuperationTime( 1500 ),
+m_nRecoveryTime( 1000 ),
 m_bHitEnemy( false ),
 m_eFightState( eNoFight ),
 m_fAngleRemaining( 0.f ),
 m_bArriveAtDestination( true ),
 m_fDestinationDeltaRadius( 100.f ),
-m_nCurrentPathPointNumber( 0 )
+m_nCurrentPathPointNumber( 0 ),
+m_pCurrentEnemy(NULL)
 {
 }
 
@@ -27,7 +28,6 @@ void IAEntity::UpdateFightState()
 	case eNoFight:
 		break;
 	case eBeginHitReceived:
-		IncreaseLife( -20 );
 		if( GetLife() <= 0 )
 			m_eFightState = eNoFight;
 		else
@@ -59,7 +59,7 @@ void IAEntity::UpdateFightState()
 		Stand();
 		break;
 	case eBeginLaunchAttack:
-		Attack( m_pCurrentEnemy );
+		Hit();
 		m_eFightState = eLaunchingAttack;
 		break;
 	case eLaunchingAttack:
@@ -81,16 +81,15 @@ void IAEntity::UpdateFightState()
 		else
 		{
 			FaceTo(oEnemyPos);
+			//Guard();
 			m_nCurrentWaitTimeBeforeNextAttack = CTimeManager::Instance()->GetCurrentTimeInMillisecond() - m_nBeginWaitTimeBeforeNextAttack;
-			if( m_nCurrentWaitTimeBeforeNextAttack > m_nRecuperationTime )
+			if( m_nCurrentWaitTimeBeforeNextAttack > m_nRecoveryTime )
 				m_eFightState = eBeginLaunchAttack;
 		}
 		break;
 	case eEndFight:
 		if(m_pCurrentEnemy->GetLife() > 0)
 			Stand();
-		else
-			m_pCurrentEnemy->Die();
 		m_eFightState = eNoFight;
 		break;
 	default:
@@ -117,7 +116,7 @@ void IAEntity::OnHitReceivedCallback( IAnimation::TEvent e, void* pData )
 		pThisFighter->GetCurrentAnimation()->RemoveCallback( OnHitReceivedCallback );
 		if( pThisFighter->m_eFightState == IAEntity::eReceivingHit )
 			pThisFighter->m_eFightState = IAEntity::eEndReceivingHit;
-		else
+		else if(pThisFighter->GetLife() > 0)
 			pThisFighter->Stand();
 		break;
 	}
@@ -222,9 +221,11 @@ void IAEntity::UpdateGoto()
 
 void IAEntity::Update()
 {
-	UpdateFaceTo();
-	UpdateGoto();
-	UpdateFightState();
+	if (GetLife() > 0) {
+		UpdateFaceTo();
+		UpdateGoto();
+		UpdateFightState();
+	}
 }
 
 void IAEntity::SetDestination( const CVector& oDestination )
@@ -275,3 +276,15 @@ void IAEntity::TurnFaceToDestination()
 	Turn( GetDestinationAngleRemaining() ); 
 }
 
+void IAEntity::Attack(IFighterEntityInterface* pEntity)
+{
+	IFighterEntity* pEnemy = dynamic_cast<IFighterEntity*>(pEntity);
+	if (pEnemy)
+		Attack(pEnemy);
+}
+
+void IAEntity::Attack(IFighterEntity* pEntity)
+{
+	m_pCurrentEnemy = pEntity;
+	m_eFightState = eBeginGoToEnemy;
+}

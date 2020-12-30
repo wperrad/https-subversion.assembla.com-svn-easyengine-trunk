@@ -15,7 +15,7 @@ public:
 	void					IncreaseLife( int nLife );
 	float					GetDistanceTo2dPoint( const CVector& oPosition );
 	void					Run();
-	void					Attack( IFighterEntity* pEnemy );
+	void					Guard();
 	void					ReceiveHit( IAEntity* pEnemy );
 	ICollisionManager&		GetCollisionManager(){ return m_oCollisionManager; }
 	void					LookAt( float alpha );
