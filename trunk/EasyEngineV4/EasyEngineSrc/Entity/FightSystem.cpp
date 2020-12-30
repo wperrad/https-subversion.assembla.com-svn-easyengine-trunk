@@ -67,7 +67,7 @@ void CFightSystem::OnHitReceivedCallback( IAnimation::TEvent e, void* pData )
 	case IAnimation::eBeginRewind:
 		pThisFighter->GetCurrentAnimation()->RemoveCallback( OnHitReceivedCallback );
 		if( pThisFighter->m_eFightState == IAEntity::eReceivingHit )
-			pThisFighter->m_eFightState = IAEntity::eEndReceivingHit;
+			pThisFighter->m_eFightState = IAEntity::eBeginPrepareForNextAttack;
 		else
 			pThisFighter->Stand();
 		break;
