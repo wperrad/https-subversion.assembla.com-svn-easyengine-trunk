@@ -8,7 +8,7 @@ class IMesh;
 class IAnimation;
 class IGeometryManager;
 
-class IAEntity : public virtual IFighterEntity
+class IAEntity : public virtual IFighterEntity, public IAEntityInterface
 {
 friend class CFightSystem;
 
@@ -31,7 +31,7 @@ private:
 	};
 
 	TFightState					m_eFightState;
-	int							m_nRecuperationTime;
+	int							m_nRecoveryTime;
 	int							m_nBeginWaitTimeBeforeNextAttack;
 	int							m_nCurrentWaitTimeBeforeNextAttack;
 	bool						m_bHitEnemy;
@@ -54,13 +54,16 @@ private:
 	void						OnReceiveHit( IFighterEntity* pAgressor );
 	void						OnEndHitAnimation();
 	void						FaceTo(const CVector& point);
+	void						Attack(IFighterEntity* pEntity);
+	void						Attack(IFighterEntityInterface* pEntity);
 	virtual void				ComputePathFind2D( const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints ) = 0;
 	virtual void				SetDestination( const CVector& oDestination );
+
 	virtual void				Turn( float fAngle ) = 0;
-	virtual void				Attack( IFighterEntity* pFighter ) = 0;
 	virtual IAnimation*			GetCurrentAnimation() = 0;
 	virtual float				GetDistanceTo2dPoint( const CVector& oPosition ) = 0;
 	virtual void				Run() = 0;
+	virtual void				Guard() = 0;
 	virtual IBox*				GetFirstCollideBox() = 0;
 	virtual IBox*				GetNextCollideBox() = 0;
 

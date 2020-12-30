@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "IRessource.h"
+#include "IEntity.h"
 
 class ISphere;
 class CVector;
@@ -15,10 +16,9 @@ class ICollisionManager;
 
 using namespace std;
 
-class IFighterEntity
+class IFighterEntity : public IFighterEntityInterface
 {
-	string						m_sCurrentHitBoneName;
-	bool						m_bHitEnemy;
+	int							m_nLife;
 
 	virtual IAnimation*			GetCurrentAnimation() = 0;
 	virtual void				OnReceiveHit( IFighterEntity* pEnemy );
@@ -26,7 +26,6 @@ class IFighterEntity
 	virtual IFighterEntity*		GetNextEnemy() = 0;
 	virtual bool				IsHitIntersectEnemySphere( IFighterEntity* pEnemy );
 	virtual bool				IsHitIntersectEnemyBox( IFighterEntity* pEnemy );
-	virtual void				SetLife( int nLife ) = 0;
 	virtual void				OnEndHitAnimation();	
 	virtual IBox*				GetBoundingBox() = 0;	
 
@@ -37,21 +36,28 @@ protected:
 	IFighterEntity();
 	virtual void				OnHit( IFighterEntity* pAgressor, string sHitBoneName );
 	virtual void				Stand() = 0;
-	virtual void				IncreaseLife( int nLife ) = 0;
 	virtual ICollisionManager&	GetCollisionManager() = 0;
 
-public:
-	virtual int					GetLife() = 0;
-	virtual void				GetPosition( CVector& v ) const = 0;
-	virtual void				Die() = 0;
-
-public: // temporaire, à mettre en privé ou protected par la suite
-	
+	string						m_sCurrentHitBoneName;
+	bool						m_bHitEnemy;
 	virtual CMatrix&			GetWorldTM() = 0;
-	virtual ISphere*			GetBoneSphere( string sBoneName ) = 0;
+	virtual ISphere*			GetBoneSphere(string sBoneName) = 0;
 	virtual float				GetBoundingSphereRadius() = 0;
 	virtual IMesh*				GetMesh() = 0;
-	virtual void				ReceiveHit( IFighterEntity* pEnemy ) = 0;
+	virtual const string&		GetAttackBoneName() = 0;
+
+public:
+	int							GetLife();
+	void						SetLife(int nLife);
+	void						IncreaseLife(int nLife);
+	virtual void				ReceiveHit(IFighterEntity* pEnemy);
+	virtual void				Hit();
+
+	virtual void				GetPosition( CVector& v ) const = 0;
+	virtual void				Die() = 0;
+	virtual void				PlayReceiveHit() = 0;
+	virtual void				PlayHitAnimation() = 0;
+
 };
 
 #endif // IFIGHTERENTITY_H

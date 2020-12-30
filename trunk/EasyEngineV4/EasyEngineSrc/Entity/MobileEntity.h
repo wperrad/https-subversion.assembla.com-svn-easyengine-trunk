@@ -27,9 +27,9 @@ protected:
 	const float									m_fMaxNeckRotationH;
 	const float									m_fMaxNeckRotationV;
 	bool										m_bPerso;
-	int											m_nLife;
 	map< IEntity::TAnimation, IAnimation* >		m_mAnimations;
 	map< TAnimation, float >					m_mAnimationSpeedByType;
+	string										m_sAttackBoneName;
 	
 
 	static map< string, TAction >				s_mActions;
@@ -42,17 +42,14 @@ protected:
 	void 					Stand( bool bLoop );
 	void 					Run( bool bLoop );
 	void 					Jump(bool bLoop);
-	void					HitLeftFoot( bool bLoop );
 	void					PlayReceiveHit( bool bLoop );
 	void					Stand();
-	void					ReceiveHit( IFighterEntity* pEnemy );	
+	void					PlayReceiveHit();
+	void					PlayHitAnimation();
+	void					Guard();
 	void					TurnEyesH( float fValue );
 	void					TurnNeckH( float f );
 	IBone*					GetPreloadedBone( string sName );
-	int						GetLife();
-	void					SetLife( int nLife );
-	void					IncreaseLife( int nLife );	
-	bool					HasAlreadyHitEnemy();
 	void					GetPosition( CVector& oPosition ) const;
 	IMesh*					GetMesh();
 	IAnimation*				GetCurrentAnimation();
@@ -65,14 +62,15 @@ protected:
 	ISphere*				GetBoneSphere( string sBoneName );
 	void					AddSpeed(float x, float y, float z);
 	void					UpdateCollision();
+	const string&			GetAttackBoneName();
 
 	static void				OnWalkAnimationCallback( IAnimation::TEvent e, void* pEntity );
 	static void 			Walk( CMobileEntity*, bool bLoop );
 	static void 			Stand( CMobileEntity*, bool bLoop );
 	static void 			Run( CMobileEntity*, bool bLoop );
 	static void				Jump(CMobileEntity* pHuman, bool bLoop);
-	static void				HitLeftFoot( CMobileEntity* pHuman, bool bLoop );
 	static void				Dying(CMobileEntity* pHuman, bool bLoop);
+	static void				Guard(CMobileEntity* pHuman, bool bLoop);
 	static void 			PlayReceiveHit( CMobileEntity* pHuman, bool bLoop );
 	static void 			OnCollision(CEntity* pThis, CEntity* pEntity);
 	static void				OnDyingCallback(IAnimation::TEvent e, void* data);

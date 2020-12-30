@@ -297,6 +297,29 @@ void SetPreferedKeyBBox( IScriptState* pState )
 		m_pConsole->Println( "L'objet entré en argument n'existe pas dans le fichier indiqué" );
 }
 
+void SetLife(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEntityId = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
+	CScriptFuncArgInt* pLife = static_cast< CScriptFuncArgInt* >(pState->GetArg(1));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pEntityId->m_nValue);
+	IFighterEntityInterface* pFighter = dynamic_cast<IFighterEntityInterface*>(pEntity);
+	if(pFighter)
+		pFighter->SetLife(pLife->m_nValue);
+}
+
+void Attack(IScriptState* pState)
+{
+	CScriptFuncArgInt* pAgressorId = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
+	CScriptFuncArgInt* pVictimId = static_cast< CScriptFuncArgInt* >(pState->GetArg(1));
+	IAEntityInterface* pAgressor = dynamic_cast<IAEntityInterface*>(m_pEntityManager->GetEntity(pAgressorId->m_nValue));
+	if (pAgressor) {
+		IFighterEntityInterface* pVictim = dynamic_cast<IFighterEntityInterface*>(m_pEntityManager->GetEntity(pVictimId->m_nValue));
+		if (pVictim) {
+			pAgressor->Attack(pVictim);
+		}
+	}
+}
+
 void ComputeKeysBoundingBoxes( IScriptState* pState )
 {
 	CScriptFuncArgString* pFileName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
@@ -2753,6 +2776,11 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "ComputeKeysBoundingBoxes", ComputeKeysBoundingBoxes, vType );
 
 	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("Attack", Attack, vType);
+
+	vType.clear();
 	vType.push_back( eString );
 	vType.push_back( eString );
 	vType.push_back( eString );
@@ -2910,5 +2938,8 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("GenerateRandomNPC", GenerateRandomNPC, vType);
 
-	
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("SetLife", SetLife, vType);
 }

@@ -223,7 +223,9 @@ void UpdatePerso()
 			IInputManager::TMouseButtonState eStatePiedG = m_pActionManager->GetMouseActionState( "HitLeftFoot");
 			if( eStatePiedG == IInputManager::eMouseButtonStateJustDown )
 			{
-				pPerso->RunAction( "HitLeftFoot", false );
+				IFighterEntityInterface* pFighter = dynamic_cast<IFighterEntityInterface*>(pPerso);
+				if (pFighter)
+					pFighter->Hit();
 			}
 
 			

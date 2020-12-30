@@ -44,7 +44,7 @@ void CLinkedCamera::Link(CNode* pNode)
 		SetWorldMatrix(heandTM);
 		Yaw(-90.f);
 		Pitch(10.f);
-		LocalTranslate(0.f, 13.f, -40.f);
+		LocalTranslate(0.f, 16.f, -40.f);
 	}
 }
 

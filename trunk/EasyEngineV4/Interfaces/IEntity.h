@@ -63,6 +63,7 @@ public:
 		eHitReceived,
 		eJump,
 		eDying,
+		eGuard,
 		eAnimationCount
 	};
 
@@ -102,6 +103,22 @@ public:
 	virtual void				GetEntityName(string& sName) = 0;
 	virtual void				SetEntityName( string sName ) = 0;
 	virtual void				Colorize(float r, float g, float b, float a) = 0;
+};
+
+class IFighterEntityInterface
+{
+public:
+	virtual int					GetLife() = 0;
+	virtual void				SetLife(int nLife) = 0;
+	virtual void				IncreaseLife(int nLife) = 0;
+	virtual void				Hit() = 0;
+};
+
+
+class IAEntityInterface
+{
+public:
+	virtual void Attack(IFighterEntityInterface* pEntity) = 0;
 };
 
 class IEntityManager : public CPlugin

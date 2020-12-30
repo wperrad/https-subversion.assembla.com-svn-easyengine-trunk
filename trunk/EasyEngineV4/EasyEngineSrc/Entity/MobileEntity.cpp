@@ -25,8 +25,7 @@ m_fEyesRotH( 0 ),
 m_fEyesRotV( 0 ),
 m_fNeckRotH( 0 ),
 m_fNeckRotV( 0 ),
-m_bPerso( false ),
-m_nLife( 1000 )
+m_bPerso( false )
 {
 	m_sTypeName = "Human";
 	if( s_mAnimationStringToType.size() == 0 )
@@ -37,20 +36,23 @@ m_nLife( 1000 )
 		s_mAnimationStringToType[ "HitLeftFoot" ] = eHitLeftFoot;
 		s_mAnimationStringToType["jump"] = eJump;
 		s_mAnimationStringToType["dying"] = eDying;
+		s_mAnimationStringToType["guard"] = eGuard;
 		s_mOrgAnimationSpeedByType[ eWalk ] = -1.6f;
 		s_mOrgAnimationSpeedByType[ eStand ] = 0.f;
 		s_mOrgAnimationSpeedByType[eRun] = -7.f;
 		s_mOrgAnimationSpeedByType[ eHitLeftFoot ] = 0.f;
 		s_mOrgAnimationSpeedByType[ eHitReceived ] = 0.f;
 		s_mOrgAnimationSpeedByType[eDying] = 0.f;
+		s_mOrgAnimationSpeedByType[eGuard] = 0.f;
 
 		s_mActions[ "walk" ] = Walk;
 		s_mActions[ "run" ] = Run;
 		s_mActions[ "stand" ] = Stand;
-		s_mActions[ "HitLeftFoot" ] = HitLeftFoot;
+		//s_mActions[ "HitLeftFoot" ] = HitLeftFoot;
 		s_mActions[ "PlayReceiveHit" ] = PlayReceiveHit;
 		s_mActions[ "jump"] = Jump;
 		s_mActions["dying"] = Dying;
+		s_mActions["guard"] = Guard;
 	}
 	for( int i = 0; i < eAnimationCount; i++ )
 		m_mAnimationSpeedByType[ (TAnimation)i ] = s_mOrgAnimationSpeedByType[ (TAnimation)i ];
@@ -81,6 +83,7 @@ m_nLife( 1000 )
 	m_pNeck = m_pSkeletonRoot->GetChildBoneByName( "Cou" );
 
 	m_pfnCollisionCallback = OnCollision;
+	m_sAttackBoneName = "OrteilsG";
 }
 
 
@@ -122,6 +125,11 @@ void CMobileEntity::UpdateCollision()
 	}
 }
 
+const string& CMobileEntity::GetAttackBoneName()
+{
+	return m_sAttackBoneName;
+}
+
 void CMobileEntity::WearArmor(string armorName)
 {
 	string path = "Armors\\" + armorName + "\\";
@@ -144,8 +152,9 @@ void CMobileEntity::SetCurrentPerso( bool bPerso )
 
 void CMobileEntity::RunAction( string sAction, bool bLoop )
 {
-	if(m_nLife > 0)
-		s_mActions[ sAction ]( this, bLoop );
+	map<string, CMobileEntity::TAction>::iterator itAction = s_mActions.find(sAction);
+	if (itAction != s_mActions.end())
+		itAction->second(this, bLoop);
 }
 
 void CMobileEntity::SetPredefinedAnimation( string s, bool bLoop )
@@ -214,19 +223,19 @@ void CMobileEntity::Die()
 
 void CMobileEntity::Yaw(float fAngle)
 {
-	if(m_nLife > 0)
+	if(GetLife() > 0)
 		CNode::Yaw(fAngle);
 }
 
 void CMobileEntity::Pitch(float fAngle)
 {
-	if (m_nLife > 0)
+	if (GetLife() > 0)
 		CNode::Pitch(fAngle);
 }
 
 void CMobileEntity::Roll(float fAngle)
 {
-	if (m_nLife > 0)
+	if (GetLife() > 0)
 		CNode::Roll(fAngle);
 }
 
@@ -236,17 +245,16 @@ void CMobileEntity::OnDyingCallback(IAnimation::TEvent e, void* pEntity)
 	pMobileEntity->m_eCurrentAnimationType = eNone;
 }
 
-void CMobileEntity::HitLeftFoot( bool bLoop )
+void CMobileEntity::PlayHitAnimation()
 {
-	SetPredefinedAnimation( "HitLeftFoot", bLoop );
-	OnHit( this, "OrteilsG" );
+	SetPredefinedAnimation("HitLeftFoot", false);
 }
 
 void CMobileEntity::PlayReceiveHit( bool bLoop )
 {
 	SetPredefinedAnimation( "HitReceived", bLoop );
 	if( !m_bUsePositionKeys )
-		ConstantLocalTranslate( CVector( 0.f, m_mAnimationSpeedByType[ eStand ], 0.f ) );
+		ConstantLocalTranslate( CVector( 0.f, m_mAnimationSpeedByType[ eHitReceived ], 0.f ) );
 }
 
 void CMobileEntity::PlayReceiveHit( CMobileEntity* pEntity, bool bLoop )
@@ -254,10 +262,17 @@ void CMobileEntity::PlayReceiveHit( CMobileEntity* pEntity, bool bLoop )
 	pEntity->PlayReceiveHit( bLoop );
 }
 
-void CMobileEntity::ReceiveHit( IFighterEntity* pEnemy )
-{	
-	RunAction( "PlayReceiveHit", false );
-	m_nLife -= 100;
+void CMobileEntity::PlayReceiveHit()
+{
+	RunAction("PlayReceiveHit", false);
+}
+
+void CMobileEntity::Guard()
+{
+	//RunAction("guard", false);
+	if (m_eCurrentAnimationType != eGuard) {
+		SetPredefinedAnimation("guard", false);
+	}
 }
 
 void CMobileEntity::OnWalkAnimationCallback( IAnimation::TEvent e, void* pData )
@@ -294,9 +309,9 @@ void CMobileEntity::Dying(CMobileEntity* pHuman, bool bLoop)
 	pHuman->Die();
 }
 
-void CMobileEntity::HitLeftFoot( CMobileEntity* pHuman, bool bLoop  )
+void CMobileEntity::Guard(CMobileEntity* pHuman, bool bLoop)
 {
-	pHuman->HitLeftFoot( bLoop );
+	pHuman->Guard();
 }
 
 void CMobileEntity::SetAnimationSpeed( IEntity::TAnimation eAnimationType, float fSpeed )
@@ -346,22 +361,6 @@ IBone* CMobileEntity::GetPreloadedBone( string sName )
 	return m_mPreloadedBones[ sName ];
 }
 
-int CMobileEntity::GetLife()
-{
-	return m_nLife;
-}
-
-void CMobileEntity::SetLife( int nLife )
-{
-	m_nLife = nLife;
-	if (m_nLife == 0)
-		Die();
-}
-
-void CMobileEntity::IncreaseLife( int nLife )
-{
-	m_nLife += nLife;
-}
 
 void CMobileEntity::GetPosition( CVector& oPosition ) const
 { 

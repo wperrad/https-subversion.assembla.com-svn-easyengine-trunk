@@ -46,6 +46,11 @@ void CNPCEntity::Run()
 	CMobileEntity::Run( true ); 
 }
 
+void CNPCEntity::Guard()
+{
+	CMobileEntity::Guard();
+}
+
 void CNPCEntity::LookAt( float alpha )
 {
 	float fMustEyeRotH = 0.f;
@@ -77,11 +82,6 @@ void CNPCEntity::LookAt( float alpha )
 void CNPCEntity::ReceiveHit( IAEntity* pEnemy )
 {
 	CMobileEntity::ReceiveHit( pEnemy );
-}
-
-void CNPCEntity::Attack( IFighterEntity* pEnemy )
-{
-	CMobileEntity::HitLeftFoot( false );
 }
 
 void CNPCEntity::Update()

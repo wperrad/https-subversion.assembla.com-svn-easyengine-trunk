@@ -32,6 +32,12 @@ Stand(npc2);
 SetEntityPos(npc2, 2000, 0, 0);
 SetEntityName(npc2, "NPC2");
 
+test = CreateNPC("test");
+Stand(test);
+SetEntityPos(test, -1000, 0, -1000);
+SetEntityName(test, "test");
+
+
 maison1 = LoadEntity("maison");
 SetEntityName(maison1, "maison1");
 SetEntityWeight(maison1, 1);
