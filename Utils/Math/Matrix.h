@@ -30,8 +30,7 @@ public:
 									float a20, float a21, float a22, float a23, 
 									float a30, float a31, float a32, float a33  );
 						CMatrix(const float* params);
-						CMatrix(const CVector& v0,const CVector& v1,
-								const CVector& v2,const CVector& v3);		
+						CMatrix(const CVector& v0, const CVector& v1, const CVector& v2, const CVector& v3, bool fillInLine);
 						CMatrix(float dVal[][4]);
 						CMatrix( float fDiag );
 	virtual				~CMatrix();

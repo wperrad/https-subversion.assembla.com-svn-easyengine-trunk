@@ -227,7 +227,7 @@ void Test( IScriptState* pState )
 		
 		
 		CVector R;
-		if (pBox->GetReactionYAlignedPlane(*pLine, 170.f, R)) {
+		if (pBox->GetReactionYAlignedPlane(first, last, 170.f, R)) {
 			IEntity* s = m_pEntityManager->CreateSphere(10);
 			s->Link(m_pScene);
 			s->SetWorldPosition(R);
@@ -770,6 +770,51 @@ void CreateMobileEntity( IScriptState* pState )
 		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
+}
+
+void CreatePlayer(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sName = pName->m_sValue;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
+	m_pRessourceManager->EnableCatchingException(false);
+
+	try
+	{
+		IEntity* pEntity = m_pEntityManager->CreatePlayer(sName, m_pFileSystem);
+		pEntity->Link(m_pScene);
+		int id = m_pEntityManager->GetEntityID(pEntity);
+		ostringstream oss;
+		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
+		m_pConsole->Println(oss.str());
+		pState->SetReturnValue(id);
+	}
+	catch (CFileNotFoundException& e)
+	{
+		ostringstream oss;
+		oss << "Erreur : fichier \"" << e.m_sFileName << "\" manquant, l'entité \"" << pName->m_sValue << "\" ne peut pas être chargée.";
+		m_pConsole->Println(oss.str());
+	}
+	catch (CRessourceException& e)
+	{
+		string s;
+		e.GetErrorMessage(s);
+		m_pConsole->Println(s);
+	}
+	catch (CBadFileFormat& e)
+	{
+		string sMessage;
+		e.GetErrorMessage(sMessage);
+		m_pConsole->Println(sMessage);
+	}
+	catch (CEException)
+	{
+		string sMessage = string("\"") + sName + "\" introuvable";
+		m_pConsole->Println(sMessage);
+	}
+	m_pRessourceManager->EnableCatchingException(bak);
 }
 
 void GetVec3DFromArg(IScriptState* pState, int argIdx, CVector& v)
@@ -2691,6 +2736,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back( eString );
 	m_pScriptManager->RegisterFunction( "CreateMobileEntity", CreateMobileEntity, vType );
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("CreatePlayer", CreatePlayer, vType);
 
 	vType.clear();
 	vType.push_back( eString );

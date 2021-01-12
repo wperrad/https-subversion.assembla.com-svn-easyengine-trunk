@@ -18,6 +18,7 @@ public:
 	float				GetSpeed() { return 0.f; }
 	void				SetSpeed(float fSpeed) {}
 	void				Update();
+	void				SetInventoryMode(bool bInventoryMode) {}
 
 private:
 	string				m_sEntityName;

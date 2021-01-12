@@ -64,10 +64,11 @@ void CBMELoader::Load(string sFileName, ILoader::IRessourceInfos& ri, IFileSyste
 		throw e;
 	}
 	fclose(pFile);
-	//string sBMEVersion;
+	string sFolder;
+	oFileSystem.GetLastDirectory(sFolder);
 
 	CBinaryFileStorage fs;
-	if (fs.OpenFile(sFileName, CBinaryFileStorage::eRead)) {
+	if (fs.OpenFile(sFolder + "\\" + sFileName, CBinaryFileStorage::eRead)) {
 		fs >> pData->m_sFileVersion;
 		if (m_sExportPluginVersion != pData->m_sFileVersion)
 		{

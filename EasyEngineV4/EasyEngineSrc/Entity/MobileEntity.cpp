@@ -25,7 +25,8 @@ m_fEyesRotH( 0 ),
 m_fEyesRotV( 0 ),
 m_fNeckRotH( 0 ),
 m_fNeckRotV( 0 ),
-m_bPerso( false )
+m_bPerso( false ),
+m_bFirstUpdate(true)
 {
 	m_sTypeName = "Human";
 	if( s_mAnimationStringToType.size() == 0 )
@@ -87,41 +88,144 @@ m_bPerso( false )
 }
 
 
-void CMobileEntity::OnCollision(CEntity* pThis, CEntity* pEntity)
+void CMobileEntity::OnCollision(CEntity* pThis, vector<CEntity*> entities)
 {
-	IMesh* pMesh = static_cast<IMesh*>(pThis->GetRessource());
-	ICollisionMesh* pCollisionMesh = pEntity ? pEntity->GetCollisionMesh() : NULL;
-	if (pCollisionMesh)
-		pThis->LinkAndUpdateMatrices(pEntity);
+	for (int i = 0; i < entities.size(); i++) {
+		CEntity* pEntity = entities[i];
+		IMesh* pMesh = static_cast<IMesh*>(pThis->GetRessource());
+		ICollisionMesh* pCollisionMesh = pEntity ? pEntity->GetCollisionMesh() : NULL;
+		if (pCollisionMesh)
+			pThis->LinkAndUpdateMatrices(pEntity);
+	}
 }
 
-void CMobileEntity::UpdateCollision()
+void CMobileEntity::ManageGravity()
 {
 	m_oBody.Update();
 	if (m_oBody.m_fWeight > 0.f)
 	{
-		float x , y, z;
-
-		if (!m_bUsePositionKeys)
-			m_oLocalMatrix.GetPosition(x, y, z);
-		else
-		{
-			CMatrix oSkeletonRootMatrix;
-			m_pSkeletonRoot->GetLocalMatrix(oSkeletonRootMatrix);
-			CMatrix oSkeletonOffset = m_oFirstAnimationFrameSkeletonMatrixInv * oSkeletonRootMatrix;
-			CMatrix oComposedMatrix = oSkeletonOffset * m_oLocalMatrix;
-			x = oComposedMatrix.m_03;
-			z = oComposedMatrix.m_23;
-		}
-
+		float x, y, z;
+		m_oLocalMatrix.GetPosition(x, y, z);
 		int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
-		LocalTranslate(0.f, m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f, 0.f);
-		CEntity* pParentEntity = static_cast<CEntity*>(m_pParent);
-		if(!TestEntityCollision(pParentEntity)) {
-			CEntity* pEntity = static_cast<CEntity*>(m_pParent->GetParent());
-			if (pEntity)
-				LinkAndUpdateMatrices(pEntity);
+		m_vNextLocalTranslate.m_y += m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f;
+	}
+}
+
+void CMobileEntity::DisplayPlayerPosition()
+{
+	string sEntityName;
+	GetEntityName(sEntityName);
+	if (sEntityName.find("perso") != -1) {
+		CVector pos;
+		GetWorldPosition(pos);
+		ostringstream oss;
+		oss << "Perso position = (" << pos.m_x << ", " << pos.m_y << ", " << pos.m_z << ")";
+		m_pEntityManager->GetGUIManager()->Print(oss.str(), 1000, 10);
+	}
+}
+
+void CMobileEntity::Update()
+{
+	ManageGravity();
+	UpdateCollision();
+
+	if (m_pCurrentAnimation)
+		m_pCurrentAnimation->Update();
+
+	UpdateWorldMatrix();
+	UpdateChildren();
+	SendBonesToShader();
+
+	m_oWorldMatrix *= m_oScaleMatrix;
+	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
+	UpdateRessource();
+
+	if (m_bDrawBoundingBox && m_pBoundingGeometry)
+		UpdateBoundingBox();
+
+	m_vNextLocalTranslate.Fill(0, 0, 0, 1);
+	DisplayPlayerPosition();
+}
+
+void CMobileEntity::UpdateCollision()
+{
+	float h = GetHeight();
+
+	m_vNextLocalTranslate += m_vConstantLocalTranslate;
+
+	CMatrix backupLocal = m_oLocalMatrix;
+	backupLocal.m_13 -= h / 2.f - m_fMaxStepHeight;
+
+	CNode::LocalTranslate(m_vNextLocalTranslate.m_x, m_vNextLocalTranslate.m_y, m_vNextLocalTranslate.m_z);
+	CNode::UpdateWorldMatrix();
+	CMatrix oLocalMatrix = m_oLocalMatrix;
+	oLocalMatrix.m_13 -= h / 2.f - m_fMaxStepHeight;
+
+	vector<CEntity*> entities;
+	if (!m_bFirstUpdate)
+		GetEntitiesCollision(entities);
+	else
+		m_bFirstUpdate = false;
+
+	CVector localPos;
+	oLocalMatrix.GetPosition(localPos);
+	
+	CVector directriceLine = m_vNextLocalTranslate;
+	CVector first = backupLocal.GetPosition();
+	CVector last = localPos;
+	CVector firstBottom = first;
+	CVector lastBottom = last;
+	CVector R = last;
+	bool bCollision = false;
+	float fMaxHeight = -999999.f;
+	for (int i = 0; i < entities.size(); i++) {
+		CEntity* pEntity = entities[i];
+		pEntity->GetBoundingGeometry()->SetTM(pEntity->GetLocalMatrix());
+		IGeometry* firstBox = GetBoundingGeometry()->Duplicate();
+		firstBox->SetTM(backupLocal);
+		IGeometry* lastBox = GetBoundingGeometry();
+		lastBox->SetTM(oLocalMatrix);
+		IGeometry::TFace collisionFace = IGeometry::eNone;
+		collisionFace = pEntity->GetBoundingGeometry()->GetReactionYAlignedBox(*firstBox, *lastBox, R);
+		if (collisionFace != IBox::eNone) {
+			lastBottom = R;
+			last = R;
+			last.m_y += h / 2.f;
+			bCollision = true;
+			if (collisionFace == IBox::eYPositive) {
+				if (fMaxHeight < last.m_y)
+					fMaxHeight = last.m_y;
+				else
+					last.m_y = fMaxHeight;
+				m_oBody.m_oSpeed.m_y = 0;
+			}
+			else {
+				last.m_y -= m_fMaxStepHeight;
+			}
 		}
+	}
+	// Ground collision
+	float fGroundHeight = static_cast<CEntity*>(m_pParent)->GetGroundHeight(localPos.m_x, localPos.m_z);
+	float fEntityY = last.m_y - h / 2.f;
+	if (fEntityY <= fGroundHeight + CBody::GetEpsilonError()) {
+		m_oBody.m_oSpeed.m_x = 0;
+		m_oBody.m_oSpeed.m_y = 0;
+		m_oBody.m_oSpeed.m_z = 0;
+		float newY = fGroundHeight + h / 2.f;
+		last.m_y = newY;
+	}
+	SetLocalPosition(last);
+
+	// Still into parent ?
+	CEntity* pParentEntity = static_cast<CEntity*>(m_pParent);
+	if (!TestEntityCollision(pParentEntity)) {
+		CEntity* pEntity = static_cast<CEntity*>(m_pParent->GetParent());
+		if (pEntity)
+			LinkAndUpdateMatrices(pEntity);
+	}
+
+	if (bCollision && m_pfnCollisionCallback) {
+		m_pfnCollisionCallback(this, entities);
 	}
 }
 
@@ -181,7 +285,7 @@ void CMobileEntity::Walk( bool bLoop )
 	{
 		SetPredefinedAnimation("walk", bLoop);
 		if (!m_bUsePositionKeys)
-			ConstantLocalTranslate(CVector(0.f, m_mAnimationSpeedByType[eWalk], 0.f));
+			ConstantLocalTranslate(CVector(0.f, 0.f, -m_mAnimationSpeedByType[eWalk]));
 	}
 }
 

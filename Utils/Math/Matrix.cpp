@@ -102,27 +102,50 @@ CMatrix::CMatrix(const float* params)
 //-----------------------------------------------------------------------------------------------------
 //											Transtypage constructor
 //-----------------------------------------------------------------------------------------------------
-CMatrix::CMatrix(const CVector& v0,const CVector& v1,const CVector& v2,const CVector& v3)
+CMatrix::CMatrix(const CVector& v0,const CVector& v1,const CVector& v2,const CVector& v3, bool fillInLine)
 {
-	m_00 = v0.m_x;
-	m_10 = v0.m_y;
-	m_20 = v0.m_z;
-	m_30 = v0.m_w;
+	if (fillInLine) {
+		m_00 = v0.m_x;
+		m_01 = v0.m_y;
+		m_02 = v0.m_z;
+		m_03 = v0.m_w;
 
-	m_01 = v1.m_x;
-	m_11 = v1.m_y;
-	m_21 = v1.m_z;
-	m_31 = v1.m_w;
+		m_10 = v1.m_x;
+		m_11 = v1.m_y;
+		m_12 = v1.m_z;
+		m_13 = v1.m_w;
 
-	m_02 = v2.m_x;
-	m_12 = v2.m_y;
-	m_22 = v2.m_z;
-	m_32 = v2.m_w;
+		m_20 = v2.m_x;
+		m_21 = v2.m_y;
+		m_22 = v2.m_z;
+		m_23 = v2.m_w;
 
-	m_03 = v3.m_x;
-	m_13 = v3.m_y;
-	m_23 = v3.m_z;
-	m_33 = v3.m_w;		
+		m_30 = v3.m_x;
+		m_31 = v3.m_y;
+		m_32 = v3.m_z;
+		m_33 = v3.m_w;
+	}
+	else {
+		m_00 = v0.m_x;
+		m_10 = v0.m_y;
+		m_20 = v0.m_z;
+		m_30 = v0.m_w;
+
+		m_01 = v1.m_x;
+		m_11 = v1.m_y;
+		m_21 = v1.m_z;
+		m_31 = v1.m_w;
+
+		m_02 = v2.m_x;
+		m_12 = v2.m_y;
+		m_22 = v2.m_z;
+		m_32 = v2.m_w;
+
+		m_03 = v3.m_x;
+		m_13 = v3.m_y;
+		m_23 = v3.m_z;
+		m_33 = v3.m_w;
+	}	
 }
 
 CMatrix::CMatrix( float fDiag )

@@ -330,6 +330,20 @@ void CBox::GetPoints( vector< CVector >& vPoints )
 	}
 }
 
+void CBox::GetCenterPoints(vector< CVector >& vPoints) const
+{
+	vector< CVector > vTemp;
+	vTemp.push_back(m_oMinPoint + CVector(0, m_oDimension.m_y / 2.f, 0));	
+	vTemp.push_back(m_oMinPoint + CVector(m_oDimension.m_x, m_oDimension.m_y / 2.f, 0));
+	vTemp.push_back(m_oMinPoint + CVector(0, m_oDimension.m_y / 2.f, m_oDimension.m_z));
+	vTemp.push_back(m_oMinPoint + CVector(m_oDimension.m_x, m_oDimension.m_y / 2.f, m_oDimension.m_z));
+	for (int i = 0; i < vTemp.size(); i++)
+	{
+		CVector v = m_oTM * vTemp[i];
+		vPoints.push_back(v);
+	}
+}
+
 bool CBox::IsIntersect(const CBox& box) const
 {
 	if (TestBoxesCollisionIntoFirstBoxBase(*this, box))
@@ -355,51 +369,201 @@ void CBox::Draw(IRenderer& oRenderer) const
 	oRenderer.DrawBox(m_oMinPoint, m_oDimension);
 }
 
-bool CBox::GetReactionYAlignedPlane(const ILine& oDirectriceLine, float planeHeight, CVector& R)
+bool IsComplexCollision(IBox& box1, IBox& box2)
+{
+	if ( (box1.GetDimension().m_x > 0.5f * box2.GetDimension().m_x) && 
+		 (box1.GetDimension().m_x < 2.f  * box2.GetDimension().m_x) &&
+		 (box1.GetDimension().m_z > 0.5f * box2.GetDimension().m_z) && 
+		 (box1.GetDimension().m_z < 2.f  * box2.GetDimension().m_z)) {
+		return false;
+	}
+	return true;
+}
+
+IGeometry::TFace CBox::GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeometry& lastPositionBox, CVector& R)
+{
+	CBox& box1 = static_cast<CBox&>(firstPositionBox);
+	CBox& box2 = static_cast<CBox&>(lastPositionBox);
+	CMatrix oTMInv;
+	m_oTM.GetInverse(oTMInv);
+	CVector box2Position = oTMInv * box2.GetTM().GetPosition();
+
+	if (!IsComplexCollision(box1, *this)) {
+		float dFirst = (box1.GetTM().GetPosition() - m_oTM.GetPosition()).Norm();
+		float dLast  = (box2.GetTM().GetPosition() - m_oTM.GetPosition()).Norm();
+		if (dLast < dFirst) {
+			R = firstPositionBox.GetTM().GetPosition();
+			return eFace;
+		}
+		else {
+			return eNone;
+		}
+	}
+	
+	float margin = (box2.GetTM().GetPosition() - box1.GetTM().GetPosition()).Norm();
+	
+	bool collision = false;
+	TFace face = eNone;
+
+	float dimx = m_oDimension.m_x / 2.f;
+	float dimy = m_oDimension.m_y / 2.f;
+	float dimz = m_oDimension.m_z / 2.f;
+	CVector RLocal;
+	
+	vector<CVector> box1PointsWorld;
+	box1.GetCenterPoints(box1PointsWorld);
+
+	vector<CVector> box2PointsWorld;
+	box2.GetCenterPoints(box2PointsWorld);
+
+	vector<CVector> box1PointsLocal, box2PointsLocal;
+	for (int i = 0; i < box1PointsWorld.size(); i++) {
+		CVector O = oTMInv * box1PointsWorld[i];
+		CVector P = oTMInv * box2PointsWorld[i];
+		box1PointsLocal.push_back(O);
+		box2PointsLocal.push_back(P);
+	}
+
+	for (int i = 0; i < box1PointsLocal.size(); i++) {
+
+		CVector O = box1PointsLocal[i];
+		CVector P = box2PointsLocal[i];
+
+		if (O.m_y < dimy && (O.m_y + box1.GetDimension().m_y) > -dimy) {
+			CVector A, B;
+			// collision sur le plan x positif
+			if (P.m_x > (dimx - margin - box1.GetDimension().m_z / 2.f) && P.m_x < dimx && P.m_x < O.m_x && P.m_z < dimz && P.m_z > -dimz) {
+				int closedPointIndex = CVector::GetMinxIndex(box2PointsLocal);
+				O = box1PointsLocal[closedPointIndex];
+				P = box2PointsLocal[closedPointIndex];
+				A = CVector(dimx, O.m_y, -dimz);
+				B = CVector(dimx, O.m_y, dimz);
+				RLocal = CVector(A.m_x + box1.GetDimension().m_z / 2.f, (O.m_y + P.m_y) / 2.f, box2Position.m_z);
+				face = eXPositive;
+				collision = true;
+				break;
+			}
+			// collision sur le plan x négatif
+			else if (P.m_x < (-dimx + margin + box1.GetDimension().m_z / 2.f) && P.m_x > -dimx && P.m_x > O.m_x && P.m_z < dimz && P.m_z > -dimz) {
+				int closedPointIndex = CVector::GetMaxxIndex(box2PointsLocal);
+				O = box1PointsLocal[closedPointIndex];
+				P = box2PointsLocal[closedPointIndex];
+				A = CVector(-dimx, O.m_y, -dimz);
+				B = CVector(-dimx, O.m_y, dimz);
+				RLocal = CVector(A.m_x - box1.GetDimension().m_z / 2.f, (O.m_y + P.m_y) / 2.f, box2Position.m_z);
+				face = eXNegative;
+				collision = true;
+				break;
+			}
+			// collision sur le plan z positif
+			else if (P.m_z > (dimz - margin - box1.GetDimension().m_z / 2.f) && P.m_z < dimz && P.m_z < O.m_z && P.m_x < dimx && P.m_x > -dimx) {
+				int closedPointIndex = CVector::GetMinzIndex(box2PointsLocal);
+				O = box1PointsLocal[closedPointIndex];
+				P = box2PointsLocal[closedPointIndex];
+				A = CVector(-dimx, O.m_y, dimz);
+				B = CVector(dimx, O.m_y, dimz);
+				RLocal = CVector(box2Position.m_x, (O.m_y + P.m_y) / 2.f, A.m_z + box1.GetDimension().m_z / 2.f);
+				face = eZPositive;
+				collision = true;
+				break;
+			}
+			// collision sur le plan z négatif
+			else if (P.m_z < (-dimz + margin + box1.GetDimension().m_z) && P.m_z > -dimz && P.m_z > O.m_z && P.m_x < dimx && P.m_x > -dimx) {
+				int closedPointIndex = CVector::GetMinzIndex(box2PointsLocal);
+				O = box1PointsLocal[closedPointIndex];
+				P = box2PointsLocal[closedPointIndex];
+				A = CVector(-dimx, O.m_y, -dimz);
+				B = CVector(dimx, O.m_y, -dimz);
+				RLocal = CVector(box2Position.m_x, (O.m_y + P.m_y) / 2.f, A.m_z - box1.GetDimension().m_z / 2.f);
+				face = eZNegative;
+				collision = true;
+				break;
+			}
+		}
+		else {
+			O = oTMInv * firstPositionBox.GetTM().GetPosition();
+			P = oTMInv * lastPositionBox.GetTM().GetPosition();
+			if (O.m_y > dimy) {
+				RLocal = P;
+				RLocal.m_y = dimy;
+				face = eYPositive;
+				collision = true;
+				break;
+			}
+			else if ((O.m_y + box1.GetDimension().m_y) < -dimy) {
+				face = eYNegative;
+				collision = true;
+				break;
+			}
+		}
+	}
+	if (collision)
+		R = m_oTM * RLocal;	
+	return face;
+}
+
+IGeometry::TFace CBox::GetReactionYAlignedPlane(const CVector& firstPoint, const CVector& lastPoint, float planeHeight, CVector& R)
 {
 	CBox temp(*this);
 	CMatrix m;
 	temp.SetWorldMatrix(m);
 	CMatrix oTMInv;
 	m_oTM.GetInverse(oTMInv);
-	CVector first, last;
-	oDirectriceLine.GetPoints(first, last);
-	CVector O = oTMInv * first;
-	CVector P = oTMInv * last;
+	//oTMInv = m_oBackupInvTM;
+	CVector O = oTMInv * firstPoint;
+	CVector P = oTMInv * lastPoint;
 	bool collision = true;
-		
+	TFace face = eNone;
+
 	float dimx = m_oDimension.m_x / 2.f;
 	float dimy = m_oDimension.m_y / 2.f;
 	float dimz = m_oDimension.m_z / 2.f;
+	float margin = 20.f;
 
-	if (!(dimy < O.m_y || -dimy > O.m_y + planeHeight)) {
+	CVector RLocal;
+	if (O.m_y < dimy && (O.m_y + planeHeight) > -dimy) {
 		CVector A, B;
-		if (O.m_x > dimx && P.m_x < dimx) {
-			// collision sur le plan z positif
+		// collision sur le plan x positif
+		if (P.m_x > (dimx - margin) && P.m_x < dimx && P.m_x < O.m_x && P.m_z < dimz && P.m_z > -dimz) {
 			A = CVector(dimx, O.m_y, -dimz);
 			B = CVector(dimx, O.m_y, dimz);
+			RLocal = CVector(A.m_x, (O.m_y + P.m_y) / 2.f, P.m_z);
+			face = eXPositive;
 		}
-		else if (O.m_x < -dimx && P.m_x > -dimx) {
-			// collision sur le plan z négatif
+		// collision sur le plan x négatif
+		else if (P.m_x < (-dimx + margin) && P.m_x > -dimx && P.m_x > O.m_x && P.m_z < dimz && P.m_z > -dimz) {
 			A = CVector(-dimx, O.m_y, -dimz);
 			B = CVector(-dimx, O.m_y, dimz);
+			RLocal = CVector(A.m_x, (O.m_y + P.m_y) / 2.f, P.m_z);
+			face = eXNegative;
 		}
-		else if (O.m_z > dimz && P.m_z < dimz) {
-			// collision sur le plan x positif
+		// collision sur le plan z positif
+		else if (P.m_z > (dimz - margin) && P.m_z < dimz && P.m_z < O.m_z && P.m_x < dimx && P.m_x > -dimx) {
 			A = CVector(-dimx, O.m_y, dimz);
 			B = CVector(dimx, O.m_y, dimz);
+			RLocal = CVector(P.m_x, (O.m_y + P.m_y) / 2.f, A.m_z);
+			face = eZPositive;
 		}
-		else if (O.m_z < -dimz && P.m_z > -dimz) {
-			// collision sur le plan x négatif
+		// collision sur le plan z négatif
+		else if (P.m_z < (-dimz + margin) && P.m_z > -dimz && P.m_z > O.m_z && P.m_x < dimx && P.m_x > -dimx) {
 			A = CVector(-dimx, O.m_y, -dimz);
 			B = CVector(dimx, O.m_y, -dimz);
+			RLocal = CVector(P.m_x, (O.m_y + P.m_y) / 2.f, A.m_z);
+			face = eZNegative;
 		}
 		else
 			collision = false;
-		if (collision) {
-			R = CVector(A.m_x, (O.m_y + P.m_y) / 2.f, P.m_z);
-			R = m_oTM * R;
-		}
 	}
-	return collision;
+	else if (O.m_y > dimy) {
+		RLocal = P;
+		RLocal.m_y = dimy;
+		face = eYPositive;
+	}
+	else if ((O.m_y + planeHeight) < -dimy) {
+		face = eYNegative;
+	}
+
+	if (collision)
+		R = m_oTM * RLocal;
+	return face;
 }

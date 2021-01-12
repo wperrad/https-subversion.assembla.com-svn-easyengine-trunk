@@ -16,9 +16,11 @@ public:
 	CRectangle(float x, float y, float width, float height);
 	CRectangle(CPosition pos, CDimension dim);
 	virtual ~CRectangle();
-
+		
 	void	SetDimension( const CDimension& dim );
-	void	SetPosition( const CPosition& pos );	
+	void	SetDimension(float width, float height);
+	void	SetPosition( const CPosition& pos );
+	void	SetPosition(int x, int y);
 	
 };
 

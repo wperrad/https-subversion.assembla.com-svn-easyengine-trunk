@@ -15,6 +15,10 @@ void CTimeManager::Update()
 {
 	int nCurrentTime = GetTickCount();
 	m_nTimeElapsedSinceLastUpdate = nCurrentTime - m_nCurrentTime;
+	if (m_nTimeElapsedSinceLastUpdate > 100) {
+		nCurrentTime = GetTickCount() - 100;
+		m_nTimeElapsedSinceLastUpdate = 100;
+	}
 	m_nCurrentTime = nCurrentTime;
 }
 

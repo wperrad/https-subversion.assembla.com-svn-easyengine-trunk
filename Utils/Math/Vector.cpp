@@ -285,6 +285,96 @@ float CVector::GetMaxz(const vector< CVector >& vPoints)
 	return fMax;
 }
 
+
+float CVector::GetDistance(const CVector& p1, const CVector& p2)
+{
+	return sqrtf(p1*p2);
+}
+
+int CVector::GetMinxIndex(const vector< CVector >& vPoints)
+{
+	int index = 0;
+	float fMin = vPoints[0].m_x;
+	for (int i = 1; i < vPoints.size(); i++)
+	{
+		if (fMin > vPoints[i].m_x) {
+			fMin = vPoints[i].m_x;
+			index = i;
+		}
+	}
+	return index;
+}
+
+int CVector::GetMinyIndex(const vector< CVector >& vPoints)
+{
+	int index = 0;
+	float fMin = vPoints[0].m_y;
+	for (int i = 1; i < vPoints.size(); i++)
+	{
+		if (fMin > vPoints[i].m_y) {
+			fMin = vPoints[i].m_y;
+			index = i;
+		}
+	}
+	return index;
+}
+
+int CVector::GetMinzIndex(const vector< CVector >& vPoints)
+{
+	int index = 0;
+	float fMin = vPoints[0].m_z;
+	for (int i = 1; i < vPoints.size(); i++)
+	{
+		if (fMin > vPoints[i].m_z) {
+			fMin = vPoints[i].m_z;
+			index = i;
+		}
+	}
+	return index;
+}
+
+int CVector::GetMaxxIndex(const vector< CVector >& vPoints)
+{
+	int index = 0;
+	float fMax = vPoints[0].m_x;
+	for (int i = 1; i < vPoints.size(); i++)
+	{
+		if (fMax < vPoints[i].m_x) {
+			fMax = vPoints[i].m_x;
+			index = i;
+		}
+	}
+	return index;
+}
+
+int CVector::GetMaxyIndex(const vector< CVector >& vPoints)
+{
+	int index = 0;
+	float fMax = vPoints[0].m_y;
+	for (int i = 1; i < vPoints.size(); i++)
+	{
+		if (fMax < vPoints[i].m_y) {
+			fMax = vPoints[i].m_y;
+			index = i;
+		}
+	}
+	return index;
+}
+
+int CVector::GetMaxzIndex(const vector< CVector >& vPoints)
+{
+	int index = 0;
+	float fMax = vPoints[0].m_z;
+	for (int i = 1; i < vPoints.size(); i++)
+	{
+		if (fMax < vPoints[i].m_z) {
+			fMax = vPoints[i].m_z;
+			index = i;
+		}
+	}
+	return index;
+}
+
 CVector2D::CVector2D():
 m_x( 0 ),
 m_y( 0 ),

@@ -237,3 +237,172 @@ void CCylinder::Draw(IRenderer& oRenderer) const
 {
 	throw 1;
 }
+
+
+IGeometry::TFace CCylinder::GetReactionYAlignedPlane(const CVector& firstPoint, const CVector& lastPoint, float planeHeight, CVector& R)
+{
+	static bool oldVersion = false;
+	if (oldVersion) {
+		R = firstPoint;
+		return eFace;
+	}
+	
+	CVector first = firstPoint;
+	CVector last = lastPoint;
+	last.m_y = first.m_y;
+
+
+	CVector center = m_oTM.GetPosition();
+	center.m_y = first.m_y;
+	float distanceToCenter = (center - last).Norm();
+	if (distanceToCenter > m_fRadius)
+		return eNone;
+
+	// First, build a new basis into which work.
+	// This basis is componed by newX, unitary vector colinear to (firstPoint, lastPoint) vector
+	// newY, which is the world Y axis and newZ, an unitary vector orthogonal to the 2 first.
+	CVector newX = last - first;
+	newX.Normalize();
+	CVector newY = CVector(0, 1, 0, 0);
+	CVector newZ = newX ^ newY;
+	newX.m_w = 0.f;
+	newY.m_w = 0.f;
+	newZ.m_w = 0.f;
+	CMatrix OPBase(newX, newY, newZ, CVector(0, 0, 0, 1), false);
+	OPBase.SetAffinePart(first);
+
+	CMatrix OPBaseInv;
+	OPBase.GetInverse(OPBaseInv);
+
+	CVector C = OPBaseInv * center; // cylinder center into the new basis
+	CVector P = OPBaseInv * last; // lastPoint into the new basis
+
+	float CH = C.m_z; // distance between C and H, H is the orthogonal projection of C on OP (with O is the local firstPoint)
+	float IH2 = m_fRadius * m_fRadius - CH * CH;
+	float IH = sqrtf(IH2);
+
+	CVector I; // intersect point between OP and cylinder
+	I.m_x = C.m_x - IH;
+
+	float IP = P.m_x - I.m_x;
+	
+	float cosa = IH / m_fRadius; // a is angle between CI and CH, also between IP and IR
+	float sina = sqrtf(1 - cosa * cosa);
+
+	float IR = CH * IP / m_fRadius;
+	CVector RLocal;
+	RLocal.m_x = IR * cosa;
+	RLocal.m_z = -IR * sina;
+	R = OPBase * RLocal;
+	return eFace;
+}
+
+
+IGeometry::TFace CCylinder::GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeometry& lastPositionBox, CVector& R)
+{
+	CVector first = firstPositionBox.GetTM().GetPosition();
+	CVector last = lastPositionBox.GetTM().GetPosition();
+	last.m_y = first.m_y;
+
+	static bool test = false;
+	if (!test) {
+		CVector C = GetTM().GetPosition();
+		float d1 = (first - C).Norm();
+		float d2 = (last - C).Norm();
+		R = d2 > d1 ? last : first;
+		return eFace;
+	}
+	
+	if (first == last) {
+		R = last;
+		return eFace;
+	}
+	// Build a new basis into which work.
+	// This basis is componed by newX, unitary vector colinear to (firstPoint, lastPoint) vector
+	// newY, which is the world Y axis and newZ, an unitary vector orthogonal to the 2 first.
+	CVector newX = last - first;
+	newX.Normalize();
+	CVector newY = CVector(0, 1, 0, 0);
+	CVector newZ = newX ^ newY;
+	newX.m_w = 0.f;
+	newY.m_w = 0.f;
+	newZ.m_w = 0.f;
+	CMatrix OPBase(newX, newY, newZ, CVector(0, 0, 0, 1), false);
+	OPBase.SetAffinePart(first);
+
+	CMatrix OPBaseInv;
+	OPBase.GetInverse(OPBaseInv);
+
+	CVector O = OPBaseInv * first;
+	CVector C = OPBaseInv * GetTM().GetPosition();
+	C.m_y = 0.f;
+	CVector P = OPBaseInv * last;
+	CBox& box2 = static_cast<CBox&>(lastPositionBox);
+
+	// search closest cylinder center point into box
+	vector<CVector> qpoints;
+	qpoints.push_back(P + CVector( box2.GetDimension().m_x / 2.f, 0,  box2.GetDimension().m_z / 2.f));
+	qpoints.push_back(P + CVector( box2.GetDimension().m_x / 2.f, 0, -box2.GetDimension().m_z / 2.f));
+	qpoints.push_back(P + CVector(-box2.GetDimension().m_x / 2.f, 0,  box2.GetDimension().m_z / 2.f));
+	qpoints.push_back(P + CVector(-box2.GetDimension().m_x / 2.f, 0, -box2.GetDimension().m_z / 2.f));
+	CVector Q = qpoints[0];
+	float minDistance = (qpoints[0] - C).Norm();
+	for(int i = 1; i < qpoints.size(); i++){
+		//CVector Qi = box2.GetTM() * qpoints[i];
+		CVector Qi = qpoints[i];
+		float distance = (Qi - C).Norm();
+		if (i == 0)
+			minDistance = distance;
+		else if (distance < minDistance) {
+			distance = minDistance;
+			Q = Qi;
+		}
+	}
+
+	float OC = (C - O).Norm();
+	float sin_beta = m_fRadius / OC;
+	if (sin_beta > 1)
+		sin_beta = 1.f;
+	float beta = asin(sin_beta);
+	float OP_OC = (P - O) * (C - O);
+	float OP = (P - O).Norm();
+	float d = OP * OC;
+	float cosbeta2 = OP_OC / d;
+	if (cosbeta2 > 1.f)
+		cosbeta2 = 1.f;
+	float beta2 = acos(cosbeta2);
+	float beta1 = beta - beta2;
+	float OH2 = OC * OC - m_fRadius * m_fRadius;
+	if (OH2 < 0)
+		OH2 = 0;
+ 	float OH = sqrt(OH2);
+	float Hx = OH * cos(beta1);
+	float Hz = OH * sin(beta1);
+	CVector H(Hx, 0.f, Hz);
+	float OQ_OH = (Q - O) * (H - O);
+	float Rx, Rz;
+	CVector Rlocal;
+	if (OH == 0) {		
+		float cos_gamma = OP_OC / (OC * OP);
+		if (cos_gamma > 1.f)
+			cos_gamma = 1.f;
+		float sin_gamma = sqrt(1 - cos_gamma * cos_gamma);
+		float OR = OP * sin_gamma;
+		Rx = OR * (1 - cos_gamma * cos_gamma);
+		Rz = OR * cos_gamma * (1 - cos_gamma * cos_gamma);
+	}
+	else {
+		float OR = OQ_OH / OH;
+		Rx = Hx * OR / OH;
+		Rz = Hz * OR / OH;
+	}
+	if (isnan(Rx) || isnan(Rz))
+		Rx = Rx;
+	Rlocal.Fill(Rx, 0, Rz, 1.f);
+	R = OPBase * Rlocal;
+
+	
+
+	return eFace;
+
+}

@@ -23,9 +23,9 @@ void CListener::SetEventCallBack( IGUIManager::EVENT_CALLBACK pfnCallback )
 }
 
 
-void CListener::ExecuteCallBack( IGUIManager::ENUM_EVENT nEvent )
+void CListener::ExecuteCallBack( IGUIManager::ENUM_EVENT nEvent, CGUIWidget* pWidget, int x, int y )
 {
 	if (_pfnCallback)
-		_pfnCallback( nEvent );
+		_pfnCallback( nEvent, pWidget, x, y );
 }
 

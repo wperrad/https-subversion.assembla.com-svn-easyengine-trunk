@@ -13,10 +13,11 @@ m_Right( oDesc.m_nResX ),
 m_Top( 0 ),
 m_Bottom( oDesc.m_nResY ),
 m_fMouseSensitivity( 0.05f ),
-m_nCursorPosx( 0 ),
-m_nCursorPosy( 0 ),
+m_nVirtualCursorPosx( 0 ),
+m_nVirtualCursorPosy( 0 ),
 m_bEditionMode( false ),
-m_bWheelConsumed(false)
+m_bWheelConsumed(false),
+m_bUpLButtonConsumed(false)
 {
 	m_OffsetMousePos.x = 0;
 	m_OffsetMousePos.y = 0;
@@ -72,6 +73,17 @@ void CInputManager::OnUpdate()
 			}
 		}
 	}
+
+	if (m_bUpLButtonConsumed) {
+		map< TMouseButton, TMouseButtonState >::iterator itButton = m_mMouseButtonState.find(eMouseButtonLeft);
+		if (itButton != m_mMouseButtonState.end())
+		{
+			if (itButton->second == eMouseButtonStateJustUp) {
+				itButton->second = eMouseButtonStateNone;
+				m_bUpLButtonConsumed = false;
+			}
+		}
+	}
 }
 
 void CInputManager::SetEditionMode( bool bEdition )
@@ -102,7 +114,7 @@ void CInputManager::OnMouseEventCallback( CPlugin* pPlugin, IEventDispatcher::TM
 		break;
 	case IEventDispatcher::T_LBUTTONDOWN:
 		b = eMouseButtonLeft;
-		if( s == eMouseButtonStateUp || s == eMouseButtonNone )
+		if( s == eMouseButtonStateJustUp || s == eMouseButtonNone )
 			s = eMouseButtonStateJustDown;
 		else
 			s = eMouseButtonStateDown;
@@ -113,11 +125,11 @@ void CInputManager::OnMouseEventCallback( CPlugin* pPlugin, IEventDispatcher::TM
 		break;
 	case IEventDispatcher::T_LBUTTONUP:
 		b = eMouseButtonLeft;
-		s = eMouseButtonStateUp;
+		s = eMouseButtonStateJustUp;
 		break;
 	case IEventDispatcher::T_RBUTTONUP:
 		b = eMouseButtonRight;
-		s = eMouseButtonStateUp;
+		s = eMouseButtonStateJustUp;
 		break;
 	case IEventDispatcher::T_WHEEL:
 		b = eMouseWheel;
@@ -189,28 +201,25 @@ void CInputManager::SetMouseCorner( int left, int right, int top, int bottom )
 	m_Bottom = bottom;
 }
 
-//void CInputManager::OnMouseClick( IEventDispatcher::TMouseEvent e, int x, int y )
-//{
-//
-//}
-
 void CInputManager::OnMouseMove( int x, int y )
 {	
+	m_nPhysicalCursorPosx = x;
+	m_nPhysicalCursorPosy = y;
 	bool bMustChange = false;
 
 	m_OffsetMousePos.x += (x - m_OldMousePos.x);	
 	m_OffsetMousePos.y += (y - m_OldMousePos.y);
 
 	POINT OffsetMousePos;
-	OffsetMousePos.x = (x - m_OldMousePos.x);	
+	OffsetMousePos.x = (x - m_OldMousePos.x);
 	OffsetMousePos.y = (y - m_OldMousePos.y);
 
 
 	m_OldMousePos.x = x;		
 	m_OldMousePos.y = y;
 	
-	m_nCursorPosx += OffsetMousePos.x;
-	m_nCursorPosy += OffsetMousePos.y;
+	m_nVirtualCursorPosx += OffsetMousePos.x;
+	m_nVirtualCursorPosy += OffsetMousePos.y;
 
 	if( !m_bEditionMode )
 	{	
@@ -274,11 +283,16 @@ void CInputManager::OnMouseMove( int x, int y )
 //	//pActionManager->m_mMouseButtonState[ b ] = s;
 //}
 
-
-void CInputManager::GetCursorPos_EE( int& x, int& y )
+void CInputManager::GetPhysicalCursorPos(int& x, int& y)
 {
-	x = m_nCursorPosx;
-	y = m_nCursorPosy;
+	x = m_nPhysicalCursorPosx;
+	y = m_nPhysicalCursorPosy;
+}
+
+void CInputManager::GetVirtualCursorPos( int& x, int& y )
+{
+	x = m_nVirtualCursorPosx;
+	y = m_nVirtualCursorPosy;
 }
 
 void CInputManager::ShowMouseCursor(bool bShow)
@@ -288,19 +302,19 @@ void CInputManager::ShowMouseCursor(bool bShow)
 
 void CInputManager::SetMouseCursorPos(int nx, int ny)
 {
-	m_nCursorPosx = nx;
-	m_nCursorPosy = ny;
+	m_nVirtualCursorPosx = nx;
+	m_nVirtualCursorPosy = ny;
 }
 
 void CInputManager::SetMouseCursorXPos(int nx)
 {
-	m_nCursorPosx = nx;
+	m_nVirtualCursorPosx = nx;
 }
 
 
 void CInputManager::SetMouseCursorYPos(int ny)
 {
-	m_nCursorPosy = ny;
+	m_nVirtualCursorPosy = ny;
 }
 
 
@@ -314,11 +328,14 @@ IInputManager::TMouseButtonState CInputManager::GetMouseButtonState( IInputManag
 	map< TMouseButton, TMouseButtonState >::iterator itButton = m_mMouseButtonState.find( b );
 	if( itButton != m_mMouseButtonState.end() )
 	{
+		TMouseButton b = itButton->first;
 		TMouseButtonState s = itButton->second;
 		if( s == eMouseButtonStateJustDown )
 			itButton->second = eMouseButtonStateDown;
 		if (s == eMouseWheelUp || s == eMouseWheelDown)
 			m_bWheelConsumed = true;
+		if ((b == TMouseButton::eMouseButtonLeft) && (s == eMouseButtonStateJustUp))
+			m_bUpLButtonConsumed = true;
 		return s;
 	}
 	return IInputManager::eMouseButtonStateNone;

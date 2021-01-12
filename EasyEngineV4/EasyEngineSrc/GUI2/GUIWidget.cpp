@@ -24,7 +24,8 @@ void CGUIWidget::Init( int nResX, int nResY, IShader* pShader )
 CGUIWidget::CGUIWidget( int nWidth, int nHeight ):
 _pListener(NULL),
 _bIsCursorInWidget( NULL ),
-m_pMesh( NULL )
+m_pMesh( NULL ),
+m_pParent(NULL)
 {
 	if( s_pShader == NULL )
 	{
@@ -37,6 +38,11 @@ m_pMesh( NULL )
 
 CGUIWidget::~CGUIWidget(void)
 {
+}
+
+void CGUIWidget::SetParent(CGUIWidget* parent)
+{
+	m_pParent = parent;
 }
 
 bool CGUIWidget::operator==( const CGUIWidget& w )
@@ -100,8 +106,9 @@ void CGUIWidget::SetListener(CListener* pListener)
 	_pListener = pListener;
 }
 
-void CGUIWidget::UpdateCallback( int nCursorXPos, int nCursorYPos, const unsigned int nButtonState )
+void CGUIWidget::UpdateCallback(int nCursorXPos, int nCursorYPos, IInputManager::TMouseButtonState eButtonState)
 {
+	_pListener->ExecuteCallBack(IGUIManager::EVENT_OUTSIDE, this, nCursorXPos, nCursorYPos);
 	bool bIsCursorInWidget = false;
 	if (_pListener)
 	{
@@ -112,35 +119,36 @@ void CGUIWidget::UpdateCallback( int nCursorXPos, int nCursorYPos, const unsigne
 				bIsCursorInWidget = true;
 				if (!_bIsCursorInWidget)
 				{
-					_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEENTERED );
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEENTERED, this, nCursorXPos, nCursorYPos);
 					_bIsCursorInWidget = true;
 					return;
 				}
-				if ( nButtonState == WM_LBUTTONDOWN )
+				if (eButtonState == IInputManager::eMouseButtonStateDown || eButtonState == IInputManager::eMouseButtonStateJustDown)
 				{
-					_pListener->ExecuteCallBack( IGUIManager::EVENT_LMOUSECLICK );
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_LMOUSECLICK, this, nCursorXPos, nCursorYPos);
 					return;
 				}
-				if ( nButtonState == WM_LBUTTONUP)
+				if (eButtonState == IInputManager::eMouseButtonStateJustUp)
 				{
-					_pListener->ExecuteCallBack( IGUIManager::EVENT_LMOUSERELEASED );
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_LMOUSERELEASED, this, nCursorXPos, nCursorYPos);
 					return;
 				}
 				if ( _NextCursorPos.GetX() != nCursorXPos || _NextCursorPos.GetY() != nCursorYPos )
 				{
-					_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEMOVE);
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEMOVE, this, nCursorXPos, nCursorYPos);
 					_NextCursorPos.SetPosition(static_cast<float> (nCursorXPos), static_cast<float> (nCursorYPos) );
 					return;
-				}				
+				}
+				_pListener->ExecuteCallBack(IGUIManager::EVENT_NONE, this, nCursorXPos, nCursorYPos);
 			}
 		}	
 		if ( !bIsCursorInWidget && _bIsCursorInWidget )
 		{
-			_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEEXITED );
+			_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEEXITED, this, nCursorXPos, nCursorYPos);
 			_bIsCursorInWidget = false;
 			return;
 		}
-		_pListener->ExecuteCallBack( IGUIManager::EVENT_NONE );
+		
 	}
 }
 

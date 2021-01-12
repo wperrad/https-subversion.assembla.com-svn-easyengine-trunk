@@ -31,6 +31,8 @@ protected:
 	bool						m_bUpdateConstantLocalTranslate;
 	bool						m_bUpdateConstantLocalRotate;
 
+	void						UpdateWorldMatrix();
+	void						UpdateChildren();
 
 public:
 	                    		CNode();
@@ -38,7 +40,6 @@ public:
 	unsigned int        		GetChildCount() const;
 	CNode*              		GetChild( unsigned int nIdx ) const;
   	virtual void	    		Update();
-	virtual void	    		UpdateWithoutChildren();
   	virtual void                Link( CNode* pNode );
 	virtual void				Unlink();
   	void                		AddChild( CNode* pNode );
@@ -47,13 +48,13 @@ public:
   	virtual void                Pitch(float fAngle);
   	virtual void                Roll(float fAngle);
   	virtual void                LocalTranslate(float dx , float dy , float dz);
-	virtual void                LocalTranslate( const CVector& vTranslate );
 	virtual void				WorldTranslate( float dx , float dy , float dz );
 	virtual void				WorldTranslate( const CVector& vTranslate );
   	void                		SetLocalPosition(float x, float y , float z);
 	void                		SetLocalPosition( const CVector& vPos );
 	void                		SetWorldPosition(float x, float y, float z);
 	void                		SetWorldPosition(const CVector& vPos);
+	virtual void				GetLocalPosition(CVector& vPosition) const;
 	virtual void				GetWorldPosition( CVector& vPosition ) const;
 	virtual void				SetLocalMatrix( const CMatrix& oMat );
 	virtual void				SetWorldMatrix( const CMatrix& oMat );

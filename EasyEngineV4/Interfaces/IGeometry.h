@@ -39,6 +39,19 @@ public:
 		eBox = 1,
 		eCylinder
 	};
+
+	enum TFace
+	{
+		eNone = 0,
+		eXPositive,
+		eXNegative,
+		eYPositive,
+		eYNegative,
+		eZPositive,
+		eFace,
+		eZNegative
+	};
+
 	
 	virtual bool				IsIntersect(const IGeometry& oGeometry) const = 0;
 	virtual void				SetTM(const CMatrix& m) = 0;
@@ -51,6 +64,8 @@ public:
 	virtual void				Transform(const CMatrix& tm) = 0;
 	virtual float				GetDistance(const IGeometry& oGeometry) const = 0;
 	virtual void				Draw(IRenderer& oRenderer) const = 0;
+	virtual TFace				GetReactionYAlignedPlane(const CVector& firstPoint, const CVector& lastPoint, float planeHeight, CVector& R) = 0;
+	virtual TFace				GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeometry& lastPositionBox, CVector& R) = 0;
 };
 
 class ILine
@@ -80,7 +95,6 @@ public:
 	virtual void				SetTM(const CMatrix& m) = 0;
 	virtual void				GetPoints( vector< CVector >& vPoints ) = 0;
 	virtual void				GetCenter( CVector& oCenter ) const = 0;
-	virtual bool				GetReactionYAlignedPlane(const ILine& oDirectriceLine, float planeHeight, CVector& R) = 0;
 };
 
 class ICylinder : public IGeometry

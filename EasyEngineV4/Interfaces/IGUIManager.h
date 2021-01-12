@@ -8,10 +8,17 @@ class IRenderer;
 class IRessourceManager;
 class IXMLParser;
 class IInputManager;
-
 class ILoaderManager;
+class CGUIWidget;
 
 using namespace std;
+
+class IGUIWindow
+{
+public:
+	virtual void	Display() = 0;
+	virtual void	SetVisibility(bool bVisible) = 0;
+};
 
 class IGUIManager : public CPlugin
 {
@@ -27,10 +34,18 @@ public:
 		EVENT_LMOUSERELEASED,
 		EVENT_RMOUSECLICK,
 		EVENT_MOUSEENTERED,
-		EVENT_MOUSEEXITED
+		EVENT_MOUSEEXITED,
+		EVENT_OUTSIDE
 	};
 
-	typedef void (*EVENT_CALLBACK)( ENUM_EVENT nEvent) ;
+	enum TFontColor 
+	{
+		eWhite = 0,
+		eBlue,
+		eTurquoise
+	};
+
+	typedef void (*EVENT_CALLBACK)( ENUM_EVENT nEvent, CGUIWidget*, int, int) ;
 
 	struct Desc : public CPlugin::Desc
 	{
@@ -53,10 +68,10 @@ public:
 	virtual void			AddWidget( int hWindow, int hWidget ) = 0;
 	virtual int				CreateListener( EVENT_CALLBACK pfnCallback ) = 0;
 	virtual void			AddEventListener( int hWidget, int hListener ) = 0;
-	virtual void			AddWindow( int hWindow ) = 0;
+	virtual void			SetCurrentWindow( IGUIWindow* pWindow ) = 0;
 	virtual void			SetVisibility( int hWindow, bool bVisible ) = 0;
 	virtual void			OnRender() = 0;
-	virtual void			Print( std::string sText, int x, int y ) = 0;
+	virtual void			Print( std::string sText, int x, int y, TFontColor color = eWhite) = 0;
 	virtual void			Print( char c, int x, int y ) = 0;
 	virtual void			SetActive( bool bActivate ) = 0;
 	virtual bool			GetActive() = 0;
@@ -67,6 +82,10 @@ public:
 	virtual void			DestroyStaticTest( int nID ) = 0;
 	virtual void			PrintStaticText( int nTextID ) = 0;
 	virtual void			EnableStaticText( int nTextID, bool bEnable ) = 0;
+	virtual IGUIWindow*		GetTopicsWindow() = 0;
+	virtual IGUIWindow*		CreatePlayerWindow(int nWidth, int nHeight) = 0;
+	virtual void			SetGUIMode(bool bGUIMode) = 0;
+	virtual bool			GetGUIMode() = 0;
 };
 
 #endif // IGUIManager_H

@@ -1,5 +1,5 @@
-#ifndef WIDGET_H
-#define WIDGET_H
+#ifndef _WIDGET_H_
+#define _WIDGET_H_
 
 #include "../Utils2/Position.h"
 #include "../Utils2/Dimension.h"
@@ -46,4 +46,4 @@ public:
 
 
 
-#endif
+#endif // _WIDGET_H_

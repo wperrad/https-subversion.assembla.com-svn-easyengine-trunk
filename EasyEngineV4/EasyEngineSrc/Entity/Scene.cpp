@@ -396,7 +396,7 @@ void CScene::Clear()
 	m_pEntityManager->Clear();
 }
 
-float CScene::GetHeight( float x, float z )
+float CScene::GetGroundHeight( float x, float z )
 {
 	const float margin = 7.f;
 	if( m_nHeightMapID != -1 )

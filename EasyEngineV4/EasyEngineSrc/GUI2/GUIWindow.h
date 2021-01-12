@@ -1,20 +1,15 @@
-#ifndef GUIWINDOW_CPP
-#ifndef GUIMANAGER_CPP
-#error
-#endif
-#endif
-
 #ifndef GUIWINDOW_H
 #define GUIWINDOW_H
 
 
 #include <vector>
 #include "GUIWidget.h"
+#include "IGUIManager.h"
 
 
-class CGUIWindow  : public CGUIWidget
+class CGUIWindow  : public CGUIWidget, public IGUIWindow
 {
-	std::vector< CGUIWidget* >		_vWidget;
+	std::vector< CGUIWidget* >	_vWidget;
 	bool						_bVisible;
 public:
 								CGUIWindow( int nWidth, int nHeight );
@@ -25,6 +20,8 @@ public:
 	void						SetVisibility(bool bVisible);
 	bool						IsVisible();
 	void						Clear();
+	void						Display();
+	void						SetPosition(float fPosX, float fPosY);
 
 };
 

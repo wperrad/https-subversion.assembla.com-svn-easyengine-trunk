@@ -20,7 +20,7 @@ class CEntity : public IEntity
 {
 protected:
 
-	typedef void (*TCollisionCallback)( CEntity*, CEntity*);
+	typedef void (*TCollisionCallback)( CEntity*, vector<CEntity*>);
 
 	IRessource*								m_pRessource;
 	IRenderer&								m_oRenderer;
@@ -59,7 +59,6 @@ protected:
 	void				SetNewBonesMatrixArray( std::vector< CMatrix >& vMatBones );
 	void				GetBonesMatrix( CNode* pInitRoot, CNode* pCurrentRoot, std::vector< CMatrix >& vMatrix );
 	virtual void		UpdateCollision();
-	CEntity*			GetEntityCollision();
 	void				GetEntitiesCollision(vector<CEntity*>& entities);
 	void				CreateAndLinkCollisionChildren(string sFileName);
 	float				GetBoundingSphereDistance(CEntity* pEntity);
@@ -67,6 +66,8 @@ protected:
 	bool				ManageGroundCollision(const CMatrix& olastLocalTM);
 	bool				TestEntityCollision(CEntity* pEntity);
 	bool				ManageBoxCollision(vector<CEntity*>& vCollideEntities, float dx, float dy, float dz, const CMatrix& oBackupMatrix);
+	void				SendBonesToShader();
+	void				UpdateRessource();
 
 	static void			OnAnimationCallback( IAnimation::TEvent e, void* );
 
@@ -78,7 +79,6 @@ public:
 	void				DrawBoundingBox( bool bDraw );
 	void				SetShader( IShader* pShader );
 	void				CenterToworld();
-	int					CreateLightEntity( IRessource* pLight );
 	IRessource*			GetRessource();
 	float				GetWeight();
 	void				SetWeight( float fWeight );
@@ -88,12 +88,9 @@ public:
 	void				SetCurrentAnimation( std::string sAnimation );
 	IAnimation*			GetCurrentAnimation();
 	IBone*				GetSkeletonRoot();
-	void				GetRessourceFileName( string& sFileName );
 	bool				HasAnimation( string sAnimationName );
 	void				DetachCurrentAnimation();
 	void				Hide( bool bHide );
-	void				SetEntityRoot( CEntity* pRoot );
-	CEntity*			GetEntityRoot();
 	void				RunAction( string sAction, bool bLoop ){}
 	void                LocalTranslate(float dx , float dy , float dz);
 	void				LocalTranslate( const CVector& vTranslate );
@@ -116,9 +113,8 @@ public:
 	void				ForceAssignBoundingGeometry(IGeometry* pBoundingGeometry);
 	IGeometry*			GetBoundingGeometry();
 	float				GetHeight();
-	void				SetGUIManager(IGUIManager* pGUIManager);
-	float				GetGroundHeight(int x, int z);
 	void				LinkAndUpdateMatrices(CEntity* pEntity);
+	virtual float		GetGroundHeight(float x, float z);
 };
 
 #endif // ENTITY_H

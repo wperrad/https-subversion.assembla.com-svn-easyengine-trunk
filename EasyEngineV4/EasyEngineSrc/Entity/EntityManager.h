@@ -42,7 +42,7 @@ public:
 	IEntity*			CreateRepere( IRenderer& oRenderer );
 	IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem );
 	IEntity*			CreateMobileEntity( string sFileNamee, IFileSystem* pFileSystem );
-	IEntity*			CreateFighterEntity( string sFileNamee, IFileSystem* pFileSystem );
+	IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem);
 	IEntity*			GetEntity( int nEntityID );
 	IEntity*			GetEntity( string sEntityName );
 	int					GetEntityID( IEntity* pEntity );

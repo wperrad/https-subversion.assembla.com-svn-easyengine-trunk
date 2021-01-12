@@ -12,13 +12,14 @@
 #include "IGeometry.h"
 #include "ICollisionManager.h"
 #include "EntityManager.h"
-#include "IGUIManager.h"
 
 // Utils
 #include "Utils2/TimeManager.h"
 #include "Utils2/RenderUtils.h"
 
 using namespace std;
+
+const float g_fMaxHeight = 80;
 
 CEntity::CEntity( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager, IGeometryManager& oGeometryManager, ICollisionManager& oCollisionManager ):
 m_oRessourceManager( oRessourceManager ),
@@ -39,7 +40,7 @@ m_pfnCollisionCallback( NULL ),
 m_bUseAdditionalColor(false),
 m_pBoundingGeometry(NULL),
 m_pRessource(NULL),
-m_fMaxStepHeight(50.f),
+m_fMaxStepHeight(g_fMaxHeight),
 m_pCollisionMesh(NULL),
 m_bDrawBoundingBox(false)
 {
@@ -67,7 +68,7 @@ m_bUseAdditionalColor(false),
 m_pCollisionMesh(NULL),
 m_pRessource(NULL),
 m_pBoundingGeometry(NULL),
-m_fMaxStepHeight(50.f),
+m_fMaxStepHeight(g_fMaxHeight),
 m_bDrawBoundingBox(false)
 {
 	if( sFileName.size() > 0 )
@@ -179,7 +180,6 @@ void CEntity::UpdateCollision()
 	{
 		if( m_pScene )
 		{
-			CVector oTransformedBoxPosition = m_oLocalMatrix.GetRotation() * m_oScaleMatrix * m_pBoundingGeometry->GetBase();
 
 			float x = 0.f;
 			float z = 0.f;
@@ -199,14 +199,14 @@ void CEntity::UpdateCollision()
 				z = oComposedMatrix.m_23;
 			}
 			int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
-			float fGroundHeight = m_pScene->GetHeight(x, z) + CBody::GetZCollisionError();
-			float fEntityZ = m_oLocalMatrix.m_13 + oTransformedBoxPosition.m_y + m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f;
+			float fGroundHeight = m_pScene->GetGroundHeight(x, z) + CBody::GetZCollisionError();
+			float fEntityZ = m_oLocalMatrix.m_13 + m_pBoundingGeometry->GetBase().m_y + m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f;
 			if( fEntityZ > fGroundHeight + CBody::GetEpsilonError() )
 			{
 				if( nDelta != 0 )
 				{
 					CVector vTranslation = m_oBody.m_oSpeed * ((float)nDelta / 1000.f);
-					WorldTranslate( vTranslation );
+					LocalTranslate( vTranslation );
 				}
 			}
 			else
@@ -215,7 +215,7 @@ void CEntity::UpdateCollision()
 				m_oBody.m_oSpeed.m_y = 0;
 				m_oBody.m_oSpeed.m_z = 0;
 				if( fEntityZ < fGroundHeight + CBody::GetEpsilonError() )
-					SetLocalPosition( m_oLocalMatrix.m_03, fGroundHeight - oTransformedBoxPosition.m_y, m_oLocalMatrix.m_23  );
+					SetLocalPosition( m_oLocalMatrix.m_03, fGroundHeight - m_pBoundingGeometry->GetBase().m_y, m_oLocalMatrix.m_23  );
 			}
 		}
 	}
@@ -250,17 +250,16 @@ void CEntity::LinkAndUpdateMatrices(CEntity* pEntity)
 	//pEntity->Update();
 }
 
-CEntity* CEntity::GetEntityCollision()
+float CEntity::GetGroundHeight(float x, float z)
 {
-	for (int i = 0; i < m_pParent->GetChildCount(); i++) {
-		CEntity* pEntity = dynamic_cast<CEntity*>(m_pParent->GetChild(i));
-		if (!pEntity || pEntity == this)
-			continue;
-
-		if (TestEntityCollision(pEntity))
-			return pEntity;
+	float fGroundHeight = 0.f;
+	CEntity* pParent = dynamic_cast<CEntity*>(m_pParent);
+	if (pParent) {
+		CVector localPos(x, 0, z);
+		CVector worldPosition = m_oWorldMatrix * localPos;
+		fGroundHeight = pParent->GetGroundHeight(worldPosition.m_x, worldPosition.m_z) - GetY();
 	}
-	return NULL;
+	return fGroundHeight;
 }
 
 void CEntity::GetEntitiesCollision(vector<CEntity*>& entities)
@@ -284,6 +283,35 @@ float CEntity::GetBoundingSphereDistance(CEntity* pEntity)
 	return fDistance;
 }
 
+void CEntity::SendBonesToShader()
+{
+	if (m_pOrgSkeletonRoot)
+	{
+		vector< CMatrix > vBoneMatrix;
+		GetBonesMatrix(m_pOrgSkeletonRoot, m_pSkeletonRoot, vBoneMatrix);
+		SetNewBonesMatrixArray(vBoneMatrix);
+	}
+}
+
+void CEntity::UpdateRessource()
+{
+	if (!m_bHidden)
+	{
+		IMesh* pMesh = dynamic_cast< IMesh* >(m_pRessource);
+		if (pMesh)
+		{
+			pMesh->SetRenderingType(m_eRenderType);
+			pMesh->DrawAnimationBoundingBox(m_bDrawAnimationBoundingBox);
+			if (m_bUseAdditionalColor)
+				pMesh->Colorize(m_oAdditionalColor.m_x, m_oAdditionalColor.m_y, m_oAdditionalColor.m_z, m_oAdditionalColor.m_w);
+		}
+		if (m_pRessource)
+			m_pRessource->Update();
+		if (pMesh)
+			pMesh->SetRenderingType(IRenderer::eFill);
+	}
+}
+
 void CEntity::Update()
 {
 	UpdateCollision();
@@ -292,41 +320,12 @@ void CEntity::Update()
 		m_pCurrentAnimation->Update();
 
 	CNode::Update();
+	SendBonesToShader();
 
-	string sEntityName;
-	GetEntityName(sEntityName);
-	if (sEntityName.find("perso") != -1) {
-		CVector pos;
-		GetWorldPosition(pos);
-		ostringstream oss;
-		oss << "Perso position = (" << pos.m_x << ", " << pos.m_y << ", " << pos.m_z << ")";
-		m_pEntityManager->GetGUIManager()->Print(oss.str(), 1000, 10);
-	}
-
-	if( m_pOrgSkeletonRoot )
-	{
-		vector< CMatrix > vBoneMatrix;
-		GetBonesMatrix( m_pOrgSkeletonRoot, m_pSkeletonRoot, vBoneMatrix );
-		SetNewBonesMatrixArray( vBoneMatrix );
-	}
 	m_oWorldMatrix *= m_oScaleMatrix;
-	m_oRenderer.SetModelMatrix( m_oWorldMatrix );
-	
-	if( !m_bHidden )
-	{
-		IMesh* pMesh = dynamic_cast< IMesh* >(m_pRessource);
-		if( pMesh )
-		{
-			pMesh->SetRenderingType( m_eRenderType );
-			pMesh->DrawAnimationBoundingBox( m_bDrawAnimationBoundingBox );
-			if (m_bUseAdditionalColor)
-				pMesh->Colorize(m_oAdditionalColor.m_x, m_oAdditionalColor.m_y, m_oAdditionalColor.m_z, m_oAdditionalColor.m_w);
-		}
-		if(m_pRessource)
-			m_pRessource->Update();
-		if( pMesh )
-			pMesh->SetRenderingType( IRenderer::eFill );
-	}
+	m_oRenderer.SetModelMatrix( m_oWorldMatrix );	
+	UpdateRessource();
+
 	if (m_bDrawBoundingBox && m_pBoundingGeometry)
 		UpdateBoundingBox();
 }
@@ -340,30 +339,7 @@ void CEntity::UpdateBoundingBox()
 
 float CEntity::GetHeight()
 {
-	IGeometry* pGeometry = m_pBoundingGeometry->Duplicate();
-	return pGeometry->GetHeight();
-}
-
-float CEntity::GetGroundHeight(int x, int z)
-{
-	float fGroundHeight = -99.f;
-
-	CEntity* pEntity = this;
-	CScene* pScene = NULL;
-	float parentHeight = 0;
-	do {
-		pScene = dynamic_cast<CScene*>(pEntity);
-		if (!pScene) {
-			CVector parentPos;
-			pEntity->GetWorldPosition(parentPos);
-			parentHeight -= parentPos.m_y;
-			pEntity = dynamic_cast<CEntity*>(pEntity->GetParent());
-		}
-	} while (pEntity && !pScene);
-
-	fGroundHeight = pScene ? pScene->GetHeight(x, z) : 0;
-	fGroundHeight += CBody::GetZCollisionError() + parentHeight;
-	return fGroundHeight;
+	return m_pBoundingGeometry->GetHeight();
 }
 
 void CEntity::LocalTranslate(float dx, float dy, float dz)
@@ -386,7 +362,7 @@ void CEntity::LocalTranslate(float dx, float dy, float dz)
 				pEntity->GetWorldPosition(oEntityPos);
 				float fCurrentDistance = (oThisPos - oEntityPos).Norm();
 				CNode::LocalTranslate(dx, dy, dz);
-				CNode::UpdateWithoutChildren();
+				CNode::UpdateWorldMatrix();
 				GetWorldPosition(oThisPos);
 				pEntity->GetWorldPosition(oEntityPos);
 				float fNextDistance = (oThisPos - oEntityPos).Norm();
@@ -402,7 +378,7 @@ void CEntity::LocalTranslate(float dx, float dy, float dz)
 		else
 		{
 			CNode::LocalTranslate(dx, dy, dz);
-			CNode::UpdateWithoutChildren();
+			CNode::UpdateWorldMatrix();
 			entities.clear();
 			GetEntitiesCollision(entities);
 			if (!entities.empty())
@@ -414,7 +390,7 @@ void CEntity::LocalTranslate(float dx, float dy, float dz)
 				ManageGroundCollision(oTemp);
 		}
 		if (bCollision && m_pfnCollisionCallback) {
-			m_pfnCollisionCallback(this, pEntity);
+			m_pfnCollisionCallback(this, entities);
 		}
 	}
 	else
@@ -442,7 +418,7 @@ bool CEntity::ManageBoxCollision(vector<CEntity*>& vCollideEntities, float dx, f
 
 			SetWorldPosition(GetX(), newy, GetZ());
 			m_oBody.m_oSpeed.m_y = 0;
-			UpdateWithoutChildren();
+			UpdateWorldMatrix();
 		}
 	}
 	else {
@@ -473,7 +449,7 @@ bool CEntity::ManageGroundCollision(const CMatrix& olastLocalTM)
 		m_oBody.m_oSpeed.m_y = 0;
 		m_oBody.m_oSpeed.m_z = 0;
 		localPos.m_y = fGroundHeight + h / 2.f;
-		worldPos.m_y = m_pScene->GetHeight(worldPos.m_x, worldPos.m_z) + h / 2.f;
+		worldPos.m_y = m_pScene->GetGroundHeight(worldPos.m_x, worldPos.m_z) + h / 2.f;
 		SetWorldPosition(worldPos);
 	}
 	return bCollision;
@@ -504,7 +480,7 @@ void CEntity::LinkEntityToBone( IEntity* pChild, IBone* pParentBone, IEntity::TL
 	CEntity* pChildEntity = static_cast< CEntity* >( pChild );
 	IMesh* pMesh = dynamic_cast< IMesh* >( pChild->GetRessource() );
 	if(pMesh)
-		pChild->LocalTranslate( pMesh->GetOrgMaxPosition() );
+		pChild->LocalTranslate( pMesh->GetOrgMaxPosition().m_x, pMesh->GetOrgMaxPosition().m_y, pMesh->GetOrgMaxPosition().m_z);
 }
 
 void CEntity::Link( CNode* pParent )

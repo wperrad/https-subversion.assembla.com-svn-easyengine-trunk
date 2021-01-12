@@ -94,12 +94,12 @@ void CWidget::UpdateCallback( int nCursorXPos, int nCursorYPos, const unsigned i
 				}
 				if ( nButtonState == WM_LBUTTONUP)
 				{
-					_pListener->ExecuteCallBack( IGUIManager::EVENT_LMOUSERELEASED );
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_LMOUSERELEASED, this, nCursorXPos, nCursorYPos);
 					return;
 				}
 				if ( _NextCursorPos.GetX() != nCursorXPos || _NextCursorPos.GetY() != nCursorYPos )
 				{
-					_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEMOVE);
+					_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEMOVE, this, nCursorXPos, nCursorYPos);
 					_NextCursorPos.SetPosition(static_cast<float> (nCursorXPos), static_cast<float> (nCursorYPos) );
 					return;
 				}				
@@ -107,11 +107,11 @@ void CWidget::UpdateCallback( int nCursorXPos, int nCursorYPos, const unsigned i
 		}	
 		if ( !bIsCursorInWidget && _bIsCursorInWidget )
 		{
-			_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEEXITED );
+			_pListener->ExecuteCallBack( IGUIManager::EVENT_MOUSEEXITED, this, nCursorXPos, nCursorYPos);
 			_bIsCursorInWidget = false;
 			return;
 		}
-		_pListener->ExecuteCallBack( IGUIManager::EVENT_NONE );
+		_pListener->ExecuteCallBack( IGUIManager::EVENT_NONE, this, nCursorXPos, nCursorYPos);
 	}
 }
 
