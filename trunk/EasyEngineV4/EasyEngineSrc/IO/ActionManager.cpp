@@ -86,7 +86,7 @@ void CActionManager::AddGUIAction(const char* szActionName, TMouse axis)
 
 void CActionManager::GetGameMousePos( int& x, int& y )
 {				
-	m_oInputManager.GetCursorPos_EE( x, y );
+	m_oInputManager.GetVirtualCursorPos( x, y );
 	x = (int) ( x * m_fMouseSensibility );
 	//x *= m_fMouseSensibility;
 	y = (int) ( y * m_fMouseSensibility );

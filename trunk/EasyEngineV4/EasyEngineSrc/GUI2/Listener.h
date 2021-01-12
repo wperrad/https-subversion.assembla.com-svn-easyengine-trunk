@@ -20,7 +20,7 @@ public:
 										CListener();
 	virtual 							~CListener();
 	void								SetEventCallBack( IGUIManager::EVENT_CALLBACK pfnCallback );
-	void								ExecuteCallBack( IGUIManager::ENUM_EVENT nEvent );
+	void								ExecuteCallBack( IGUIManager::ENUM_EVENT nEvent, CGUIWidget* pWidget, int x, int y);
 	
 };
 

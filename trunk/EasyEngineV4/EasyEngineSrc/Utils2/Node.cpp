@@ -45,38 +45,39 @@ CNode* CNode::GetChild( unsigned int nIdx ) const
 	return m_vChild[ nIdx ];
 }
 
-void CNode::Update()
+void CNode::UpdateWorldMatrix()
 {
-	if( m_bUpdateConstantLocalTranslate )
-		LocalTranslate( m_vConstantLocalTranslate );
-	if ( m_bQuaternionMode )
+	if (m_bQuaternionMode)
 	{
 		CQuaternion oParentWorldQuaternion;
-		if ( m_pParent )
-			m_pParent->GetWorldQuaternion( oParentWorldQuaternion );
+		if (m_pParent)
+			m_pParent->GetWorldQuaternion(oParentWorldQuaternion);
 		m_oWorldQuaternion = oParentWorldQuaternion * m_oLocalQuaternion;
 	}
 	else
 	{
-  		CMatrix oParentWorldMatrix;
-  		if ( m_pParent )
-  			m_pParent->GetWorldMatrix( oParentWorldMatrix );
-  		m_oWorldMatrix = oParentWorldMatrix * m_oLocalMatrix;
-
+		CMatrix oParentWorldMatrix;
+		if (m_pParent)
+			m_pParent->GetWorldMatrix(oParentWorldMatrix);
+		m_oWorldMatrix = oParentWorldMatrix * m_oLocalMatrix;
 	}
-	for ( unsigned int i = 0; i < m_vChild.size(); i++ )
-  	{
-  	 	CNode* pNode = m_vChild[i];
-  		pNode->Update();
-  	}
 }
 
-void CNode::UpdateWithoutChildren()
+void CNode::UpdateChildren()
 {
-	CMatrix oParentWorldMatrix;
-  	if ( m_pParent )
-  		m_pParent->GetWorldMatrix( oParentWorldMatrix );
-  	m_oWorldMatrix = oParentWorldMatrix * m_oLocalMatrix;
+	for (unsigned int i = 0; i < m_vChild.size(); i++)
+	{
+		CNode* pNode = m_vChild[i];
+		pNode->Update();
+	}
+}
+
+void CNode::Update()
+{
+	if( m_bUpdateConstantLocalTranslate )
+		LocalTranslate( m_vConstantLocalTranslate.m_x, m_vConstantLocalTranslate.m_y, m_vConstantLocalTranslate.m_z );
+	UpdateWorldMatrix();
+	UpdateChildren();
 }
 
 void CNode::Link( CNode* pNode )
@@ -115,14 +116,8 @@ void CNode::SetParent( CNode* pNode )
 void CNode::LocalTranslate( float dx, float dy, float dz )
 {
 	m_oLocalMatrix = m_oLocalMatrix * CMatrix::GetTranslation( dx, dy, dz );
-	//LocalTranslate( CVector( dx, dy, dz, 1 ) );
 }
 
-void CNode::LocalTranslate( const CVector& vTranslate )
-{
-	//m_oLocalMatrix = m_oLocalMatrix * CMatrix::GetTranslation( vTranslate );
-	LocalTranslate( vTranslate.m_x, vTranslate.m_y, vTranslate.m_z );
-}
 
 bool bTest = false;
 
@@ -160,7 +155,7 @@ void CNode::WorldTranslate( const CVector& vTranslate )
 		m_oLocalMatrix.m_23 += vTranslate.m_z;
 	}
 	else
-		LocalTranslate( oLocalTranslation );
+		LocalTranslate( oLocalTranslation.m_x, oLocalTranslation.m_y, oLocalTranslation.m_z);
 }
 
 void CNode::Yaw( float fAngle )
@@ -204,6 +199,14 @@ void CNode::SetWorldPosition(float x, float y, float z)
 void CNode::SetLocalPosition(const CVector& vPos)
 {
 	SetLocalPosition(vPos.m_x, vPos.m_y, vPos.m_z);
+}
+
+void CNode::GetLocalPosition(CVector& vPosition) const
+{
+	vPosition.m_x = m_oLocalMatrix.m_03;
+	vPosition.m_y = m_oLocalMatrix.m_13;
+	vPosition.m_z = m_oLocalMatrix.m_23;
+	vPosition.m_w = m_oLocalMatrix.m_33;
 }
 
 void CNode::GetWorldPosition( CVector& vPosition ) const

@@ -4,7 +4,6 @@
 #include "Entity.h"
 #include "FighterEntity.h"
 
-
 class CMobileEntity : public CEntity, public virtual IFighterEntity
 {
 
@@ -30,6 +29,8 @@ protected:
 	map< IEntity::TAnimation, IAnimation* >		m_mAnimations;
 	map< TAnimation, float >					m_mAnimationSpeedByType;
 	string										m_sAttackBoneName;
+	CVector										m_vNextLocalTranslate;
+	bool										m_bFirstUpdate;
 	
 
 	static map< string, TAction >				s_mActions;
@@ -61,8 +62,8 @@ protected:
 	ICollisionManager&		GetCollisionManager(){ return m_oCollisionManager; }
 	ISphere*				GetBoneSphere( string sBoneName );
 	void					AddSpeed(float x, float y, float z);
-	void					UpdateCollision();
 	const string&			GetAttackBoneName();
+	void					DisplayPlayerPosition();
 
 	static void				OnWalkAnimationCallback( IAnimation::TEvent e, void* pEntity );
 	static void 			Walk( CMobileEntity*, bool bLoop );
@@ -72,7 +73,7 @@ protected:
 	static void				Dying(CMobileEntity* pHuman, bool bLoop);
 	static void				Guard(CMobileEntity* pHuman, bool bLoop);
 	static void 			PlayReceiveHit( CMobileEntity* pHuman, bool bLoop );
-	static void 			OnCollision(CEntity* pThis, CEntity* pEntity);
+	static void 			OnCollision(CEntity* pThis, vector<CEntity*> entities);
 	static void				OnDyingCallback(IAnimation::TEvent e, void* data);
 
 
@@ -85,10 +86,12 @@ public:
 	void					SetCurrentPerso( bool bPerso );
 	void					Die();
 	void					WearArmor(string armorName);
-
 	void					Yaw(float fAngle);
 	void					Pitch(float fAngle);
 	void					Roll(float fAngle);
+	void					ManageGravity();
+	void					Update();
+	void					UpdateCollision();
 };
 
 #endif // MOBILEENTITY_H

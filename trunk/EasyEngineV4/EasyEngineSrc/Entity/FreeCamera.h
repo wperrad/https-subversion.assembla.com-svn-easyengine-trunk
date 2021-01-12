@@ -20,6 +20,7 @@ public:
 	float				GetSpeed();
 	void				SetSpeed(float fSpeed);
 	void				LocalTranslate(float x, float y, float z);
+	void				SetInventoryMode(bool bInventoryMode) {}
 };
 
 

@@ -135,7 +135,7 @@ void CNPCEntity::Turn( float fAngle )
 	Yaw( fAngle );
 }
 
-void CNPCEntity::OnCollision( CEntity* pThis, CEntity* pEntity )
+void CNPCEntity::OnCollision( CEntity* pThis, vector<CEntity*> entities)
 {
 	CNPCEntity* pNPC = static_cast< CNPCEntity* >(pThis);
 	IAEntity::OnCollision( pNPC );

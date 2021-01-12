@@ -77,10 +77,7 @@ void CLoaderManager::Load( string sFileName, ILoader::IRessourceInfos& ri )
 	map< string, ILoader* >::iterator itLoader = m_mLoaderByExtension.find( sExtension );
 	if ( itLoader != m_mLoaderByExtension.end() )
 	{
-		string dir;
-		m_oFileSystem.GetRootDirectory(dir);
-		string sFilePath = dir.empty() ? sFileName : dir + "\\" + sFileName;
-		itLoader->second->Load(sFilePath, ri, m_oFileSystem );
+		itLoader->second->Load(sFileName, ri, m_oFileSystem );
 		ri.m_sFileName = sFileName;
 	}
 	else
@@ -99,7 +96,7 @@ void CLoaderManager::Export( string sFileName, const ILoader::IRessourceInfos& r
 	if ( itLoader != m_mLoaderByExtension.end() )
 	{
 		string sDir;
-		m_oFileSystem.GetRootDirectory( sDir );
+		m_oFileSystem.GetLastDirectory( sDir );
 		string sFilePath;
 		string sPrefix = sFileName.substr( 0, 3 );
 		if( sPrefix != "c:\\" && sPrefix != "C:\\" )

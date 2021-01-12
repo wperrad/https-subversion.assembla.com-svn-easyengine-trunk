@@ -121,6 +121,13 @@ public:
 	virtual void Attack(IFighterEntityInterface* pEntity) = 0;
 };
 
+class IPlayer 
+{
+public:
+	virtual void Action() = 0;
+	virtual void DisplayPlayerWindow(bool bDisplay) = 0;
+};
+
 class IEntityManager : public CPlugin
 {
 public:
@@ -147,6 +154,7 @@ public:
 	virtual IEntity*			CreateEntity( string sFileName = "noname" ) = 0;
 	virtual IEntity*			CreateRepere( IRenderer& oRenderer ) = 0;
 	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem ) = 0;
+	virtual IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem ) = 0;
 	virtual IEntity*			GetEntity( int nEntityID ) = 0;
 	virtual IEntity*			GetEntity( string sEntityName ) = 0;

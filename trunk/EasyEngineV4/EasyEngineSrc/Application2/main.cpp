@@ -50,6 +50,7 @@ struct CGFXOption
 void  OnWindowEvent( CPlugin* pPlugin, IEventDispatcher::TWindowEvent e, int nWidth, int nHeight );
 void UpdateCamera();
 void GetOptionsByCommandLine( string sCommandArguments, CGFXOption& oOption );
+void DestroyPlugins();
 
 IDrawTool*				m_pDrawTool = NULL;
 IWindow*				m_pWindow = NULL;
@@ -83,9 +84,6 @@ CNode* m_pBase;
 CNode* m_pTestMesh;
 vector< IEntity* > m_vAnimatedEntities;
 
-IEntity* LoadAndLinkAnimatedentity( string sFileName, string sAnimationFile, IEntity* pScene, IRenderer& oRenderer, float fzpos, float fRoll = 0.f, bool bAnimate = true );
-IEntity* LoadAndLinkEntity( string sFileName, IEntity* pScene, IRenderer& oRenderer, float fzpos, float fRoll = 0.f );
-
 vector< IEntity* > m_vLight;
 bool	m_bFirstTimeOpenFile = true;
 CDebugTool* m_pDebugTool = NULL;
@@ -94,28 +92,12 @@ IEntity* m_pScene = NULL;
 
 float m_nDeltaTickCount = 0;
 float m_nLastTickCount = 0;
-bool  m_bGUIMode = false;
 int m_nLastGameMousePosx, m_nLastGameMousePosy;
 CMatrix ident;
 bool m_bRenderScene = true;
 bool bCapture = false;
 
 
-void SetGUIMode( bool bGUI )
-{
-	if ( bGUI )
-	{
-		m_pInputManager->SetMouseCursorPos(0,0);
-		m_bGUIMode = true;
-	}
-	else
-	{
-		m_pActionManager->SetGameMousePos( m_nLastGameMousePosx, m_nLastGameMousePosy );
-		m_bGUIMode = false;
-	}
-	m_pCameraManager->GetActiveCamera()->Freeze( bGUI );
-	ShowCursor( bGUI );
-}
 
 void InitScene( ISceneManager* pSceneManager )
 {
@@ -184,8 +166,12 @@ void OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE s
 	switch( state )
 	{
 	case IInputManager::JUST_PRESSED:
-		if(key == VK_TAB)
-			SetGUIMode(!m_bGUIMode);
+		if (key == VK_TAB) {
+			IPlayer* player = dynamic_cast<IPlayer*>(m_pEntityManager->GetPerso());
+			if (player) {
+				player->DisplayPlayerWindow(!m_pGUIManager->GetGUIMode());
+			}
+		}
 		else if(key == m_pConsole->GetConsoleShortCut())
 			m_pConsole->Open(!m_pConsole->IsOpen());
 	}
@@ -193,7 +179,7 @@ void OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE s
 
 void UpdatePerso()
 {
-	if( !m_pConsole->IsOpen() )
+	if( !m_pConsole->IsOpen() && !m_pGUIManager->GetGUIMode())
 	{
 		IEntity* pPerso = m_pEntityManager->GetPerso();
 		if( pPerso )
@@ -220,6 +206,14 @@ void UpdatePerso()
 				m_pActionManager->ForceActionState("SautPerso", IInputManager::PRESSED);
 			}
 
+			IInputManager::KEY_STATE eStateAction = m_pActionManager->GetKeyActionState("Action");
+			if (eStateAction == IInputManager::JUST_PRESSED)
+			{
+				IPlayer* pPlayer = dynamic_cast<IPlayer*>(pPerso);
+				pPlayer->Action();
+				m_pActionManager->ForceActionState("Action", IInputManager::PRESSED);
+			}
+
 			IInputManager::TMouseButtonState eStatePiedG = m_pActionManager->GetMouseActionState( "HitLeftFoot");
 			if( eStatePiedG == IInputManager::eMouseButtonStateJustDown )
 			{
@@ -227,7 +221,6 @@ void UpdatePerso()
 				if (pFighter)
 					pFighter->Hit();
 			}
-
 			
 			ICamera* pLinkedCamera = m_pCameraManager->GetCameraFromType(ICameraManager::T_LINKED_CAMERA);
 			if (pLinkedCamera) {
@@ -260,8 +253,7 @@ void OnUpdateWindow()
 	m_nDeltaTickCount = nTickCount - m_nLastTickCount;
 	m_nLastTickCount = (float)nTickCount;
 	m_pInputManager->OnUpdate();
-	//m_pGUIManager->Print( "Salut les connards !", 800, 0 );
-	if( !m_pConsole->IsOpen() )
+	if( !m_pConsole->IsOpen() && !m_pGUIManager->GetGUIMode())
 		UpdateCamera();
 	UpdatePerso();
 	m_pRenderer->BeginRender();
@@ -310,6 +302,7 @@ void InitPlugins( string sCmdLine )
 	IFileSystem::Desc oFileSystemDesc( NULL, "FileSystem" );
 	m_pFileSystem = static_cast< IFileSystem* > ( CPlugin::Create( oFileSystemDesc, sDirectoryName + "FileUtils.dll", "CreateFileSystem" ) );
 	m_pFileSystem->Mount( "..\\data" );
+	m_pFileSystem->Mount( "..\\data\\Gui");
 	m_pFileSystem->Mount( "..\\..\\EasyEngine\\data" );
 
 	IEventDispatcher::Desc oEventDispatcherDesc( NULL, "Event dispatcher " );
@@ -393,6 +386,33 @@ void InitPlugins( string sCmdLine )
 	m_pConsole->SetConsoleShortCut(192);
 }
 
+void InitKeyActions()
+{
+	const char pAzerty[] = { 'Z', 'S', 'Q', 'D' };
+	const char pQwerty[] = { 'W', 'S', 'A', 'D' };
+	const char* pCurrent = pQwerty;
+
+	m_pActionManager->AddKeyAction("Avancer", pCurrent[0]);
+	m_pActionManager->AddKeyAction("Reculer", pCurrent[1]);
+	m_pActionManager->AddKeyAction("StrafeLeft", pCurrent[2]);
+	m_pActionManager->AddKeyAction("StrafeRight", pCurrent[3]);
+	m_pActionManager->AddKeyAction("MoreSpeed", 'V');
+	m_pActionManager->AddKeyAction("LessSpeed", 'C');
+	m_pActionManager->AddKeyAction("Action", 'E');
+	m_pActionManager->AddKeyAction("CameraYaw", AXIS_H);
+	m_pActionManager->AddKeyAction("CameraPitch", AXIS_V);
+	m_pActionManager->AddKeyAction("Console", 222);
+	m_pActionManager->AddGUIAction("CursorX", AXIS_H);
+	m_pActionManager->AddGUIAction("CursorY", AXIS_V);
+
+	m_pActionManager->AddKeyAction("AvancerPerso", 'T');
+	m_pActionManager->AddKeyAction("SautPerso", ' ');
+	m_pActionManager->AddMouseAction("HitLeftFoot", IInputManager::eMouseButtonLeft, IInputManager::eMouseButtonStateJustDown);
+	m_pActionManager->AddMouseAction("Zoom", IInputManager::eMouseWheel, IInputManager::eMouseWheelUp);
+	m_pActionManager->AddMouseAction("Unzoom", IInputManager::eMouseWheel, IInputManager::eMouseWheelDown);
+}
+
+
 int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine, int nCmdShow )
 {
 	m_pDebugTool = new CDebugTool;
@@ -402,57 +422,21 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 #endif // CATCH_EXCEPTION
 
 		InitPlugins( plCmdLine );
-
 		
 		ICamera* pFreeCamera = m_pCameraManager->CreateCamera( ICameraManager::T_FREE_CAMERA, 40.f, *m_pEntityManager );
 		m_pCameraManager->SetActiveCamera( pFreeCamera );
 		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 40.f, *m_pEntityManager );
-		const char pAzerty[] = {'Z', 'S', 'Q', 'D'};
-		const char pQwerty[] = {'W', 'S', 'A', 'D'};
-		const char* pCurrent = pQwerty;
 
-		m_pActionManager->AddKeyAction("Avancer" , pCurrent[0]);
-		m_pActionManager->AddKeyAction("Reculer" , pCurrent[1]);
-		m_pActionManager->AddKeyAction("StrafeLeft" , pCurrent[2]);
-		m_pActionManager->AddKeyAction("StrafeRight" , pCurrent[3]);
-		m_pActionManager->AddKeyAction("MoreSpeed" , 'V');
-		m_pActionManager->AddKeyAction("LessSpeed" , 'C');
-		m_pActionManager->AddKeyAction("CameraYaw" , AXIS_H);
-		m_pActionManager->AddKeyAction("CameraPitch" , AXIS_V);
-		m_pActionManager->AddKeyAction("Console", 222 );
-		m_pActionManager->AddGUIAction("CursorX" , AXIS_H);
-		m_pActionManager->AddGUIAction("CursorY" , AXIS_V);
-
-		m_pActionManager->AddKeyAction( "AvancerPerso", 'T' );
-		m_pActionManager->AddKeyAction("SautPerso", ' ');
-		m_pActionManager->AddMouseAction( "HitLeftFoot", IInputManager::eMouseButtonLeft, IInputManager::eMouseButtonStateJustDown );
-		m_pActionManager->AddMouseAction("Zoom", IInputManager::eMouseWheel, IInputManager::eMouseWheelUp);
-		m_pActionManager->AddMouseAction("Unzoom", IInputManager::eMouseWheel, IInputManager::eMouseWheelDown);
+		InitKeyActions();
 
 		m_pEventDispatcher->AbonneToWindowEvent( NULL, OnWindowEvent );
 		m_pInputManager->AbonneToKeyEvent( NULL, OnKeyAction );
-		
+				
 		InitScene( m_pSceneManager );
 		m_pWindow->ShowModal();
 		m_pRenderer->DestroyContext();
 
-		delete m_pDebugTool;
-		delete m_pConsole;
-		delete m_pScriptManager;
-		delete m_pGUIManager;
-		delete m_pXMLParser;
-		delete m_pEntityManager;	
-		delete m_pSceneManager;
-		delete m_pRessourceManager;
-		delete m_pLoaderManager;
-		delete m_pCameraManager;
-		delete m_pSoftRenderer;
-		delete m_pRenderer;
-		delete m_pWindow;
-		delete m_pActionManager;
-		delete m_pInputManager;
-		delete m_pEventDispatcher;
-		delete m_pFileSystem;
+		DestroyPlugins();
 
 #ifdef CATCH_EXCEPTION
 	}
@@ -470,6 +454,28 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 
 	return 0;
 }
+
+void DestroyPlugins()
+{
+	delete m_pDebugTool;
+	delete m_pConsole;
+	delete m_pScriptManager;
+	delete m_pGUIManager;
+	delete m_pXMLParser;
+	delete m_pEntityManager;
+	delete m_pSceneManager;
+	delete m_pRessourceManager;
+	delete m_pLoaderManager;
+	delete m_pCameraManager;
+	delete m_pSoftRenderer;
+	delete m_pRenderer;
+	delete m_pWindow;
+	delete m_pActionManager;
+	delete m_pInputManager;
+	delete m_pEventDispatcher;
+	delete m_pFileSystem;
+}
+
 
 void  OnWindowEvent( CPlugin* pPlugin, IEventDispatcher::TWindowEvent e, int nWidth, int nHeight )
 {

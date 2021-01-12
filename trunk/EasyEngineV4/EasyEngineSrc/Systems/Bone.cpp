@@ -68,7 +68,7 @@ void CBone::UpdateTime( float fTime )
 {
 	if( m_mKeys[ m_sCurrentAnimation ].size() > 0 )
 	{
-		if( IsTimeToNextKey( fTime ) )
+		while(!m_bEnd && IsTimeToNextKey(fTime))
 			NextKey();
 		GetInterpolatedMatrix( fTime );
 	}

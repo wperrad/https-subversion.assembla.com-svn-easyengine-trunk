@@ -32,6 +32,8 @@ public:
 	float				GetDistance(const IBox& oBox) const;
 	float				GetDistance(const ICylinder& oBox) const;
 	void				Draw(IRenderer& oRenderer) const;
+	TFace				GetReactionYAlignedPlane(const CVector& firstPoint, const CVector& lastPoint, float planeHeight, CVector& R);
+	TFace				GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeometry& lastPositionBox, CVector& R);
 	
 
 	const IPersistantObject& operator >> (CBinaryFileStorage& store) const;

@@ -10,6 +10,7 @@
 #include "NPCEntity.h"
 #include "LineEntity.h"
 #include "CylinderEntity.h"
+#include "Player.h"
 
 CEntityManager::CEntityManager( const Desc& oDesc ):
 IEntityManager( oDesc ),
@@ -145,6 +146,13 @@ IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFil
 {
 	IEntity* pEntity = new CMobileEntity( sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager );
 	CreateEntity( pEntity );
+	return pEntity;
+}
+
+IEntity* CEntityManager::CreatePlayer(string sFileName, IFileSystem* pFileSystem)
+{
+	IEntity* pEntity = new CPlayer(sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager, *m_pGUIManager);
+	CreateEntity(pEntity);
 	return pEntity;
 }
 

@@ -87,7 +87,6 @@ void CConsole::SetBlink( bool blink )
 void CConsole::Open( bool bOpen )
 {
 	m_bIsOpen = bOpen;
-	m_oInputManager.SetEditionMode( bOpen );
 	m_oGUIManager.EnableStaticText( m_nStaticTextID, bOpen );
 }
 

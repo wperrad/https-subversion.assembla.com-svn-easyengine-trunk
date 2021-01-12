@@ -26,14 +26,23 @@ CRectangle::~CRectangle(void)
 {
 }
 
-
-
-void CRectangle::SetDimension( const CDimension& dim )
+void CRectangle::SetDimension(const CDimension& dim)
 {
-	m_oDim.SetDimension( dim.GetWidth(), dim.GetHeight() );
+	m_oDim.SetDimension(dim.GetWidth(), dim.GetHeight());
 }
 
-void CRectangle::SetPosition( const CPosition& pos )
+void CRectangle::SetDimension(float width, float height)
+{
+	m_oDim.SetDimension(width, height);
+}
+
+void CRectangle::SetPosition(const CPosition& pos)
 {
 	m_oPos = pos;
 }
+
+void CRectangle::SetPosition(int x, int y)
+{
+	m_oPos.SetPosition(x, y);
+}
+

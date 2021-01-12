@@ -133,7 +133,7 @@ void CLexAnalyser::ReadUntilEndComment(string sScript, unsigned int& startIndex,
 
 void CLexAnalyser::ReadUntilEndLine(string sScript, unsigned int& startIndex)
 {
-	while (startIndex < sScript.size() && (sScript[startIndex] != '/n' ) ) {
+	while (startIndex < sScript.size() && (sScript[startIndex] != '\n' ) ) {
 		startIndex++;
 	}
 }
@@ -362,7 +362,7 @@ void CLexAnalyser::CalculLexicalArrayFromCSV( string sCSVName, IFileSystem* pFS 
 		throw e;
 	}
 	string d;
-	pFS->GetRootDirectory( d );
+	pFS->GetLastDirectory( d );
 	fclose( pFile );
 	CCSVReader r( ';' );
 	string sCSVConfigPath;

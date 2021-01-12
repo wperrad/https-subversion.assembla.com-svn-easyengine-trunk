@@ -53,7 +53,8 @@ void IFighterEntity::Hit()
 
 void IFighterEntity::OnEndHitAnimation()
 {
-	Stand();
+	if (m_nLife <= 0)
+		Stand();
 }
 
 void IFighterEntity::OnReceiveHit( IFighterEntity* pEnemy )

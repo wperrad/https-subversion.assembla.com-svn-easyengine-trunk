@@ -55,6 +55,15 @@ public:
 	static float	GetMaxx(const vector< CVector >& vPoints);
 	static float	GetMaxy(const vector< CVector >& vPoints);
 	static float	GetMaxz(const vector< CVector >& vPoints);
+
+	static float	GetDistance(const CVector& p1, const CVector& p2);
+
+	static int		GetMinxIndex(const vector< CVector >& vPoints);
+	static int		GetMinyIndex(const vector< CVector >& vPoints);
+	static int		GetMinzIndex(const vector< CVector >& vPoints);
+	static int		GetMaxxIndex(const vector< CVector >& vPoints);
+	static int		GetMaxyIndex(const vector< CVector >& vPoints);
+	static int		GetMaxzIndex(const vector< CVector >& vPoints);
 };
 
 class CVector2D

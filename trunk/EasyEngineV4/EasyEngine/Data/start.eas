@@ -10,38 +10,38 @@ SetEntityPos(light1, 0, 20000, 50000);
 light2=AddLightw("omni", 75000);
 SetEntityPos(light2, 0, 75000, -260000);
 
-perso=CreateMobileEntity("testExport15");
+
+perso=CreatePlayer("testExport15");
+
 SetEntityName(perso, "perso");
 SetCurrentPerso(perso);
 Stand(perso);
 SetAnimationSpeed(perso, "run", 2);
-
+SetAnimationSpeed(perso, "walk", 1.5);
+WearArmor(perso, "2");
 
 SetCameraType("link");
 SetFov(60);
+
 
 
 npc1 = CreateNPC("testExport15");
 Stand(npc1);
 SetEntityName(npc1, "NPC1");
 SetEntityPos(npc1, -200, 1000, 1000);
-
+WearArmor(npc1, "2");
 
 npc2 = CreateNPC("testExport15");
 Stand(npc2);
 SetEntityPos(npc2, 2000, 0, 0);
 SetEntityName(npc2, "NPC2");
-
-test = CreateNPC("test");
-Stand(test);
-SetEntityPos(test, -1000, 0, -1000);
-SetEntityName(test, "test");
-
+WearArmor(npc2, "2");
 
 maison1 = LoadEntity("maison");
 SetEntityName(maison1, "maison1");
 SetEntityWeight(maison1, 1);
-SetEntityPos(maison1, 2000, 5000, 2000);
+SetEntityPos(maison1, 2000, 4000, 2000);
+
 
 maison2 = LoadEntity("maison");
 SetEntityName(maison2, "maison2");
@@ -53,21 +53,14 @@ SetEntityPos(temple, 0, 5000, 10000);
 SetEntityWeight(temple, 10);
 SetEntityName(temple, "Parthenon");
 
+
 socle=LoadEntity("socle.bme");
 SetEntityPos(socle, 5000, 5000, 12000);
 SetEntityWeight(socle, 10);
 SetEntityName(socle, "socle");
 
-box=CreateBox(1000, 300, 2000);
-SetEntityPos(box, 0, 230, 0);
-
-line = CreateLineEntity(-1100, 230, -900, 0, 230, 0);
 
 
-WearArmor(perso, "2");
-WearArmor(npc1, "2");
-WearArmor(npc2, "2");
-WearArmor(test, "2");
 
-//GenerateRandomNPC("testExport14", "2", 100, 20);
 
+//GenerateRandomNPC("testExport15", "2", 100, 20);

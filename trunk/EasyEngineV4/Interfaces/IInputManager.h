@@ -44,7 +44,7 @@ public:
 	enum TMouseButtonState
 	{
 		eMouseButtonStateNone = 0,
-		eMouseButtonStateUp,
+		eMouseButtonStateJustUp,
 		eMouseButtonStateDown,
 		eMouseButtonStateJustDown,
 		eMouseWheelUp,
@@ -54,8 +54,8 @@ public:
 
 	typedef void( *TKeyCallback )( CPlugin*, unsigned int, KEY_STATE );
 
-
-	virtual void				GetCursorPos_EE( int& x, int& y ) = 0;
+	virtual void				GetPhysicalCursorPos(int& x, int& y) = 0;
+	virtual void				GetVirtualCursorPos( int& x, int& y ) = 0;
 	virtual void				SetMouseCursorXPos( int x ) = 0;
 	virtual void				SetMouseCursorYPos( int y ) = 0;
 	virtual TMouseButtonState	GetMouseButtonState( TMouseButton b ) = 0;

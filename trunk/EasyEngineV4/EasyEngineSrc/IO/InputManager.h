@@ -24,8 +24,10 @@ private:
 	//vector< TMouseCallback >								m_vMouseCallback;
 	POINT													m_OldMousePos;
 	POINT													m_OffsetMousePos;
-	int														m_nCursorPosx;
-	int														m_nCursorPosy;
+	int														m_nPhysicalCursorPosx;
+	int														m_nPhysicalCursorPosy;
+	int														m_nVirtualCursorPosx;
+	int														m_nVirtualCursorPosy;
 	unsigned int											m_ButtonState;
 	std::map< unsigned int, KEY_STATE > 					m_mKeyboardState;
 	map< TMouseButton, TMouseButtonState >					m_mMouseButtonState;
@@ -43,6 +45,7 @@ private:
 	vector< int >											m_vLastKeyEvent;
 	map< int, bool >										m_mKeyPressed;
 	bool													m_bWheelConsumed;
+	bool													m_bUpLButtonConsumed;
 
 
 
@@ -63,7 +66,8 @@ public:
 	
 
 	void									GetOffsetMouse( int& x, int& y );
-	void									GetCursorPos_EE( int& x, int& y );
+	void									GetPhysicalCursorPos(int& x, int& y);
+	void									GetVirtualCursorPos( int& x, int& y );
 	void									ShowMouseCursor(bool bShow);
 	void									SetMouseCursorPos(int nx, int ny);
 	void									SetMouseCursorXPos(int nx);

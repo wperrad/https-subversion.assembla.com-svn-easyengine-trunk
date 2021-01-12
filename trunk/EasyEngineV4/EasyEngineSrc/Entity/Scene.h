@@ -71,7 +71,7 @@ public:
 	void					Load( string sFileName );
 	void					Export( string sFileName );
 	void					Clear();
-	float					GetHeight( float x, float z );
+	float					GetGroundHeight( float x, float z );
 	void					SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false );
 	IGrid*					GetCollisionGrid();
 	void					CreateCollisionMap();

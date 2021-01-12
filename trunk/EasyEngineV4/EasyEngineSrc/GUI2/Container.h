@@ -1,13 +1,3 @@
-#ifndef CONTAINER_CPP
-#ifndef GUIMANAGER_CPP
-#ifndef GUIWIDGET_CPP
-#ifndef GUIWINDOW_CPP
-#error
-#endif
-#endif
-#endif
-#endif
-
 #ifndef CONTAINER_H
 #define CONTAINER_H
 

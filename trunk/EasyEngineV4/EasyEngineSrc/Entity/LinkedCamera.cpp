@@ -49,6 +49,15 @@ void CLinkedCamera::Link(CNode* pNode)
 }
 
 void CLinkedCamera::Update() 
-{ 
-	CNode::Update(); 
+{
+	if (!m_bFreeze)
+	{
+		float lastHeight = m_oWorldMatrix.m_13;
+		CNode::Update();
+		float nextHeight = m_oWorldMatrix.m_13;
+		float ascendSpeed = nextHeight - lastHeight;
+		float maxAscendSpeed = ascendSpeed / 80.f;
+		if (nextHeight - lastHeight > maxAscendSpeed)
+			m_oWorldMatrix.m_13 = lastHeight + maxAscendSpeed;
+	}
 }
