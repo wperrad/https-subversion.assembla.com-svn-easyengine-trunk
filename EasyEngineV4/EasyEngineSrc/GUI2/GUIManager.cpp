@@ -90,9 +90,9 @@ void CGUIManager::InitFontMap()
 	CreateFontBitmap("Arial", dim.GetWidth(), vDataBlue, vCharSize, 255, 0, 0);
 	CreateFontBitmap("Arial", dim.GetWidth(), vDataTurquoise, vCharSize, 255, 255, 0);
 	IShader* pShader = m_oRenderer.GetShader( "gui");
-	ITexture* pFontTextureWhite = m_oRessourceManager.CreateTexture2D(m_oRenderer, pShader, 3, vDataWhite, dim.GetWidth(), dim.GetHeight(), IRenderer::T_RGBA);
-	ITexture* pFontTextureBlue  = m_oRessourceManager.CreateTexture2D(m_oRenderer, pShader, 3, vDataBlue,  dim.GetWidth(), dim.GetHeight(), IRenderer::T_RGBA);
-	ITexture* pFontTextureTurquoise = m_oRessourceManager.CreateTexture2D(m_oRenderer, pShader, 3, vDataTurquoise, dim.GetWidth(), dim.GetHeight(), IRenderer::T_RGBA);
+	ITexture* pFontTextureWhite = m_oRessourceManager.CreateTexture2D(pShader, 3, vDataWhite, dim.GetWidth(), dim.GetHeight(), IRenderer::T_RGBA);
+	ITexture* pFontTextureBlue  = m_oRessourceManager.CreateTexture2D(pShader, 3, vDataBlue,  dim.GetWidth(), dim.GetHeight(), IRenderer::T_RGBA);
+	ITexture* pFontTextureTurquoise = m_oRessourceManager.CreateTexture2D(pShader, 3, vDataTurquoise, dim.GetWidth(), dim.GetHeight(), IRenderer::T_RGBA);
 	
 	CRectangle char0( 0, 12 * (float)rect.m_oDim.GetHeight() / 16.f, vCharSize[ 48 ].m_x, vCharSize[  48 ].m_y );
 
@@ -253,9 +253,9 @@ CGUIWidget* CGUIManager::CreateFontImageFromTexture(ITexture* pTexture, const CR
 
 	ILoader::CAnimatableMeshData oData;
 	oData.m_vMeshes.push_back(mi);
-	m_pFontMaterial = m_oRessourceManager.CreateMaterial(mi.m_oMaterialInfos, m_oRenderer, pTexture);
+	m_pFontMaterial = m_oRessourceManager.CreateMaterial(mi.m_oMaterialInfos, pTexture);
 
-	IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh(oData, m_oRenderer, m_pFontMaterial);
+	IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh(oData, m_pFontMaterial);
 	IMesh* pRect = pARect->GetMesh(0);
 
 	m_oLastWidgetInfosCreated = mi;
@@ -272,21 +272,21 @@ IMesh* CGUIManager::CreateImageFromTexture(ITexture* pTexture, const CRectangle&
 
 	ILoader::CAnimatableMeshData oData;
 	oData.m_vMeshes.push_back(mi);
-	IRessource* pMaterial = m_oRessourceManager.CreateMaterial(mi.m_oMaterialInfos, m_oRenderer, pTexture);
-	IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh(oData, m_oRenderer, pMaterial);
+	IRessource* pMaterial = m_oRessourceManager.CreateMaterial(mi.m_oMaterialInfos, pTexture);
+	IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh(oData, pMaterial);
 	IMesh* pRect = pARect->GetMesh(0);
 	return pRect;
 }
 
 CGUIWidget* CGUIManager::CreateFontImageFromFile( const string& sTextureName, const CRectangle& skin )
 {
-	ITexture* pTexture = static_cast< ITexture* > (  m_oRessourceManager.GetRessource( sTextureName, m_oRenderer ) );
+	ITexture* pTexture = static_cast< ITexture* > (  m_oRessourceManager.GetRessource(sTextureName) );
 	return CreateFontImageFromTexture( pTexture, skin );
 }
 
 IMesh* CGUIManager::CreateImageFromFile(const string& sTextureName, const CRectangle& skin, const CDimension& oImageSize) const
 {
-	ITexture* pTexture = static_cast< ITexture* > (m_oRessourceManager.GetRessource(sTextureName, m_oRenderer));
+	ITexture* pTexture = static_cast< ITexture* > (m_oRessourceManager.GetRessource(sTextureName));
 	return CreateImageFromTexture(pTexture, skin, oImageSize);
 }
 
@@ -310,7 +310,7 @@ CGUIWidget* CGUIManager::CreateImageFromSkin( const string& sSkinPath, unsigned 
 {
 	size_t nDotPos = sSkinPath.find( "." );
 	string sImageName = sSkinPath.substr( 0, nDotPos ) + ".tga";
-	ITexture* pTexture = static_cast< ITexture* > ( m_oRessourceManager.GetRessource( sImageName, m_oRenderer ) );
+	ITexture* pTexture = static_cast< ITexture* > ( m_oRessourceManager.GetRessource(sImageName) );
 	pTexture->SetShader( m_oRenderer.GetShader( "gui" ) );
 	int nResWidth, nResHeight;
 	m_oRenderer.GetResolution( nResWidth, nResHeight );
@@ -385,7 +385,7 @@ CGUIWidget* CGUIManager::CreateImageFromSkin( const string& sSkinPath, unsigned 
 
 	ILoader::CAnimatableMeshData oData;
 	oData.m_vMeshes.push_back( mi );
-	IRessource* pMesh = m_oRessourceManager.CreateMesh( oData, m_oRenderer, pMaterial );
+	IRessource* pMesh = m_oRessourceManager.CreateMesh( oData, pMaterial );
 	
 	CGUIWidget* pWidget = new CGUIWidget( nWidth, nHeight );
 	pWidget->SetRect( pMesh );
@@ -683,7 +683,7 @@ int CGUIManager::CreateStaticText( vector< string >& vText, int nPosX, int nPosY
 	if( mi.m_vVertex.size() > 0 )
 	{
 		ami.m_vMeshes.push_back( mi );
-		IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh( ami, m_oRenderer, m_pFontMaterial );
+		IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh( ami, m_pFontMaterial );
 		int nID = m_mStaticText.size();
 		m_mStaticText[ nID ] = pARect;
 		return nID;

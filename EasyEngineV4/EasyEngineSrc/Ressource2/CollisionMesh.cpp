@@ -45,7 +45,7 @@ int CCollisionMesh::GetGeometryCount() const
 	return (int)m_oCollisionModelInfos.m_vPrimitives.size();
 }
 
-IShader* CCollisionMesh::GetCurrentShader() const
+IShader* CCollisionMesh::GetShader() const
 {
 	return NULL;
 }

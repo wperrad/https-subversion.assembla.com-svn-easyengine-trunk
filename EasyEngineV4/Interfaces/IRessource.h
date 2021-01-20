@@ -64,7 +64,7 @@ public:
 		sFileName = m_sFileName; 
 	}
 	virtual void		SetFileName( string sFileName ){ m_sFileName = sFileName; }
-	virtual IShader*	GetCurrentShader() const = 0;
+	virtual IShader*	GetShader() const = 0;
 	virtual void		GetName( string& sName ){ sName = m_sName; }
 	virtual void		SetName( string sName ){ m_sName = sName; }
 };
@@ -73,7 +73,8 @@ class ITexture : public IRessource
 {
 public:
 	ITexture( const IRessource::Desc& oDesc ) : IRessource( oDesc ){}
-	virtual void		GetDimension( int& nWidth, int& nHeight ) = 0;
+	virtual void			GetDimension( int& nWidth, int& nHeight ) = 0;
+	virtual unsigned int	GetFrameBufferObjectId() = 0;
 };
 
 
@@ -126,6 +127,7 @@ public:
 	virtual void			SetCurrentAnimationBoundingBox( string AnimationName ) = 0;
 	virtual CVector&		GetOrgMaxPosition() = 0;
 	virtual void			Colorize(float r, float g, float b, float a) = 0;
+	virtual void			SetTexture(ITexture* pTexture) = 0;	
 };
 
 class IAnimatableMesh : public IRessource
@@ -160,20 +162,22 @@ public:
 		IFileSystem&		m_oFileSystem;
 		ILoaderManager&		m_oLoaderManager;
 		ISystemsManager&	m_oSystemManager;
+		IRenderer&			m_oRenderer;
 		Desc( IRenderer& oRenderer, IFileSystem& oFileSystem, ILoaderManager& oLoaderManager, ISystemsManager&	oSystemManager ):
 			CPlugin::Desc( NULL, "" ),
 			m_oFileSystem( oFileSystem ),
 			m_oLoaderManager( oLoaderManager ),
-			m_oSystemManager( oSystemManager) {}
+			m_oSystemManager( oSystemManager),
+			m_oRenderer(oRenderer) {}
 	};
 
-	virtual IRessource*			GetRessource( const std::string& sRessourceFileName, IRenderer& oRenderer, bool bDuplicate = false ) = 0;
-	virtual IRessource*			CreateMaterial( ILoader::CMaterialInfos& mi, IRenderer& oRenderer, ITexture* pAlternative = NULL ) = 0;
-	virtual IAnimatableMesh*	CreateMesh( ILoader::CAnimatableMeshData& mi, IRenderer& oRenderer, IRessource* pMaterial ) = 0;
+	virtual IRessource*			GetRessource( const std::string& sRessourceFileName, bool bDuplicate = false ) = 0;
+	virtual IRessource*			CreateMaterial( ILoader::CMaterialInfos& mi, ITexture* pAlternative = NULL ) = 0;
+	virtual IAnimatableMesh*	CreateMesh( ILoader::CAnimatableMeshData& mi, IRessource* pMaterial ) = 0;
 	virtual int					GetLightCount() = 0;
 	virtual void				SetDrawTool( IDrawTool* pDrawTool ) = 0;
-	virtual ITexture*			CreateTexture2D( IRenderer& oRenderer, IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat ) = 0;
-	virtual IRessource*			CreateLight( CVector Color, IRessource::TLight type, float fIntensity, IRenderer& oRenderer ) = 0;
+	virtual ITexture*			CreateTexture2D(IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat ) = 0;
+	virtual IRessource*			CreateLight( CVector Color, IRessource::TLight type, float fIntensity) = 0;
 	virtual void				SetLightIntensity( IRessource* pLight, float fIntensity ) = 0;
 	virtual float				GetLightIntensity( IRessource* pRessource ) = 0;
 	virtual CVector				GetLightColor( IRessource* pRessource ) = 0;
@@ -183,6 +187,7 @@ public:
 	virtual bool				IsCatchingExceptionEnabled() = 0;
 	virtual void				PopErrorMessage( string& sMessage ) = 0;
 	virtual void				DestroyAllRessources() = 0;
+	virtual ITexture*			CreateRenderTexture(int width, int height, string sShaderName) = 0;
 };
 
 #endif // IRESSOURCE_H

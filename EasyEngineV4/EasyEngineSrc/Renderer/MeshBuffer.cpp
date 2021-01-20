@@ -18,6 +18,11 @@ CGeometryBuffer::~CGeometryBuffer(void)
 {
 }
 
+unsigned int CGeometryBuffer::GetVertexCount() const
+{
+	return m_nVertexCount;
+}
+
 unsigned int CGeometryBuffer::GetIndexCount() const
 {
 	return m_nIndexCount;
@@ -31,6 +36,11 @@ unsigned int CGeometryBuffer::GetID() const
 unsigned int CGeometryBuffer::GetUVIndexCount() const
 {
 	return m_nUVIndexCount;
+}
+
+void CGeometryBuffer::SetVertexCount(int nVertexCount)
+{
+	m_nVertexCount = nVertexCount;
 }
 
 CIndexedGeometryBuffer::CIndexedGeometryBuffer() :

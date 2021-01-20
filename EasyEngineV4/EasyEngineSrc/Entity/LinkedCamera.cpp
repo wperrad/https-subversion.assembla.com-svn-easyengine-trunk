@@ -2,8 +2,8 @@
 #include "MobileEntity.h"
 #include "ISystems.h"
 
-CLinkedCamera::CLinkedCamera( float fFov ):
-CCamera( fFov )
+CLinkedCamera::CLinkedCamera( float fFov, IRenderer& oRenderer):
+CCamera(fFov, oRenderer)
 {
 	m_sEntityName = "Linked camera";
 }

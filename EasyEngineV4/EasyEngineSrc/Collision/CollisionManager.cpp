@@ -98,7 +98,7 @@ void CCollisionManager::RenderCollisionGeometry(IShader* pCollisionShader, const
 
 void CCollisionManager::OnRenderCollisionMap()
 {
-	IShader* pOrgShader = m_pGround->GetCurrentShader();
+	IShader* pOrgShader = m_pGround->GetShader();
 	IShader* pCollisionShader = m_oRenderer.GetShader("collision");
 	pCollisionShader->Enable(true);
 	m_pGround->SetShader(pCollisionShader);
@@ -142,23 +142,23 @@ void CCollisionManager::OnRenderCollisionMap()
 	m_oRenderer.SetProjectionMatrix(oBakProj);
 }
 
-void CCollisionManager::ComputeGroundMapDimensions(IMesh* pMesh)
+void CCollisionManager::ComputeGroundMapDimensions(IMesh* pMesh, float& width, float& height, float& groundToScreenScaleFactor)
 {
 	IBox* pBox = pMesh->GetBBox();
 	if (pBox->GetDimension().m_x <= pBox->GetDimension().m_z * m_fScreenRatio)
 	{
-		m_fGroundMapWidth = (pBox->GetDimension().m_x * (float)m_nScreenHeight) / pBox->GetDimension().m_z;
-		m_fGroundMapHeight = (float)m_nScreenHeight;
-		m_fWorldToScreenScaleFactor = pBox->GetDimension().m_z / 2.f;
+		width = (pBox->GetDimension().m_x * (float)m_nScreenHeight) / pBox->GetDimension().m_z;
+		height = (float)m_nScreenHeight;
+		groundToScreenScaleFactor = pBox->GetDimension().m_z / 2.f;
 	}
 	else
 	{
-		m_fGroundMapWidth = (float)m_nScreenWidth;
-		m_fGroundMapHeight = pBox->GetDimension().m_z * (float)m_nScreenWidth / pBox->GetDimension().m_x;
-		m_fWorldToScreenScaleFactor = pBox->GetDimension().m_x / 2.f;
+		width = (float)m_nScreenWidth;
+		height = pBox->GetDimension().m_z * (float)m_nScreenWidth / pBox->GetDimension().m_x;
+		groundToScreenScaleFactor = pBox->GetDimension().m_x / 2.f;
 	}
-	m_fGroundMapWidth = ((int)m_fGroundMapWidth / 4) * 4;
-	m_fGroundMapHeight = ((int)m_fGroundMapHeight / 4) * 4;
+	width = ((int)width / 4) * 4;
+	height = ((int)height / 4) * 4;
 }
 
 void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IEntity*> collides, IEntity* pScene, IRenderer::TPixelFormat format)
@@ -171,7 +171,7 @@ void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IE
 		throw e;
 	}
 	
-	IShader* pOrgShader = m_pGround->GetCurrentShader();
+	IShader* pOrgShader = m_pGround->GetShader();
 	IShader* pCollisionShader = m_oRenderer.GetShader("collision");
 	pCollisionShader->Enable(true);
 	m_pGround->SetShader(pCollisionShader);
@@ -180,7 +180,7 @@ void CCollisionManager::CreateCollisionMap(ILoader::CTextureInfos& ti, vector<IE
 	oProj.m_00 = 1.f / m_fScreenRatio;
 	const IBox* pBox = m_pGround->GetBBox();
 
-	ComputeGroundMapDimensions(m_pGround);
+	ComputeGroundMapDimensions(m_pGround, m_fGroundMapWidth, m_fGroundMapHeight, m_fWorldToScreenScaleFactor);
 	int subdivisionCount = 30;
 
 	int cellMapSize = m_fGroundMapWidth / subdivisionCount;
@@ -245,7 +245,7 @@ void CCollisionManager::LoadCollisionMap(string sFileName, IEntity* pScene)
 		IBox* pBox = m_pGround->GetBBox();
 		m_fGroundWidth = pBox->GetDimension().m_x;
 		m_fGroundHeight = pBox->GetDimension().m_z;
-		ComputeGroundMapDimensions(m_pGround);
+		ComputeGroundMapDimensions(m_pGround, m_fGroundMapWidth, m_fGroundMapHeight, m_fWorldToScreenScaleFactor);
 	}
 }
 
@@ -258,7 +258,7 @@ void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos&
 {
 	if (!m_pGround)
 		m_pGround = pGround;
- 	IShader* pOrgShader = pGround->GetCurrentShader();
+ 	IShader* pOrgShader = pGround->GetShader();
 	IShader* pHMShader = m_oRenderer.GetShader("hm");
 	pHMShader->Enable(true);
 	pGround->SetShader(pHMShader);
@@ -273,7 +273,7 @@ void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos&
 	if (maxLenght < pBox->GetDimension().m_z)
 		maxLenght = pBox->GetDimension().m_z;
 	
-	ComputeGroundMapDimensions(pGround);
+	ComputeGroundMapDimensions(pGround, m_fGroundMapWidth, m_fGroundMapHeight, m_fWorldToScreenScaleFactor);
 	float fOriginMapX = ((float)nWidth - m_fGroundMapWidth) / 2.f;
 	float fOriginMapY = ((float)nHeight - m_fGroundMapHeight) / 2.f;
 
@@ -305,7 +305,7 @@ void CCollisionManager::GetOriginalShaders(const vector<IEntity*>& staticObjects
 	for (vector<IEntity*>::const_iterator it = staticObjects.begin(); it != staticObjects.end(); it++) {
 		IMesh* pMesh = dynamic_cast<IMesh*>((*it)->GetRessource());
 		if (pMesh)
-			vBackupStaticObjectShader.push_back(pMesh->GetCurrentShader());
+			vBackupStaticObjectShader.push_back(pMesh->GetShader());
 	}
 }
 
@@ -328,7 +328,7 @@ void CCollisionManager::OnRenderHeightMap( IRenderer* pRenderer )
 {
 	pRenderer->SetBackgroundColor( 0, 0, 255 );
 
-	IShader* pOrgShader = s_pMesh->GetCurrentShader();
+	IShader* pOrgShader = s_pMesh->GetShader();
 	IShader* pHMShader = pRenderer->GetShader( "hm" );
 	pHMShader->Enable( true );
 	s_pMesh->SetShader( pHMShader );

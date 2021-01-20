@@ -52,8 +52,9 @@ public:
 	void						Update();
 	void						GetMaterialMatrix( CMatrix& );
 	void						SetShader( IShader* pShader );
-	IShader*					GetCurrentShader() const { return m_pShader; }
+	IShader*					GetShader() const { return m_pShader; }
 	void						SetAdditionalColor(float r, float g, float b, float a);
+	void						SetTexture(ITexture* pTexture);
 };
 
 

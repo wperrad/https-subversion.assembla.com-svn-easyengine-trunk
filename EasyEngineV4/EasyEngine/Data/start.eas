@@ -60,7 +60,13 @@ SetEntityWeight(socle, 10);
 SetEntityName(socle, "socle");
 
 
+map = CreateMapEntity("map-quad");
+SetEntityPos(map, -3000, 480, -3000);
 
 
+cube = CreateTestEntity("cubeTex");
+SetEntityPos(cube, 0, 1000, 1000);
+SetEntityWeight(cube, 1);
 
-//GenerateRandomNPC("testExport15", "2", 100, 20);
+
+GenerateRandomNPC("testExport15", "2", 100, 20);

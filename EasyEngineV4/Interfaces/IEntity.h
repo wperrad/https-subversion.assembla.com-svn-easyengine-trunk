@@ -105,6 +105,12 @@ public:
 	virtual void				Colorize(float r, float g, float b, float a) = 0;
 };
 
+class IScene
+{
+public:
+	//virtual void				WriteMap(IRenderer::TPixelFormat format) = 0;
+};
+
 class IFighterEntityInterface
 {
 public:
@@ -139,15 +145,17 @@ public:
 		ICollisionManager&		m_oCollisionManager;
 		IGeometryManager&		m_oGeometryManager;
 		IPathFinder&			m_oPathFinder;
+		ICameraManager&			m_oCameraManager;
 		Desc( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IFileSystem& oFileSystem, ICollisionManager& oCollisionManager, 
-			IGeometryManager& oGeometryManager, IPathFinder& oPathFinder ) : 
+			IGeometryManager& oGeometryManager, IPathFinder& oPathFinder, ICameraManager&	oCameraManager) :
 			CPlugin::Desc( NULL, "" ),
 			m_oRessourceManager( oRessourceManager ),
 			m_oRenderer(oRenderer),
 			m_oFileSystem( oFileSystem ),
 			m_oCollisionManager( oCollisionManager ),
 			m_oGeometryManager( oGeometryManager ),
-			m_oPathFinder(oPathFinder){}
+			m_oPathFinder(oPathFinder),
+			m_oCameraManager(oCameraManager){}
 	};
 	IEntityManager( const Desc& oDesc ) : CPlugin( NULL, "" ){}
 	virtual IEntity*			CreateEntity( std::string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate = false ) = 0;
@@ -156,6 +164,8 @@ public:
 	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem ) = 0;
 	virtual IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem ) = 0;
+	virtual IEntity*			CreateMapEntity(string sFileName, IFileSystem* pFileSystem) = 0;
+	virtual IEntity*			CreateTestEntity(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual IEntity*			GetEntity( int nEntityID ) = 0;
 	virtual IEntity*			GetEntity( string sEntityName ) = 0;
 	virtual int					GetEntityID( IEntity* pEntity ) = 0;

@@ -37,7 +37,8 @@ m_oLoaderManager( oDesc.m_oLoaderManager ),
 m_pCurrentRenderer( NULL ),
 m_pDrawTool( NULL ),
 m_bCatchException( true ),
-m_oSystemManager( oDesc.m_oSystemManager )
+m_oSystemManager( oDesc.m_oSystemManager ),
+m_oRenderer(oDesc.m_oRenderer)
 {
 	m_mRessourceCreation[ "ase" ] = CreateMesh;
 	m_mRessourceCreation[ "ame" ] = CreateMesh;
@@ -67,9 +68,9 @@ void CRessourceManager::EnableCatchingException( bool bEnable )
 	m_bCatchException = bEnable;
 }
 
-ITexture* CRessourceManager::CreateTexture2D( IRenderer& oRenderer, IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat )
+ITexture* CRessourceManager::CreateTexture2D( IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat )
 {
-	CTexture2D::CDesc oDesc( oRenderer, pShader, nUnitTexture );
+	CTexture2D::CDesc oDesc(m_oRenderer, pShader, nUnitTexture );
 	oDesc.m_vTexels.insert( oDesc.m_vTexels.begin(), vData.begin(), vData.end() );
 	oDesc.m_nWidth = nWidth;
 	oDesc.m_nHeight = nHeight;
@@ -82,7 +83,7 @@ ITexture* CRessourceManager::CreateTexture2D( IRenderer& oRenderer, IShader* pSh
 //-------------------------------------------------------------------------------------------
 //										_GetRessource
 //-------------------------------------------------------------------------------------------
-IRessource* CRessourceManager::GetRessource( const string& sRessourceFileName, IRenderer& oRenderer, bool bDuplicate ) 
+IRessource* CRessourceManager::GetRessource( const string& sRessourceFileName, bool bDuplicate ) 
 {	
 	IRessource* pRessource = NULL;
 	if ( m_mRessource.count( sRessourceFileName ) > 0 && !bDuplicate )
@@ -92,7 +93,7 @@ IRessource* CRessourceManager::GetRessource( const string& sRessourceFileName, I
 	}
 	else
 	{
-		pRessource = GetRessourceByExtension( sRessourceFileName, oRenderer );
+		pRessource = GetRessourceByExtension(sRessourceFileName);
 		if ( pRessource )
 		{
 			m_mRessource[ sRessourceFileName ] = pRessource;
@@ -102,7 +103,7 @@ IRessource* CRessourceManager::GetRessource( const string& sRessourceFileName, I
 	return pRessource;
 }
 
-ITestMesh* CRessourceManager::GetTestRessource( const std::string& sRessourceFileName, ITestShaderManager& oTestShaderManager, IRenderer& oRenderer )
+ITestMesh* CRessourceManager::GetTestRessource( const std::string& sRessourceFileName, ITestShaderManager& oTestShaderManager)
 {
 	string sExtension;
 	CStringUtils::GetExtension( sRessourceFileName, sExtension );
@@ -113,17 +114,17 @@ ITestMesh* CRessourceManager::GetTestRessource( const std::string& sRessourceFil
 		exception e( sMessage.c_str() );
 		throw e;
 	}
-	ITestMesh* pRessource = itRessourceCreation->second( sRessourceFileName, this, oTestShaderManager, oRenderer );
+	ITestMesh* pRessource = itRessourceCreation->second( sRessourceFileName, this, oTestShaderManager, m_oRenderer );
 	return pRessource;
 }
 
-IRessource*	CRessourceManager::CreateMaterial( ILoader::CMaterialInfos& mi, IRenderer& oRenderer, ITexture* pAlternative )
+IRessource*	CRessourceManager::CreateMaterial( ILoader::CMaterialInfos& mi, ITexture* pAlternative )
 {
-	IShader* pShader = oRenderer.GetShader( mi.m_sShaderName );
-	CMaterial::Desc oDesc( oRenderer, pShader );
+	IShader* pShader = m_oRenderer.GetShader( mi.m_sShaderName );
+	CMaterial::Desc oDesc(m_oRenderer, pShader );
 	oDesc.m_fShininess = mi.m_fShininess;
 	if( !pAlternative )
-		oDesc.m_pTexture = static_cast< ITexture* >( GetRessource( mi.m_sDiffuseMapName, oRenderer ) );
+		oDesc.m_pTexture = static_cast< ITexture* >( GetRessource(mi.m_sDiffuseMapName) );
 	else
 		oDesc.m_pTexture = pAlternative;
 	oDesc.m_sName = mi.m_sFileName;
@@ -134,7 +135,7 @@ IRessource*	CRessourceManager::CreateMaterial( ILoader::CMaterialInfos& mi, IRen
 	return new CMaterial( oDesc );
 }
 
-IRessource* CRessourceManager::GetRessourceByExtension( string sRessourceFileName, IRenderer& oRenderer )
+IRessource* CRessourceManager::GetRessourceByExtension( string sRessourceFileName)
 {
 	string sExtension;
 	CStringUtils::GetExtension( sRessourceFileName, sExtension );
@@ -145,7 +146,7 @@ IRessource* CRessourceManager::GetRessourceByExtension( string sRessourceFileNam
 		CExtensionNotFoundException e( sMessage.c_str() );
 		throw e;
 	}
-	IRessource* pRessource = itRessourceCreation->second( sRessourceFileName, this, oRenderer );
+	IRessource* pRessource = itRessourceCreation->second( sRessourceFileName, this, m_oRenderer );
 	return pRessource;
 }
 
@@ -154,17 +155,17 @@ int CRessourceManager::GetLightCount()
 	return m_nLightCount;
 }
 
-IRessource* CRessourceManager::CreateMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer )
+IRessource* CRessourceManager::CreateMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer)
 {
 	ILoader::CAnimatableMeshData oData;
 	oData.m_sFileName = sFileName;
 	pRessourceManager->m_oLoaderManager.Load( sFileName, oData );
-	return pRessourceManager->CreateMesh( oData, oRenderer );
+	return pRessourceManager->CreateMesh(oData);
 }
 
-IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oData, IRenderer& oRenderer, IRessource* pMaterial )
+IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oData, IRessource* pMaterial )
 {
-	IRessource::Desc oResDesc( oRenderer, NULL );
+	IRessource::Desc oResDesc( m_oRenderer, NULL );
 	CAnimatableMesh* pAMesh = new CAnimatableMesh( oResDesc );
 	IBone* pSkeleton = LoadSkeleton( oData );
 	pAMesh->SetSkeleton( pSkeleton );
@@ -184,14 +185,14 @@ IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oD
 		IShader* pShader = NULL;	
 		string sShaderName;
 
-		CMesh::Desc oDesc( mi.m_vVertex, mi.m_vIndex, vFinalUVVertexArray, vFinalUVIndexArray, mi.m_vNormalVertex, oRenderer, pShader );
+		CMesh::Desc oDesc( mi.m_vVertex, mi.m_vIndex, vFinalUVVertexArray, vFinalUVIndexArray, mi.m_vNormalVertex, m_oRenderer, pShader );
 		oDesc.m_vNormalFaceArray.swap( mi.m_vNormalFace );
 		oDesc.m_vNormalVertexArray.swap( mi.m_vNormalVertex );
 		oDesc.m_pBbox = mi.m_pBoundingBox;
 
 		if ( mi.m_vWeightVertex.size() > 0 )
 		{
-			pShader = oRenderer.GetShader( "skinning" );
+			pShader = m_oRenderer.GetShader( "skinning" );
 			oDesc.m_vVertexWeight.resize( mi.m_vWeightVertex.size() );
 			memcpy( &oDesc.m_vVertexWeight[ 0 ], &mi.m_vWeightVertex[ 0 ], mi.m_vWeightVertex.size() * sizeof( float ) );
 			oDesc.m_vWeightedVertexID.resize( mi.m_vWeigtedVertexID.size() );
@@ -201,15 +202,17 @@ IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oD
 
 		if( !pShader )
 		{
-			pShader = oRenderer.GetShader( mi.m_sShaderName );
+			pShader = m_oRenderer.GetShader( mi.m_sShaderName );
 			if( !pShader )
-				pShader = oRenderer.GetShader( "perpixellighting" );
+				pShader = m_oRenderer.GetShader( "perpixellighting" );
 		}
 		
 		if ( !pMaterial )
-			CollectMaterials( mi.m_oMaterialInfos, oRenderer, pShader, this, oDesc.m_mMaterials );
+			CollectMaterials( mi.m_oMaterialInfos, m_oRenderer, pShader, this, oDesc.m_mMaterials );
 		else
 			oDesc.m_mMaterials[ 0 ] = static_cast< CMaterial* >( pMaterial );
+		if (pMaterial && !static_cast< CMaterial* >(pMaterial)->GetShader())
+			pMaterial->SetShader(pShader);
 		if( oData.m_bMultiMaterialActivated )
 			oDesc.m_vFaceMaterialID.swap( mi.m_vFaceMaterialID );
 
@@ -312,6 +315,27 @@ void CRessourceManager::DestroyAllRessources()
 	m_mRessource.clear();
 }
 
+ITexture* CRessourceManager::CreateRenderTexture(int width, int height, string sShaderName)
+{
+	unsigned int nTextureId, nFBOId;
+	m_oRenderer.CreateFrameBufferObject(width, height, nFBOId, nTextureId);
+
+	IShader* pShader = m_oRenderer.GetShader(sShaderName);
+	CTexture2D* pTexture = NULL;	
+	CTexture2D::CDesc desc(m_oRenderer, pShader, 0);
+	desc.m_nWidth = width;
+	desc.m_nHeight = height;
+	desc.m_eFormat = IRenderer::T_RGB;
+	desc.m_sName = "Map render texture";
+	desc.m_nUnitTexture = 3;
+	desc.m_bGenerateMipmaps = false;
+	desc.m_bRenderTexture = true;
+	desc.m_nTextureId = nTextureId;
+	desc.m_nFrameBufferObjectId = nFBOId;
+	pTexture = new CTexture2D(desc);
+	return pTexture;
+}
+
 void CRessourceManager::CollectMaterials( const ILoader::CMaterialInfos& oMaterialInfos, IRenderer& oRenderer, IShader* pShader, IRessourceManager* pRessourceManager, std::map< int, CMaterial* >& mMaterials )
 {
 	mMaterials[ oMaterialInfos.m_nID ] = CreateMaterial( &oMaterialInfos, oRenderer, pShader, pRessourceManager );
@@ -340,7 +364,7 @@ CMaterial* CRessourceManager::CreateMaterial( const ILoader::CMaterialInfos* pMa
 
 		if ( pMaterialInfos->m_sDiffuseMapName != "NONE" )
 		{
-			ITexture* pTexture = static_cast< ITexture* > ( pRessourceManager->GetRessource( pMaterialInfos->m_sDiffuseMapName, oRenderer ) );
+			ITexture* pTexture = static_cast< ITexture* > ( pRessourceManager->GetRessource( pMaterialInfos->m_sDiffuseMapName) );
 			if ( !pTexture )
 			{
 				string sMessage = string( "Texture " ) + pMaterialInfos->m_sDiffuseMapName + " not found";
@@ -422,9 +446,9 @@ IRessource* CRessourceManager::CreateTexture( string sFileName, CRessourceManage
 	return static_cast< ITexture* > ( pTexture );
 }
 
-IRessource* CRessourceManager::CreateLight( CVector Color, IRessource::TLight type, float fIntensity, IRenderer& oRenderer )
+IRessource* CRessourceManager::CreateLight( CVector Color, IRessource::TLight type, float fIntensity)
 {
-	CLight::Desc oDesc( oRenderer, NULL );
+	CLight::Desc oDesc( m_oRenderer, NULL );
 	oDesc.Color = Color;
 	oDesc.fIntensity = fIntensity;
 	oDesc.type = type;

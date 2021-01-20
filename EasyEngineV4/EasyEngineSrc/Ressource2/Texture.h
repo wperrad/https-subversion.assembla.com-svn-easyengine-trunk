@@ -21,18 +21,21 @@ protected:
 	int							m_nID;
 	int							m_nUnitTexture;
 	IShader*					m_pShader;
+	int							m_nFrameBufferObjectId;
 
 public:
 	struct CDesc : public IRessource::Desc
 	{
 		float*						m_pData;
 		int							m_nUnitTexture;
-		IRenderer::TPixelFormat	m_eFormat;
+		IRenderer::TPixelFormat		m_eFormat;
+		int							m_nFrameBufferObjectId;
 		CDesc( IRenderer& oRenderer, IShader* pShader, int nUnitTexture );
 	};
 						CTextureBase( const CDesc& oDesc );
 	virtual void		Update() = 0;
 	void				SetShader( IShader* pShader );
+	unsigned int		GetFrameBufferObjectId();
 };
 
 class CTexture1D : public CTextureBase
@@ -49,7 +52,7 @@ public:
 				CTexture1D( CDesc& oDesc );
 	void		GetDimension( int& nWidth, int& nHeight );
 	void		Update();
-	IShader*	GetCurrentShader() const;
+	IShader*	GetShader() const;
 };
 
 
@@ -59,7 +62,6 @@ class CTexture2D : public CTextureBase
 	int							m_nWidth;
 	int							m_nHeight;
 	int							m_nReponse;
-	
 
 public:
 
@@ -68,13 +70,16 @@ public:
 		vector< unsigned char >		m_vTexels;
 		int							m_nWidth;
 		int							m_nHeight;
+		bool						m_bGenerateMipmaps;
+		bool						m_bRenderTexture;
+		int							m_nTextureId;
 		CDesc( IRenderer& oRenderer, IShader* pShader, int nUnitTexture );
 	};
 
 								CTexture2D( CDesc& oDesc );
 	void						Update();
 	void						GetDimension( int& nWidth, int& nHeight );
-	IShader*					GetCurrentShader() const;
+	IShader*					GetShader() const;
 };
 
 #endif	//TEXTURE_H

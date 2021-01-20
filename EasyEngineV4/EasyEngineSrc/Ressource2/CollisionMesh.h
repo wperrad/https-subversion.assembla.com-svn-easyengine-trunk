@@ -17,7 +17,7 @@ public:
 	void		Update();
 	void		SetShader(IShader* pShader);
 	bool		IsCollide(IBox* pBox);
-	IShader*	GetCurrentShader() const;
+	IShader*	GetShader() const;
 	IGeometry*	GetGeometry(int index);
 	int			GetGeometryCount() const;
 

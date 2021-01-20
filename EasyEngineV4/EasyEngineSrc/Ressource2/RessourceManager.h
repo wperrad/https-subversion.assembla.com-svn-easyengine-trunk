@@ -45,25 +45,21 @@ class CRessourceManager : public IRessourceManager
 	std::map< std::string, IRessource* >			m_mRessource;
 	ILoaderManager&									m_oLoaderManager;
 	ISystemsManager&								m_oSystemManager;
+	IRenderer&										m_oRenderer;
 
 	vector< string >								m_vErrorMessage;
-	IRessource*										GetRessourceByExtension( std::string sRessourceFileName, IRenderer& oRenderer );	
-	IRessource*										CreateMaterial( ILoader::CMaterialInfos& mi, IRenderer& oRenderer, ITexture* pAlternative = NULL );
-	IAnimatableMesh*								CreateMesh( ILoader::CAnimatableMeshData& oData, IRenderer& oRenderer, IRessource* pMaterial = NULL );
+	IRessource*										GetRessourceByExtension( std::string sRessourceFileName);	
+	IRessource*										CreateMaterial( ILoader::CMaterialInfos& mi, ITexture* pAlternative = NULL );
+	IAnimatableMesh*								CreateMesh( ILoader::CAnimatableMeshData& oData, IRessource* pMaterial = NULL );
 	IBone*											LoadSkeleton( ILoader::CAnimatableMeshData& oData );
 
-	//static void										SetLocalTMByWorldTM( CNode* pNode );
 	static IRessource*								CreateMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
 	static IRessource*								CreateCollisionMesh(string sFileName, CRessourceManager* pRessouceManager, IRenderer& oRenderer);
 	static IRessource*								CreateAnimation( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
-	//static IRessource*								CreateHierarchyMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
 	static IRessource*								CreateTexture( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
 	static IRessource*								CreateLight( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
 	static void										CollectMaterials( const ILoader::CMaterialInfos& oMaterialInfos, IRenderer& oRenderer, IShader* pShader, IRessourceManager* pRessourceManager, std::map< int, CMaterial* >& vMaterials );
 	static CMaterial*								CreateMaterial( const ILoader::CMaterialInfos*, IRenderer& oRenderer, IShader* pShader, IRessourceManager* pRessourceManager );
-
-	static ITestMesh*								CreateTestMesh( const CChunk&, CRessourceManager* , ITestShaderManager&, IRenderer& );
-
 
 	std::map< std::string, TRessourceCreation >		m_mRessourceCreation;
 	std::map< std::string, TTestRessourceCreation >	m_mTestRessourceCreation;
@@ -81,12 +77,12 @@ public:
 	void				EnableCatchingException( bool bEnable );
 	bool				IsCatchingExceptionEnabled();
 	void				SetCurrentRenderer( IRenderer* pRenderer );
-	IRessource*			GetRessource( const std::string& sRessourceFileName, IRenderer& oRenderer, bool bDuplicate = false );
-	ITexture*			CreateTexture2D( IRenderer& oRenderer, IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat );
-	ITestMesh*			GetTestRessource( const std::string& sRessourceFileName, ITestShaderManager&, IRenderer& oRenderer );
+	IRessource*			GetRessource( const std::string& sRessourceFileName, bool bDuplicate = false );
+	ITexture*			CreateTexture2D(IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat );
+	ITestMesh*			GetTestRessource( const std::string& sRessourceFileName, ITestShaderManager&);
 	int					GetLightCount();
 	void				SetDrawTool( IDrawTool* pDrawTool ){ m_pDrawTool = pDrawTool; }
-	IRessource*			CreateLight( CVector Color, IRessource::TLight type, float fIntensity, IRenderer& oRenderer );
+	IRessource*			CreateLight( CVector Color, IRessource::TLight type, float fIntensity);
 	void				SetLightIntensity( IRessource* pLight, float fIntensity );
 	float				GetLightIntensity( IRessource* pRessource );
 	CVector				GetLightColor( IRessource* pRessource );
@@ -94,6 +90,7 @@ public:
 	void				DisableLight( IRessource* pRessource );
 	void				PopErrorMessage( string& sMessage );
 	void				DestroyAllRessources();
+	ITexture*			CreateRenderTexture(int width, int height, string sShaderName);
 };
 
 

@@ -19,7 +19,7 @@ void CAnimatableMesh::SetShader( IShader* pShader )
 {
 }
 
-IShader* CAnimatableMesh::GetCurrentShader() const
+IShader* CAnimatableMesh::GetShader() const
 {
 	return NULL;
 }

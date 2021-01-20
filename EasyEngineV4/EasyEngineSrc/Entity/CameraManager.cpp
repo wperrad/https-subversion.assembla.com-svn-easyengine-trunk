@@ -18,9 +18,6 @@ m_pActiveCamera( NULL )
 
 CCameraManager::~CCameraManager()
 {
-	map< TCameraType, ICamera* >::iterator itCam = m_mCamera.find( T_FREE_CAMERA );
-	if( itCam != m_mCamera.end() )
-		delete itCam->second;
 }
 
 ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityManager& oEntityManager )
@@ -30,17 +27,20 @@ ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityMana
 	switch( type )
 	{
 	case ICameraManager::T_FREE_CAMERA:
-		pCamera = new CFreeCamera( fFov );
+		pCamera = new CFreeCamera( fFov, *m_vRenderer[0]);
 		sCameraName = "FreeCamera";
 		break;
 	case ICameraManager::T_LINKED_CAMERA:
-		pCamera = new CLinkedCamera( fFov );
+		pCamera = new CLinkedCamera( fFov, *m_vRenderer[0]);
 		sCameraName = "LinkedCamera";
+		break;
+	case ICameraManager::T_MAP_CAMERA:
+		pCamera = new CFreeCamera(fFov, *m_vRenderer[0]);
+		sCameraName = "MapCamera";
 		break;
 	}
 	m_mCameraType[ pCamera ] = type;
 	m_mCamera[ type ] = pCamera;
-	//oEntityManager.CreateEntity( sCameraName );
 	oEntityManager.AddEntity( pCamera, sCameraName );
 	return pCamera;
 }
@@ -48,8 +48,10 @@ ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityMana
 void CCameraManager::SetActiveCamera( ICamera* pCamera )
 {
 	m_pActiveCamera = pCamera;
-	for ( unsigned int i= 0; i < m_vRenderer.size(); i++ )
-		m_vRenderer.at( i )->SetFov( pCamera->GetFov() );
+	for (unsigned int i = 0; i < m_vRenderer.size(); i++) {
+		if(pCamera)
+			m_vRenderer.at(i)->SetFov(pCamera->GetFov());
+	}
 }
 
 ICamera* CCameraManager::GetActiveCamera()

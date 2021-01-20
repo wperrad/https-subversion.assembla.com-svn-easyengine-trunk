@@ -19,7 +19,8 @@ CTextureBase::CTextureBase( const CDesc& oDesc ):
 ITexture( oDesc ),
 m_nUnitTexture( oDesc.m_nUnitTexture ),
 m_nID( -1 ),
-m_pShader( oDesc.m_pShader )
+m_pShader( oDesc.m_pShader ),
+m_nFrameBufferObjectId(oDesc.m_nFrameBufferObjectId)
 {
 }
 
@@ -28,6 +29,10 @@ void CTextureBase::SetShader( IShader* pShader )
 	m_pShader = pShader;
 }
 
+unsigned int CTextureBase::GetFrameBufferObjectId()
+{
+	return m_nFrameBufferObjectId;
+}
 
 CTexture1D::CDesc::CDesc( IRenderer& oRenderer, IShader* pShader, int nUnitTexture ) :
 CTextureBase::CDesc( oRenderer, pShader, nUnitTexture ),
@@ -78,7 +83,7 @@ void CTexture1D::Update()
 
 }
 
-IShader* CTexture1D::GetCurrentShader() const
+IShader* CTexture1D::GetShader() const
 {
 	return m_pShader;
 }
@@ -86,7 +91,10 @@ IShader* CTexture1D::GetCurrentShader() const
 CTexture2D::CDesc::CDesc( IRenderer& oRenderer, IShader* pShader, int nUnitTexture ):
 CTextureBase::CDesc( oRenderer, pShader, m_nUnitTexture ),
 m_nWidth( 0 ),
-m_nHeight( 0 )
+m_nHeight( 0 ),
+m_bGenerateMipmaps(true),
+m_bRenderTexture(false),
+m_nTextureId(-1)
 {
 }
 
@@ -94,18 +102,24 @@ CTexture2D::CTexture2D(  CDesc& oDesc ):
 CTextureBase( oDesc ),
 m_nReponse( -1 )
 {
-	if ( oDesc.m_vTexels.size() == 0 )
-	{
-		CRessourceException e( "" );
-		throw e;
-	}
 	m_nWidth = oDesc.m_nWidth;
 	m_nHeight = oDesc.m_nHeight;
-	//m_nID = GetRenderer().CreateTexture2D( oDesc.m_vTexels, m_nWidth, m_nHeight, oDesc.m_eFormat );
-	m_nID = GetRenderer().CreateMipmaps2D(oDesc.m_vTexels, m_nWidth, m_nHeight, oDesc.m_eFormat);
+	if (oDesc.m_nTextureId == -1) {
+		if (oDesc.m_bGenerateMipmaps)
+			m_nID = GetRenderer().CreateMipmaps2D(oDesc.m_vTexels, m_nWidth, m_nHeight, oDesc.m_eFormat);
+		else
+			m_nID = GetRenderer().CreateTexture2D(oDesc.m_vTexels, m_nWidth, m_nHeight, oDesc.m_eFormat);
+	}
+	else
+		m_nID = oDesc.m_nTextureId;
+	if (!oDesc.m_bRenderTexture && (oDesc.m_vTexels.size() == 0))
+	{
+		CRessourceException e("CTexture2D::CTexture2D() : texel array empty");
+		throw e;
+	}
 }
 
-IShader* CTexture2D::GetCurrentShader() const
+IShader* CTexture2D::GetShader() const
 {
 	return m_pShader;
 }

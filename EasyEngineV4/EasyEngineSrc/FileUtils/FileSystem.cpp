@@ -22,9 +22,9 @@ void CFileSystem::Mount( string sDirectory )
 FILE* CFileSystem::OpenFile( const string& sFileName, const string& sMode )
 {
 	FILE* pFile = NULL;
-	if ( m_sRootDirectory.size() >  0 )
+	if (m_sLastDirectory.size() >  0 )
 	{
-		string sCurrentPath = m_sRootDirectory + "\\" + sFileName;
+		string sCurrentPath = m_sLastDirectory + "\\" + sFileName;
 		fopen_s( &pFile, sCurrentPath.c_str(), sMode.c_str() );
 		if ( pFile )
 			return pFile;
@@ -41,7 +41,7 @@ FILE* CFileSystem::OpenFile( const string& sFileName, const string& sMode )
 		i++;
 	}
 	if ( pFile )
-		m_sRootDirectory = m_vDirectory[ i - 1 ];
+		m_sLastDirectory = m_vDirectory[ i - 1 ];
 	return pFile;
 }
 
@@ -81,9 +81,9 @@ HANDLE CFileSystem::FindFirstFile_EE( const string& sMask, WIN32_FIND_DATAA& dat
 	return hFile;
 }
 
-void CFileSystem::GetRootDirectory( std::string& sRootDirectory ) const
+void CFileSystem::GetLastDirectory( std::string& sRootDirectory ) const
 {
-	sRootDirectory = m_sRootDirectory;
+	sRootDirectory = m_sLastDirectory;
 }
 
 extern "C" _declspec(dllexport) IFileSystem* CreateFileSystem( const IFileSystem::Desc& oDesc )

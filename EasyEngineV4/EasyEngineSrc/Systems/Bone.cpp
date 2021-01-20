@@ -113,8 +113,8 @@ void CBone::GetInterpolatedMatrix( float fTime )
 	float t = GetInterpolatedFactor( fTime );
 	if( t >= 0 )
 	{
-		CKey& oLastKey = m_mKeys[ m_sCurrentAnimation ][ m_nLastKeyValue ];
-		CKey& oNextKey = m_mKeys[ m_sCurrentAnimation ][ m_nNextKeyValue ];
+		CKey& oLastKey = m_vCurrentAnimationKeys[m_nLastKeyValue];
+		CKey& oNextKey = m_vCurrentAnimationKeys[m_nNextKeyValue];
 		CMatrix& Ms = oLastKey.m_oLocalTM;
 		CMatrix& Mf = oNextKey.m_oLocalTM;
 
@@ -260,6 +260,7 @@ int CBone::GetKeyCount() const
 void CBone::SetCurrentAnimation( string sAnimation )
 {
 	m_sCurrentAnimation = sAnimation;
+	m_vCurrentAnimationKeys = m_mKeys[m_sCurrentAnimation];
 	Rewind();
 	for( unsigned int i = 0; i < m_vChild.size(); i++ )
 	{

@@ -53,6 +53,20 @@ extern PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 extern PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
+extern PFNGLDRAWARRAYSINSTANCEDEXTPROC glDrawArraysInstanced;
+extern PFNGLDRAWELEMENTSINSTANCEDEXTPROC glDrawElementsInstanced;
+extern PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers;
+extern PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
+extern PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers;
+extern PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer;
+extern PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage;
+extern PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer;
+extern PFNGLFRAMEBUFFERTEXTUREPROC glFramebufferTexture;
+extern PFNGLDRAWBUFFERSPROC glDrawBuffers;
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus;
+extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
+extern PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
+extern PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D;
 
 void InitExtensions();
 

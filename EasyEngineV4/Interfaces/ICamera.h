@@ -13,12 +13,7 @@
 
 
 
-class ICamera : 
-#ifdef ENTITYCAMERA
-	public IEntity
-#else
-	public CNode
-#endif // ENTITYCAMERA
+class ICamera : public IEntity
 {
 
 public:
@@ -29,6 +24,7 @@ public:
 	virtual float	GetFov() = 0;
 	virtual void	Zoom(int value) = 0;
 	virtual void	SetInventoryMode(bool bInventoryMode) = 0;
+	virtual void	DisplayViewCone(bool display) = 0;
 };
 
 #endif // ICAMERA_H

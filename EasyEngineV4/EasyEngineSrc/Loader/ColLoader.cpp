@@ -1,6 +1,6 @@
 #include "ColLoader.h"
 #include "IGeometry.h"
-
+#include "IFileSystem.h"
 
 CColLoader::CColLoader(IGeometryManager& oGeometryManager):
 	m_oGeometryManager(oGeometryManager)
@@ -8,14 +8,21 @@ CColLoader::CColLoader(IGeometryManager& oGeometryManager):
 }
 
 
-void CColLoader::Load(string sFileName, ILoader::IRessourceInfos& ri, IFileSystem&)
+void CColLoader::Load(string sFileName, ILoader::IRessourceInfos& ri, IFileSystem& oFileSystem)
 {
 	ILoader::CCollisionModelInfos* pCmi = dynamic_cast<ILoader::CCollisionModelInfos*>(&ri);
 	if (pCmi) {
 		ILoader::CCollisionModelInfos& cmi = *pCmi;
+		string sFilePath;
+		FILE* pFile = oFileSystem.OpenFile(sFileName, "rb");
+		if (pFile) {
+			fclose(pFile);
+			oFileSystem.GetLastDirectory(sFilePath);
+			sFilePath += "\\" + sFileName;
+		}
 		CBinaryFileStorage fs;
-		if (!fs.OpenFile(sFileName, IFileStorage::eRead)) {
-			CFileNotFoundException e(sFileName);
+		if (!fs.OpenFile(sFilePath, IFileStorage::eRead)) {
+			CFileNotFoundException e(sFilePath);
 			throw e;
 		}
 		int count = 0;

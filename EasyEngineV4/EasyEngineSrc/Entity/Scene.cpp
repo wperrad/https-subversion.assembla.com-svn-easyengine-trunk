@@ -163,15 +163,19 @@ void CScene::Update()
 	if (!m_bHeightMapCreated && counter++ == 20 ){
 		CreateHeightMap();
 	}
-
 	CTimeManager::Instance()->Update();
+	RenderScene();
+}
+
+void  CScene::RenderScene()
+{
 	CMatrix oCamMatrix;
 	m_oCameraManager.GetActiveCamera()->Update();
-	m_oCameraManager.GetActiveCamera()->GetWorldMatrix( oCamMatrix );
-	m_oRenderer.SetCameraMatrix( oCamMatrix );
+	m_oCameraManager.GetActiveCamera()->GetWorldMatrix(oCamMatrix);
+	m_oRenderer.SetCameraMatrix(oCamMatrix);
 	CNode::Update();
-	m_oRenderer.SetModelMatrix( m_oWorldMatrix );
-	if ( m_pRessource )
+	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
+	if (m_pRessource)
 		m_pRessource->Update();
 }
 

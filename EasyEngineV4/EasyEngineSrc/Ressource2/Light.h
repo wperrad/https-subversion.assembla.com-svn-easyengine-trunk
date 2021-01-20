@@ -55,7 +55,7 @@ public:
 	void						SetIntensity( float fIntensity );
 	float						GetIntensity();
 	CVector						GetColor();
-	IShader*					GetCurrentShader() const { return NULL; }
+	IShader*					GetShader() const { return NULL; }
 };
 
 #endif //LIGHT_H

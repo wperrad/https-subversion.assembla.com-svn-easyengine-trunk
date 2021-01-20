@@ -1,0 +1,8 @@
+varying vec2 Texcoord;
+
+uniform sampler2D baseMap;
+
+void main()
+{
+    gl_FragData[0] = texture2D(baseMap, Texcoord);	
+}

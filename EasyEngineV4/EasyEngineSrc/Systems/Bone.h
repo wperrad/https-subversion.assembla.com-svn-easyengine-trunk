@@ -12,6 +12,7 @@ class CBone : public IBone
 	int										m_nLastKeyValue;
 	int										m_nNextKeyValue;
 	map< string, vector< CKey > > 			m_mKeys; // Associe à chaque animation son vecteur de clés correspondant
+	vector<CKey>							m_vCurrentAnimationKeys;
 	string									m_sCurrentAnimation;
 	IBox*									m_pBoundingBox;
 	ISphere*								m_pSphere;

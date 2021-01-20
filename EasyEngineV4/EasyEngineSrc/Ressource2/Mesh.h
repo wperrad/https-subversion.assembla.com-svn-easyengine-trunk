@@ -85,7 +85,6 @@ public:
 						CMesh( const Desc& oDesc );
 	virtual				~CMesh();
 	void				Update();
-	void				DisplayDebugInfos();
 	bool				operator==( const IMesh& w );
 	void				DrawBoundingBox( bool bDraw );
 	void				DrawBoundingSphere( bool bDraw );
@@ -93,15 +92,14 @@ public:
 	void				DrawAnimationBoundingBox( bool bDraw );
 	void				SetShader( IShader* pShader );
 	IBox*				GetBBox();
-	IShader*			GetCurrentShader() const{ return m_pShader; }
+	IShader*			GetShader() const{ return m_pShader; }
 	int					GetParentBoneID()const;
 	void				GetOrgWorldPosition( CVector& v );
 	void				SetRenderingType( IRenderer::TRenderType t );
 	IBox*				GetAnimationBBox( string sAnimation );
 	CVector&			GetOrgMaxPosition();
 	void				Colorize(float r, float g, float b, float a);
-
-	static void SetShaderName( std::string sShaderName );
+	void				SetTexture(ITexture* pTexture);
 };
 
 #endif

@@ -64,7 +64,7 @@ class CCollisionManager : public ICollisionManager
 	void RestoreOriginalShaders(const vector<IShader*>& vBackupStaticObjectShader, vector<IEntity*>& staticObjects);
 	void RenderCollisionGeometry(IShader* pCollisionShader, const CMatrix& groundModel, const IBox* const pBox);
 	bool IsSegmentInsideSegment(float fS1Center, float fS1Radius, float fS2Center, float fS2Radius);
-	void ComputeGroundMapDimensions(IMesh* pMesh);
+	void ComputeGroundMapDimensions(IMesh* pMesh, float& width, float& height, float& groundToScreenScaleFactor);
 
 	// Collision map
 	void MarkBox(int row, int column, float r, float g, float b, IEntityManager* pEntityManager);

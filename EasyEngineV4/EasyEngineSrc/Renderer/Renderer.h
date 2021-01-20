@@ -94,6 +94,7 @@ public:
 	void						ResizeScreen( int nWidth, int nHeight );
 	void						DestroyContext();
 	void						BeginRender();
+	void						ClearColorBuffer(float r, float g, float b, float a);
 	void						EndRender();
 	void						EnableZTest( bool bEnable );
 	
@@ -204,8 +205,9 @@ public:
 	void						DesabonneToRenderEvent( TRenderEventCallback callback );
 	void						SetModelViewMatrix( const CMatrix& mModelView );
 	void						SetProjectionMatrix( const CMatrix& oMatrix );
-	void						GetCameraMatrix(CMatrix& oMatrix) const;
+	void						GetInvCameraMatrix(CMatrix& oMatrix) const;
 	void						SetCameraMatrix( const CMatrix& oMatrix );
+	void						SetInvCameraMatrix(const CMatrix& oMatrix);
 	void						GetModelMatrix(CMatrix& oMatrix);
 	void						SetModelMatrix( const CMatrix& oMatrix );
 
@@ -226,8 +228,8 @@ public:
 	void						CullFace(bool enable);
 	void						EnableDepthTest(bool enable);
 	bool						IsCullingEnabled();
-
-	void						Test(  int nShader  );
+	void						CreateFrameBufferObject(int width, int height, unsigned int& nFBOId, unsigned int& nTextureId);
+	void						SetCurrentFBO(int fbo);
 };
 
 extern "C" _declspec(dllexport) IRenderer* CreateRenderer( const IRenderer::Desc& );
