@@ -12,10 +12,9 @@ void CRepere::Update()
 {
 	CShape::Update();
 	if (!m_bHidden) {
-		CMatrix id, cam, camInv;
-		m_oRenderer.GetCameraMatrix(cam);
-		cam.GetInverse(camInv);
-		m_oRenderer.SetModelViewMatrix(cam);
+		CMatrix camInv;
+		m_oRenderer.GetInvCameraMatrix(camInv);
+		m_oRenderer.SetModelViewMatrix(camInv);
 		m_oRenderer.DrawBase(m_oBase, 1000);
 	}
 }

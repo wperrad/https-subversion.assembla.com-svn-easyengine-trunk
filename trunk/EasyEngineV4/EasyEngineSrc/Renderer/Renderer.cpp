@@ -176,6 +176,12 @@ void CRenderer::BeginRender()
 	}
 }
 
+void CRenderer::ClearColorBuffer(float r, float g, float b, float a)
+{
+	glClearColor(r, g, b, a);
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+
 void CRenderer::DestroyContext()
 {
 	wglMakeCurrent(NULL,NULL);
@@ -279,35 +285,50 @@ IBuffer* CRenderer::CreateGeometry( const vector< float >&	vVertexArray, const v
 									const vector< float >& vNormalFaceArray, const vector< float >& vNormalVertexArray )
 {
 	vector< float > vNewVertexArray;
-	CRenderUtils::CreateNonIndexedVertexArray( vIndexArray, vVertexArray, 3, vNewVertexArray );
+	if (vIndexArray.size() > 0) {
+		CRenderUtils::CreateNonIndexedVertexArray(vIndexArray, vVertexArray, 3, vNewVertexArray);
+	}
+	else {
+		vNewVertexArray.resize(vVertexArray.size());
+		std::copy(vVertexArray.begin(), vVertexArray.end(), vNewVertexArray.begin());
+	}
 	int nVertexBufferSize = ( int ) ( vNewVertexArray.size() * sizeof( float ) );
 
 	vector< float > vNonIndexedNormal;
-	CRenderUtils::CreateNonIndexedVertexArray( vIndexArray, vNormalVertexArray, 3, vNonIndexedNormal );
+	if(vNormalVertexArray.size() > 0)
+		CRenderUtils::CreateNonIndexedVertexArray( vIndexArray, vNormalVertexArray, 3, vNonIndexedNormal );
 
 	vector< float > vNewUVVertexArray;
-	CRenderUtils::CreateNonIndexedVertexArray( vUVIndexArray, vUVVertexArray, 2, vNewUVVertexArray );
+	if(vUVVertexArray.size() > 0)
+		CRenderUtils::CreateNonIndexedVertexArray( vUVIndexArray, vUVVertexArray, 2, vNewUVVertexArray );
 
 	int nUVVertexBufferSize = (int)( vNewUVVertexArray.size() * sizeof( float ) );
 	
-	glEnableClientState ( GL_VERTEX_ARRAY );	
-    glEnableClientState ( GL_NORMAL_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+	glEnableClientState ( GL_VERTEX_ARRAY );
+	if(vNormalVertexArray.size() > 0)
+		glEnableClientState ( GL_NORMAL_ARRAY );
+	if(vUVVertexArray.size() > 0)
+		glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
     unsigned int nVertexBufferID;
 	glGenBuffers( 1, &nVertexBufferID );
 	glBindBuffer( GL_ARRAY_BUFFER_ARB, nVertexBufferID );
 	glBufferData( GL_ARRAY_BUFFER_ARB, nVertexBufferSize*2 + nUVVertexBufferSize , NULL , GL_STATIC_DRAW_ARB );
 	glBufferSubData( GL_ARRAY_BUFFER_ARB, 0, nVertexBufferSize, &vNewVertexArray[ 0 ] );
-	glBufferSubData( GL_ARRAY_BUFFER_ARB, nVertexBufferSize, nVertexBufferSize, &vNonIndexedNormal[ 0 ] );
+	if(vNormalVertexArray.size() > 0)
+		glBufferSubData( GL_ARRAY_BUFFER_ARB, nVertexBufferSize, nVertexBufferSize, &vNonIndexedNormal[ 0 ] );
 	if ( vNewUVVertexArray.size() > 0 )
 		glBufferSubData( GL_ARRAY_BUFFER_ARB, nVertexBufferSize * 2, nUVVertexBufferSize, &vNewUVVertexArray[ 0 ] );
 
 	glDisableClientState ( GL_VERTEX_ARRAY );
-	glDisableClientState ( GL_NORMAL_ARRAY );
-	glDisableClientState ( GL_TEXTURE_COORD_ARRAY );
+	if (vNormalVertexArray.size() > 0)
+		glDisableClientState ( GL_NORMAL_ARRAY );
+	if (vUVVertexArray.size() > 0)
+		glDisableClientState ( GL_TEXTURE_COORD_ARRAY );
 
 	CGeometryBuffer* pBuffer = new CGeometryBuffer( ( unsigned int )vIndexArray.size(), ( unsigned int )vUVIndexArray.size(), nVertexBufferID );
+	if (vIndexArray.size() == 0)
+		pBuffer->SetVertexCount(vVertexArray.size() / 3);
     return pBuffer;
 }
 
@@ -442,14 +463,16 @@ void CRenderer::DrawGeometry( const IBuffer* pBuffer )
   	glEnableClientState(GL_NORMAL_ARRAY);	
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	int nVertexBufferSize = pGeometryBuffer->GetIndexCount() * 3 * sizeof(float);
+	int nVertexBufferSize = pGeometryBuffer->GetIndexCount() > 0 ? pGeometryBuffer->GetIndexCount() * 3 * sizeof(float) : pGeometryBuffer->GetVertexCount() * 3 * sizeof(float);
 	int nNormalVertexBufferSize = pGeometryBuffer->GetIndexCount() * 3 * sizeof(float);
 	//int nTextCoordBufferSize = pGeometryBuffer->GetUVIndexCount() * 2 * sizeof(float);
 
 	glBindBuffer( GL_ARRAY_BUFFER_ARB, pGeometryBuffer->GetID() );
 	glVertexPointer( 3, GL_FLOAT, 0, 0 );
-	glNormalPointer( GL_FLOAT, 0, BUFFER_OFFSET( nVertexBufferSize ) );
-	glTexCoordPointer(2,GL_FLOAT, 0,BUFFER_OFFSET( nVertexBufferSize + nNormalVertexBufferSize ) );
+	if(nNormalVertexBufferSize > 0)
+		glNormalPointer( GL_FLOAT, 0, BUFFER_OFFSET( nVertexBufferSize ) );
+	if(pGeometryBuffer->GetUVIndexCount() > 0)
+		glTexCoordPointer(2,GL_FLOAT, 0,BUFFER_OFFSET( nVertexBufferSize + nNormalVertexBufferSize ) );
 
 	glDrawArrays(GL_TRIANGLES , 0 , pGeometryBuffer->GetIndexCount());
 	
@@ -509,7 +532,7 @@ void CRenderer::SetProjectionMatrix( const CMatrix& oMatrix )
 	glMatrixMode( GL_MODELVIEW );
 }
 
-void CRenderer::GetCameraMatrix(CMatrix& oMatrix) const
+void CRenderer::GetInvCameraMatrix(CMatrix& oMatrix) const
 {
 	oMatrix = m_oCameraMatrixInv;
 }
@@ -518,6 +541,12 @@ void CRenderer::SetCameraMatrix( const CMatrix& oMatrix )
 {
 	if(!m_bCameraLocked)
 		oMatrix.GetInverse( m_oCameraMatrixInv );
+}
+
+void CRenderer::SetInvCameraMatrix(const CMatrix& oMatrix)
+{
+	if (!m_bCameraLocked)
+		m_oCameraMatrixInv = oMatrix;
 }
 
 void CRenderer::GetModelMatrix(CMatrix& oMatrix)
@@ -582,7 +611,7 @@ void CRenderer::FillBuffer( const std::vector< float >& vData, int nBufferID, in
 	glBufferSubData( GL_ARRAY_BUFFER_ARB, nOffset, vData.size() * sizeof(float), &vData[ 0 ] );
 	GLenum error = glGetError();
 	if( error != 0 )
-	throw 1;
+		throw 1;
 	m_nCurrentBufferOffset += static_cast< int >( vData.size() ) * sizeof(float) + nOffset * sizeof(float);
 }
 
@@ -665,8 +694,7 @@ int CRenderer::CreateTexture1D( float* pTexelsArray, int nSize, TPixelFormat for
 		nInternalFormat = 4;
 	GLenum glFormat = m_mPixelFormat[ format ];
 	glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	//glTexImage2D( GL_TEXTURE_2D, 0, nInternalFormat, (GLsizei) nWidth, (GLsizei)nHeight, 0, glFormat, GL_UNSIGNED_BYTE, pTexelsArray );	
+	glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );	
 	glTexImage1D( GL_TEXTURE_1D, 0, nInternalFormat, nSize, 0, glFormat, GL_FLOAT, pTexelsArray );
 	return nTextureID;
 }
@@ -855,7 +883,9 @@ void CRenderer::DrawSphere(double dRadius, unsigned int nSliceCount, unsigned in
 void CRenderer::DrawCylinder(double dBaseRadius, double dTopRadius, double dHeight, 
 							unsigned int nSlicesCount, unsigned int nStacksCount)
 {
-	gluCylinder(m_pQuadricObj,dBaseRadius,dTopRadius,dHeight,nSlicesCount,nStacksCount);
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
+	LoadMatrix(oModelView);
+	gluCylinder(m_pQuadricObj, dBaseRadius, dTopRadius, dHeight, nSlicesCount, nStacksCount);
 }
 
 
@@ -1382,13 +1412,47 @@ extern "C" _declspec(dllexport) IRenderer* CreateRenderer( const IRenderer::Desc
 	return new CRenderer( oDesc );
 }
 
-void CRenderer::Test( int nShader )
+void CRenderer::CreateFrameBufferObject(int width, int height, unsigned int& nFBOId, unsigned int& nTextureId)
 {
-	//int nID = glGetUniformLocation( nShader, "matBones" );
-	//float pArray[ 16 ] = { 0., 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-	//glUniformMatrix4fv( nID, 1, false, pArray );
+	glGenFramebuffers(1, &nFBOId);
+	glBindFramebuffer(GL_FRAMEBUFFER, nFBOId);
+	// The texture we're going to render to
+	glGenTextures(1, &nTextureId);
 
-	int nID = glGetUniformLocation( nShader, "matBones" );
-	float pArray[ 16 ] = { 0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15. };
-	glUniformMatrix4fv( nID, 1, false, pArray );
+
+	// "Bind" the newly created texture : all future texture functions will modify this texture
+	glBindTexture(GL_TEXTURE_2D, nTextureId);
+
+	// Give an empty image to OpenGL ( the last "0" )
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+	// Poor filtering. Needed !
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+#if 0
+	// The depth buffer
+	GLuint depthrenderbuffer;
+	glGenRenderbuffers(1, &depthrenderbuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+#endif // 0
+
+	// Set "renderedTexture" as our colour attachement #0
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, nTextureId, 0);
+	// Set the list of draw buffers.
+	GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+								   // Always check that our framebuffer is ok
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		CEException e("Error during CRenderer::Test()");
+		throw e;
+	}
+}
+
+void CRenderer::SetCurrentFBO(int fbo)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 }

@@ -5,6 +5,7 @@
 
 class CGeometryBuffer : public IBuffer
 {
+	unsigned int	m_nVertexCount;
 	unsigned int	m_nIndexCount;
 	unsigned int	m_nID;
 	unsigned int	m_nUVIndexCount;
@@ -20,10 +21,11 @@ public:
 					CGeometryBuffer();
 					CGeometryBuffer( unsigned int nIndexCount, unsigned int nUVIndexCount, unsigned int nBufferID );
 	virtual			~CGeometryBuffer();
+	unsigned int	GetVertexCount() const;
 	unsigned int	GetIndexCount() const;
 	unsigned int	GetUVIndexCount() const;
-	unsigned int	GetVertexWeightAttributeCount() const;
 	unsigned int	GetID() const;
+	void			SetVertexCount(int nVertexCount);
 };
 
 class CIndexedGeometryBuffer : public IBuffer

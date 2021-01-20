@@ -57,7 +57,7 @@ public:
 	void			Update();
 	bool			GetPause();
 	void			SetShader( IShader* pShader ){}
-	IShader*		GetCurrentShader() const{ return NULL; }
+	IShader*		GetShader() const{ return NULL; }
 	void			SetStartAnimationTime( int nTime );
 	void			SetEndAnimationTime( int nTime );
 	void			NextFrame();

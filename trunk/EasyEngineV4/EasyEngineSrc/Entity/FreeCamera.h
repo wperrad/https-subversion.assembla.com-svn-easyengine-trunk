@@ -3,15 +3,13 @@
 
 #include "Camera.h"
 
+class IRenderer;
+
 class CFreeCamera : public CCamera
 {
-	float	m_fYaw;
-	float	m_fPitch;
-	string	m_sEntityName;
-	float	m_fSpeed;
-
 public:
-	CFreeCamera( float fFov );
+	CFreeCamera(float fFov, IRenderer& oRenderer);
+	virtual ~CFreeCamera();
 	void				Move( float fOffsetYaw, float fOffsetPitch, float fOffsetRoll, float fAvanceOffet, float fLeftOffset, float fUpOffset );
 	void				Colorize(float r, float g, float b, float a) {}
 	void				GetEntityName(string& sName);
@@ -21,6 +19,13 @@ public:
 	void				SetSpeed(float fSpeed);
 	void				LocalTranslate(float x, float y, float z);
 	void				SetInventoryMode(bool bInventoryMode) {}
+
+private:
+	float				m_fYaw;
+	float				m_fPitch;
+	string				m_sEntityName;
+	float				m_fSpeed;
+	bool				m_bDisplayViewCone;
 };
 
 

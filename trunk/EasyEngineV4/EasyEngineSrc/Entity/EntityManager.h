@@ -25,6 +25,7 @@ class CEntityManager : public IEntityManager
 	CMobileEntity*							m_pPerso;
 	IFileSystem&							m_oFileSystem;
 	ICollisionManager&						m_oCollisionManager;
+	ICameraManager&							m_oCameraManager;
 	void									CreateEntity( IEntity* pEntity, string sName = "noname" );
 	map< CEntity*, int >					m_mCollideEntities;
 	map< IAEntity*, int >					m_mIAEntities;
@@ -41,6 +42,8 @@ public:
 	IEntity*			CreateEntity( string sName = "noname" );
 	IEntity*			CreateRepere( IRenderer& oRenderer );
 	IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem );
+	IEntity*			CreateMapEntity(string sFileName, IFileSystem* pFileSystem);
+	IEntity*			CreateTestEntity(string sFileName, IFileSystem* pFileSystem);
 	IEntity*			CreateMobileEntity( string sFileNamee, IFileSystem* pFileSystem );
 	IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem);
 	IEntity*			GetEntity( int nEntityID );

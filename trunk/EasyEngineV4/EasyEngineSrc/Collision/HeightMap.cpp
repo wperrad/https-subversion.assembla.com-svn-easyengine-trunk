@@ -176,7 +176,7 @@ void CHeightMap::ExtractHeightMapFromTexture( string sFileName, ILoaderManager& 
 	int nNewWidth = nMaxX + 1 - nMinX + nPixelAdd;
 	string sDir;
 	if( pFileSystem )
-		pFileSystem->GetRootDirectory( sDir );
+		pFileSystem->GetLastDirectory( sDir );
 	string sOutPath = sDir + "\\" + sOutFileName;
 	oLoaderManager.CreateBMPFromData( vPixels, nNewWidth, nMaxY + 1 - nMinY, bpp * 8, sOutPath );
 }

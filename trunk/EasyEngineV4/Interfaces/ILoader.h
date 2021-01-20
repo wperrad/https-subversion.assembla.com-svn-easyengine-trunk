@@ -88,7 +88,7 @@ public:
 		map< string, map< int, IBox* > >				m_oKeyBoundingBoxes;
 		map< string, int >								m_oPreferedKeyBBox;
 		CMeshInfos() : 
-		m_bCanBeIndexed( true ), m_nParentBoneID( -1 ), m_bMultiMaterial( false ){}
+		m_bCanBeIndexed( true ), m_nParentBoneID( -1 ), m_bMultiMaterial( false ), m_pBoundingBox(NULL){}
 	};
 
 	struct CAnimatableMeshData : public IRessourceInfos

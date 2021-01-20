@@ -1,13 +1,19 @@
 #include "FreeCamera.h"
+#include "IRenderer.h"
 
-
-CFreeCamera::CFreeCamera( float fFov ):
-CCamera( fFov ),
+CFreeCamera::CFreeCamera( float fFov, IRenderer& oRenderer ):
+CCamera( fFov, oRenderer),
 m_fYaw( 0.f ),
 m_fPitch( 0.f ),
-m_fSpeed(1.f)
+m_fSpeed(1.f),
+m_bDisplayViewCone(false)
 {
 	m_sEntityName = "Free camera";
+}
+
+CFreeCamera::~CFreeCamera()
+{
+
 }
 
 float CFreeCamera::GetSpeed()

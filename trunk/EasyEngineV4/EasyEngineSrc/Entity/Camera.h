@@ -8,11 +8,12 @@
 class CCamera : public ICamera
 {
 public:
-	CCamera( float fFov );
-	void				Freeze( bool bFreeze );	
+	CCamera( float fFov, IRenderer& oRenderer);
+	virtual ~CCamera();
+	void				Freeze( bool bFreeze);	
 	float				GetFov();
 	IGeometry*			GetBoundingGeometry() { return NULL; }
-	void				Update() { CNode::Update(); }
+	void				Update();
 	void				DrawBoundingBox(bool bDraw) {}
 	void				SetShader(IShader* pShader) {}
 	IBox*				GetBBox() { return NULL; }
@@ -39,11 +40,14 @@ public:
 	void				DrawAnimationBoundingBox(bool bDraw) {}
 	float				GetBoundingSphereRadius() const { return 0.f; }
 	void				Goto(const CVector& oPosition, float fSpeed) { throw 1; }
+	void				DisplayViewCone(bool display);
 
 protected:
 	
-	bool	m_bFreeze;
-	float	m_fFov;
+	bool				m_bFreeze;
+	float				m_fFov;
+	bool				m_bDisplayViewCone;
+	IRenderer&			m_oRenderer;
 };
 
 #endif // CAMERA_H

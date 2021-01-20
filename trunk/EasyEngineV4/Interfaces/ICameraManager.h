@@ -26,7 +26,12 @@ public:
 		}
 	};
 
-	enum TCameraType{ T_FREE_CAMERA, T_LINKED_CAMERA };
+	enum TCameraType
+	{ 
+		T_FREE_CAMERA, 
+		T_LINKED_CAMERA,
+		T_MAP_CAMERA
+	};
 
 	virtual ICamera*		CreateCamera( TCameraType, float fFov, IEntityManager& oEntityManager ) = 0;
 	virtual void			SetActiveCamera( ICamera* ) = 0;

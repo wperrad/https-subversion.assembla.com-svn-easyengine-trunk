@@ -35,7 +35,7 @@
 #include "IGeometry.h"
 #include "IPathFinder.h"
 
-//#define CATCH_EXCEPTION
+#define CATCH_EXCEPTION
 
 using namespace std;
 
@@ -345,12 +345,7 @@ void InitPlugins( string sCmdLine )
 	ICollisionManager::Desc oCollisionManagerDesc( *m_pRenderer, *m_pLoaderManager, *m_pGeometryManager);
 	oCollisionManagerDesc.m_sName = "Collision";
 	oCollisionManagerDesc.m_pFileSystem = m_pFileSystem;
-	m_pCollisionManager = static_cast< ICollisionManager* >( CPlugin::Create( oCollisionManagerDesc, "Collision.dll", "CreateCollisionManager" ) );
-
-	IEntityManager::Desc oEntityManagerDesc( *m_pRessourceManager, *m_pRenderer, *m_pFileSystem, *m_pCollisionManager, *m_pGeometryManager, *m_pPathFinder );
-	m_pEntityManager = static_cast< IEntityManager* >( CPlugin::Create( oEntityManagerDesc, sDirectoryName + "Entity.dll", "CreateEntityManager" ) );
-
-	m_pCollisionManager->SetEntityManager(m_pEntityManager);
+	m_pCollisionManager = static_cast< ICollisionManager* >( CPlugin::Create( oCollisionManagerDesc, "Collision.dll", "CreateCollisionManager" ) );	
 
 	vector< IRenderer* > vRenderer;
 	vRenderer.push_back( m_pRenderer );
@@ -358,6 +353,10 @@ void InitPlugins( string sCmdLine )
 		vRenderer.push_back( m_pSoftRenderer );
 	ICameraManager::Desc oCameraManagerDesc( vRenderer );
 	m_pCameraManager = static_cast< ICameraManager* >( CPlugin::Create( oCameraManagerDesc, sDirectoryName + "Entity.dll", "CreateCameraManager" ) );
+
+	IEntityManager::Desc oEntityManagerDesc(*m_pRessourceManager, *m_pRenderer, *m_pFileSystem, *m_pCollisionManager, *m_pGeometryManager, *m_pPathFinder, *m_pCameraManager);
+	m_pEntityManager = static_cast< IEntityManager* >(CPlugin::Create(oEntityManagerDesc, sDirectoryName + "Entity.dll", "CreateEntityManager"));
+	m_pCollisionManager->SetEntityManager(m_pEntityManager);
 
 	ISceneManager::Desc oSceneManagerDesc( *m_pRessourceManager, *m_pRenderer, *m_pCameraManager, *m_pEntityManager, *m_pLoaderManager, *m_pCollisionManager );
 	m_pSceneManager = static_cast< ISceneManager* >( CPlugin::Create( oSceneManagerDesc, sDirectoryName + "Entity.dll", "CreateSceneManager" ) );
@@ -424,8 +423,8 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 		InitPlugins( plCmdLine );
 		
 		ICamera* pFreeCamera = m_pCameraManager->CreateCamera( ICameraManager::T_FREE_CAMERA, 40.f, *m_pEntityManager );
-		m_pCameraManager->SetActiveCamera( pFreeCamera );
 		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 40.f, *m_pEntityManager );
+		ICamera* pMapCamera = m_pCameraManager->CreateCamera(ICameraManager::T_MAP_CAMERA, 40.f, *m_pEntityManager);
 
 		InitKeyActions();
 
@@ -433,6 +432,8 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 		m_pInputManager->AbonneToKeyEvent( NULL, OnKeyAction );
 				
 		InitScene( m_pSceneManager );
+		pMapCamera->Link(m_pScene);
+		pFreeCamera->Link(m_pScene);
 		m_pWindow->ShowModal();
 		m_pRenderer->DestroyContext();
 

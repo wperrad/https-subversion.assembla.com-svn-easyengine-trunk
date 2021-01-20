@@ -31,7 +31,7 @@ void CBKELoader::Load( string sFileName, ILoader::IRessourceInfos& ri, IFileSyst
 	}
 	m_nFileOffset = 0;
 	string sRootDirectory;
-	oFileSystem.GetRootDirectory( sRootDirectory );
+	oFileSystem.GetLastDirectory( sRootDirectory );
 	CBinaryFileStorage fs;
 	if ( !fs.OpenFile( sRootDirectory + "\\" + sFileName, CBinaryFileStorage::eRead ) )
 	{

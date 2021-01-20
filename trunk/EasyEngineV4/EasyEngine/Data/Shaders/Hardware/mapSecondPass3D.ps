@@ -1,0 +1,7 @@
+varying vec2 Texcoord;
+uniform sampler2D baseMap;
+
+void main()
+{ 
+    gl_FragColor = texture2D(baseMap, Texcoord);
+}

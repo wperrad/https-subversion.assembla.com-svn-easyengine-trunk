@@ -11,6 +11,8 @@
 #include "LineEntity.h"
 #include "CylinderEntity.h"
 #include "Player.h"
+#include "MapEntity.h"
+#include "TestEntity.h"
 
 CEntityManager::CEntityManager( const Desc& oDesc ):
 IEntityManager( oDesc ),
@@ -21,7 +23,8 @@ m_pPerso( NULL ),
 m_oFileSystem( oDesc.m_oFileSystem ),
 m_oCollisionManager( oDesc.m_oCollisionManager ),
 m_oGeometryManager( oDesc.m_oGeometryManager ),
-m_oPathFinder(oDesc.m_oPathFinder)
+m_oPathFinder(oDesc.m_oPathFinder),
+m_oCameraManager(oDesc.m_oCameraManager)
 {
 	m_itCurrentParsedEntity = m_mCollideEntities.end();
 	m_itCurrentIAEntity = m_mIAEntities.end();
@@ -166,6 +169,28 @@ IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem )
 	return pEntity;
 }
 
+
+
+IEntity* CEntityManager::CreateMapEntity(string sFileName, IFileSystem* pFileSystem)
+{
+	string sName = sFileName;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	IEntity* pEntity = new CMapEntity(sName, m_oRessourceManager, m_oRenderer, this, m_oGeometryManager, m_oCollisionManager, m_oCameraManager);
+	CreateEntity(pEntity);
+	return pEntity;
+}
+
+IEntity* CEntityManager::CreateTestEntity(string sFileName, IFileSystem* pFileSystem)
+{
+	string sName = sFileName;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	IEntity* pEntity = new CTestEntity(sName, m_oRessourceManager, m_oRenderer, this, m_oGeometryManager, m_oCollisionManager);
+	CreateEntity(pEntity);
+	return pEntity;
+}
+
 int	CEntityManager::GetEntityID( IEntity* pEntity )
 {
 	map< IEntity*, int >::iterator itEntity = m_mEntitiesID.find( pEntity );
@@ -181,7 +206,7 @@ int CEntityManager::GetEntityCount()
 
 IEntity* CEntityManager::CreateLightEntity( CVector Color, IRessource::TLight type, float fIntensity )
 {
-	IRessource* pLight = m_oRessourceManager.CreateLight( Color, type, fIntensity, m_oRenderer );
+	IRessource* pLight = m_oRessourceManager.CreateLight(Color, type, fIntensity);
 	CLightEntity* pLightEntity = new CLightEntity( pLight, m_oRessourceManager, m_oRenderer, m_oGeometryManager, m_oCollisionManager );
 	CreateEntity( pLightEntity );
 	return pLightEntity;

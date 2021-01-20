@@ -163,6 +163,7 @@
     <ClInclude Include="LightEntity.h" />
     <ClInclude Include="LineEntity.h" />
     <ClInclude Include="LinkedCamera.h" />
+    <ClInclude Include="MapEntity.h" />
     <ClInclude Include="MobileEntity.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="NPCEntity.h" />
@@ -172,6 +173,7 @@
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Shape.h" />
     <ClInclude Include="SphereEntity.h" />
+    <ClInclude Include="TestEntity.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BoxEntity.cpp" />
@@ -188,6 +190,7 @@
     <ClCompile Include="LightEntity.cpp" />
     <ClCompile Include="LineEntity.cpp" />
     <ClCompile Include="LinkedCamera.cpp" />
+    <ClCompile Include="MapEntity.cpp" />
     <ClCompile Include="MobileEntity.cpp" />
     <ClCompile Include="NPCEntity.cpp" />
     <ClCompile Include="Player.cpp" />
@@ -196,6 +199,7 @@
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shape.cpp" />
     <ClCompile Include="SphereEntity.cpp" />
+    <ClCompile Include="TestEntity.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

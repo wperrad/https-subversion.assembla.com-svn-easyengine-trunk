@@ -42,7 +42,8 @@ m_pBoundingGeometry(NULL),
 m_pRessource(NULL),
 m_fMaxStepHeight(g_fMaxHeight),
 m_pCollisionMesh(NULL),
-m_bDrawBoundingBox(false)
+m_bDrawBoundingBox(false),
+m_pScene(NULL)
 {
 	m_pEntityManager = static_cast<CEntityManager*>(pEntityManager);
 }
@@ -69,7 +70,8 @@ m_pCollisionMesh(NULL),
 m_pRessource(NULL),
 m_pBoundingGeometry(NULL),
 m_fMaxStepHeight(g_fMaxHeight),
-m_bDrawBoundingBox(false)
+m_bDrawBoundingBox(false),
+m_pScene(NULL)
 {
 	if( sFileName.size() > 0 )
 	{
@@ -104,7 +106,7 @@ void CEntity::SetRessource( string sFileName, IRessourceManager& oRessourceManag
 	transform( sExt.begin(), sExt.end(), sExtLower.begin(), tolower );
 	if ( sExtLower == "ale" )
 		bDuplicate = true;
-	IAnimatableMesh* pAMesh = dynamic_cast< IAnimatableMesh* >( oRessourceManager.GetRessource( sFileName, oRenderer, bDuplicate ) );
+	IAnimatableMesh* pAMesh = dynamic_cast< IAnimatableMesh* >( oRessourceManager.GetRessource( sFileName, bDuplicate ) );
 	if( pAMesh )
 	{
 		if( pAMesh->GetMeshCount() > 0 )
@@ -155,7 +157,7 @@ void CEntity::CreateAndLinkCollisionChildren(string sFileName)
 	string sPrefix = sFileName.substr(0, dotPos);
 	string sCollisionFileName = sPrefix + ".col";
 	try {
-		m_pCollisionMesh = dynamic_cast<ICollisionMesh*>(m_oRessourceManager.GetRessource(sCollisionFileName, m_oRenderer, false));
+		m_pCollisionMesh = dynamic_cast<ICollisionMesh*>(m_oRessourceManager.GetRessource(sCollisionFileName, false));
 		for (int i = 0; i < m_pCollisionMesh->GetGeometryCount(); i++) {
 			IGeometry* pGeometry = m_pCollisionMesh->GetGeometry(i);
 			ostringstream oss;
@@ -527,7 +529,7 @@ void CEntity::GetBonesMatrix( CNode* pInitRoot, CNode* pCurrentRoot, vector< CMa
 
 void CEntity::SetNewBonesMatrixArray( std::vector< CMatrix >& vMatBones )
 {
-	m_pRessource->GetCurrentShader()->SendUniformMatrix4Array( "matBones", vMatBones, true );
+	m_pRessource->GetShader()->SendUniformMatrix4Array( "matBones", vMatBones, true );
 }
 
 float CEntity::GetWeight()
@@ -596,7 +598,7 @@ void CEntity::AddAnimation( string sAnimationFile )
 {
 	if( m_pSkeletonRoot )
 	{
-		IAnimation* pAnimation =  static_cast< IAnimation* >( m_oRessourceManager.GetRessource( sAnimationFile, m_oRenderer, true ) );
+		IAnimation* pAnimation =  static_cast< IAnimation* >( m_oRessourceManager.GetRessource( sAnimationFile, true ) );
 		m_mAnimation[ sAnimationFile ] =  pAnimation;
 		IMesh* pMesh = static_cast< IMesh* >( m_pRessource );
 		pAnimation->SetSkeleton( m_pSkeletonRoot );

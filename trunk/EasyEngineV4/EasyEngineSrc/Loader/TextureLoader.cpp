@@ -81,7 +81,7 @@ void CBMPLoader::Load( string sFileName, IRessourceInfos& ri, IFileSystem& oFile
 	FILE* pFile = oFileSystem.OpenFile( sFileName, "rb" );
 	if ( pFile )
 	{
-		oFileSystem.GetRootDirectory( sRootDirectory );
+		oFileSystem.GetLastDirectory( sRootDirectory );
 		fclose( pFile );
 		
 		string sPath;

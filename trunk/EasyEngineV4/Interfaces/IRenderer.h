@@ -120,6 +120,7 @@ public:
 	virtual void			DrawBase( const CMatrix& mBase, float fSize ) = 0;
 	virtual void			DrawBox( const CVector& oMinPoint, const CVector& oDimension ) = 0;
 	virtual void			DrawSphere(double dRadius, unsigned int nSliceCount, unsigned int nStackCount) = 0;
+	virtual void			DrawCylinder(double dBaseRadius, double dTopRadius, double dHeight,	unsigned int nSlicesCount, unsigned int nStacksCount) = 0;
 	virtual int				CreateTexture1D( float* pTexelsArray, int nSize, TPixelFormat format ) = 0;
 	virtual int				CreateTexture2D( vector< unsigned char>& pTexelsArray, int nWidth, int nHeight, TPixelFormat format ) = 0;
 	virtual int				CreateMipmaps2D(vector< unsigned char>& vTexel, int nWidth, int nHeight, IRenderer::TPixelFormat format) = 0;
@@ -138,11 +139,13 @@ public:
 
 	virtual void			SetModelViewMatrix( const CMatrix& oMatrix ) = 0;
 	virtual void			SetProjectionMatrix( const CMatrix& oMatrix ) = 0;
-	virtual void			GetCameraMatrix(CMatrix& oMatrix) const = 0;
+	virtual void			GetInvCameraMatrix(CMatrix& oMatrix) const = 0;
+	virtual void			SetInvCameraMatrix(const CMatrix& oMatrix) = 0;
 	virtual void			SetCameraMatrix( const CMatrix& oMatrix ) = 0;
 	virtual void			GetModelMatrix(CMatrix& oMatrix) = 0;
 	virtual void			SetModelMatrix( const CMatrix& oMatrix  ) = 0;
 	virtual void			BeginRender() = 0;
+	virtual void			ClearColorBuffer(float r, float g, float b, float a) = 0;
 	virtual void			EndRender() = 0;
 	virtual void			DestroyContext() = 0;
 
@@ -173,7 +176,9 @@ public:
 	virtual void			SetLineWidth(int width) = 0;
 	virtual bool			IsCullingEnabled() = 0;
 
-	virtual void			Test( int nShader ) = 0;
+	virtual void			SetCurrentFBO(int fbo) = 0;
+	virtual void			CreateFrameBufferObject(int width, int height, unsigned int& nFBOId, unsigned int& nTextureId) = 0;
+	virtual void			ResizeScreen(int nWidth, int nHeight) = 0;
 };
 
 

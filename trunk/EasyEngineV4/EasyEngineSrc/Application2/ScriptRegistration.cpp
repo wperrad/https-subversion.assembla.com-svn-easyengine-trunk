@@ -208,31 +208,6 @@ void CreateRepere( IScriptState* pState )
 
 void Test( IScriptState* pState )
 {
-	CScriptFuncArgInt* pBoxId = (CScriptFuncArgInt*)pState->GetArg(0);
-	CScriptFuncArgInt* pLineId = (CScriptFuncArgInt*)pState->GetArg(1);
-	IEntity* pBoxEntity = m_pEntityManager->GetEntity(pBoxId->m_nValue);
-	IBox* pBox = dynamic_cast<IBox*>(pBoxEntity->GetBoundingGeometry());
-	IEntity* pLineEntity = m_pEntityManager->GetEntity(pLineId->m_nValue);
-	ILine* pLine = dynamic_cast<ILine*>(pLineEntity);
-	if (pLine) {
-		CVector first, last;
-		pLine->GetPoints(first, last);
-
-		CVector firstNewBase, lastNewBase;
-		CMatrix boxTM, boxTMInv;
-		pBoxEntity->GetWorldMatrix(boxTM);
-		boxTM.GetInverse(boxTMInv);
-		firstNewBase = boxTMInv * first;
-		lastNewBase = boxTMInv * last;
-		
-		
-		CVector R;
-		if (pBox->GetReactionYAlignedPlane(first, last, 170.f, R)) {
-			IEntity* s = m_pEntityManager->CreateSphere(10);
-			s->Link(m_pScene);
-			s->SetWorldPosition(R);
-		}
-	}
 }
 
 void Test2(IScriptState* pState)
@@ -351,7 +326,7 @@ void ComputeKeysBoundingBoxes( IScriptState* pState )
 	if( bFind )
 	{
 		ILoader::CMeshInfos& mi = oData.m_vMeshes[ i ];
-		IAnimation* pAnimation = static_cast< IAnimation* >( m_pRessourceManager->GetRessource( sAnimationName, *m_pRenderer ) );
+		IAnimation* pAnimation = static_cast< IAnimation* >( m_pRessourceManager->GetRessource( sAnimationName) );
 		map< int, vector< CKey > > mBoneKeys;
 		pAnimation->GetBoneKeysMap( mBoneKeys );
 		IWeightTable* pWeightTable = m_pGeometryManager->CreateWeightTable();
@@ -479,25 +454,63 @@ void LocalTranslate( IScriptState* pState )
 	}
 }
 
+ICameraManager::TCameraType GetCamTypeByString(string sCamType)
+{
+	if (sCamType == "link")
+		return ICameraManager::T_LINKED_CAMERA;
+	if(sCamType == "free")
+		return ICameraManager::T_FREE_CAMERA;
+	if (sCamType == "map")
+		return ICameraManager::T_MAP_CAMERA;
+}
+
 void SetCameraType( IScriptState* pState )
 {
 	CScriptFuncArgString* pCamType = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	ICamera* pCamera = NULL;
-	if( pCamType->m_sValue == "link" )
-	{
-		pCamera = m_pCameraManager->GetCameraFromType( ICameraManager::T_LINKED_CAMERA );
-		m_pCameraManager->SetActiveCamera( pCamera );
+	ICamera* pCamera = m_pCameraManager->GetCameraFromType(GetCamTypeByString(pCamType->m_sValue));
+	if (pCamera) {
+		m_pCameraManager->SetActiveCamera(pCamera);
 
-		IEntity* pPerso = m_pEntityManager->GetPerso();
-		if( pPerso )
-			pCamera->Link( pPerso );
-		else
-			m_pConsole->Println( "Erreur : vous devez définir un personnage (fonction SetCurrentPerso(persoID)) avant de définir une caméra liée." );
+		if (pCamType->m_sValue == "link")
+		{
+			IEntity* pPerso = m_pEntityManager->GetPerso();
+			if (pPerso)
+				pCamera->Link(pPerso);
+			else
+				m_pConsole->Println("Erreur : vous devez définir un personnage (fonction SetCurrentPerso(persoID)) avant de définir une caméra liée.");
+		}
 	}
-	else if( pCamType->m_sValue == "free" )
-	{
-		pCamera = m_pCameraManager->GetCameraFromType( ICameraManager::T_FREE_CAMERA );
-		m_pCameraManager->SetActiveCamera( pCamera );
+	else {
+		ostringstream oss;
+		oss << "Erreur, camera " << pCamType->m_sValue << " inexistante.";
+		m_pConsole->Println(oss.str());
+	}
+}
+
+void DisplayCamera(IScriptState* pState)
+{
+	CScriptFuncArgString* pCamType = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	CScriptFuncArgInt* pDisplay = static_cast< CScriptFuncArgInt* >(pState->GetArg(1));
+	ICamera* pCamera = m_pCameraManager->GetCameraFromType(GetCamTypeByString(pCamType->m_sValue));
+	if(pCamera)
+		pCamera->DisplayViewCone(pDisplay->m_nValue > 0 ? true : false);
+	else {
+		ostringstream oss;
+		oss << "Erreur : camera \"" << pCamType->m_sValue << "\" inexistante";
+		m_pConsole->Print(oss.str());
+	}
+}
+
+void InitCamera(IScriptState* pState)
+{
+	CScriptFuncArgString* pCamtype = (CScriptFuncArgString*) pState->GetArg(0);
+	ICamera* pCamera = m_pCameraManager->GetCameraFromType(GetCamTypeByString(pCamtype->m_sValue));
+	if (pCamera) {
+		CMatrix m;
+		pCamera->SetLocalMatrix(m);
+	}
+	else {
+		m_pConsole->Println("Erreur : camera inexistante");
 	}
 }
 
@@ -507,6 +520,8 @@ void GetCameraID(IScriptState* pState)
 	ICameraManager::TCameraType type = ICameraManager::T_FREE_CAMERA;
 	if(pType->m_sValue == "link")
 		type = ICameraManager::T_LINKED_CAMERA;
+	else if(pType->m_sValue == "map")
+		type = ICameraManager::T_MAP_CAMERA;
 	ICamera* pCamera = m_pCameraManager->GetCameraFromType(type);
 	pState->SetReturnValue(m_pEntityManager->GetEntityID(pCamera));
 }
@@ -704,7 +719,7 @@ void GenerateRandomNPC(IScriptState* pState)
 		m_pEntityManager->WearArmor(id, "2");
 		pEntity->RunAction("stand", true);
 		float angle = 360 * r / RAND_MAX;
-		pEntity->Roll(angle);
+		pEntity->Yaw(angle);
 	}
 }
 
@@ -881,6 +896,96 @@ void CreateNPC( IScriptState* pState )
 		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
+}
+
+void CreateMapEntity(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sName = pName->m_sValue;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
+	m_pRessourceManager->EnableCatchingException(false);
+
+	try
+	{
+		IEntity* pEntity = m_pEntityManager->CreateMapEntity(sName, m_pFileSystem);
+		pEntity->Link(m_pScene);
+		int id = m_pEntityManager->GetEntityID(pEntity);
+		ostringstream oss;
+		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
+		m_pConsole->Println(oss.str());
+		pState->SetReturnValue(id);
+	}
+	catch (CFileNotFoundException& e)
+	{
+		ostringstream oss;
+		oss << "Erreur : fichier \"" << e.m_sFileName << "\" manquant, l'entité \"" << pName->m_sValue << "\" ne peut pas être chargée.";
+		m_pConsole->Println(oss.str());
+	}
+	catch (CRessourceException& e)
+	{
+		string s;
+		e.GetErrorMessage(s);
+		m_pConsole->Println(s);
+	}
+	catch (CBadFileFormat& e)
+	{
+		string sMessage;
+		e.GetErrorMessage(sMessage);
+		m_pConsole->Println(sMessage);
+	}
+	catch (CEException)
+	{
+		string sMessage = string("\"") + sName + "\" introuvable";
+		m_pConsole->Println(sMessage);
+	}
+	m_pRessourceManager->EnableCatchingException(bak);
+}
+
+void CreateTestEntity(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sName = pName->m_sValue;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
+	m_pRessourceManager->EnableCatchingException(false);
+
+	try
+	{
+		IEntity* pEntity = m_pEntityManager->CreateTestEntity(sName, m_pFileSystem);
+		pEntity->Link(m_pScene);
+		int id = m_pEntityManager->GetEntityID(pEntity);
+		ostringstream oss;
+		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
+		m_pConsole->Println(oss.str());
+		pState->SetReturnValue(id);
+	}
+	catch (CFileNotFoundException& e)
+	{
+		ostringstream oss;
+		oss << "Erreur : fichier \"" << e.m_sFileName << "\" manquant, l'entité \"" << pName->m_sValue << "\" ne peut pas être chargée.";
+		m_pConsole->Println(oss.str());
+	}
+	catch (CRessourceException& e)
+	{
+		string s;
+		e.GetErrorMessage(s);
+		m_pConsole->Println(s);
+	}
+	catch (CBadFileFormat& e)
+	{
+		string sMessage;
+		e.GetErrorMessage(sMessage);
+		m_pConsole->Println(sMessage);
+	}
+	catch (CEException)
+	{
+		string sMessage = string("\"") + sName + "\" introuvable";
+		m_pConsole->Println(sMessage);
+	}
+	m_pRessourceManager->EnableCatchingException(bak);
 }
 
 void DisplayAnimationTime( IScriptState* pState )
@@ -1322,7 +1427,7 @@ void DisplayShaderName( IScriptState* pState )
 	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
 	string sShaderName;
-	pEntity->GetRessource()->GetCurrentShader()->GetName( sShaderName );
+	pEntity->GetRessource()->GetShader()->GetName( sShaderName );
 	m_pConsole->Println( sShaderName );
 }
 
@@ -1361,7 +1466,7 @@ void DisplayHM( IScriptState* pState )
 	string sFileName = pString->m_sValue;
 	if( sFileName.find( ".bme" ) == -1 )
 		sFileName += ".bme";
-	IMesh* pMesh = dynamic_cast< IMesh* >( m_pRessourceManager->GetRessource( sFileName, *m_pRenderer ) );
+	IMesh* pMesh = dynamic_cast< IMesh* >( m_pRessourceManager->GetRessource( sFileName) );
 	if( pMesh )
 		m_pCollisionManager->DisplayHeightMap( pMesh );
 	else
@@ -1842,7 +1947,13 @@ void RollEntity( IScriptState* pState )
 	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* pRoll = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
-	pEntity->Roll( pRoll->m_fValue );
+	if (!pEntity) {
+		ostringstream oss;
+		oss << "RollEntity() : Erreur lors du chargement de l'entité" << pID->m_nValue;
+		m_pConsole->Println(oss.str());
+	}
+	else
+		pEntity->Roll( pRoll->m_fValue );
 }
 
 void PitchEntity( IScriptState* pState )
@@ -2390,6 +2501,15 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eString);
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("DisplayCamera", DisplayCamera, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("InitCamera", InitCamera, vType);	
+
+	vType.clear();
+	vType.push_back(eString);
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("PatchBMEMeshTextureName", PatchBMEMeshTextureName, vType);
 
@@ -2746,6 +2866,14 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "CreateNPC", CreateNPC, vType );
 
 	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("CreateMapEntity", CreateMapEntity, vType);
+	
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("CreateTestEntity", CreateTestEntity, vType);
+
+	vType.clear();
 	vType.push_back( eInt );
 	m_pScriptManager->RegisterFunction( "Walk", Walk, vType );
 
@@ -2837,8 +2965,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetPreferedKeyBBox", SetPreferedKeyBBox, vType );
 
 	vType.clear();
-	vType.push_back(eInt);
-	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction( "Test", Test, vType );
 
 	vType.clear();
@@ -2978,7 +3104,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eInt);
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("WearArmor", WearArmor, vType);
-
 
 	vType.clear();
 	vType.push_back(eString);

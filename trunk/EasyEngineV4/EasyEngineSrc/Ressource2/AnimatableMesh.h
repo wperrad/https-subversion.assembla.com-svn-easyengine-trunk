@@ -11,7 +11,7 @@ public:
 	~CAnimatableMesh();
 	void 			Update();
 	void			SetShader( IShader* pShader ) ;
-	IShader*		GetCurrentShader() const;
+	IShader*		GetShader() const;
 	void			AddMesh( CMesh* pMesh );
 	void			SetSkeleton( IBone* pBone );
 	IMesh*			GetMesh( int nIndex );
