@@ -19,22 +19,13 @@ public:
 	~CMapEntity();
 
 	void				Update();
-
-
-
-protected:
-
-	void				RenderMap();
-	void				CollectMapEntities(vector<CEntity*>& entities);
-	void				DisplayEntities(vector<CEntity*>& entities);
+	void                Link(CNode* pNode);
 
 private:
 	ICameraManager&		m_oCameraManager;
-	ITexture*			m_pMapTexture;
 	int					m_nMapWidth;
 	int					m_nMapHeight;
 	const string		m_sFirstPassShaderName;
 	const string		m_sSecondPassShaderName;
-	ICamera*			m_pMapCamera;
 };
 

@@ -11,8 +11,12 @@
 #include "IRenderer.h"
 #include "IShader.h"
 #include "IRessource.h"
+#include "ICameraManager.h"
+#include "ICamera.h"
+#include "IEntity.h"
 #include "PlayerWindow.h"
 #include "TopicsWindow.h"
+#include "MapWindow.h"
 #include "Utils2/Chunk.h"
 #include "Utils2/Dimension.h"
 #include "Utils2/Position.h"
@@ -29,14 +33,17 @@ using namespace std;
 
 CGUIManager::CGUIManager( const Desc &oDesc ):
 IGUIManager( oDesc ),
-m_pCurrentWindow(NULL),
 m_oRenderer( oDesc.m_oRenderer ),
 m_oRessourceManager( oDesc.m_oRessourceManager ),
 m_oXMLParser( oDesc.m_oXMLParser ),
 m_oInputManager( oDesc.m_oInputManager ),
 m_bActive( true ),
 m_nCharspace( 1 ),
-m_bGUIMode(false)
+m_bGUIMode(false),
+m_oCameraManager(oDesc.m_oCameraManager),
+m_oEntityManager(oDesc.m_oEntityManager),
+m_oScene(oDesc.m_oScene),
+m_bDisplayMap(false)
 {
 	int nResWidth, nResHeight;
 	m_oRenderer.GetResolution( nResWidth, nResHeight );
@@ -51,13 +58,15 @@ m_bGUIMode(false)
 #endif // DISPLAYCURSOR
 	InitFontMap();
 
-	m_pTopicsWindow = new CTopicsWindow(*this, 900, 800);
+	m_pTopicsWindow = new CTopicsWindow(m_oRessourceManager, m_oRenderer, *this, 900, 800);
 	m_pTopicsWindow->AddTopic("Bonjour", "Bonjour, je m'appelle Mirabelle.", -1);
 	m_pTopicsWindow->AddTopic("République", "La République est une et indivisible.", -1);
 	m_pTopicsWindow->AddTopic("Armée républicaine", "Si vous cherchez du travail vous pouvez vous engager dans l'armée Républicaine. Vous trouverez la caserne à l'Est de la ville.", -1);
 	m_pTopicsWindow->AddTopic("Guilde des forgerons", "La guilde des forgeron recrute en ce moment, vous trouverez leur responsable au siège de la guilde ici en ville.", -1);
 	m_pTopicsWindow->AddTopic("Service", "Pour l'instant la ville est toute récente donc vous ne trouverez pas grand chose en dehors d'un forgeron.", -1);
 	m_pTopicsWindow->AddTopic("Mission", "je n'ai pas de mission à vous confier.", -1);
+
+	m_pMapWindow = new CMapWindow(this, m_oScene, m_oRessourceManager, m_oRenderer, 512, 512);
 }
 
 
@@ -102,11 +111,9 @@ void CGUIManager::InitFontMap()
 		{
 			char c = (char) ( i * 16 + j );
 			CRectangle charRect( j * 16, 16 * i, vCharSize[ i * 16 + j ].m_x, vCharSize[ i * 16 + j ].m_y );			
-			m_mWidgetFontBlue[c] = CreateFontImageFromTexture(pFontTextureBlue, charRect);
-			m_mWidgetFontTurquoise[c] = CreateFontImageFromTexture(pFontTextureTurquoise, charRect);
-			m_mWidgetFontWhite[c] = CreateFontImageFromTexture(pFontTextureWhite, charRect);
-			m_mWidgetFontInfos[c] = m_oLastWidgetInfosCreated;
-			
+			m_mWidgetFontBlue[c] = new CGUIWidget(m_oRenderer, m_oRessourceManager, pFontTextureBlue, charRect);
+			m_mWidgetFontTurquoise[c] = new CGUIWidget(m_oRenderer, m_oRessourceManager, pFontTextureTurquoise, charRect);
+			m_mWidgetFontWhite[c] = new CGUIWidget(m_oRenderer, m_oRessourceManager, pFontTextureWhite, charRect, m_mWidgetFontInfos[c], m_pFontMaterial);
 		}
 	}
 }
@@ -191,121 +198,6 @@ void CGUIManager::CreateFontBitmap( string FontName, int nSize, vector< unsigned
 	}
 }
 
-void CGUIManager::CreateQuadMeshInfosFromTexture(ITexture* pTexture, const CRectangle& oSkin, ILoader::CMeshInfos& mi, CRectangle& oFinalSkin) const
-{
-	string sShaderName = "gui";
-	IShader* pShader = m_oRenderer.GetShader(sShaderName);
-
-	int nTexDimWidth = 0, nTexDimHeight = 0;
-	pTexture->GetDimension(nTexDimWidth, nTexDimHeight);
-	oFinalSkin = oSkin;
-	if (oSkin.m_oDim.GetWidth() == 0 || oSkin.m_oDim.GetHeight() == 0)
-		oFinalSkin.SetDimension(CDimension(nTexDimWidth, nTexDimHeight));
-
-	pTexture->SetShader(pShader);
-
-	CRectangle oScreenRect;
-	int nResWidth, nResHeight;
-	m_oRenderer.GetResolution(nResWidth, nResHeight);
-	CDimension oScreenDim(nResWidth, nResHeight);
-	GetScreenCoordFromTexCoord(oFinalSkin, oScreenDim, oScreenRect);
-
-	float fScreenXmin = oScreenRect.m_oPos.GetX();
-	float fScreenYmin = oScreenRect.m_oPos.GetY();
-	float fScreenXmax = fScreenXmin + oScreenRect.m_oDim.GetWidth();
-	float fScreenYmax = fScreenYmin + oScreenRect.m_oDim.GetHeight();
-
-	mi.m_vVertex.push_back(fScreenXmin); mi.m_vVertex.push_back(fScreenYmin); mi.m_vVertex.push_back(0);
-	mi.m_vVertex.push_back(fScreenXmax); mi.m_vVertex.push_back(fScreenYmin); mi.m_vVertex.push_back(0);
-	mi.m_vVertex.push_back(fScreenXmin); mi.m_vVertex.push_back(fScreenYmax); mi.m_vVertex.push_back(0);
-	mi.m_vVertex.push_back(fScreenXmax); mi.m_vVertex.push_back(fScreenYmax); mi.m_vVertex.push_back(0);
-
-	mi.m_vIndex.push_back(2); mi.m_vIndex.push_back(0); mi.m_vIndex.push_back(3);
-	mi.m_vIndex.push_back(1); mi.m_vIndex.push_back(3); mi.m_vIndex.push_back(0);
-
-	CRectangle oTextureRect(0, 0, nTexDimWidth, nTexDimHeight);
-	fScreenXmax = 1 - (float)oFinalSkin.m_oPos.GetX() / (float)oTextureRect.m_oDim.GetWidth();
-	fScreenYmax = 1 - (float)oFinalSkin.m_oPos.GetY() / (float)oTextureRect.m_oDim.GetHeight();
-	fScreenXmin = 1 - (float)(oFinalSkin.m_oPos.GetX() + oFinalSkin.m_oDim.GetWidth()) / (float)(oTextureRect.m_oDim.GetWidth());
-	fScreenYmin = 1 - (float)(oFinalSkin.m_oPos.GetY() + oFinalSkin.m_oDim.GetHeight()) / (float)(oTextureRect.m_oDim.GetHeight());
-	float pUVVertex[8] = { fScreenXmin, fScreenYmin, fScreenXmax, fScreenYmin, fScreenXmin, fScreenYmax, fScreenXmax, fScreenYmax };
-	for (int i = 0; i < 8; i++)
-		mi.m_vUVVertex.push_back(pUVVertex[i]);
-	mi.m_vUVIndex.push_back(3); mi.m_vUVIndex.push_back(1); mi.m_vUVIndex.push_back(2);
-	mi.m_vUVIndex.push_back(0); mi.m_vUVIndex.push_back(2); mi.m_vUVIndex.push_back(1);
-
-	for (int i = 0; i < 6; i++)
-		mi.m_vNormalFace.push_back(0.f);
-
-	for (int i = 0; i < 18; i++)
-		mi.m_vNormalVertex.push_back(0.f);
-
-	mi.m_bCanBeIndexed = false;
-	mi.m_oMaterialInfos.m_sShaderName = sShaderName;
-	mi.m_sShaderName = sShaderName;
-}
-
-CGUIWidget* CGUIManager::CreateFontImageFromTexture(ITexture* pTexture, const CRectangle& oSkin)
-{
-	ILoader::CMeshInfos mi;
-	CRectangle oFinalSkin;
-	CreateQuadMeshInfosFromTexture(pTexture, oSkin, mi, oFinalSkin);
-
-	ILoader::CAnimatableMeshData oData;
-	oData.m_vMeshes.push_back(mi);
-	m_pFontMaterial = m_oRessourceManager.CreateMaterial(mi.m_oMaterialInfos, pTexture);
-
-	IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh(oData, m_pFontMaterial);
-	IMesh* pRect = pARect->GetMesh(0);
-
-	m_oLastWidgetInfosCreated = mi;
-	CGUIWidget* pWidget = new CGUIWidget(oFinalSkin.m_oDim.GetWidth(), oFinalSkin.m_oDim.GetHeight());
-	pWidget->SetRect(pRect);
-	return pWidget;
-}
-
-IMesh* CGUIManager::CreateImageFromTexture(ITexture* pTexture, const CRectangle& oSkin, const CDimension& oImageSize) const
-{
-	CRectangle oFinalSkin;
-	ILoader::CMeshInfos mi;
-	CreateQuadMeshInfosFromTexture(pTexture, oSkin, mi, oFinalSkin);
-
-	ILoader::CAnimatableMeshData oData;
-	oData.m_vMeshes.push_back(mi);
-	IRessource* pMaterial = m_oRessourceManager.CreateMaterial(mi.m_oMaterialInfos, pTexture);
-	IAnimatableMesh* pARect = m_oRessourceManager.CreateMesh(oData, pMaterial);
-	IMesh* pRect = pARect->GetMesh(0);
-	return pRect;
-}
-
-CGUIWidget* CGUIManager::CreateFontImageFromFile( const string& sTextureName, const CRectangle& skin )
-{
-	ITexture* pTexture = static_cast< ITexture* > (  m_oRessourceManager.GetRessource(sTextureName) );
-	return CreateFontImageFromTexture( pTexture, skin );
-}
-
-IMesh* CGUIManager::CreateImageFromFile(const string& sTextureName, const CRectangle& skin, const CDimension& oImageSize) const
-{
-	ITexture* pTexture = static_cast< ITexture* > (m_oRessourceManager.GetRessource(sTextureName));
-	return CreateImageFromTexture(pTexture, skin, oImageSize);
-}
-
-int	CGUIManager::CreateImage( const string& sFileName, unsigned int nWidth, unsigned int nHeight )
-{
-	size_t nDotPos = sFileName.find( "." );
-	string sExt = sFileName.substr( nDotPos + 1 );
-	std::transform( sExt.begin(), sExt.end(), sExt.begin(), tolower );
-	CGUIWidget* pWidget = NULL;
-	if( sExt == "cursor" )
-		pWidget = CreateImageFromSkin( sFileName, nWidth, nHeight );
-	else
-		pWidget = CreateFontImageFromFile( sFileName, CRectangle( 0, 0, nWidth, nHeight ) );
-	return InsertWidgetInMap( pWidget );
-}
-
-//-----------------------------------------------------------------------------------------------------
-//											_CreateImage
-//-----------------------------------------------------------------------------------------------------
 CGUIWidget* CGUIManager::CreateImageFromSkin( const string& sSkinPath, unsigned int nWidth, unsigned int nHeight )
 {
 	size_t nDotPos = sSkinPath.find( "." );
@@ -388,7 +280,7 @@ CGUIWidget* CGUIManager::CreateImageFromSkin( const string& sSkinPath, unsigned 
 	IRessource* pMesh = m_oRessourceManager.CreateMesh( oData, pMaterial );
 	
 	CGUIWidget* pWidget = new CGUIWidget( nWidth, nHeight );
-	pWidget->SetRect( pMesh );
+	pWidget->SetQuad( pMesh );
 	pWidget->SetSkinName( sPropertyName );	
 	return pWidget;
 }
@@ -417,23 +309,6 @@ void CGUIManager::AddWidget( int hWindow, int hWidget )
 	}
 	CGUIWidget* pWidget = GetWidgetByHandle( hWidget );
 	pWindow->AddWidget( pWidget );
-}
-
-
-//-----------------------------------------------------------------------------------------------------
-//										CreateGUIWindow
-//-----------------------------------------------------------------------------------------------------
-int CGUIManager::CreateGUIWindow(int nx, int ny , int nWidth, int nHeight)
-{
-	CGUIWindow* pGUIWindow = new CGUIWindow(nWidth, nHeight);
-	return InsertWidgetInMap( pGUIWindow );
-}
-
-CGUIWindow* CGUIManager::_CreateGUIWindow(int nx, int ny , int nWidth, int nHeight)
-{
-	CGUIWindow* pGUIWindow = new CGUIWindow(nWidth, nHeight);
-	pGUIWindow->SetPosition( (float)nx, (float)ny );
-	return pGUIWindow;
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -477,25 +352,15 @@ void CGUIManager::OnRender()
 			m_oInputManager.SetMouseCursorYPos( 0 );
 		// fin test
 
-		if (m_pCurrentWindow)
+		for(set<CGUIWindow*>::iterator itWindow = m_DisplayedWindowsSet.begin(); itWindow != m_DisplayedWindowsSet.end(); itWindow++)
 		{
-			m_pCurrentWindow->Display();
-			size_t nWidgetCount = m_pCurrentWindow->GetWidgetCount() ;
-			for ( unsigned int i = 0; i < nWidgetCount; i++ )
-			{
-				CGUIWidget* pWidget = m_pCurrentWindow->GetWidget( i );
-				pWidget->Display();
-			}
-			IInputManager::TMouseButtonState eButtonState = m_oInputManager.GetMouseButtonState( IInputManager::eMouseButtonLeft );
-			for (size_t i=0 ; i<nWidgetCount ; i++)
-			{
-				CGUIWidget* pWidget = m_pCurrentWindow->GetWidget( ( unsigned int ) i );
-				pWidget->UpdateCallback( nCursorXPos,nCursorYPos, eButtonState );
-			}
+			CGUIWindow* pWindow = *itWindow;
+			pWindow->Display();
+			IInputManager::TMouseButtonState eButtonState = m_oInputManager.GetMouseButtonState(IInputManager::eMouseButtonLeft);
+			pWindow->UpdateCallback(nCursorXPos, nCursorYPos, eButtonState);			
 		}
 
 		RenderText();
-
 
 #ifdef DISPLAYCURSOR
 		m_pCursor->SetPosition( static_cast<float>( nCursorXPos ), static_cast<float>( nCursorYPos ) );
@@ -551,26 +416,33 @@ CDimension CGUIManager::GetDimension(CGUIWidget* pWidget)
 	return pWidget->GetDimension();
 }
 
-
-
-//-----------------------------------------------------------------------------------------------------
-//										AddWindow
-//-----------------------------------------------------------------------------------------------------
-void CGUIManager::AddWindow( int hWindow )
+void CGUIManager::AddWindow(IGUIWindow* pWindow)
 {
-	CGUIWindow* pWindow = dynamic_cast< CGUIWindow* > ( GetWidgetByHandle( hWindow ) );
-	if ( pWindow == NULL )
-	{
-		exception e( "Handle de CGUIWindow invalide" );
-		throw e;
-	}
-	m_pCurrentWindow = pWindow;
+	CGUIWindow* pGuiWindow = (CGUIWindow*)pWindow;
+	m_DisplayedWindowsSet.insert(pGuiWindow);
+	if (!m_bGUIMode && pGuiWindow->IsGUIMode())
+		SetGUIMode(true);
 }
 
-
-void CGUIManager::SetCurrentWindow(IGUIWindow* pWindow)
+bool CGUIManager::IsWindowDisplayed(IGUIWindow* pWindow)
 {
-	m_pCurrentWindow = dynamic_cast<CGUIWindow*>(pWindow);
+	set<CGUIWindow*>::iterator itWindow = m_DisplayedWindowsSet.find((CGUIWindow*)pWindow);
+	return (itWindow != m_DisplayedWindowsSet.end());
+}
+
+void CGUIManager::RemoveWindow(IGUIWindow* pWindow)
+{
+	CGUIWindow* pGUIWindow = (CGUIWindow*)pWindow;
+	m_DisplayedWindowsSet.erase(pGUIWindow);
+	bool bGUIMode = false;
+	for (set<CGUIWindow*>::iterator itWindow = m_DisplayedWindowsSet.begin(); itWindow != m_DisplayedWindowsSet.end(); itWindow++) {
+		if ((*itWindow)->IsGUIMode() == true) {
+			bGUIMode = true;
+			break;
+		}
+	}
+	if(!bGUIMode)
+		SetGUIMode(bGUIMode);
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -723,8 +595,14 @@ IGUIWindow* CGUIManager::GetTopicsWindow()
 void CGUIManager::SetGUIMode(bool bGUIMode)
 {
 	m_oInputManager.SetEditionMode(bGUIMode);
-	ShowCursor(bGUIMode);
 	m_bGUIMode = bGUIMode;
+	
+	bool condition = false;
+	do{
+		INT ret = ShowCursor(m_bGUIMode);
+		condition = bGUIMode ? ret > 0 : ret < 0;
+	} while (!condition);
+
 }
 
 bool CGUIManager::GetGUIMode()
@@ -779,6 +657,16 @@ int CGUIManager::GetCurrentFontEspacementY()
 	return (int)m_mWidgetFontWhite['A']->GetDimension().GetHeight() + 2;
 }
 
+void CGUIManager::ToggleDisplayMap()
+{
+	m_bDisplayMap = !m_bDisplayMap;
+	if (m_bDisplayMap)
+		AddWindow(m_pMapWindow);
+	else
+		RemoveWindow(m_pMapWindow);
+	m_oScene.DisplayMap(m_bDisplayMap);
+}
+
 unsigned int CGUIManager::GetCurrentFontHeight() const
 {
 	map< unsigned char, CGUIWidget* >::const_iterator it =  m_mWidgetFontWhite.find( 'A' );
@@ -822,7 +710,7 @@ bool CGUIManager::GetActive()
 
 IGUIWindow* CGUIManager::CreatePlayerWindow(int nWidth, int nHeight)
 {
-	IGUIWindow* playerWindow = new CPlayerWindow(this, nWidth, nHeight);
+	IGUIWindow* playerWindow = new CPlayerWindow(this, m_oRessourceManager, m_oRenderer, CDimension(nWidth, nHeight));
 	return playerWindow;
 }
 

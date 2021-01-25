@@ -96,16 +96,13 @@ int m_nLastGameMousePosx, m_nLastGameMousePosy;
 CMatrix ident;
 bool m_bRenderScene = true;
 bool bCapture = false;
-
+bool g_bEditionMode = false;
 
 
 void InitScene( ISceneManager* pSceneManager )
-{
-	IEntity* pScene = pSceneManager->CreateScene( "Game", "", *m_pGeometryManager, *m_pPathFinder );
-	m_pScene = pScene;
-	
+{	
 	m_pRepere = m_pEntityManager->CreateRepere( *m_pRenderer );
-	m_pRepere->Link( pScene );
+	m_pRepere->Link( m_pScene );
 	try
 	{
 		m_pConsole->Open(true);
@@ -166,14 +163,22 @@ void OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE s
 	switch( state )
 	{
 	case IInputManager::JUST_PRESSED:
-		if (key == VK_TAB) {
-			IPlayer* player = dynamic_cast<IPlayer*>(m_pEntityManager->GetPerso());
-			if (player) {
-				player->DisplayPlayerWindow(!m_pGUIManager->GetGUIMode());
+		if (key == m_pConsole->GetConsoleShortCut())
+			m_pConsole->Open(!m_pConsole->IsOpen());
+		else if (!m_pConsole->IsOpen()) {
+			if (key == VK_TAB) {
+				IPlayer* player = dynamic_cast<IPlayer*>(m_pEntityManager->GetPerso());
+				if (player)
+					player->ToggleDisplayPlayerWindow();
+			}
+			else if (key == 'M')
+				m_pGUIManager->ToggleDisplayMap();
+			else if (key == 'E')
+			{
+				IPlayer* pPlayer = dynamic_cast<IPlayer*>(m_pEntityManager->GetPerso());
+				pPlayer->Action();
 			}
 		}
-		else if(key == m_pConsole->GetConsoleShortCut())
-			m_pConsole->Open(!m_pConsole->IsOpen());
 	}
 }
 
@@ -204,14 +209,6 @@ void UpdatePerso()
 			{
 				pPerso->RunAction("jump", true);
 				m_pActionManager->ForceActionState("SautPerso", IInputManager::PRESSED);
-			}
-
-			IInputManager::KEY_STATE eStateAction = m_pActionManager->GetKeyActionState("Action");
-			if (eStateAction == IInputManager::JUST_PRESSED)
-			{
-				IPlayer* pPlayer = dynamic_cast<IPlayer*>(pPerso);
-				pPlayer->Action();
-				m_pActionManager->ForceActionState("Action", IInputManager::PRESSED);
 			}
 
 			IInputManager::TMouseButtonState eStatePiedG = m_pActionManager->GetMouseActionState( "HitLeftFoot");
@@ -302,7 +299,6 @@ void InitPlugins( string sCmdLine )
 	IFileSystem::Desc oFileSystemDesc( NULL, "FileSystem" );
 	m_pFileSystem = static_cast< IFileSystem* > ( CPlugin::Create( oFileSystemDesc, sDirectoryName + "FileUtils.dll", "CreateFileSystem" ) );
 	m_pFileSystem->Mount( "..\\data" );
-	m_pFileSystem->Mount( "..\\data\\Gui");
 	m_pFileSystem->Mount( "..\\..\\EasyEngine\\data" );
 
 	IEventDispatcher::Desc oEventDispatcherDesc( NULL, "Event dispatcher " );
@@ -328,7 +324,6 @@ void InitPlugins( string sCmdLine )
 	oRendererDesc.m_sShaderDirectory = "Shaders";
 	m_pRenderer = static_cast< IRenderer* >( CPlugin::Create( oRendererDesc, sDirectoryName + "Renderer.dll", "CreateRenderer" ) );	
 
-	m_pRenderer->AbonneToRenderEvent( OnRender );
 
 	IGeometryManager::Desc oGeometryManagerDesc( NULL, "" );
 	m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGeometryManagerDesc, "Geometry.dll", "CreateGeometryManager" ) );
@@ -364,7 +359,10 @@ void InitPlugins( string sCmdLine )
 	IXMLParser::Desc oXMLParserDesc( *m_pFileSystem );
 	m_pXMLParser = static_cast< IXMLParser* >( CPlugin::Create( oXMLParserDesc, sDirectoryName + "FileUtils.dll", "CreateXMLParser" ) );
 
-	IGUIManager::Desc oGUIManagerDesc( *m_pRenderer, *m_pRessourceManager, *m_pXMLParser, *m_pInputManager );
+	m_pScene = m_pSceneManager->CreateScene("Game", "", *m_pGeometryManager, *m_pPathFinder);
+
+	IScene* pScene = dynamic_cast<IScene*>(m_pScene);
+	IGUIManager::Desc oGUIManagerDesc( *m_pRenderer, *m_pRessourceManager, *m_pXMLParser, *m_pInputManager, *m_pCameraManager, *m_pEntityManager, *pScene);
 	m_pGUIManager = static_cast< IGUIManager* >( CPlugin::Create( oGUIManagerDesc, sDirectoryName + "GUI.dll", "CreateGUIManager" ) );
 
 	m_pEntityManager->SetGUIManager(m_pGUIManager);
@@ -398,6 +396,7 @@ void InitKeyActions()
 	m_pActionManager->AddKeyAction("MoreSpeed", 'V');
 	m_pActionManager->AddKeyAction("LessSpeed", 'C');
 	m_pActionManager->AddKeyAction("Action", 'E');
+	//m_pActionManager->AddKeyAction("Map", 'M');
 	m_pActionManager->AddKeyAction("CameraYaw", AXIS_H);
 	m_pActionManager->AddKeyAction("CameraPitch", AXIS_V);
 	m_pActionManager->AddKeyAction("Console", 222);
@@ -423,8 +422,8 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 		InitPlugins( plCmdLine );
 		
 		ICamera* pFreeCamera = m_pCameraManager->CreateCamera( ICameraManager::T_FREE_CAMERA, 40.f, *m_pEntityManager );
-		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 40.f, *m_pEntityManager );
-		ICamera* pMapCamera = m_pCameraManager->CreateCamera(ICameraManager::T_MAP_CAMERA, 40.f, *m_pEntityManager);
+		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 60.f, *m_pEntityManager );
+		
 
 		InitKeyActions();
 
@@ -432,7 +431,6 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 		m_pInputManager->AbonneToKeyEvent( NULL, OnKeyAction );
 				
 		InitScene( m_pSceneManager );
-		pMapCamera->Link(m_pScene);
 		pFreeCamera->Link(m_pScene);
 		m_pWindow->ShowModal();
 		m_pRenderer->DestroyContext();

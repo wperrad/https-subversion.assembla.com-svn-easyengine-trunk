@@ -10,6 +10,9 @@ class IXMLParser;
 class IInputManager;
 class ILoaderManager;
 class CGUIWidget;
+class ICameraManager;
+class IEntityManager;
+class IScene;
 
 using namespace std;
 
@@ -54,21 +57,34 @@ public:
 		IXMLParser&				m_oXMLParser;
 		std::string				m_sShaderName;
 		IInputManager&			m_oInputManager;
-		Desc( IRenderer& oRenderer, IRessourceManager& oRessourceManager, IXMLParser& oXMLParser, IInputManager& oInputManager ):
+		ICameraManager&			m_oCameraManager;
+		IEntityManager&			m_oEntityManager;
+		IScene&					m_oScene;
+		Desc( 
+			IRenderer& oRenderer, 
+			IRessourceManager& oRessourceManager, 
+			IXMLParser& oXMLParser, 
+			IInputManager& oInputManager,
+			ICameraManager& oCameraManager,
+			IEntityManager&	oEntityManager,
+			IScene&	oScene):
 			CPlugin::Desc( NULL, "" ),
 			m_oRenderer( oRenderer ),
 			m_oRessourceManager( oRessourceManager ),
 			m_oXMLParser( oXMLParser ),
-			m_oInputManager( oInputManager ){}
+			m_oInputManager( oInputManager ),
+			m_oCameraManager(oCameraManager),
+			m_oEntityManager(oEntityManager),
+			m_oScene(oScene){}
 	};
 
-	virtual int				CreateImage( const std::string& sFileName, unsigned int nWidth = 0, unsigned int nHeight = 0 ) = 0;
 	virtual void			SetPosition( int hWidget, int x, int y ) = 0;
-	virtual int				CreateGUIWindow( int nx, int ny , int nWidth, int nHeight ) = 0;
 	virtual void			AddWidget( int hWindow, int hWidget ) = 0;
 	virtual int				CreateListener( EVENT_CALLBACK pfnCallback ) = 0;
 	virtual void			AddEventListener( int hWidget, int hListener ) = 0;
-	virtual void			SetCurrentWindow( IGUIWindow* pWindow ) = 0;
+	virtual bool			IsWindowDisplayed(IGUIWindow* pWindow) = 0;
+	virtual void			AddWindow(IGUIWindow* pWindow) = 0;
+	virtual void			RemoveWindow(IGUIWindow* pWindow) = 0;
 	virtual void			SetVisibility( int hWindow, bool bVisible ) = 0;
 	virtual void			OnRender() = 0;
 	virtual void			Print( std::string sText, int x, int y, TFontColor color = eWhite) = 0;
@@ -86,6 +102,7 @@ public:
 	virtual IGUIWindow*		CreatePlayerWindow(int nWidth, int nHeight) = 0;
 	virtual void			SetGUIMode(bool bGUIMode) = 0;
 	virtual bool			GetGUIMode() = 0;
+	virtual void			ToggleDisplayMap() = 0;
 };
 
 #endif // IGUIManager_H

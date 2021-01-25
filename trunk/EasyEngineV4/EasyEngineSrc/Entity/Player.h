@@ -18,7 +18,8 @@ public:
 	virtual ~CPlayer();
 
 	void	Action();
-	void	DisplayPlayerWindow(bool bDisplay);
+	void	ToggleDisplayPlayerWindow();
+	void	Update();
 
 
 protected:

@@ -317,6 +317,11 @@ void CMesh::Colorize(float r, float g, float b, float a)
 	m_bUseAdditionalColor = true;
 }
 
+ITexture* CMesh::GetTexture(int nMaterialIndex)
+{
+	return m_mMaterials[0]->GetTexture();
+}
+
 void CMesh::SetTexture(ITexture* pTexture)
 {
 	m_mMaterials[0]->SetTexture(pTexture);

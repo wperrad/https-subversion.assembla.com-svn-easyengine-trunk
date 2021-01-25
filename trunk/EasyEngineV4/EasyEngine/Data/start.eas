@@ -23,8 +23,6 @@ WearArmor(perso, "2");
 SetCameraType("link");
 SetFov(60);
 
-
-
 npc1 = CreateNPC("testExport15");
 Stand(npc1);
 SetEntityName(npc1, "NPC1");
@@ -40,13 +38,13 @@ WearArmor(npc2, "2");
 maison1 = LoadEntity("maison");
 SetEntityName(maison1, "maison1");
 SetEntityWeight(maison1, 1);
-SetEntityPos(maison1, 2000, 4000, 2000);
+SetEntityPos(maison1, 2000, 1000, 2000);
 
 
 maison2 = LoadEntity("maison");
 SetEntityName(maison2, "maison2");
 SetEntityWeight(maison2, 1);
-SetEntityPos(maison2, 13000, 2000, -4000);
+SetEntityPos(maison2, 13000, 1000, -4000);
 
 temple=LoadEntity("parthenon.bme");
 SetEntityPos(temple, 0, 5000, 10000);
@@ -69,4 +67,4 @@ SetEntityPos(cube, 0, 1000, 1000);
 SetEntityWeight(cube, 1);
 
 
-GenerateRandomNPC("testExport15", "2", 100, 20);
+//GenerateRandomNPC("testExport15", "2", 100, 20);

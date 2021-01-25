@@ -4,20 +4,15 @@
 #include "IRessource.h"
 #include <sstream>
 
-CTopicsWindow::CTopicsWindow(IGUIManager& oGUIManager, int width, int height) :
-	CGUIWindow(width, height),
+CTopicsWindow::CTopicsWindow(IRessourceManager& oRessourceManager, IRenderer& oRenderer, IGUIManager& oGUIManager, int width, int height) :
+	CGUIWindow("Gui/TopicsWindow.bmp", oRessourceManager, oRenderer, CDimension(width, height)),
 	m_oGUIManager(static_cast<CGUIManager&>(oGUIManager)),
 	m_nMaxCharPerLine(96)
 {
-	CRectangle rect;
-	rect.SetDimension(width, height);
-	//CGUIManager& oGUI = static_cast<CGUIManager&>(oGUIManager);
-	IMesh* pRect = m_oGUIManager.CreateImageFromFile("TopicsWindow.bmp", rect, CDimension(width, height));
-	SetRect(pRect);
-	_Position.SetPosition(400, 200);
-	
-	m_pTopicFrame = new CTopicFrame(oGUIManager, 198, 759);
+	SetPosition(400, 200);
+	m_pTopicFrame = new CTopicFrame(oGUIManager, oRenderer, oRessourceManager, 198, 759);
 	AddWidget(m_pTopicFrame);
+	SetGUIMode(true);
 }
 
 void CTopicsWindow::AddTopic(string sTopicName, string sTopicValue, int nSpeakerId)
@@ -82,23 +77,17 @@ void CTopicsWindow::DisplayTopicInfos(string sTopicInfo)
 		m_sText.insert(0, "\n");
 }
 
-CTopicFrame::CTopicFrame(IGUIManager& oGUIManager, int width, int height) : 
-	CGUIWidget(width, height),
+CTopicFrame::CTopicFrame(IGUIManager& oGUIManager, IRenderer& oRenderer, IRessourceManager& oRessourceManager, int width, int height) :
+	CGUIWidget(oRenderer, oRessourceManager, "Gui/topic-frame.bmp", width, height),
 	m_oGUIManager(oGUIManager),
 	m_nXTextMargin(5),
 	m_nYTextmargin(5),
 	m_nYmargin(21),
-	m_nTextHeight(25), 
+	m_nTextHeight(25),
 	m_nTopicBorderWidth(218)
 {
-	CGUIManager& oGUI = static_cast<CGUIManager&>(oGUIManager);
-
 	CListener* pEventListener = new CListener;
 	pEventListener->SetEventCallBack(OnEventCallback);
-	CRectangle rect;
-	rect.SetDimension(width, height);
-	IMesh* pTopicFrameMesh = oGUI.CreateImageFromFile("topic-frame4.bmp", rect, rect.m_oDim);
-	SetRect(pTopicFrameMesh);
 	SetListener(pEventListener);
 	m_mFontColorFromTopicState[eNormal] = IGUIManager::eWhite;
 	m_mFontColorFromTopicState[ePressed] = IGUIManager::eTurquoise;
@@ -175,13 +164,9 @@ void CTopicFrame::OnEventCallback(IGUIManager::ENUM_EVENT nEvent, CGUIWidget* pW
 	case IGUIManager::EVENT_NONE:
 	case IGUIManager::EVENT_MOUSEMOVE:
 	{
-		//ostringstream oss;
-		//oss << "Mouse position : (" << x << ", " << y << ")";
 		CTopicFrame* pTopicFrame = dynamic_cast<CTopicFrame*>(pWidget);
 		if (pTopicFrame) {
 			int index = pTopicFrame->GetTopicIndexFromY(y);
-			//oss << ", index de l'item sélectionné : " << index;
-			//pTopicFrame->m_oGUIManager.Print(oss.str(), 500, 300);
 			if(index < pTopicFrame->m_mTopics.size())
 				pTopicFrame->OnItemHover(pTopicFrame->GetTopicIndexFromY(y));
 		}

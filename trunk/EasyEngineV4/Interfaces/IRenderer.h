@@ -145,7 +145,6 @@ public:
 	virtual void			GetModelMatrix(CMatrix& oMatrix) = 0;
 	virtual void			SetModelMatrix( const CMatrix& oMatrix  ) = 0;
 	virtual void			BeginRender() = 0;
-	virtual void			ClearColorBuffer(float r, float g, float b, float a) = 0;
 	virtual void			EndRender() = 0;
 	virtual void			DestroyContext() = 0;
 
@@ -179,6 +178,9 @@ public:
 	virtual void			SetCurrentFBO(int fbo) = 0;
 	virtual void			CreateFrameBufferObject(int width, int height, unsigned int& nFBOId, unsigned int& nTextureId) = 0;
 	virtual void			ResizeScreen(int nWidth, int nHeight) = 0;
+	virtual float			GetScreenRatio() = 0;
+	virtual void			SetModelViewToIdentity() = 0;
+	virtual void			ClearFrameBuffer() = 0;
 };
 
 
