@@ -54,6 +54,7 @@ public:
 	void						SetShader( IShader* pShader );
 	IShader*					GetShader() const { return m_pShader; }
 	void						SetAdditionalColor(float r, float g, float b, float a);
+	ITexture*					GetTexture();
 	void						SetTexture(ITexture* pTexture);
 };
 

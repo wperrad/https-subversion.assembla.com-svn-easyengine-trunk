@@ -157,6 +157,7 @@
     <ClInclude Include="GUIWidget.h" />
     <ClInclude Include="GUIWindow.h" />
     <ClInclude Include="Listener.h" />
+    <ClInclude Include="MapWindow.h" />
     <ClInclude Include="PlayerWindow.h" />
     <ClInclude Include="TopicsWindow.h" />
   </ItemGroup>
@@ -167,6 +168,7 @@
     <ClCompile Include="GUIWidget.cpp" />
     <ClCompile Include="GUIWindow.cpp" />
     <ClCompile Include="Listener.cpp" />
+    <ClCompile Include="MapWindow.cpp" />
     <ClCompile Include="PlayerWindow.cpp" />
     <ClCompile Include="TopicsWindow.cpp" />
   </ItemGroup>

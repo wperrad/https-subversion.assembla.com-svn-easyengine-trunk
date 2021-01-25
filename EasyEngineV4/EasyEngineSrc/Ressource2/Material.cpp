@@ -96,6 +96,11 @@ void CMaterial::SetAdditionalColor(float r, float g, float b, float a)
 	m_bUseAdditionalColor = true;
 }
 
+ITexture* CMaterial::GetTexture()
+{
+	return m_pTexture;
+}
+
 void CMaterial::SetTexture(ITexture* pTexture)
 {
 	m_pTexture = pTexture;

@@ -38,6 +38,14 @@ ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityMana
 		pCamera = new CFreeCamera(fFov, *m_vRenderer[0]);
 		sCameraName = "MapCamera";
 		break;
+	case ICameraManager::T_GUI_MAP_CAMERA:
+		pCamera = new CFreeCamera(fFov, *m_vRenderer[0]);
+		sCameraName = "GuiMapCamera";
+		break;
+	default:
+		pCamera = new CFreeCamera(fFov, *m_vRenderer[0]);
+		sCameraName = "noNameCamera";
+		break;
 	}
 	m_mCameraType[ pCamera ] = type;
 	m_mCamera[ type ] = pCamera;

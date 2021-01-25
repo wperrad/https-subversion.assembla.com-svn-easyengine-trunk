@@ -48,6 +48,7 @@ extern IEntity*				m_pRepere;
 extern bool					m_bRenderScene;
 extern IEventDispatcher*	m_pEventDispatcher;
 
+extern bool g_bEditionMode;
 
 enum TObjectType
 {
@@ -99,6 +100,18 @@ IEntity* LoadEntity( string sName )
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 	return pEntity;
+}
+
+void SetEditionMode(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
+	g_bEditionMode = pEnable->m_nValue == 0 ? true : false;
+}
+
+void ShowGUICursor(IScriptState* pState)
+{
+	CScriptFuncArgInt* pShowCursor = (CScriptFuncArgInt*)pState->GetArg(0);
+	ShowCursor(pShowCursor->m_nValue == 1 ? TRUE : FALSE);
 }
 
 void DisplayFov( IScriptState* pState )
@@ -2493,7 +2506,15 @@ void ResetFreeCamera(IScriptState* pState)
 
 void RegisterAllFunctions( IScriptManager* pScriptManager )
 {
-	vector< TFuncArgType > vType;	
+	vector< TFuncArgType > vType;
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("SetEditionMode", SetEditionMode, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("ShowGUICursor", ShowGUICursor, vType);
 
 	vType.clear();
 	vType.push_back(eInt);

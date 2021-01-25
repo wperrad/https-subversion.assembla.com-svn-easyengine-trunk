@@ -108,7 +108,9 @@ public:
 class IScene
 {
 public:
-	//virtual void				WriteMap(IRenderer::TPixelFormat format) = 0;
+	virtual void				RenderMap() = 0;
+	virtual ITexture*			GetMapTexture() = 0;
+	virtual void				DisplayMap(bool display) = 0;
 };
 
 class IFighterEntityInterface
@@ -131,7 +133,7 @@ class IPlayer
 {
 public:
 	virtual void Action() = 0;
-	virtual void DisplayPlayerWindow(bool bDisplay) = 0;
+	virtual void ToggleDisplayPlayerWindow() = 0;
 };
 
 class IEntityManager : public CPlugin

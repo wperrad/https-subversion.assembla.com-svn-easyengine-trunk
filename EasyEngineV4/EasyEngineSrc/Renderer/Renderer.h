@@ -94,7 +94,7 @@ public:
 	void						ResizeScreen( int nWidth, int nHeight );
 	void						DestroyContext();
 	void						BeginRender();
-	void						ClearColorBuffer(float r, float g, float b, float a);
+	void						ClearFrameBuffer();
 	void						EndRender();
 	void						EnableZTest( bool bEnable );
 	
@@ -230,6 +230,7 @@ public:
 	bool						IsCullingEnabled();
 	void						CreateFrameBufferObject(int width, int height, unsigned int& nFBOId, unsigned int& nTextureId);
 	void						SetCurrentFBO(int fbo);
+	float						GetScreenRatio();
 };
 
 extern "C" _declspec(dllexport) IRenderer* CreateRenderer( const IRenderer::Desc& );

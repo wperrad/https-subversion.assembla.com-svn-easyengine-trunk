@@ -5,6 +5,7 @@
 #include <sstream>
 #include <map>
 #include <string>
+#include <set>
 
 // Engine
 #include "Listener.h"
@@ -23,6 +24,8 @@ class IRessource;
 class IAnimatableMesh;
 class IMesh;
 class CTopicsWindow;
+class ICamera;
+class IScene;
 
 using namespace std;
 
@@ -44,13 +47,9 @@ class CGUIManager : public IGUIManager
 		int						m_nPosY;
 	};
 
-	ILoaderManager*			m_pLoaderManager;
-	bool					m_bActive;
-	bool					m_bGUIMode;
-	CGUIWindow*				m_pCurrentWindow;
-
-	void					GetScreenCoordFromTexCoord( const CRectangle& oTexture, const CDimension& oScreenDim, CRectangle& oScreen ) const;
-	void					InitFontMap();
+	ILoaderManager*							m_pLoaderManager;
+	bool									m_bActive;
+	bool									m_bGUIMode;
 
 #ifdef DISPLAYCURSOR
 	CGUIWidget*								m_pCursor;
@@ -64,20 +63,23 @@ class CGUIManager : public IGUIManager
 	ILoader::CMeshInfos						m_oLastWidgetInfosCreated;
 	IRenderer&								m_oRenderer;
 	IRessourceManager&						m_oRessourceManager;
+	ICameraManager&							m_oCameraManager;
+	IEntityManager&							m_oEntityManager;
 	IXMLParser&								m_oXMLParser;
 	IInputManager&							m_oInputManager;
+	IScene&									m_oScene;
 	IRessource*								m_pFontMaterial;
 	map< int, IAnimatableMesh* >			m_mStaticText;
 	std::map< int, CGUIWidget* >			m_mWidget;
 	std::map< int, CListener* >				m_mListener;
 	CTopicsWindow*							m_pTopicsWindow;
+	CGUIWindow*								m_pMapWindow;
+	bool									m_bDisplayMap;
 
+	void									GetScreenCoordFromTexCoord(const CRectangle& oTexture, const CDimension& oScreenDim, CRectangle& oScreen) const;
+	void									InitFontMap();
 	CGUIWidget*								GetWidgetByHandle( int hWidget ) const;
 	CGUIWidget*								CreateImageFromSkin( const std::string& szFileName, unsigned int nWidth=0, unsigned int nHeight=0 );
-	IMesh*									CreateImageFromTexture(ITexture* pTexture, const CRectangle& oSkin, const CDimension& oImageSize) const;
-	void									CreateQuadMeshInfosFromTexture(ITexture* pTexture, const CRectangle& oSkin, ILoader::CMeshInfos& mi, CRectangle& oFinalSkin) const;
-	CGUIWidget*								CreateFontImageFromTexture(ITexture* pTexture, const CRectangle& oSkin);
-	CGUIWindow*								_CreateGUIWindow(int nx, int ny , int nWidth, int nHeight);
 	int										InsertWidgetInMap( CGUIWidget* pWidget );
 	bool									IsVisible(CGUIWindow* pWindow);
 	CDimension								GetDimension(CGUIWidget* pWidget);
@@ -89,21 +91,19 @@ class CGUIManager : public IGUIManager
 	IShader*								m_pShader;
 	int										m_nCharspace;
 	map< int, bool >						m_mStaticTextToRender;
+	set<CGUIWindow*>						m_DisplayedWindowsSet;
 
 	
 	
 public:
 
 					CGUIManager( const Desc& desc );
-	virtual			~CGUIManager(void);	
-	int				CreateImage( const std::string& sFileName, unsigned int nWidth=0, unsigned int nHeight=0 );
-	CGUIWidget*		CreateFontImageFromFile(const std::string& sTextureName, const CRectangle& rect);
-	IMesh*			CreateImageFromFile(const string& sTextureName, const CRectangle& skin, const CDimension& oImageSize) const;
+	virtual			~CGUIManager(void);
 	void			SetVisibility( int hWindow, bool bVisible );
 	void			AddWidget( int hWindow, int hWidget );
-	void			AddWindow( int hWindow );
-	void			SetCurrentWindow(IGUIWindow* pWindow);
-	int				CreateGUIWindow(int nx, int ny , int nWidth, int nHeight);
+	void			AddWindow(IGUIWindow* pWindow);
+	bool			IsWindowDisplayed(IGUIWindow* pWindow);
+	void			RemoveWindow(IGUIWindow* pWindow);
 	void			SetPosition( int hWidget, int nx, int ny);	
 	void			OnRender();
 #ifdef 	DISPLAYCURSOR
@@ -123,9 +123,10 @@ public:
 	void			PrintStaticText( int nTextID );
 	void			EnableStaticText( int nTextID, bool bEnable );
 	IGUIWindow*		GetTopicsWindow();
+	void			ToggleDisplayMap();
 	void			SetGUIMode(bool bGUIMode);
 	bool			GetGUIMode();
-	int				GetCurrentFontEspacementY();
+	int				GetCurrentFontEspacementY();	
 };
 
 extern "C" _declspec(dllexport) IGUIManager* CreateGUIManager( const IGUIManager::Desc& );

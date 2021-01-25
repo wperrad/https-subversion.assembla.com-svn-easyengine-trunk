@@ -165,8 +165,8 @@ void CRenderer::CalculProjectionMatrix( CMatrix& oMatrix, float fov )
 
 void CRenderer::BeginRender()
 {
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );	
-	glLoadIdentity();
+	glClearColor(m_vBackgroundColor.m_x, m_vBackgroundColor.m_y, m_vBackgroundColor.m_z, m_vBackgroundColor.m_w);
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	for ( unsigned int i = 0; i < m_vRenderEventCallback.size(); i++ )
 		m_vRenderEventCallback[ i ]( this );
 	if( m_bMustChangeFov )
@@ -176,10 +176,10 @@ void CRenderer::BeginRender()
 	}
 }
 
-void CRenderer::ClearColorBuffer(float r, float g, float b, float a)
+void CRenderer::ClearFrameBuffer()
 {
-	glClearColor(r, g, b, a);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(m_vBackgroundColor.m_x, m_vBackgroundColor.m_y, m_vBackgroundColor.m_z, m_vBackgroundColor.m_w);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void CRenderer::DestroyContext()
@@ -1444,6 +1444,7 @@ void CRenderer::CreateFrameBufferObject(int width, int height, unsigned int& nFB
 	// Set the list of draw buffers.
 	GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
 	glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 								   // Always check that our framebuffer is ok
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -1455,4 +1456,11 @@ void CRenderer::CreateFrameBufferObject(int width, int height, unsigned int& nFB
 void CRenderer::SetCurrentFBO(int fbo)
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+}
+
+float CRenderer::GetScreenRatio()
+{
+	int nWidth, nHeight;
+	m_oWindow.GetDimension(nWidth, nHeight);
+	return ((float)nWidth / (float)nHeight);
 }

@@ -67,8 +67,6 @@ protected:
 	bool				TestEntityCollision(CEntity* pEntity);
 	bool				ManageBoxCollision(vector<CEntity*>& vCollideEntities, float dx, float dy, float dz, const CMatrix& oBackupMatrix);
 	void				SendBonesToShader();
-	void				UpdateRessource();
-
 	static void			OnAnimationCallback( IAnimation::TEvent e, void* );
 
 public:
@@ -115,6 +113,7 @@ public:
 	float				GetHeight();
 	void				LinkAndUpdateMatrices(CEntity* pEntity);
 	virtual float		GetGroundHeight(float x, float z);
+	virtual void		UpdateRessource();
 };
 
 #endif // ENTITY_H

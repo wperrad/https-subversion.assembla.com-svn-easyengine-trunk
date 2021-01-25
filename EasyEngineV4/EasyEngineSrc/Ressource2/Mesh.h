@@ -99,6 +99,7 @@ public:
 	IBox*				GetAnimationBBox( string sAnimation );
 	CVector&			GetOrgMaxPosition();
 	void				Colorize(float r, float g, float b, float a);
+	ITexture*			GetTexture(int nMaterialIndex);
 	void				SetTexture(ITexture* pTexture);
 };
 

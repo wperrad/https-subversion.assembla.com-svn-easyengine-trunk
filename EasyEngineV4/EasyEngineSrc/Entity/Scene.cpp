@@ -12,6 +12,9 @@
 #include "Utils2/TimeManager.h"
 #include "IPathFinder.h"
 #include "EntityManager.h"
+#include "MobileEntity.h"
+#include "MapEntity.h"
+#include "SphereEntity.h"
 
 using namespace std;
 
@@ -40,16 +43,47 @@ m_oPathFinder(oDesc.m_oPathFinder),
 m_nHeightMapID( -1 ),
 m_bCollisionMapCreated(true),
 m_bHeightMapCreated(true),
-m_pCollisionGrid(NULL)
+m_pCollisionGrid(NULL),
+m_sMapFirstPassShaderName("mapFirstPass"),
+m_sMapSecondPassShaderName("mapSecondPass2D"),
+m_pPlayer(NULL),
+m_bDisplayMap(false)
 {
 	SetName( "Scene" );
 	SetEntityName("Scene");
 	m_pRessource = NULL;
 	m_pEntityManager = static_cast<CEntityManager*>(oDesc.m_pEntityManager);
+
+
+	ICamera* pMapCamera = m_oCameraManager.CreateCamera(ICameraManager::T_MAP_CAMERA, 40.f, *m_pEntityManager);
+	pMapCamera->Link(this);
+
+	m_pMapCamera = m_oCameraManager.GetCameraFromType(ICameraManager::T_MAP_CAMERA);
+	m_pMapCamera->SetWorldPosition(0, 40000, 0);
+	m_pMapCamera->Pitch(-90);
+
+	m_pMapTexture = CreateMapTexture();
+
+	m_pPlayerMapSphere = static_cast<CEntity*>(m_pEntityManager->CreateEntity("playerPointer.bme", "", m_oRenderer));
+	m_pPlayerMapSphere->SetShader(m_oRenderer.GetShader(m_sMapFirstPassShaderName));
+	
 }
 
 CScene::~CScene()
 {
+}
+
+ITexture* CScene::CreateMapTexture()
+{
+	int nMapWidth, nMapHeight;
+	m_oRenderer.GetResolution(nMapWidth, nMapHeight);
+	ITexture* pMapTexture = m_oRessourceManager.CreateRenderTexture(nMapWidth, nMapHeight, m_sMapSecondPassShaderName);
+	return pMapTexture;
+}
+
+ITexture* CScene::GetMapTexture()
+{
+	return m_pMapTexture;
 }
 
 void CScene::SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate )
@@ -163,8 +197,22 @@ void CScene::Update()
 	if (!m_bHeightMapCreated && counter++ == 20 ){
 		CreateHeightMap();
 	}
+	if (m_vMapEntities.size() == 0) {
+		OnChangeSector();
+	}
 	CTimeManager::Instance()->Update();
 	RenderScene();
+
+	if (m_bDisplayMap) {
+		RenderMap();
+		m_oRenderer.SetCurrentFBO(0);
+	}
+	
+}
+
+void CScene::DisplayMap(bool display)
+{
+	m_bDisplayMap = display;
 }
 
 void  CScene::RenderScene()
@@ -177,6 +225,83 @@ void  CScene::RenderScene()
 	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
 	if (m_pRessource)
 		m_pRessource->Update();
+}
+
+void CScene::RenderMap()
+{
+	// first pass
+	m_oRenderer.SetCurrentFBO(m_pMapTexture->GetFrameBufferObjectId());
+	DisplayEntities(m_vMapEntities);
+}
+
+void CScene::CollectMapEntities(vector<CEntity*>& entities)
+{
+	for (int i = 0; i < GetChildCount(); i++) {
+		CEntity* pEntity = dynamic_cast<CEntity*>(GetChild(i));
+		if (pEntity) {
+			if (pEntity != this) {
+				CMobileEntity* pMobile = dynamic_cast<CMobileEntity*>(pEntity);
+				if (!pMobile) {
+					CLightEntity* pLightEntity = dynamic_cast<CLightEntity*>(pEntity);
+					if (!pLightEntity) {
+						CMapEntity* pMapEntity = dynamic_cast<CMapEntity*>(pEntity);
+						if(!pMapEntity)
+							entities.push_back(pEntity);
+					}
+				}
+				else {
+					IPlayer* pPlayer = dynamic_cast<IPlayer*>(pMobile);
+					if (pPlayer) {
+						m_pPlayer = pEntity;
+						entities.push_back(m_pPlayer);
+					}
+				}
+			}
+		}
+	}
+}
+
+void CScene::OnChangeSector()
+{
+	CollectMapEntities(m_vMapEntities);
+}
+
+void CScene::DisplayEntities(vector<CEntity*>& entities)
+{
+	ICamera* pActiveCamera = m_oCameraManager.GetActiveCamera();
+	CMatrix oCamMatrix;
+	m_pMapCamera->SetLocalPosition(m_pPlayer->GetX(), m_pMapCamera->GetY(), m_pPlayer->GetZ());
+	m_pMapCamera->Update();
+	m_pMapCamera->GetWorldMatrix(oCamMatrix);
+	CMatrix oBackupInvCameraMatrix;
+	m_oRenderer.GetInvCameraMatrix(oBackupInvCameraMatrix);
+	m_oRenderer.SetCameraMatrix(oCamMatrix);
+	m_oCameraManager.SetActiveCamera(m_pMapCamera);
+	m_oRenderer.ClearFrameBuffer();
+	IShader* pBackupShader = NULL;
+	IShader* pFirstPassShader = m_oRenderer.GetShader(m_sMapFirstPassShaderName);
+
+	CMatrix m;
+	m_oRenderer.SetModelMatrix(m);
+	IMesh* pGround = static_cast<IMesh*>(GetRessource());
+	pBackupShader = pGround->GetShader();
+	pGround->SetShader(pFirstPassShader);
+	pGround->Update();
+	pGround->SetShader(pBackupShader);
+
+	for (int i = 0; i < entities.size(); i++) {
+		pBackupShader = entities[i]->GetRessource()->GetShader();
+		entities[i]->SetShader(pFirstPassShader);
+		m_oRenderer.SetModelMatrix(entities[i]->GetWorldMatrix());
+		entities[i]->UpdateRessource();
+		entities[i]->SetShader(pBackupShader);
+	}
+	
+	m_pPlayerMapSphere->SetLocalMatrix(m_pPlayer->GetWorldMatrix());
+	m_pPlayerMapSphere->Update();
+
+	m_oCameraManager.SetActiveCamera(pActiveCamera);
+	m_oRenderer.SetInvCameraMatrix(oBackupInvCameraMatrix);
 }
 
 void CScene::GetSkeletonEntities( CNode* pRoot, vector< IEntity* >& vEntity, string sFileFilter )

@@ -17,6 +17,7 @@ class ICamera;
 class IEntityManager;
 class ICollisionManager;
 class IPathFinder;
+class CSphereEntity;
 
 using namespace std;
 
@@ -60,6 +61,10 @@ public:
 	IGrid*						GetCollisionGrid();
 	void						CreateCollisionMap();
 	void						RenderScene();
+	void						RenderMap();
+	ITexture*					CreateMapTexture();
+	ITexture*					GetMapTexture();
+	void						DisplayMap(bool display);
 
 
 private:
@@ -74,6 +79,14 @@ private:
 	bool						m_bCollisionMapCreated;
 	bool						m_bHeightMapCreated;
 	IGrid*						m_pCollisionGrid;
+	ICamera*					m_pMapCamera;
+	const string				m_sMapFirstPassShaderName;
+	const string				m_sMapSecondPassShaderName;
+	ITexture*					m_pMapTexture;
+	vector<CEntity*>			m_vMapEntities;
+	CEntity*					m_pPlayer;
+	CEntity*					m_pPlayerMapSphere;
+	bool						m_bDisplayMap;
 
 	void						GetInfos(ILoader::CSceneInfos& si);
 	void						Load(const ILoader::CSceneInfos& si);
@@ -83,7 +96,8 @@ private:
 	void						CreateCollisionGrid();
 	void						CreateHeightMap();
 	void						CollectMapEntities(vector<CEntity*>& entities);
-	void						DisplayMapEntities(vector<CEntity*>& entities);
+	void						DisplayEntities(vector<CEntity*>& entities);
+	void						OnChangeSector();
 };
 
 #endif // SCENE_NODE_H

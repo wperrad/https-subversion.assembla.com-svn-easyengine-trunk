@@ -123,7 +123,7 @@ IRessource*	CRessourceManager::CreateMaterial( ILoader::CMaterialInfos& mi, ITex
 	IShader* pShader = m_oRenderer.GetShader( mi.m_sShaderName );
 	CMaterial::Desc oDesc(m_oRenderer, pShader );
 	oDesc.m_fShininess = mi.m_fShininess;
-	if( !pAlternative )
+	if( !pAlternative && !mi.m_sDiffuseMapName.empty())
 		oDesc.m_pTexture = static_cast< ITexture* >( GetRessource(mi.m_sDiffuseMapName) );
 	else
 		oDesc.m_pTexture = pAlternative;

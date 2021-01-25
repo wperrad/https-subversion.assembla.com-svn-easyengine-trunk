@@ -1,8 +1,34 @@
-Suite à un accident, vous êtes devenu amnésique et vous êtes à la recherche de votre passé... (parents, etc.) Vous découvrez être dans un régime très particulier, dans lequel les habitants semblent raisonner de facon étrange. Par exemple 
-Suite aux conseils de qqu'un vous vous engagez dans l'armée. Après être monté en grade et avoir obtenu un titre important (par exemple capitaine), votre chef vous donne l'ordre d'aller enquêter sur une série d'attaques qui ont eu lieu sur des troupes républicaines ces derniers temps. Vous découvrez alors que leurs auteurs fomentent une rebelion contre la République. Le roi vous demande en personne d'essayer d'en savoir plus en essayant de rejoindre les rebelles. En vous infiltrant, vous découvrez qu'ils sont à la recherche d'une armure légendaire mentionnée dans des textes anciens qui conférerait un pouvoir extraordinaire à celui qui la porterait. Après plusieurs recherches infructueuses, l'un des rebelles vous indique qu'un vieux sage vivant dans la montagne pourrait peut être vous en apprendre d'avantage. En allant le voir, il vous explique que l'armure a été forgée par un peuple ancien qui est parti vers l'Est il y a longtemps, de l'autre côté des montagne infranchissables, et que l'on a perdu sa trace depuis. Vous décidez alors d'aller à la recherche de ce peuple en franchissant ces montagnes et après plusieurs péripéties vous découvrez ce peuple, le peuple d'Eran. Ils vous apprennent que leurs ancêtres ont fabriqué une armure capable, en faisant corps avec son porteur, de développer sa force potentielle en la décuplant et de projeter son énergie vitale pour porter des attaques dévastatrices. Arrivé sur place, vous apprenez de la part de leur chef qu'ils vivaient auparavant à l'Ouest, là où vit maintenant la République, et qu'ils ont été trahi par leurs chefs qui ont collaboré avec le peuple actuel (les Ghuls), avant que ceux-ci se fassent à leur tour trahir par leurs anciens complices. Une guerre s'est alors déclenchée entre la république Ghuls et les rebelles Eran, menée par leur chef mais ceux-ci, beaucoup moins nombreux, ont dû fuir à l'Est. Ils sont restés cachés pendant plusieurs siècles mais leur légende dit que leur chef doit se réincarner et reprendre la tête de la rebellion pour partir à la reconquête de leur ancienne terre. Leur chef vous demande alors de vous joindre à eux pour les aider à retrouver cette armure. La quête se compose de plusieurs missions ayant pour but de récupérer toutes les pièces de l'armure. Après l'avoir rapportée à leur chef, celui-ci vous confie avoir eu dès le début des soupcons sur le fait que vous soyiez la réincarnation de Darien, le chef de la rebellion Eran. Il voulait vérifier cela en vous envoyant récupérer les pièce de l'armure du guerrier d'Eran et, une fois l'armure reconstituée, vérifier qu'elle était en harmonie avec vous,  seuls des guerriers d'Eran ou la réincarnation de leur chef pouvant réaliser celà. 
+Suite à un accident, vous êtes devenu amnésique et vous êtes à la recherche de votre passé... (parents, etc.) En discutant avec les habitants vous apprenez qu'ils craignent le retour d'Eranes, un démon qui avait autrefois tenté de s'emparer du pays et qui a été vaincu par les troupes de la résistance, qui ont ensuite fondé la République. Il existe plusieurs races qui cohabitent dans cette république. Les Gengjus, une race nomade, sont craints et persécutés par le reste de la population. Beaucoup d'entre eux ont fuit le centre et se sont regroupés dans des villes fortifiées ou des campements nomades à travers le pays. Certains d'entre eux sont restés vivre avec le reste de la population en reniant leurs origines pour se faire accepter. Ils sont accusés d'avoir collaboré avec Eranès et sont soupconnés de vouloir détruire la République par un coup d'état. Certains vouent un culte à Eranès par le biais d'une secte satanique, les Adorateurs.
+
+Suite aux conseils de qqu'un vous vous engagez dans l'armée. Après être monté en grade et avoir obtenu un titre important (par exemple capitaine), votre chef vous donne l'ordre d'aller enquêter sur une série d'attaques qui ont eu lieu sur des troupes républicaines ces derniers temps. Vous êtes aidé dans votre tâche par Amran, un Gengjus travaillant pour l'armée République et infiltré chez les Adorateurs. Vous découvrez alors que leurs auteurs fomentent une rebelion contre la République. Le roi vous demande en personne d'essayer d'en savoir plus en essayant de rejoindre les rebelles. En vous infiltrant, vous découvrez qu'ils sont à la recherche d'une armure légendaire mentionnée dans des textes anciens qui conférerait un pouvoir extraordinaire à celui qui la porterait. Vous allez rapporter l'information à votre chef qui vous demande de continuer à enquêter chez les rebelles et vous finissez par apprendre que d'après leur légende, Eranès doit se réincarner sous forme humaine et prendre le contrôle de la rebellion. 
+
+
+Après plusieurs recherches infructueuses, l'un des rebelles vous indique qu'un vieux sage vivant dans la montagne pourrait peut être vous en apprendre d'avantage. En allant le voir, il vous explique que l'armure a été forgée par un peuple ancien qui est parti vers l'Est il y a longtemps, de l'autre côté des montagne infranchissables, et que l'on a perdu sa trace depuis. Vous décidez alors d'aller à la recherche de ce peuple en franchissant ces montagnes et après plusieurs péripéties vous découvrez ce peuple, le peuple d'Eran. Ils vous apprennent que leurs ancêtres ont fabriqué une armure capable, en faisant corps avec son porteur, de développer sa force potentielle en la décuplant et de projeter son énergie vitale pour porter des attaques dévastatrices. Arrivé sur place, vous apprenez de la part de leur chef qu'ils vivaient auparavant à l'Ouest, là où vit maintenant la République, et qu'ils ont été trahi par leurs chefs qui ont collaboré avec le peuple actuel (les Ghuls), avant que ceux-ci se fassent à leur tour trahir par leurs anciens complices. Une guerre s'est alors déclenchée entre la république Ghuls et les rebelles Eran, menée par leur chef mais ceux-ci, beaucoup moins nombreux, ont dû fuir à l'Est. Ils sont restés cachés pendant plusieurs siècles mais leur légende dit que leur chef doit se réincarner et reprendre la tête de la rebellion pour partir à la reconquête de leur ancienne terre. Leur chef vous demande alors de vous joindre à eux pour les aider à retrouver cette armure. La quête se compose de plusieurs missions ayant pour but de récupérer toutes les pièces de l'armure. Après l'avoir rapportée à leur chef, celui-ci vous confie avoir eu dès le début des soupcons sur le fait que vous soyiez la réincarnation de Darien, le chef de la rebellion Eran. Il voulait vérifier cela en vous envoyant récupérer les pièce de l'armure du guerrier d'Eran et, une fois l'armure reconstituée, vérifier qu'elle était en harmonie avec vous,  seuls des guerriers d'Eran ou la réincarnation de leur chef pouvant réaliser celà. 
 
  après vous être fait attaquer,  moult péripéties pour vous faire accepter par ce 
 
  chez ... qu'il soupconne 
 
  Ceux-ci révèlent qu'ils 
+ 
+Ordre du royaume d'Eran
+
+. Chevalier 
+. Baron
+. Seigneur
+. Prince
+
+
+Noms : 
+
+. Mirabelle
+. Varna
+. Yan Kudje
+. Edao
+. Kridar
+. Balam Ekab
+
+
+Idées :
+
+. Mettre une jauge de température

@@ -15,7 +15,7 @@ struct CTopicInfo
 class CTopicsWindow : public CGUIWindow
 {
 public:
-	CTopicsWindow(IGUIManager& oGUIManager, int width, int height);
+	CTopicsWindow(IRessourceManager& oRessourceManager, IRenderer& oRenderer, IGUIManager& oGUIManager, int width, int height);
 	virtual ~CTopicsWindow();
 	void									AddTopic(string sTopicName, string sTopicValue, int nSpeakerId);
 	void									Display();
@@ -39,7 +39,7 @@ public:
 		eReleased
 	};
 
-	CTopicFrame(IGUIManager& oGUIManager, int width, int height);
+	CTopicFrame(IGUIManager& oGUIManager, IRenderer& oRenderer, IRessourceManager& oRessourceManager, int width, int height);
 	void										Display();
 	void										AddTopic(string sTopicName, string sTopicValue, int nSpeakerId);
 	void										SetParent(CGUIWidget* parent);
