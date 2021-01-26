@@ -122,15 +122,13 @@ public:
 	void						DrawGeometry( const IBuffer* pBuffer );
 	void						DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style = T_TRIANGLES );
 	void						DrawBase( const CMatrix& mBase, float fSize );
-	void						DrawLine( const CVector& p1, const CVector& p2, const CVector& color  );
+	void						DrawLine(const CVector& p1, const CVector& p2, const CVector& color);
+	void						DrawLineInternal( const CVector& p1, const CVector& p2, const CVector& color  );
 	void						DrawBox( const CVector& oMinPoint, const CVector& oDimension );
 	int							CreateTexture1D( float* pTexelsArray, int nSize, TPixelFormat format );
 	int							CreateTexture2D( vector< unsigned char >& pTexelsArray, int nWidth, int nWeight, TPixelFormat format );
 	int							CreateMipmaps2D(vector< unsigned char>& vTexel, int nWidth, int nHeight, IRenderer::TPixelFormat format);
-	void						Print(const char* szText,int nWidth , int nHeight);	
 	void						EnableLighting( bool bEnable );
-	void						RenderText(int nPosx, int nPosy, const char* szText);
-	void						EndRenderText();
 	void						SetMaterialAmbient(float* fAmbient);
 	void						SetMaterialDiffuse(float* fDiffuse);
 	void						SetMaterialSpecular(float* fSpecular);
@@ -153,6 +151,7 @@ public:
 	void						DrawSphere(double dRadius, unsigned int nSliceCount, unsigned int nStackCount);
 	void						DrawCylinder(double dBaseRadius, double dTopRadius, double dHeight, 
 											unsigned int nSlicesCount, unsigned int nStacksCount);
+	void						DrawQuad(float fLenght, float fWidth);
 	void						SetLightAmbient(unsigned int nLightID, float r, float g, float b, float a);
 	void						SetLightDiffuse(unsigned int nLightID, float r, float g, float b, float a);
 	void						SetLightSpecular(unsigned int nLightID, float r, float g, float b, float a);
@@ -215,7 +214,6 @@ public:
 	void						GetDebugString( std::string& s ) const;
 	void						DisplayDebugInfos( bool );
 	bool						IsDisplayDebugInfos() const;
-	//void						SetCurrentObjectWorldTM( CMatrix& m );
 	void						SetCurrentObjectLocalTM( CMatrix& m );
 	void						SetCurrentCameraMatrix( CMatrix& m );
 	void						SetBackgroundColor( int r, int g, int b, int a = 255 );

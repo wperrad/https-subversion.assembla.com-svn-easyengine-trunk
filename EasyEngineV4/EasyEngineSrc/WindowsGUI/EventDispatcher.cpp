@@ -23,6 +23,16 @@ void CEventDispatcher::AbonneToWindowEvent( CPlugin* pPlugin, TWindowCallback pf
 	m_vWindowAbonnedPlugins.push_back( pair< CPlugin*, TWindowCallback >::pair( pPlugin, pfnCallback ) );
 }
 
+void CEventDispatcher::DesabonneToMouseEvent(TMouseCallback pfnCallback)
+{
+	for (vector< pair< CPlugin*, TMouseCallback > >::iterator it = m_vMouseAbonnedPlugins.begin(); it != m_vMouseAbonnedPlugins.end(); it++) {
+		if (it->second == pfnCallback) {
+			m_vMouseAbonnedPlugins.erase(it);
+			break;
+		}
+	}
+}
+
 void CEventDispatcher::DesabonneToWindowEvent(TWindowCallback pfnCallback)
 {
 	for (vector< pair< CPlugin*, TWindowCallback > >::iterator it = m_vWindowAbonnedPlugins.begin(); it != m_vWindowAbonnedPlugins.end(); it++) {

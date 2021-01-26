@@ -48,6 +48,7 @@ public:
 	void				operator+=(const CMatrix& mat);
 	void				operator*=(const CMatrix& mat);
 	CMatrix				operator/(float d);
+	bool				operator==(const CMatrix& mat)const;
 		
 	void				Get( float* arr ) const;
 	void				Get( std::vector< float >& vData ) const;

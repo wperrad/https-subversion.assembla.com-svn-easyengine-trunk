@@ -19,7 +19,8 @@ public:
 	void 			AbonneToKeyEvent( CPlugin* pPlugin, TKeyCallback pfnCallback );
 	void 			AbonneToMouseEvent( CPlugin* pPlugin, TMouseCallback pfnCallback );
 	void 			AbonneToWindowEvent( CPlugin* pPlugin, TWindowCallback pfnCallback );
-	void			DesabonneToWindowEvent(TWindowCallback pfnCallback);
+	void			DesabonneToMouseEvent(TMouseCallback pfnCallback);
+	void			DesabonneToWindowEvent(TWindowCallback pfnCallback);	
 
 	void 			DispatchKeyEvent( TKeyEvent, int nKeyCode );
 	void 			DispatchMouseEvent( TMouseEvent, int x, int y );

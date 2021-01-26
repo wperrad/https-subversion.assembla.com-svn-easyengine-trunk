@@ -13,6 +13,7 @@
 #include "Player.h"
 #include "MapEntity.h"
 #include "TestEntity.h"
+#include "QuadEntity.h"
 
 CEntityManager::CEntityManager( const Desc& oDesc ):
 IEntityManager( oDesc ),
@@ -302,6 +303,14 @@ IEntity* CEntityManager::CreateSphere( float fSize )
 	pSphere->SetScaleFactor( fSize, fSize, fSize );
 	CreateEntity( pSphere, "Sphere" );
 	return pSphere;
+}
+
+IEntity* CEntityManager::CreateQuad(float lenght, float width)
+{
+	IQuad* pQuad = m_oGeometryManager.CreateQuad(lenght, width);
+	CQuadEntity* pQuadEntity = new CQuadEntity(m_oRenderer, m_oRessourceManager, *pQuad);
+	CreateEntity(pQuadEntity, "Quad");
+	return pQuadEntity;
 }
 
 void CEntityManager::AddCollideEntity( IEntity* pEntity )

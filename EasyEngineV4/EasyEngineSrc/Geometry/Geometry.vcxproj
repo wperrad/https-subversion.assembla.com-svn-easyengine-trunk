@@ -154,6 +154,7 @@
     <ClInclude Include="Circle.h" />
     <ClInclude Include="Cylinder.h" />
     <ClInclude Include="GeometryManager.h" />
+    <ClInclude Include="Quad.h" />
     <ClInclude Include="Segment.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="WeightTable.h" />
@@ -163,6 +164,7 @@
     <ClCompile Include="Circle.cpp" />
     <ClCompile Include="Cylinder.cpp" />
     <ClCompile Include="GeometryManager.cpp" />
+    <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Segment.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="weighttable.cpp" />

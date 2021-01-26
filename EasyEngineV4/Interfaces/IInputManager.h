@@ -2,6 +2,7 @@
 #define IINPUTMANAGER_H
 
 #include "EEPlugin.h"
+#include "IEventDispatcher.h"
 
 class IWidget;
 class IEventDispatcher;

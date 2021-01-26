@@ -168,6 +168,7 @@
     <ClInclude Include="Node.h" />
     <ClInclude Include="NPCEntity.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="QuadEntity.h" />
     <ClInclude Include="Repere.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
@@ -194,6 +195,7 @@
     <ClCompile Include="MobileEntity.cpp" />
     <ClCompile Include="NPCEntity.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="QuadEntity.cpp" />
     <ClCompile Include="Repere.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />

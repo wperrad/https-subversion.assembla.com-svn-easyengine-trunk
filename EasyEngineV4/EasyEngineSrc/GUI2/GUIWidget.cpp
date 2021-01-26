@@ -256,7 +256,6 @@ void CGUIWidget::SetPosition(CPosition p)
 	_Position = p;
 }
 
-
 void CGUIWidget::CreateQuadMeshInfosFromTexture(IRenderer& oRenderer, ITexture* pTexture, const CRectangle& oSkin, ILoader::CMeshInfos& mi, CRectangle& oFinalSkin) const
 {
 	string sShaderName = "gui";

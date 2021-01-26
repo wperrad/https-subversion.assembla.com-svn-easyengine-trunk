@@ -515,9 +515,9 @@ void CRenderer::DrawBase( const CMatrix& mBase, float fSize )
 	CVector x = mBase * CVector( 1 * fSize, 0, 0, 1 );
 	CVector y = mBase * CVector( 0, 1 * fSize, 0, 1 );
 	CVector z = mBase * CVector( 0, 0, 1 * fSize, 1 );
-	DrawLine( CVector( mBase.m_03, mBase.m_13, mBase.m_23 ), CVector( x.m_x, x.m_y, x.m_z ), CVector( 1, 0, 0 ) );
-	DrawLine( CVector( mBase.m_03, mBase.m_13, mBase.m_23 ), CVector( y.m_x, y.m_y, y.m_z ), CVector( 0, 1, 0 ) );
-	DrawLine( CVector( mBase.m_03, mBase.m_13, mBase.m_23 ), CVector( z.m_x, z.m_y, z.m_z ), CVector( 0, 0, 1 ) );
+	DrawLineInternal( CVector( mBase.m_03, mBase.m_13, mBase.m_23 ), CVector( x.m_x, x.m_y, x.m_z ), CVector( 1, 0, 0 ) );
+	DrawLineInternal( CVector( mBase.m_03, mBase.m_13, mBase.m_23 ), CVector( y.m_x, y.m_y, y.m_z ), CVector( 0, 1, 0 ) );
+	DrawLineInternal( CVector( mBase.m_03, mBase.m_13, mBase.m_23 ), CVector( z.m_x, z.m_y, z.m_z ), CVector( 0, 0, 1 ) );
 }
 
 void CRenderer::SetModelViewMatrix( const CMatrix& m )
@@ -834,12 +834,19 @@ void CRenderer::EnableLight(unsigned int LightID)
 	glEnable((GLenum)LightID);
 }
 
-void CRenderer::DrawLine( const CVector& p1, const CVector& p2, const CVector& color )
+void CRenderer::DrawLine(const CVector& p1, const CVector& p2, const CVector& color)
+{
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
+	LoadMatrix(oModelView);
+	DrawLineInternal(p1, p2, color);
+}
+
+void CRenderer::DrawLineInternal( const CVector& p1, const CVector& p2, const CVector& color )
 {
 	glColor3f( color.m_x, color.m_y, color.m_z );
 	glBegin( GL_LINES );
-	glVertex3f( p1.m_x, p1.m_y, p1.m_z );
-	glVertex3f( p2.m_x, p2.m_y, p2.m_z );
+	glVertex4f( p1.m_x, p1.m_y, p1.m_z, p1.m_w );
+	glVertex4f( p2.m_x, p2.m_y, p2.m_z, p2.m_w );
 	glEnd();
 }
 
@@ -859,24 +866,24 @@ void CRenderer::DrawBox( const CVector& oMinPoint, const CVector& oDimension )
 	CVector p7 = oMinPoint + CVector( 0, oDimension.m_y, oDimension.m_z );
 	
 	CVector color( 1, 1, 1, 1 );
-	DrawLine( p0, p1, color );
-	DrawLine( p1, p2, color  );
-	DrawLine( p2, p3, color  );
-	DrawLine( p3, p0, color  );
-	DrawLine( p0, p4, color  );
-	DrawLine( p1, p5, color  );
-	DrawLine( p2, p6, color  );
-	DrawLine( p3, p7, color  );
-	DrawLine( p4, p5, color  );
-	DrawLine( p5, p6, color  );
-	DrawLine( p6, p7, color  );
-	DrawLine( p7, p4, color  );
+	DrawLineInternal( p0, p1, color );
+	DrawLineInternal( p1, p2, color  );
+	DrawLineInternal( p2, p3, color  );
+	DrawLineInternal( p3, p0, color  );
+	DrawLineInternal( p0, p4, color  );
+	DrawLineInternal( p1, p5, color  );
+	DrawLineInternal( p2, p6, color  );
+	DrawLineInternal( p3, p7, color  );
+	DrawLineInternal( p4, p5, color  );
+	DrawLineInternal( p5, p6, color  );
+	DrawLineInternal( p6, p7, color  );
+	DrawLineInternal( p7, p4, color  );
 }
 
 void CRenderer::DrawSphere(double dRadius, unsigned int nSliceCount, unsigned int nStackCount)
 {
 	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
-	LoadMatrix( oModelView );
+	LoadMatrix(oModelView);
 	gluSphere(m_pQuadricObj,dRadius,nSliceCount,nStackCount);	
 }
 
@@ -888,6 +895,18 @@ void CRenderer::DrawCylinder(double dBaseRadius, double dTopRadius, double dHeig
 	gluCylinder(m_pQuadricObj, dBaseRadius, dTopRadius, dHeight, nSlicesCount, nStacksCount);
 }
 
+void CRenderer::DrawQuad(float fLenght, float fWidth)
+{
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
+	LoadMatrix(oModelView);
+	glColor3f(1.f, 0.f, 0.f);
+	glBegin(GL_QUADS);
+	glVertex3f(-fLenght / 2.f, 0.f, -fWidth / 2.f);
+	glVertex3f(-fLenght / 2.f, 0.f,  fWidth / 2.f);
+	glVertex3f( fLenght / 2.f, 0.f, -fWidth / 2.f);
+	glVertex3f( fLenght / 2.f, 0.f,  fWidth / 2.f);
+	glEnd();
+}
 
 void CRenderer::SetLightAmbient(unsigned int nLightID, float r, float g, float b, float a)
 {
