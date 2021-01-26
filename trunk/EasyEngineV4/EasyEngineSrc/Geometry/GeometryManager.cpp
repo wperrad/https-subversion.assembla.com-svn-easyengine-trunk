@@ -5,6 +5,7 @@
 #include "Segment.h"
 #include "Cylinder.h"
 #include "Circle.h"
+#include "Quad.h"
 
 CGeometryManager::CGeometryManager( CPlugin::Desc& oDesc ) : IGeometryManager()
 {
@@ -80,6 +81,11 @@ ICircle* CGeometryManager::CreateCircle( const CVector2D& oCenter, float fRadius
 ISegment2D*	CGeometryManager::CreateSegment2D( const CVector2D& first, const CVector2D& last )
 {
 	return new CSegment2D( first, last );
+}
+
+IQuad* CGeometryManager::CreateQuad(float lenght, float width)
+{
+	return new CQuad(lenght, width);
 }
 
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc )

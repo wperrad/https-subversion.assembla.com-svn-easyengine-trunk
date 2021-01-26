@@ -180,10 +180,12 @@
     <ClInclude Include="..\..\Interfaces\IWidget.h" />
     <ClInclude Include="..\..\Interfaces\IWindow.h" />
     <ClInclude Include="..\..\Interfaces\IXMLParser.h" />
+    <ClInclude Include="Editor.h" />
     <ClInclude Include="PluginCreation.h" />
     <ClInclude Include="ScriptRegistration.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Editor.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ScriptRegistration.cpp" />
   </ItemGroup>

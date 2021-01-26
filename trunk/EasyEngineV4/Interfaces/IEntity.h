@@ -182,6 +182,7 @@ public:
 	virtual IEntity*			GetPerso() = 0;
 	virtual IEntity*			CreateSphere( float fSize ) = 0;
 	virtual IEntity*			CreateBox( IRenderer& oRenderer, const CVector& oDimension ) = 0;
+	virtual IEntity*			CreateQuad(float lenght, float width) = 0;
 	virtual ISphere&			GetSphere( IEntity* pSphereEntity ) = 0;
 	virtual IBox&				GetBox( IEntity* pBoxEntity ) = 0;
 	virtual void				AddCollideEntity( IEntity* pEntity ) = 0;

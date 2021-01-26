@@ -87,6 +87,9 @@
     <ClInclude Include="TestEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="QuadEntity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BoxEntity.cpp">
@@ -159,6 +162,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TestEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QuadEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

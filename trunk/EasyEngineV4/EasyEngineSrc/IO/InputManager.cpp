@@ -89,7 +89,12 @@ void CInputManager::OnUpdate()
 void CInputManager::SetEditionMode( bool bEdition )
 {
 	m_bEditionMode = bEdition;
-	ShowCursor( bEdition );
+	int ret = 0;
+	bool condition = false; 
+	do {
+		ret = ShowCursor(bEdition);
+		condition = bEdition ? ret >= 0 : ret < 0;
+	} while (!condition);
 }
 
 void CInputManager::OnKeyEventCallback( CPlugin* pPlugin, IEventDispatcher::TKeyEvent e, int nKeyCode )
@@ -207,19 +212,22 @@ void CInputManager::OnMouseMove( int x, int y )
 	m_nPhysicalCursorPosy = y;
 	bool bMustChange = false;
 
-	m_OffsetMousePos.x += (x - m_OldMousePos.x);	
-	m_OffsetMousePos.y += (y - m_OldMousePos.y);
-
 	POINT OffsetMousePos;
-	OffsetMousePos.x = (x - m_OldMousePos.x);
-	OffsetMousePos.y = (y - m_OldMousePos.y);
 
+	if (!m_bEditionMode) {
+		m_OffsetMousePos.x += (x - m_OldMousePos.x);
+		m_OffsetMousePos.y += (y - m_OldMousePos.y);
+		OffsetMousePos.x = (x - m_OldMousePos.x);
+		OffsetMousePos.y = (y - m_OldMousePos.y);
+	}
 
 	m_OldMousePos.x = x;		
 	m_OldMousePos.y = y;
 	
-	m_nVirtualCursorPosx += OffsetMousePos.x;
-	m_nVirtualCursorPosy += OffsetMousePos.y;
+	if (!m_bEditionMode) {
+		m_nVirtualCursorPosx += OffsetMousePos.x;
+		m_nVirtualCursorPosy += OffsetMousePos.y;
+	}
 
 	if( !m_bEditionMode )
 	{	
@@ -351,11 +359,6 @@ void CInputManager::AbonneToKeyEvent( CPlugin* pPlugin, TKeyCallback pfnCallback
 {
 	m_vKeyCallback.push_back( pair< CPlugin*, TKeyCallback >::pair( pPlugin, pfnCallback ) );
 }
-
-//void CInputManager::AbonneToMouseEvent( TMouseCallback pCallback )
-//{
-//	m_vMouseCallback.push_back( pCallback );
-//}
 
 CInputManager::KEY_STATE CInputManager::GetKeyState( unsigned char key )
 {

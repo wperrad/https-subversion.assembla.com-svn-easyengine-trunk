@@ -20,6 +20,7 @@ public:
 	ICylinder*		CreateCylinder();
 	ICircle*		CreateCircle( const CVector2D& oCenter, float fRadius );
 	ISegment2D*		CreateSegment2D( const CVector2D& first, const CVector2D& last );
+	IQuad*			CreateQuad(float lenght, float width);
 };
 
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc );

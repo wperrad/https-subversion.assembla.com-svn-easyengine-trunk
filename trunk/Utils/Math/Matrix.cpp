@@ -351,6 +351,13 @@ CMatrix CMatrix::operator /(float d)
 
 }
 
+bool CMatrix::operator==(const CMatrix& mat) const
+{
+	return ( (m_00 == mat.m_00) && (m_01 == mat.m_01) && (m_02 == mat.m_02) && (m_03 == mat.m_03) &&
+			 (m_10 == mat.m_10) && (m_11 == mat.m_11) && (m_12 == mat.m_12) && (m_13 == mat.m_13) &&
+			 (m_20 == mat.m_20) && (m_21 == mat.m_21) && (m_22 == mat.m_22) && (m_23 == mat.m_23) &&
+			 (m_30 == mat.m_30) && (m_31 == mat.m_31) && (m_32 == mat.m_32) && (m_33 == mat.m_33) );
+}
 
 //
 ////-----------------------------------------------------------------------------------------------------

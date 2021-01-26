@@ -34,6 +34,7 @@
 #include "ISystems.h"
 #include "IGeometry.h"
 #include "IPathFinder.h"
+#include "Editor.h"
 
 #define CATCH_EXCEPTION
 
@@ -48,6 +49,7 @@ struct CGFXOption
 };
 
 void  OnWindowEvent( CPlugin* pPlugin, IEventDispatcher::TWindowEvent e, int nWidth, int nHeight );
+void OnMouseEvent(CPlugin*, IEventDispatcher::TMouseEvent, int, int);
 void UpdateCamera();
 void GetOptionsByCommandLine( string sCommandArguments, CGFXOption& oOption );
 void DestroyPlugins();
@@ -88,7 +90,8 @@ vector< IEntity* > m_vLight;
 bool	m_bFirstTimeOpenFile = true;
 CDebugTool* m_pDebugTool = NULL;
 CNode* m_pEntity = NULL;
-IEntity* m_pScene = NULL; 
+IEntity* m_pScene = NULL;
+CEditor* m_pEditor = NULL;
 
 float m_nDeltaTickCount = 0;
 float m_nLastTickCount = 0;
@@ -96,7 +99,6 @@ int m_nLastGameMousePosx, m_nLastGameMousePosy;
 CMatrix ident;
 bool m_bRenderScene = true;
 bool bCapture = false;
-bool g_bEditionMode = false;
 
 
 void InitScene( ISceneManager* pSceneManager )
@@ -418,8 +420,8 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 	try
 	{
 #endif // CATCH_EXCEPTION
-
 		InitPlugins( plCmdLine );
+		m_pEditor = new CEditor(*m_pInputManager, *m_pCameraManager, *m_pEventDispatcher, *m_pRenderer, *m_pEntityManager);
 		
 		ICamera* pFreeCamera = m_pCameraManager->CreateCamera( ICameraManager::T_FREE_CAMERA, 40.f, *m_pEntityManager );
 		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 60.f, *m_pEntityManager );

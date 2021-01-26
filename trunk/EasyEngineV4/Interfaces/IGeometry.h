@@ -37,7 +37,8 @@ public:
 	enum Type
 	{
 		eBox = 1,
-		eCylinder
+		eCylinder,
+		eQuad
 	};
 
 	enum TFace
@@ -66,6 +67,12 @@ public:
 	virtual void				Draw(IRenderer& oRenderer) const = 0;
 	virtual TFace				GetReactionYAlignedPlane(const CVector& firstPoint, const CVector& lastPoint, float planeHeight, CVector& R) = 0;
 	virtual TFace				GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeometry& lastPositionBox, CVector& R) = 0;
+};
+
+class IQuad : public IGeometry
+{
+public:
+	virtual void				GetDimension(float& lenght, float& width) = 0;
 };
 
 class ILine
@@ -153,6 +160,7 @@ public:
 	virtual ICylinder*		CreateCylinder() = 0;
 	virtual ICylinder*		CreateCylinder(const CMatrix& oTM, float fRadius, float fHeight) = 0;
 	virtual ICircle*		CreateCircle( const CVector2D& oCenter, float fRadius ) = 0;
+	virtual IQuad*			CreateQuad(float lenght, float width) = 0;
 	virtual int				GetLastCreateBoxID() = 0;
 	virtual IBox*			GetBox( int nID ) const = 0;
 };

@@ -20,6 +20,7 @@
 #include "ISystems.h"
 #include "IGeometry.h"
 #include "IHud.h"
+#include "Editor.h"
 #include "../Utils2/RenderUtils.h"
 #include "../Utils2/DebugTool.h"
 
@@ -47,8 +48,7 @@ extern IGeometryManager*	m_pGeometryManager;
 extern IEntity*				m_pRepere;
 extern bool					m_bRenderScene;
 extern IEventDispatcher*	m_pEventDispatcher;
-
-extern bool g_bEditionMode;
+extern CEditor*				m_pEditor;
 
 enum TObjectType
 {
@@ -105,7 +105,7 @@ IEntity* LoadEntity( string sName )
 void SetEditionMode(IScriptState* pState)
 {
 	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
-	g_bEditionMode = pEnable->m_nValue == 0 ? true : false;
+	m_pEditor->SetEditionMode(pEnable->m_nValue == 0 ? false : true);
 }
 
 void ShowGUICursor(IScriptState* pState)
@@ -209,6 +209,47 @@ void CreateSphere( IScriptState* pState )
 	oss << "La sphere a été créée avec l'identifiant " << id << ".";
 	m_pConsole->Println( oss.str() );
 	pState->SetReturnValue(id);
+}
+
+void CreateQuad(IScriptState* pState)
+{
+	CScriptFuncArgFloat* pLenght = static_cast< CScriptFuncArgFloat* >(pState->GetArg(0));
+	CScriptFuncArgFloat* pWidth = static_cast< CScriptFuncArgFloat* >(pState->GetArg(1));
+	IEntity* pQuadEntity = m_pEntityManager->CreateQuad(pLenght->m_fValue, pWidth->m_fValue);
+	pQuadEntity->Link(m_pScene);
+	ostringstream oss;
+	int id = m_pEntityManager->GetEntityID(pQuadEntity);
+	oss << "Le quad a été créée avec l'identifiant " << id << ".";
+	m_pConsole->Println(oss.str());
+	pState->SetReturnValue(id);
+}
+
+void RayTrace(IScriptState* pState)
+{
+	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >(pState->GetArg(0));
+	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >(pState->GetArg(1));
+
+	int w, h;
+	m_pRenderer->GetResolution(w, h);
+	float logicalx = (px->m_fValue / (float)w - 0.5f) * 2.0f;
+	//float logicaly = (py->m_fValue / (float)h - 0.5f) * 2.0f;
+	float logicaly = (0.5f - py->m_fValue / (float)h) * 2.0f;
+	CVector logicalP1(logicalx, logicaly, -1.f);
+	CVector logicalP2(logicalx, logicaly, 1.f);
+	CMatrix V, M, P;
+	m_pCameraManager->GetActiveCamera()->GetWorldMatrix().GetInverse(V);
+	m_pRenderer->GetProjectionMatrix(P);
+
+	CMatrix PVM = P * V * M;
+	CMatrix PVMInv;
+	PVM.GetInverse(PVMInv);
+
+	CMatrix m;
+	CVector p1 = PVMInv * logicalP1;
+	CVector p2 = PVMInv * logicalP2;
+
+	IEntity* pLine = m_pEntityManager->CreateLineEntity(p1, p2);
+	pLine->Link(m_pScene);
 }
 
 void CreateRepere( IScriptState* pState )
@@ -3001,6 +3042,16 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back( eFloat );
 	m_pScriptManager->RegisterFunction( "CreateSphere", CreateSphere, vType );
+
+	vType.clear();
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("CreateQuad", CreateQuad, vType);
+
+	vType.clear();
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("RayTrace", RayTrace, vType);
 
 	vType.clear();
 	vType.push_back( eInt );

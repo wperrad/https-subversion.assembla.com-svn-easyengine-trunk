@@ -60,6 +60,7 @@ public:
 	void				SetPerso( IEntity* pPerso );
 	IEntity*			GetPerso();
 	IEntity*			CreateSphere( float fSize );
+	IEntity*			CreateQuad(float lenght, float width);
 	IEntity*			CreateBox( IRenderer& oRenderer, const CVector& oDimension );
 	ISphere&			GetSphere( IEntity* pSphereEntity );
 	IBox&				GetBox( IEntity* pBoxEntity );
