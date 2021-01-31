@@ -28,10 +28,10 @@ void main()
 		gl_FragColor *= texture2D( baseMap, Texcoord );
 		
 #ifdef MULTIMATERIAL
-	int bMultimaterial = round( fMultimaterial );
+	int bMultimaterial = int( fMultimaterial );
 	if( bMultimaterial == 1 )
 	{
-		int nID = round(nPSMatID);
+		int nID = int(nPSMatID);
 		switch( nID )
 		{
 		case 1:

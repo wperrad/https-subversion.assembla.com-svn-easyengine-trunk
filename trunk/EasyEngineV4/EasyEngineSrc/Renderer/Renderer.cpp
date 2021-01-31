@@ -253,7 +253,7 @@ void CRenderer::CreateOGLContext( const Desc& oDesc )
 			0,											
 			0,											
 			0, 0, 0, 0,									
-			16,											
+			32,											
 			0,											
 			0,											
 			PFD_MAIN_PLANE,								
@@ -899,13 +899,14 @@ void CRenderer::DrawQuad(float fLenght, float fWidth)
 {
 	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
 	LoadMatrix(oModelView);
-	glColor3f(1.f, 0.f, 0.f);
+	CullFace(false);
 	glBegin(GL_QUADS);
 	glVertex3f(-fLenght / 2.f, 0.f, -fWidth / 2.f);
 	glVertex3f(-fLenght / 2.f, 0.f,  fWidth / 2.f);
-	glVertex3f( fLenght / 2.f, 0.f, -fWidth / 2.f);
 	glVertex3f( fLenght / 2.f, 0.f,  fWidth / 2.f);
+	glVertex3f( fLenght / 2.f, 0.f, -fWidth / 2.f);
 	glEnd();
+	CullFace(true);
 }
 
 void CRenderer::SetLightAmbient(unsigned int nLightID, float r, float g, float b, float a)

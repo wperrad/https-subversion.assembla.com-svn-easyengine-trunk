@@ -31,7 +31,7 @@ void main()
 		if ( fBoneID != -1. )
 		{
 			float fWeightedVertexValue = vVertexWeight[ iBone ];
-			matWeight += fWeightedVertexValue * matBones[ fBoneID ];
+			matWeight += fWeightedVertexValue * matBones[ int(fBoneID) ];
 		}
 	}	
 	
