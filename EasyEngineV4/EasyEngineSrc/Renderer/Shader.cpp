@@ -52,7 +52,15 @@ void CShader::Attach( string sShaderFileName, IRenderer::TShaderType type, IFile
 		throw e;
 	}
 	m_oRenderer.SetShaderSource( nShaderID, pSource );
-	m_oRenderer.CompileShader( nShaderID );
+	try {
+		m_oRenderer.CompileShader(nShaderID);
+	}
+	catch (exception& e) {		
+		string message = "\"" + sShaderFileName + "\" : " + e.what();
+		exception e2(message.c_str());
+		throw e2;
+	}
+	
 	m_mShaderName[ sShaderFileName ] = nShaderID;
 	m_oRenderer.AttachShaderToProgram( m_nProgram, nShaderID );
 	delete pSource;

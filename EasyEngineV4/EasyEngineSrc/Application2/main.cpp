@@ -306,7 +306,9 @@ void InitPlugins( string sCmdLine )
 	IEventDispatcher::Desc oEventDispatcherDesc( NULL, "Event dispatcher " );
 	m_pEventDispatcher = static_cast< IEventDispatcher* >( CPlugin::Create( oEventDispatcherDesc, sDirectoryName + "WindowsGUI.dll", "CreateEventDispatcher" ) );
 
-	int nResX = 1920, nResY = 1080;
+	RECT rect;
+	GetWindowRect(GetDesktopWindow(), &rect);
+	int nResX = rect.right, nResY = rect.bottom;
 
 	IInputManager::Desc oInputManagerDesc( *m_pEventDispatcher );
 	oInputManagerDesc.m_nResX = nResX;
