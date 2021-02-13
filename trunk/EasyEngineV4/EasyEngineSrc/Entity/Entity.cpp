@@ -43,7 +43,8 @@ m_pRessource(NULL),
 m_fMaxStepHeight(g_fMaxHeight),
 m_pCollisionMesh(NULL),
 m_bDrawBoundingBox(false),
-m_pScene(NULL)
+m_pScene(NULL),
+m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL))
 {
 	m_pEntityManager = static_cast<CEntityManager*>(pEntityManager);
 }
@@ -71,7 +72,8 @@ m_pRessource(NULL),
 m_pBoundingGeometry(NULL),
 m_fMaxStepHeight(g_fMaxHeight),
 m_bDrawBoundingBox(false),
-m_pScene(NULL)
+m_pScene(NULL),
+m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL))
 {
 	if( sFileName.size() > 0 )
 	{
@@ -149,6 +151,10 @@ void CEntity::SetRessource( string sFileName, IRessourceManager& oRessourceManag
 		CEException e( "Nous vous autorisons à fouetter le développeur" );
 		throw e;
 	}
+
+	LoadRessourceCallback callback = m_oPairLoadRessourceCallback.first;
+	if(callback)
+		callback(m_oPairLoadRessourceCallback.second);
 }
 
 void CEntity::CreateAndLinkCollisionChildren(string sFileName)
@@ -201,7 +207,8 @@ void CEntity::UpdateCollision()
 				z = oComposedMatrix.m_23;
 			}
 			int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
-			float fGroundHeight = m_pScene->GetGroundHeight(x, z) + CBody::GetZCollisionError();
+			const float margin = -20.;
+			float fGroundHeight = m_pScene->GetGroundHeight(x, z) + m_pScene->GetGroundMargin();
 			float fEntityZ = m_oLocalMatrix.m_13 + m_pBoundingGeometry->GetBase().m_y + m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f;
 			if( fEntityZ > fGroundHeight + CBody::GetEpsilonError() )
 			{
@@ -444,7 +451,7 @@ bool CEntity::ManageGroundCollision(const CMatrix& olastLocalTM)
 	CVector localPos, worldPos;
 	m_oLocalMatrix.GetPosition(localPos);
 	m_oWorldMatrix.GetPosition(worldPos);
-	float fGroundHeight = static_cast<CEntity*>(m_pParent)->GetGroundHeight(worldPos.m_x, worldPos.m_z);
+	float fGroundHeight = static_cast<CEntity*>(m_pParent)->GetGroundHeight(worldPos.m_x, worldPos.m_z) + m_pScene->GetGroundMargin();
 	float fEntityY = localPos.m_y - h / 2.f;
 	if (fEntityY <= fGroundHeight + CBody::GetEpsilonError()) {
 		m_oBody.m_oSpeed.m_x = 0;
@@ -761,4 +768,10 @@ IGeometry* CEntity::GetBoundingGeometry()
 		pGeometry = m_pBoundingGeometry;
 
 	return pGeometry;
+}
+
+void CEntity::SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin)
+{
+	m_oPairLoadRessourceCallback.first = callback;
+	m_oPairLoadRessourceCallback.second = plugin;
 }

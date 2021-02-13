@@ -53,6 +53,7 @@ public:
 	void			Play( bool bLoop );
 	void			Pause( bool bPause );
 	void			Stop();
+	float			GetSpeed();
 	void			SetSpeed( float fSpeed );
 	void			Update();
 	bool			GetPause();

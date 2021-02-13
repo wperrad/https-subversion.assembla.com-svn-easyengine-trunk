@@ -69,16 +69,17 @@ public:
 	virtual TFace				GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeometry& lastPositionBox, CVector& R) = 0;
 };
 
-class IQuad : public IGeometry
-{
-public:
-	virtual void				GetDimension(float& lenght, float& width) = 0;
-};
-
 class ILine
 {
 public:
 	virtual void			GetPoints(CVector& first, CVector& last) const = 0;
+};
+
+class IQuad : public IGeometry
+{
+public:
+	virtual void				GetDimension(float& lenght, float& width) = 0;
+	virtual void				GetLineIntersection(const CVector& A, const CVector& B, CVector& I) = 0;
 };
 
 class IBox : public IGeometry
@@ -115,7 +116,7 @@ public:
 };
 
 
-class ISegment
+class ISegment : public IGeometry
 {
 public:
 	virtual ~ISegment() = 0{}

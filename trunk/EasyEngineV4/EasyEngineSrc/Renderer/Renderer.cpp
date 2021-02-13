@@ -120,10 +120,15 @@ void CRenderer::InitOpengl()
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 }
 
-void CRenderer::SetBackgroundColor( int r, int g, int b, int a )
+void CRenderer::SetBackgroundColor(const CVector& vColor)
 {
-	m_vBackgroundColor = CVector( (float)r / 255., (float)g / 255., (float)b / 255. );
-	glClearColor( m_vBackgroundColor.m_x, m_vBackgroundColor.m_y, m_vBackgroundColor.m_z, m_vBackgroundColor.m_w );
+	m_vBackgroundColor = vColor;
+	glClearColor(vColor.m_x, vColor.m_y, vColor.m_z, vColor.m_w);	
+}
+
+void CRenderer::SetBackgroundColor( float r, float g, float b, float a )
+{
+	SetBackgroundColor(CVector(r, g, b, a));
 }
 
 void CRenderer::GetBackgroundColor( CVector& vColor )

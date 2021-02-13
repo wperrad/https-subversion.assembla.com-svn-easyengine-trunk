@@ -9,6 +9,7 @@ class IGeometryManager;
 class CMobileEntity;
 class IAEntity;
 class CEntity;
+class CPlayer;
 
 class CEntityManager : public IEntityManager
 {
@@ -22,7 +23,6 @@ class CEntityManager : public IEntityManager
 	map< string, IEntity* >					m_mNameEntities;
 	map< IEntity*, string >					m_mEntitiesName;
 	int										m_nLastEntityID;
-	CMobileEntity*							m_pPerso;
 	IFileSystem&							m_oFileSystem;
 	ICollisionManager&						m_oCollisionManager;
 	ICameraManager&							m_oCameraManager;
@@ -35,6 +35,7 @@ class CEntityManager : public IEntityManager
 	map< IFighterEntity*, int >				m_mFighterEntities;
 	map< IFighterEntity*, int >::iterator	m_itCurrentFighterEntity;
 	IGUIManager*							m_pGUIManager;
+	CPlayer*								m_pPlayer;
 
 public:
 	CEntityManager( const Desc& oDesc );
@@ -46,6 +47,8 @@ public:
 	IEntity*			CreateTestEntity(string sFileName, IFileSystem* pFileSystem);
 	IEntity*			CreateMobileEntity( string sFileNamee, IFileSystem* pFileSystem );
 	IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem);
+	void				SetPlayer(IPlayer* player);
+	IPlayer*			GetPlayer();
 	IEntity*			GetEntity( int nEntityID );
 	IEntity*			GetEntity( string sEntityName );
 	int					GetEntityID( IEntity* pEntity );
@@ -57,8 +60,6 @@ public:
 	void				Clear();
 	void				AddEntity( IEntity* pEntity, string sEntityName = "noname", int nID = -1 );
 	void				SetZCollisionError( float e );
-	void				SetPerso( IEntity* pPerso );
-	IEntity*			GetPerso();
 	IEntity*			CreateSphere( float fSize );
 	IEntity*			CreateQuad(float lenght, float width);
 	IEntity*			CreateBox( IRenderer& oRenderer, const CVector& oDimension );

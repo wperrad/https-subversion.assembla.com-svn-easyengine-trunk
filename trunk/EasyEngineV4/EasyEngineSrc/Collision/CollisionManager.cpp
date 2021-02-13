@@ -6,7 +6,8 @@
 #include "IGeometry.h"
 #include "Utils2/RenderUtils.h"
 #include "IEntity.h"
-
+#include "Interface.h"
+#include <set>
 
 IMesh* CCollisionManager::s_pMesh = NULL;
 
@@ -29,7 +30,9 @@ m_fGridHeight(800.f),
 m_pCollisionGrid(NULL),
 m_pScene(NULL),
 m_fScreenRatio(m_fScreenRatio),
-m_pEntityManager(NULL)
+m_pEntityManager(NULL),
+m_bEnableHMHack(true),
+m_bEnableHMHack2(false)
 {
 	g_pCurrentCollisionManager = this;
 	m_oRenderer.GetResolution(m_nScreenWidth, m_nScreenHeight);
@@ -274,11 +277,24 @@ void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos&
 		maxLenght = pBox->GetDimension().m_z;
 	
 	ComputeGroundMapDimensions(pGround, m_fGroundMapWidth, m_fGroundMapHeight, m_fWorldToScreenScaleFactor);
+	if(m_bEnableHMHack)
+		m_fWorldToScreenScaleFactor *= 1.70068f;
+	else if (m_bEnableHMHack2) {
+		m_fWorldToScreenScaleFactor *= 2.55103f;
+	}
 	float fOriginMapX = ((float)nWidth - m_fGroundMapWidth) / 2.f;
 	float fOriginMapY = ((float)nHeight - m_fGroundMapHeight) / 2.f;
 
 	pHMShader->SendUniformValues("h", pBox->GetDimension().m_y);
-	pHMShader->SendUniformValues("zMin", pBox->GetMinPoint().m_y);
+	float zmin = pBox->GetMinPoint().m_y;
+	if (m_bEnableHMHack) {
+		zmin += 210.f; // temporary hack
+	}
+	else if (m_bEnableHMHack2) {
+		static float value = 210.f;
+		zmin += value; // temporary hack
+	}
+	pHMShader->SendUniformValues("zMin", zmin);
 	pHMShader->SendUniformValues("scale", m_fWorldToScreenScaleFactor);
 
 	CMatrix oBakProj;
@@ -298,6 +314,102 @@ void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos&
 	pHMShader->Enable(false);
 	pGround->SetShader(pOrgShader);
 	m_oRenderer.SetProjectionMatrix(oBakProj);
+}
+
+void CCollisionManager::CreateHeightMap(string sFileName)
+{
+	if (sFileName.find(".bme") == -1)
+		sFileName += ".bme";
+	IEntity* pEntity = NULL;
+	try
+	{
+		pEntity = m_pEntityManager->CreateEntity(sFileName, "", m_oRenderer);
+	}
+	catch (CEException& e)
+	{
+		string sError;
+		e.GetErrorMessage(sError);
+		string s = string("Erreur : ") + sError;
+		throw e;
+	}
+	if (pEntity)
+	{
+		IMesh* pMesh = dynamic_cast< IMesh* >(pEntity->GetRessource());
+		if (pMesh)
+		{
+			IMesh* pGround = static_cast<IMesh*>(m_pScene->GetRessource());
+			string sSceneFileName;
+			pGround->GetFileName(sSceneFileName);
+			if (sSceneFileName == sFileName)
+				EnableHMHack(true);
+			else
+				EnableHMHack2(true);
+			ILoader::CTextureInfos ti;
+			CreateHeightMap(pMesh, ti, IRenderer::T_BGR);
+			ti.m_ePixelFormat = ILoader::eBGR;
+			string sTextureFileName = sFileName.substr(0, sFileName.find('.'));
+			sTextureFileName = string("HM_") + sTextureFileName + ".bmp";
+			m_oLoaderManager.Export(sTextureFileName, ti);
+		}
+	}
+}
+
+void CCollisionManager::CreateHeightMapWithoutRender(string sFileName)
+{
+	ILoader::CTextureInfos ti;
+	ILoader::CAnimatableMeshData ami;
+	m_oLoaderManager.Load(sFileName, ami);
+	ILoader::CMeshInfos& mi = ami.m_vMeshes[0];
+	CVector dim = mi.m_pBoundingBox->GetDimension();
+	int nCellCount = dim.m_x * dim.m_z;
+	int quadCount = mi.m_vIndex.size() / 6;
+	set<float> setx;
+	set<float> sety;
+	set<float> setz;
+	map<pair<float, float>, float> mxz;
+	float ymin = mi.m_vVertex[1];
+	float ymax = ymin;
+	for (int i = 0; i < mi.m_vVertex.size() / 3; i++) {
+		float x = mi.m_vVertex[3 * i];
+		float y = mi.m_vVertex[3 * i + 1];
+		float z = mi.m_vVertex[3 * i + 2];
+		setx.insert(x);
+		sety.insert(y);
+		setz.insert(z);
+		mxz[pair<float, float>(x, z)] = y;
+		if (ymin > y)
+			ymin = y;
+		if (ymax < y)
+			ymax = y;
+	}
+	float d = dim.m_x / setx.size();
+	int width = 64; // setx.size() + 1;
+	int height = 64; // setz.size() + 1;
+	ti.m_vTexels.resize(3 * width * height);
+	memset(&ti.m_vTexels[0], 0, ti.m_vTexels.size());
+
+	
+	for (map<pair<float, float>, float>::iterator it = mxz.begin(); it != mxz.end(); it++) {
+		float x = it->first.first;
+		float y = it->second;
+		float z = it->first.second;
+		x += dim.m_x / 2.f;
+		z += dim.m_z / 2.f;
+		int pixelx = x / d;
+		int pixelz = z / d;
+		int pixelIndex = pixelx + pixelz * setx.size();
+		if (pixelIndex < ti.m_vTexels.size()/3) {
+			ti.m_vTexels[3 * pixelIndex] = 255 * (0.5f + y / dim.m_y);
+			ti.m_vTexels[3 * pixelIndex + 1] = 255 * (0.5f + y / dim.m_y);
+			ti.m_vTexels[3 * pixelIndex + 2] = 255 * (0.5f + y / dim.m_y);
+		}
+	}
+	ti.m_nWidth = width;
+	ti.m_nHeight = height;
+	ti.m_ePixelFormat = ILoader::eBGR;
+	string groundName = sFileName.substr(0, sFileName.find('.'));
+	string textureFileName = "HM_" + groundName + "_test.bmp";
+	m_oLoaderManager.Export(textureFileName, ti);
 }
 
 void CCollisionManager::GetOriginalShaders(const vector<IEntity*>& staticObjects, vector<IShader*>& vBackupStaticObjectShader)
@@ -326,7 +438,7 @@ void CCollisionManager::RestoreOriginalShaders(const vector<IShader*>& vBackupSt
 
 void CCollisionManager::OnRenderHeightMap( IRenderer* pRenderer )
 {
-	pRenderer->SetBackgroundColor( 0, 0, 255 );
+	pRenderer->SetBackgroundColor( 0, 0, 1 );
 
 	IShader* pOrgShader = s_pMesh->GetShader();
 	IShader* pHMShader = pRenderer->GetShader( "hm" );
@@ -721,6 +833,18 @@ void CCollisionManager::ConvertLinearToCoord(int pixelNumber, int& x, int& y)
 {
 	x = pixelNumber / 3 - pixelNumber / (3 * m_oCollisionMap.m_nWidth) * m_oCollisionMap.m_nWidth;
 	y = pixelNumber / (3 * m_oCollisionMap.m_nWidth);
+}
+
+void CCollisionManager::EnableHMHack(bool enable)
+{
+	m_bEnableHMHack2 = !enable;
+	m_bEnableHMHack = enable;
+}
+
+void CCollisionManager::EnableHMHack2(bool enable)
+{
+	m_bEnableHMHack = !enable;
+	m_bEnableHMHack2 = enable;
 }
 
 bool CCollisionManager::TestCellObstacle(int row, int column)

@@ -25,7 +25,6 @@ m_fEyesRotH( 0 ),
 m_fEyesRotV( 0 ),
 m_fNeckRotH( 0 ),
 m_fNeckRotV( 0 ),
-m_bPerso( false ),
 m_bFirstUpdate(true)
 {
 	m_sTypeName = "Human";
@@ -205,7 +204,8 @@ void CMobileEntity::UpdateCollision()
 		}
 	}
 	// Ground collision
-	float fGroundHeight = static_cast<CEntity*>(m_pParent)->GetGroundHeight(localPos.m_x, localPos.m_z);
+	const float margin = 7.f;
+	float fGroundHeight = static_cast<CEntity*>(m_pParent)->GetGroundHeight(localPos.m_x, localPos.m_z) + margin;
 	float fEntityY = last.m_y - h / 2.f;
 	if (fEntityY <= fGroundHeight + CBody::GetEpsilonError()) {
 		m_oBody.m_oSpeed.m_x = 0;
@@ -247,11 +247,6 @@ void CMobileEntity::WearArmor(string armorName)
 		if (pBone)
 			LinkEntityToBone(pArmorPiece, pBone, ePreserveChildRelativeTM);
 	}
-}
-
-void CMobileEntity::SetCurrentPerso( bool bPerso )
-{
-	m_bPerso = bPerso;
 }
 
 void CMobileEntity::RunAction( string sAction, bool bLoop )
@@ -422,6 +417,11 @@ void CMobileEntity::SetAnimationSpeed( IEntity::TAnimation eAnimationType, float
 {
 	m_mAnimations[ eAnimationType ]->SetSpeed(fSpeed);
 	m_mAnimationSpeedByType[ eAnimationType ] = s_mOrgAnimationSpeedByType[ eAnimationType ] * fSpeed;
+}
+
+float CMobileEntity::GetAnimationSpeed(IEntity::TAnimation eAnimationType)
+{
+	return m_mAnimations[eAnimationType]->GetSpeed();
 }
 
 IEntity::TAnimation CMobileEntity::GetCurrentAnimationType() const

@@ -154,10 +154,11 @@ public:
 
 	struct CEntityInfos : public CSceneObjInfos
 	{
-		string						m_sAnimationFileName;
-		float						m_fWeight;
-		string						m_sTypeName;
-		vector< CEntityInfos* >		m_vSubEntityInfos;
+		string								m_sAnimationFileName;
+		map< string, float>					m_mAnimationSpeed;
+		float								m_fWeight;
+		string								m_sTypeName;
+		vector< CEntityInfos* >				m_vSubEntityInfos;
 	};
 
 	struct CLightEntityInfos : public CSceneObjInfos
@@ -171,7 +172,8 @@ public:
 	{
 		vector< CSceneObjInfos* >	m_vObject;
 		string						m_sSceneFileName;
-		string						m_sPersoName;
+		string						m_sOriginalSceneFileName;
+		CVector						m_oBackgroundColor;
 	};
 
 	struct CCollisionModelInfos : public IRessourceInfos

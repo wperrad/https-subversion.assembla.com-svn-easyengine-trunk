@@ -216,7 +216,8 @@ public:
 	bool						IsDisplayDebugInfos() const;
 	void						SetCurrentObjectLocalTM( CMatrix& m );
 	void						SetCurrentCameraMatrix( CMatrix& m );
-	void						SetBackgroundColor( int r, int g, int b, int a = 255 );
+	void						SetBackgroundColor(const CVector& vColor);
+	void						SetBackgroundColor( float r, float g, float b, float a = 1.f );
 	void						GetBackgroundColor( CVector& vColor );
 	void						ReadPixels( int x, int y, int width, int height, vector< unsigned char >& vPixels, TPixelFormat format );
 	void						LockCamera(bool lock);

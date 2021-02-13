@@ -138,6 +138,11 @@ bool CAnimation::GetPause()
 	return m_bPause;
 }
 
+float CAnimation::GetSpeed()
+{
+	return m_fSpeed;
+}
+
 void CAnimation::SetSpeed( float fSpeed )
 {
 	m_fSpeed = fSpeed;

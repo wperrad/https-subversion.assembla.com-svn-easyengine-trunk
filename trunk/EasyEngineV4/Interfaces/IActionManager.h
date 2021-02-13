@@ -24,7 +24,7 @@ public:
 	{
 		IInputManager&	m_oInputManager;
 		Desc( IInputManager& oInputManager ) : 
-			CPlugin::Desc( NULL, "" ),
+			CPlugin::Desc( NULL, "ActionManager" ),
 			m_oInputManager( oInputManager ){}
 	};
 

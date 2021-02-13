@@ -138,6 +138,11 @@ float CVirtualProcessor::GetVariableValue(string varName)
 	return -1.f;
 }
 
+float CVirtualProcessor::GetRegisterValue(CRegister::TType reg)
+{
+	return *m_vRegAddr[reg];
+}
+
 void CVirtualProcessor::MovRegReg( unsigned char* pOperand )
 {
 	int r1 = pOperand[ 0 ] >> 4;

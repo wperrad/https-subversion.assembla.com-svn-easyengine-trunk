@@ -69,7 +69,10 @@ ICamera* CCameraManager::GetActiveCamera()
 
 ICameraManager::TCameraType	CCameraManager::GetCameraType( ICamera* pCamera ) 
 {
-	return m_mCameraType[ pCamera ];
+	map< ICamera*, TCameraType >::iterator itCamera = m_mCameraType.find(pCamera);
+	if (itCamera != m_mCameraType.end())
+		return itCamera->second;
+	return T_NONE;
 }
 
 ICamera* CCameraManager::GetCameraFromType( TCameraType type )

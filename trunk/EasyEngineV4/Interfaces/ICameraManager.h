@@ -28,6 +28,7 @@ public:
 
 	enum TCameraType
 	{ 
+		T_NONE,
 		T_FREE_CAMERA, 
 		T_LINKED_CAMERA,
 		T_MAP_CAMERA,

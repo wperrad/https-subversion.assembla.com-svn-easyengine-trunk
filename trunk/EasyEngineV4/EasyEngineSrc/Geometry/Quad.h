@@ -7,6 +7,7 @@ class CQuad : public IQuad
 {
 public :
 	CQuad(float fLenght, float fWidth);
+	void				GetLineIntersection(const CVector& A, const CVector& B, CVector& I);
 	void				GetDimension(float& lenght, float& width);
 	bool				IsIntersect(const IGeometry& oGeometry) const;
 	void				SetTM(const CMatrix& m);
@@ -32,6 +33,7 @@ public :
 
 
 private:
+	void			ComputeNormal(CVector& n) const;
 	float			m_fLenght;
 	float			m_fWidth;
 	CMatrix			m_oTM;

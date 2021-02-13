@@ -48,6 +48,10 @@ class CCollisionManager : public ICollisionManager
 	vector<IEntity*>			m_vGridElements;
 	ILoader::CTextureInfos		m_oCollisionMap;
 
+	// Height map
+	bool						m_bEnableHMHack;
+	bool						m_bEnableHMHack2;
+
 	// temp
 	IEntityManager*				m_pEntityManager;
 	// fin temp
@@ -77,13 +81,19 @@ class CCollisionManager : public ICollisionManager
 	float WorldToPixel(float worldLenght);
 	void ConvertLinearToCoord(int pixelNumber, int& x, int& y);
 
+	// Height map
+	void EnableHMHack(bool enable);
+	void EnableHMHack2(bool enable);
+
 	// Path finding
 	void FindPath(float fromX, float fromY, float toX, float toY, IEntityManager* pEntityManager);
 
 public:	
 
 	CCollisionManager( const Desc& oDesc );
-	void	CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos& ti , IRenderer::TPixelFormat format = IRenderer::T_RGB );	
+	void	CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos& ti , IRenderer::TPixelFormat format = IRenderer::T_RGB );
+	void	CreateHeightMap(string sFileName);
+	void	CreateHeightMapWithoutRender(string sFileName);
 	int		LoadHeightMap( string sFileName, IMesh* pMesh );
 	void	LoadHeightMap( string sFileName, vector< vector< unsigned char > >& vPixels  );
 	float	GetMapHeight( int nHeightMapID, float x, float z );

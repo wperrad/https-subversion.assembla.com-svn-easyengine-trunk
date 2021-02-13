@@ -1,13 +1,12 @@
 // testFenetre.cpp : Defines the entry point for the application.
 //
 
-#include "stdafx.h"
 #include "testFenetre.h"
-
 #include "IPathFinder.h"
 #include <map>
 #include <string>
 #include <commdlg.h>
+#include "Interface.h"
 
 using namespace std;
 
@@ -50,7 +49,6 @@ COLORREF closeColor = 0xff;
 COLORREF obstacleColor = 0x999999;
 COLORREF pathColor = 0x0099ff;
 
-map<string, CPlugin*> CPlugin::s_mPlugins;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -506,6 +504,9 @@ void Reset(HWND hWnd, bool resetObstacles)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	EEInterface* pInterface = new EEInterface;
+	CPlugin::SetEngineInterface(pInterface);
+
 	int x, y, row, column;
 	switch (message)
 	{

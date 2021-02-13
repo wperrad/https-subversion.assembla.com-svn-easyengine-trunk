@@ -108,6 +108,52 @@ void SetEditionMode(IScriptState* pState)
 	m_pEditor->SetEditionMode(pEnable->m_nValue == 0 ? false : true);
 }
 
+void PutEntityIntoScene(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sName = pName->m_sValue;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
+	m_pRessourceManager->EnableCatchingException(false);
+	try
+	{
+		m_pEditor->SetEditionMode(true);
+		m_pEditor->AddEntity(sName);
+	}
+	catch (CFileNotFoundException& e)
+	{
+		string sMessage = string("Erreur : fichier \"") + e.m_sFileName + "\" manquant.";
+		m_pConsole->Println(sMessage);
+	}
+	catch (CRessourceException& e)
+	{
+		string s;
+		e.GetErrorMessage(s);
+		m_pConsole->Println(s);
+	}
+	catch (CBadFileFormat)
+	{
+		ostringstream oss;
+		oss << "\"" << sName << "\" : Mauvais format de fichier, essayez de le réexporter";
+		m_pConsole->Println(oss.str());
+	}
+	catch (CEException& e)
+	{
+		m_pConsole->Println(e.what());
+	}
+	m_pRessourceManager->EnableCatchingException(bak);
+}
+
+void SaveGround(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sName = pName->m_sValue;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	m_pEditor->SaveGround(sName);
+}
+
 void ShowGUICursor(IScriptState* pState)
 {
 	CScriptFuncArgInt* pShowCursor = (CScriptFuncArgInt*)pState->GetArg(0);
@@ -254,7 +300,8 @@ void RayTrace(IScriptState* pState)
 
 void CreateRepere( IScriptState* pState )
 {
-	IEntity* pRepere = m_pEntityManager->CreateRepere( *m_pRenderer );
+	IEntity* pRepere = m_pEntityManager->CreateRepere(*m_pRenderer);
+	pRepere->Link(m_pScene);
 	ostringstream oss;
 	oss << "Le repère a été créé avec l'identifiant " << m_pEntityManager->GetEntityID( pRepere )  << ".";
 	m_pConsole->Println( oss.str() );
@@ -527,9 +574,9 @@ void SetCameraType( IScriptState* pState )
 
 		if (pCamType->m_sValue == "link")
 		{
-			IEntity* pPerso = m_pEntityManager->GetPerso();
-			if (pPerso)
-				pCamera->Link(pPerso);
+			IPlayer* player = m_pEntityManager->GetPlayer();
+			if (player)
+				pCamera->Link(dynamic_cast<IEntity*>(player));
 			else
 				m_pConsole->Println("Erreur : vous devez définir un personnage (fonction SetCurrentPerso(persoID)) avant de définir une caméra liée.");
 		}
@@ -585,13 +632,18 @@ void SetCurrentPerso( IScriptState* pState )
 	CScriptFuncArgInt* pPersoID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	IEntity* pPerso = m_pEntityManager->GetEntity( pPersoID->m_nValue );
 	if(pPerso)
-		m_pEntityManager->SetPerso( pPerso );
+		m_pEntityManager->SetPlayer( dynamic_cast<IPlayer*>(pPerso) );
 	else
 	{
 		ostringstream oss;
 		oss << "Erreur : SetCurrentPerso(" << pPersoID->m_nValue << ") -> Id not exists";
 		m_pConsole->Println(oss.str());
 	}		
+}
+
+void GetPlayerId(IScriptState* pState)
+{
+	pState->SetReturnValue(m_pEntityManager->GetEntityID(dynamic_cast<IEntity*>(m_pEntityManager->GetPlayer())));
 }
 
 void SetGravity( IScriptState* pState )
@@ -675,7 +727,7 @@ void SetAnimationSpeed( IScriptState* pState )
 			m_pConsole->Println(oss.str());
 			return;
 		}
-		pEntity->SetAnimationSpeed( eAnim, pSpeed->m_fValue );		
+		pEntity->SetAnimationSpeed( eAnim, pSpeed->m_fValue );
 	}
 	else
 	{
@@ -1574,14 +1626,6 @@ void DisplayLightIntensity( IScriptState* pState )
 	m_pConsole->Println( oss.str() );
 }
 
-void SetReperePos( IScriptState* pState )
-{
-	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 0 ) );
-	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
-	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
-	m_pRepere->SetLocalPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
-}
-
 void RunScript( string sFileName )
 {
 	FILE* pFile = m_pFileSystem->OpenFile( sFileName, "r" );
@@ -1878,6 +1922,13 @@ void CreateHM( IScriptState* pState )
 		IMesh* pMesh = dynamic_cast< IMesh* >( pEntity->GetRessource() );
 		if( pMesh )
 		{
+			IMesh* pGround = static_cast<IMesh*>(m_pScene->GetRessource());
+			string sSceneFileName;
+			pGround->GetFileName(sSceneFileName);
+			if (sSceneFileName == sFileName)
+				m_pCollisionManager->EnableHMHack(true);
+			else
+				m_pCollisionManager->EnableHMHack2(true);
 			ILoader::CTextureInfos ti;
 			m_pCollisionManager->CreateHeightMap( pMesh, ti, IRenderer::T_BGR );
 			ti.m_ePixelFormat = ILoader::eBGR;
@@ -1887,6 +1938,26 @@ void CreateHM( IScriptState* pState )
 	}
 	else
 		m_pConsole->Println( "Une erreur s'est produite lors de la création de l'entité" );
+}
+
+void CreateHMFromFile(IScriptState* pState)
+{
+	CScriptFuncArgString* pString = static_cast<CScriptFuncArgString*>(pState->GetArg(0));
+	string sFileName = pString->m_sValue;
+	if (sFileName.find(".bme") == -1)
+		sFileName += ".bme";
+	IEntity* pEntity = NULL;
+	try
+	{
+		m_pCollisionManager->CreateHeightMap(sFileName);
+	}
+	catch (CEException& e)
+	{
+		string sError;
+		e.GetErrorMessage(sError);
+		string s = string("Erreur : ") + sError;
+		m_pConsole->Println(s);
+	}
 }
 
 void CreateCollisionMap(IScriptState* pState)
@@ -2141,7 +2212,7 @@ void SetBkgColor( IScriptState* pState )
 		CScriptFuncArgInt* pArg = static_cast< CScriptFuncArgInt* >( pState->GetArg( i ) );
 		v.push_back( pArg->m_nValue );
 	}
-	m_pRenderer->SetBackgroundColor( v[0 ], v[ 1 ], v[ 2 ], 1 );
+	m_pRenderer->SetBackgroundColor( (float)v[0 ] / 255.f, (float)v[ 1 ] / 255.f, (float)v[ 2 ] / 255.f, 1 );
 }
 
 void DisplayCamPos( IScriptState* pState )
@@ -2545,13 +2616,74 @@ void ResetFreeCamera(IScriptState* pState)
 	pFreeCamera->SetLocalMatrix(m);
 }
 
+void PrintReg(IScriptState* pState)
+{
+	CScriptFuncArgString* pReg = (CScriptFuncArgString*)pState->GetArg(0);
+	float regValue = m_pScriptManager->GetRegisterValue(pReg->m_sValue);
+	m_pConsole->Print(regValue);
+}
+
+void DisplayGroundHeight(IScriptState* pState)
+{
+	CScriptFuncArgFloat* px = (CScriptFuncArgFloat*)pState->GetArg(0);
+	CScriptFuncArgFloat* pz = (CScriptFuncArgFloat*)pState->GetArg(1);
+	float h = m_pCollisionManager->GetMapHeight(0, px->m_fValue, pz->m_fValue);
+	m_pConsole->Println(h);
+}
+
+void SetGroundAdaptationHeight(IScriptState* pState)
+{
+	CScriptFuncArgFloat* pHeight = (CScriptFuncArgFloat*)pState->GetArg(0);
+	m_pEditor->SetGroundAdaptationHeight(pHeight->m_fValue);
+}
+
+void SetGroundMargin(IScriptState* pState)
+{
+	CScriptFuncArgFloat* pMargin = (CScriptFuncArgFloat*)pState->GetArg(0);
+	IScene* pScene = dynamic_cast<IScene*>(m_pScene);
+	pScene->SetGroundMargin(pMargin->m_fValue);
+}
+
+void DisplayGroundMargin(IScriptState* pState)
+{
+	IScene* pScene = dynamic_cast<IScene*>(m_pScene); ;
+	m_pConsole->Println(pScene->GetGroundMargin());
+}
+
 void RegisterAllFunctions( IScriptManager* pScriptManager )
 {
 	vector< TFuncArgType > vType;
 
 	vType.clear();
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("SetGroundMargin", SetGroundMargin, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("GetPlayerId", GetPlayerId, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayGroundMargin", DisplayGroundMargin, vType);
+
+	vType.clear();
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("DisplayGroundHeight", DisplayGroundHeight, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("PutEntityIntoScene", PutEntityIntoScene, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("PrintReg", PrintReg, vType);
+	
+	vType.clear();
 	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("SetEditionMode", SetEditionMode, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("SaveGround", SaveGround, vType);
 
 	vType.clear();
 	vType.push_back(eInt);
@@ -2727,6 +2859,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "CreateHM", CreateHM, vType );
 
 	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("CreateHMFromFile", CreateHMFromFile, vType);
+
+	vType.clear();
 	m_pScriptManager->RegisterFunction("CreateCollisionMap", CreateCollisionMap, vType);
 
 	vType.clear();
@@ -2773,11 +2909,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back( eFloat );
 	m_pScriptManager->RegisterFunction( "SetCamPos", SetCamPos, vType );
 
-	vType.clear();
-	vType.push_back( eFloat );
-	vType.push_back( eFloat );
-	vType.push_back( eFloat );
-	m_pScriptManager->RegisterFunction( "SetReperePos", SetReperePos, vType );
 
 	vType.clear();
 	vType.push_back( eString );

@@ -239,13 +239,16 @@ float IAEntity::GetDestinationAngleRemaining()
 	GetPosition( oThisPosition );
 	oThisPosition = CVector( oThisPosition.m_x, 0, oThisPosition.m_z );
 	CVector oDirection = oTempPosition - oThisPosition;
+	if (oDirection == CVector(0, 0, 0)) {
+		return 0.f;
+	}
 	return GetAngleBetween2Vectors(oBefore, oDirection);
 }
 
 float IAEntity::GetAngleBetween2Vectors(CVector& v1, CVector& v2)
 {
 	float n = (v1.Norm() * v2.Norm());
-	float cosAlpha;
+	float cosAlpha = 0;
 	if (n != 0)
 		cosAlpha = (v1 * v2) / n;
 	if (cosAlpha > 1.f) cosAlpha = 1.f;

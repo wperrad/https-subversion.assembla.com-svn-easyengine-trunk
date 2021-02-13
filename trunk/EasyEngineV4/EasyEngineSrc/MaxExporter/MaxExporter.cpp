@@ -1,3 +1,6 @@
+#include "Interface.h"
+
+
 #include "MaxExporter.h"
 #include "3dsmaxport.h"
 #include <sstream>
@@ -57,6 +60,8 @@ CMaxExporter::CMaxExporter():
 g_bInterruptExport( false ),
 m_bOpenglCoord(true)
 {
+	EEInterface* pInterface = new EEInterface;
+	CPlugin::SetEngineInterface(pInterface);
 	IGeometryManager::Desc oGMDesc(NULL, "");
 	m_pGeometryManager = static_cast< IGeometryManager* >(CPlugin::Create(oGMDesc, "stdplugs\\EasyEngine\\Geometry.dll", "CreateGeometryManager"));
 	IFileSystem::Desc oFSDesc(NULL, "");

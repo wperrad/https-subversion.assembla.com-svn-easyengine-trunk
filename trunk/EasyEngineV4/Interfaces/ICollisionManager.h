@@ -28,7 +28,7 @@ public:
 		IFileSystem*		m_pFileSystem;
 		IGeometryManager&	m_oGeometryManager;
 		Desc( IRenderer& oRenderer, ILoaderManager& oLoaderManager, IGeometryManager& oGeometryManager) :
-			CPlugin::Desc( NULL, "" ), 
+			CPlugin::Desc( NULL, "CollisionManager" ), 
 			m_oRenderer( oRenderer ),
 			m_oLoaderManager( oLoaderManager ),
 			m_pFileSystem( NULL ),
@@ -36,6 +36,7 @@ public:
 	};
 	ICollisionManager( const Desc& oDesc ) : CPlugin( NULL, "" ){}
 	virtual void	CreateHeightMap( IMesh* pMesh, ILoader::CTextureInfos& ti, IRenderer::TPixelFormat format = IRenderer::T_RGB ) = 0;	
+	virtual void	CreateHeightMap( string sFileName) = 0;
 	virtual void	LoadHeightMap( string sFileName, vector< vector< unsigned char > >& vPixels  ) = 0;
 	virtual int		LoadHeightMap( string sFileName, IMesh* pMesh ) = 0;
 	virtual float	GetMapHeight( int nHeightMapID, float xModel, float yModel ) = 0;
@@ -61,6 +62,9 @@ public:
 	virtual void	GetCellCoordFromPosition(float x, float y, int& row, int& column) = 0;
 	virtual void	GetPositionFromCellCoord(int row, int column, float& x, float& y) = 0;
 	virtual bool	TestCellObstacle(int iRow, int iColumn) = 0;
+
+	virtual void	EnableHMHack(bool enable) = 0;
+	virtual void	EnableHMHack2(bool enable) = 0;
 
 	// temp
 	virtual void	Test(IEntityManager* pEntityManager) = 0;

@@ -76,8 +76,10 @@ public:
 	void											Open( bool bOpen );
 	void											Print(string s);
 	void											Print(int i);
+	void											Print(float f);
 	void											Println(string s);
 	void											Println(int i);
+	void											Println(float f);
 	void											Print2D(string s);
 	void											SetBlink( bool blink );
 	int												GetConsoleShortCut();

@@ -419,6 +419,14 @@ void CConsole::Print(int i)
 	Print(oss.str());
 }
 
+void CConsole::Print(float f)
+{
+	ostringstream oss;
+	oss << f;
+	Println(oss.str());
+	Print(oss.str());
+}
+
 void CConsole::Println(string s)
 {
 	Print(s);
@@ -433,6 +441,12 @@ void CConsole::Println(int i)
 	Println(oss.str());
 }
 
+void CConsole::Println(float f)
+{
+	ostringstream oss;
+	oss << f;
+	Println(oss.str());
+}
 
 int CConsole::GetConsoleShortCut()
 {
