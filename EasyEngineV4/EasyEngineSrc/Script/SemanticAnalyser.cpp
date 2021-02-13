@@ -143,13 +143,6 @@ void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 				CompleteSyntaxicTree( oTree.m_vChild[ i ] );
 		}
 	}
-	else if( oTree.m_Lexem.m_eType == CLexAnalyser::CLexem::eVar )
-	{
-		AddNewVariable(oTree);
-		
-		for( unsigned int i = 0; i < oTree.m_vChild.size(); i++ )
-			CompleteSyntaxicTree( oTree.m_vChild[ i ] );
-	}
 	else
 	{
 		for( unsigned int i = 0; i < oTree.m_vChild.size(); i++ )

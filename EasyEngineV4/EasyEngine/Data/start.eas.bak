@@ -1,60 +1,66 @@
+CreateRepere();
+
+OpenConsole(0);
+
 SetBkgColor(0, 100, 255);
-SetSceneMap("terrain");
+SetSceneMap("ground005");
 
-l=AddLightw("omni", 4000);
-SetEntityPos(l, 0, 10000, 55000);
+light1=AddLightw("omni", 4000);
+SetEntityPos(light1, 0, 20000, 50000);
 
-l=AddLightw("omni", 75000);
-SetEntityPos(l, 0, 75000, -260000);
 
-p=CreateMobileEntity("testExport14");
-SetEntityName(p, "Entity12");
-SetCurrentPerso(p);
-Stand(p);
-SetAnimationSpeed(p, "run", 1.5);
+light2=AddLightw("omni", 75000);
+SetEntityPos(light2, 0, 75000, -260000);
 
-a = LoadEntity("Armors\2\Armure2_cuirasse");
-Link(a, -1, 12, 3, "preserve");
-a = LoadEntity("Armors\2\Armure2_jupe");
-Link(a, -1, 12, 1, "preserve");
-a = LoadEntity("Armors\2\Armure2_JambiereD");
-Link(a, -1, 12, 44, "preserve");
-a = LoadEntity("Armors\2\Armure2_JambiereG");
-Link(a, -1, 12, 49, "preserve");
-a = LoadEntity("Armors\2\Armure2_BrassiereD");
-Link(a, -1, 12, 9, "preserve");
-a = LoadEntity("Armors\2\Armure2_BrassiereG");
-Link(a, -1, 12, 27, "preserve");
-a = LoadEntity("Armors\2\Armure2_EpauletteD");
-Link(a, -1, 12, 7, "preserve");
-a = LoadEntity("Armors\2\Armure2_EpauletteG");
-Link(a, -1, 12, 25, "preserve");
 
-SetCameraType("link");
-SetFov(60);
+perso=CreatePlayer("testExport15");
 
-c = GetCameraID("link");
+SetEntityName(perso, "perso");
+SetCurrentPerso(perso);
+Stand(perso);
+SetAnimationSpeed(perso, "run", 2);
+SetAnimationSpeed(perso, "walk", 1.5);
+WearArmor(perso, "2");
 
-RollEntity(c, 180);
-PitchEntity(c, 80);
-LocalTranslate(c, 0, 120, 300);
+npc1 = CreateNPC("testExport15");
+Stand(npc1);
+SetEntityName(npc1, "NPC1");
+SetEntityPos(npc1, -200, 1000, 1000);
+WearArmor(npc1, "2");
 
-p = CreateNPC("testExport14");
-Stand(p);
-SetEntityPos(p, -200, 1000, 1000);
-SetEntityName(p, "Entity27");
+npc2 = CreateNPC("testExport15");
+Stand(npc2);
+SetEntityPos(npc2, 2000, 0, 0);
+SetEntityName(npc2, "NPC2");
+WearArmor(npc2, "2");
 
-p = CreateNPC("testExport14");
-Stand(p);
-SetEntityPos(p, 2000, 0, 0);
-SetEntityName(p, "Entity34");
+maison1 = LoadEntity("maison");
+SetEntityName(maison1, "maison1");
+SetEntityWeight(maison1, 1);
+SetEntityPos(maison1, 2000, 1000, 2000);
 
-p = LoadEntity("maison");
-SetEntityWeight(p, 1);
-SetEntityPos(p, 2000, 5000, 2000);
 
-p = LoadEntity("maison");
-SetEntityWeight(p, 1);
-SetEntityPos(p, 13000, 2000, -4000);
+maison2 = LoadEntity("maison");
+SetEntityName(maison2, "maison2");
+SetEntityWeight(maison2, 1);
+SetEntityPos(maison2, 13000, 1000, -4000);
 
-SetCameraType("free");
+temple=LoadEntity("parthenon.bme");
+SetEntityPos(temple, 0, 5000, 10000);
+SetEntityWeight(temple, 10);
+SetEntityName(temple, "Parthenon");
+
+
+socle=LoadEntity("socle.bme");
+SetEntityPos(socle, 5000, 5000, 12000);
+SetEntityWeight(socle, 10);
+SetEntityName(socle, "socle");
+
+
+map = CreateMapEntity("map-quad");
+SetEntityPos(map, -3000, 480, -3000);
+
+
+cube = CreateTestEntity("cubeTex");
+SetEntityPos(cube, 0, 1000, 1000);
+SetEntityWeight(cube, 1);

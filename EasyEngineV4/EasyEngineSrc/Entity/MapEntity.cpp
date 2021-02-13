@@ -28,6 +28,7 @@ CMapEntity::CMapEntity(
 	m_sFirstPassShaderName("mapFirstPass"),
 	m_sSecondPassShaderName("mapSecondPass3D")
 {
+	m_sTypeName = "MapEntity";
 	SetShader(m_oRenderer.GetShader(m_sSecondPassShaderName));
 }
 

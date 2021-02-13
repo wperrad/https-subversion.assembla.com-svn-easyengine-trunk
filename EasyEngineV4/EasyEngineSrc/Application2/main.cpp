@@ -35,12 +35,11 @@
 #include "IGeometry.h"
 #include "IPathFinder.h"
 #include "Editor.h"
+#include "Interface.h"
 
 #define CATCH_EXCEPTION
 
 using namespace std;
-
-map<string, CPlugin*> CPlugin::s_mPlugins;
 
 struct CGFXOption
 {
@@ -103,8 +102,6 @@ bool bCapture = false;
 
 void InitScene( ISceneManager* pSceneManager )
 {	
-	m_pRepere = m_pEntityManager->CreateRepere( *m_pRenderer );
-	m_pRepere->Link( m_pScene );
 	try
 	{
 		m_pConsole->Open(true);
@@ -169,7 +166,7 @@ void OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE s
 			m_pConsole->Open(!m_pConsole->IsOpen());
 		else if (!m_pConsole->IsOpen()) {
 			if (key == VK_TAB) {
-				IPlayer* player = dynamic_cast<IPlayer*>(m_pEntityManager->GetPerso());
+				IPlayer* player = m_pEntityManager->GetPlayer();
 				if (player)
 					player->ToggleDisplayPlayerWindow();
 			}
@@ -177,7 +174,7 @@ void OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE s
 				m_pGUIManager->ToggleDisplayMap();
 			else if (key == 'E')
 			{
-				IPlayer* pPlayer = dynamic_cast<IPlayer*>(m_pEntityManager->GetPerso());
+				IPlayer* pPlayer = m_pEntityManager->GetPlayer();
 				pPlayer->Action();
 			}
 		}
@@ -188,7 +185,7 @@ void UpdatePerso()
 {
 	if( !m_pConsole->IsOpen() && !m_pGUIManager->GetGUIMode())
 	{
-		IEntity* pPerso = m_pEntityManager->GetPerso();
+		IEntity* pPerso = dynamic_cast<IEntity*>(m_pEntityManager->GetPlayer());
 		if( pPerso )
 		{
 			IInputManager::KEY_STATE eStateWalk = m_pActionManager->GetKeyActionState( "AvancerPerso");
@@ -282,8 +279,10 @@ void OnRender( IRenderer* pRenderer )
 
 }
 
-void InitPlugins( string sCmdLine )
+EEInterface* InitPlugins( string sCmdLine )
 {
+	EEInterface* pInterface = new EEInterface;
+	CPlugin::SetEngineInterface(pInterface);
 	string sDirectoryName;
 #ifdef _DEBUG
 		sDirectoryName = "..\\..\\EasyEngine\\Debug\\";
@@ -303,7 +302,7 @@ void InitPlugins( string sCmdLine )
 	m_pFileSystem->Mount( "..\\data" );
 	m_pFileSystem->Mount( "..\\..\\EasyEngine\\data" );
 
-	IEventDispatcher::Desc oEventDispatcherDesc( NULL, "Event dispatcher " );
+	IEventDispatcher::Desc oEventDispatcherDesc( NULL, "EventDispatcher" );
 	m_pEventDispatcher = static_cast< IEventDispatcher* >( CPlugin::Create( oEventDispatcherDesc, sDirectoryName + "WindowsGUI.dll", "CreateEventDispatcher" ) );
 
 	RECT rect;
@@ -321,6 +320,7 @@ void InitPlugins( string sCmdLine )
 	IWindow::Desc oWindowDesc( nResX, nResY, "AC", *m_pEventDispatcher );
 	oWindowDesc.m_bFullscreen = oOption.m_bFullscreen;
 	oWindowDesc.m_nBits = 32;
+	oWindowDesc.m_sName = "Window";
 	m_pWindow = static_cast< IWindow* >( CPlugin::Create( oWindowDesc, sDirectoryName + "WindowsGUI.dll", "CreateWindow2" ) );
 
 	IRenderer::Desc oRendererDesc( *m_pWindow, *m_pFileSystem );
@@ -328,21 +328,21 @@ void InitPlugins( string sCmdLine )
 	oRendererDesc.m_sShaderDirectory = "Shaders";
 	m_pRenderer = static_cast< IRenderer* >( CPlugin::Create( oRendererDesc, sDirectoryName + "Renderer.dll", "CreateRenderer" ) );	
 
-
-	IGeometryManager::Desc oGeometryManagerDesc( NULL, "" );
+	IGeometryManager::Desc oGeometryManagerDesc( NULL, "GeometryManager" );
 	m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGeometryManagerDesc, "Geometry.dll", "CreateGeometryManager" ) );
 
 	ILoaderManager::Desc oLoaderDesc( *m_pFileSystem, *m_pGeometryManager );
+	oLoaderDesc.m_sName = "LoaderManager";
 	m_pLoaderManager =  static_cast< ILoaderManager* >( CPlugin::Create( oLoaderDesc, sDirectoryName + "Loader.dll", "CreateLoaderManager" ) );
 
 	ISystemsManager::Desc oSystemsDesc( *m_pGeometryManager );
 	m_pSystemsManager = static_cast< ISystemsManager* >( CPlugin::Create( oSystemsDesc, sDirectoryName + "Systems.dll", "CreateSystemsManager" ) );
 
 	IRessourceManager::Desc oRessourceManagerDesc( *m_pRenderer, *m_pFileSystem, *m_pLoaderManager, *m_pSystemsManager );
+	oRessourceManagerDesc.m_sName = "RessourceManager";
 	m_pRessourceManager = static_cast< IRessourceManager* >( CPlugin::Create( oRessourceManagerDesc, sDirectoryName + "Ressource.dll", "CreateRessourceManager" ) );
 
 	ICollisionManager::Desc oCollisionManagerDesc( *m_pRenderer, *m_pLoaderManager, *m_pGeometryManager);
-	oCollisionManagerDesc.m_sName = "Collision";
 	oCollisionManagerDesc.m_pFileSystem = m_pFileSystem;
 	m_pCollisionManager = static_cast< ICollisionManager* >( CPlugin::Create( oCollisionManagerDesc, "Collision.dll", "CreateCollisionManager" ) );	
 
@@ -351,6 +351,7 @@ void InitPlugins( string sCmdLine )
 	if ( m_pSoftRenderer )
 		vRenderer.push_back( m_pSoftRenderer );
 	ICameraManager::Desc oCameraManagerDesc( vRenderer );
+	oCameraManagerDesc.m_sName = "CameraManager";
 	m_pCameraManager = static_cast< ICameraManager* >( CPlugin::Create( oCameraManagerDesc, sDirectoryName + "Entity.dll", "CreateCameraManager" ) );
 
 	IEntityManager::Desc oEntityManagerDesc(*m_pRessourceManager, *m_pRenderer, *m_pFileSystem, *m_pCollisionManager, *m_pGeometryManager, *m_pPathFinder, *m_pCameraManager);
@@ -367,6 +368,7 @@ void InitPlugins( string sCmdLine )
 
 	IScene* pScene = dynamic_cast<IScene*>(m_pScene);
 	IGUIManager::Desc oGUIManagerDesc( *m_pRenderer, *m_pRessourceManager, *m_pXMLParser, *m_pInputManager, *m_pCameraManager, *m_pEntityManager, *pScene);
+	oGUIManagerDesc.m_sName = "GUIManager";
 	m_pGUIManager = static_cast< IGUIManager* >( CPlugin::Create( oGUIManagerDesc, sDirectoryName + "GUI.dll", "CreateGUIManager" ) );
 
 	m_pEntityManager->SetGUIManager(m_pGUIManager);
@@ -385,6 +387,8 @@ void InitPlugins( string sCmdLine )
 	oConsoleDesc.m_nHeight = 800;
 	m_pConsole = static_cast< IConsole* >( CPlugin::Create( oConsoleDesc, sDirectoryName + "IO.dll", "CreateConsole" ) );
 	m_pConsole->SetConsoleShortCut(192);
+
+	return pInterface;
 }
 
 void InitKeyActions()
@@ -422,8 +426,8 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 	try
 	{
 #endif // CATCH_EXCEPTION
-		InitPlugins( plCmdLine );
-		m_pEditor = new CEditor(*m_pInputManager, *m_pCameraManager, *m_pEventDispatcher, *m_pRenderer, *m_pEntityManager);
+		EEInterface* pInterface = InitPlugins( plCmdLine );
+		m_pEditor = new CEditor;
 		
 		ICamera* pFreeCamera = m_pCameraManager->CreateCamera( ICameraManager::T_FREE_CAMERA, 40.f, *m_pEntityManager );
 		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 60.f, *m_pEntityManager );

@@ -9,88 +9,40 @@
 #include <map>
 #include <string>
 
+using namespace std;
+
+class EEInterface;
+
 class CPlugin
 {
-	CPlugin*									m_pParent;
-	std::map< std::string, CPlugin* >			m_mChild;
-
-	static std::map<std::string, CPlugin*>		s_mPlugins;
-
 public:
-	void AddChildPlugin( const std::string& sName, CPlugin* pChild )
-	{
-		m_mChild[ sName ] = pChild;
-	}
-
-
 
 	struct Desc
 	{
 		CPlugin*		m_pParent;
 		std::string		m_sName;
-		Desc( CPlugin* pParent, std::string sName ) : m_pParent( pParent ), m_sName( sName ){}
+		Desc(CPlugin* pParent, std::string sName) : m_pParent(pParent), m_sName(sName) {}
 	};
 
-	CPlugin( CPlugin* pParent, const std::string& sName ):
-	m_pParent( pParent )
-	{
-		if ( pParent )
-		{
-			m_pParent = pParent;
-			m_pParent->AddChildPlugin( sName, this );
-		}
-	}
+	CPlugin(CPlugin* pParent, const std::string& sName);
+	virtual	~CPlugin();
+	string GetName();
+	void AddChildPlugin(const std::string& sName, CPlugin* pChild);
+	static CPlugin* GetPlugin(std::string name);
+	virtual void UpdateChildPlugins();
+	CPlugin* GetChildPlugin(const std::string& sPluginName);
+	static CPlugin* Create(const CPlugin::Desc& oDesc, std::string sDllPath, const std::string& sFuncName);
+	static void SetEngineInterface(EEInterface* pInterface);
+	virtual void EnableRenderEvent(bool enable);
 
-	virtual	~CPlugin(){}
+protected:
+	static EEInterface*							s_pEngineInterface;
 
-	static CPlugin* GetPlugin(std::string name)
-	{
-		std::map<std::string, CPlugin*>::iterator itPlugin = s_mPlugins.find(name);
-		if (itPlugin != s_mPlugins.end())
-			return itPlugin->second;
-		return NULL;
-	}
-
-	virtual void UpdateChildPlugins()
-	{
-		for ( std::map< std::string, CPlugin* >::iterator itPlugin = m_mChild.begin(); itPlugin != m_mChild.end(); itPlugin++ )
-		{
-			CPlugin* pPlugin = itPlugin->second;
-			pPlugin->UpdateChildPlugins ();
-		}
-	}
-
-	CPlugin* GetChildPlugin( const std::string& sPluginName )
-	{
-		CPlugin* pPlugin = NULL;
-		std::map< std::string, CPlugin* >::iterator itPlugin = m_mChild.find( sPluginName );
-		if ( itPlugin != m_mChild.end() )
-			pPlugin = itPlugin->second;
-		return pPlugin;
-	}
-
-	static CPlugin* Create( const CPlugin::Desc& oDesc, std::string sDllPath, const std::string& sFuncName )
-	{
-		HMODULE hDll = LoadLibraryA(sDllPath.c_str());
-		if ( !hDll )
-		{
-			std::string sMessage = sDllPath + " introuvable";
-			std::exception e( sMessage.c_str() );
-			throw e;
-		}
-		CPlugin* ( *pCreate )( const CPlugin::Desc& ) = reinterpret_cast< CPlugin* ( * )( const CPlugin::Desc& ) > ( GetProcAddress( hDll, sFuncName.c_str() ) );
-		if ( !pCreate )
-		{
-			std::string sMessage = std::string( "Impossible de charger la fonction \"" ) + sFuncName + "\"  dans " + sDllPath;
-			std::exception e( sMessage.c_str() );
-			throw e;
-		}
-		CPlugin* plugin = pCreate(oDesc);
-		s_mPlugins[oDesc.m_sName] = plugin;
-		return plugin;
-	}
-
-	virtual void EnableRenderEvent(bool enable) {}
+private:
+	CPlugin*									m_pParent;
+	std::map< std::string, CPlugin* >			m_mChild;
+	static std::map<std::string, CPlugin*>		s_mPlugins;
+	string										m_sName;
 	
 };
 

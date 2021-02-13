@@ -23,6 +23,7 @@ class ISystemsManager;
 class IBone;
 class IBox;
 struct CKey;
+class IGeometry;
 
 using namespace std;
 
@@ -97,6 +98,7 @@ public:
 	virtual void		Play( bool bLoop ) = 0;
 	virtual void		Pause( bool bPause ) = 0;
 	virtual void		Stop() = 0;
+	virtual float		GetSpeed() = 0;
 	virtual void		SetSpeed( float fSpeed ) = 0;
 	virtual bool		GetPause() = 0;
 	virtual void		SetSkeleton( IBone* pBone ) = 0;

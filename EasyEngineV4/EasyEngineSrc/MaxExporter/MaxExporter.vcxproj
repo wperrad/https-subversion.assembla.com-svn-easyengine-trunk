@@ -74,7 +74,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\..\..\..\..\..\..\..\..\Program Files\Autodesk\3ds Max 2016\stdplugs\EasyEngine</OutDir>
+    <OutDir>$(ADSK_3DSMAX_x64_2020)stdplugs\EasyEngine\</OutDir>
     <TargetExt>.dlu</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -110,16 +110,17 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;MAXEXPORTER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\3ds Max 2016 SDK\maxsdk\include;C:\Program Files\Autodesk\3ds Max 2016 SDK\maxsdk\include\IGame;..\..\..\Utils;..\..\Interfaces;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\Utils;..\..\Interfaces;..;$(ADSK_3DSMAX_SDK_2020)\include;$(ADSK_3DSMAX_SDK_2020)\include\IGame;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>core.lib;igame.lib;geom.lib;maxutil.lib;mesh.lib;Utils2.lib;Math.lib;Utils.lib;RenderUtil.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files\Autodesk\3ds Max 2016 SDK\maxsdk\lib\x64\Release;%(AdditionalLibraryDirectories);..\..\..\utils\x64\$(Configuration);..\x64\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Program Files\Autodesk\3ds Max 2016 SDK\maxsdk\lib\x64\Release;%(AdditionalLibraryDirectories);..\..\..\utils\x64\$(Configuration);..\x64\$(Configuration);$(ADSK_3DSMAX_SDK_2020)\lib\x64\release</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy ..\..\EasyEngine\$(Configuration)\*.dll "C:\Program Files\Autodesk\3ds Max 2016\stdplugs\EasyEngine" /y</Command>
+      <Command>copy ..\..\EasyEngine\$(Configuration)\*.dll "$(ADSK_3DSMAX_x64_2020)stdplugs\EasyEngine" /y
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

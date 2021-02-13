@@ -46,6 +46,100 @@ void CSegment::GetPoints( CVector& p1, CVector& p2 ) const
 	p2 = m_oLast;
 }
 
+bool CSegment::IsIntersect(const IGeometry& oGeometry) const
+{
+	return false;
+}
+
+void CSegment::SetTM(const CMatrix& m)
+{
+
+}
+
+void CSegment::GetTM(CMatrix& m) const
+{
+
+}
+
+const CMatrix& CSegment::GetTM() const
+{
+	return m_oTM;
+}
+
+const CVector& CSegment::GetBase() const
+{
+	return m_oTM.GetPosition();
+}
+
+float CSegment::ComputeBoundingSphereRadius() const
+{
+	return (m_oFirst - m_oLast).Norm();
+}
+
+IGeometry*	CSegment::Duplicate()
+{
+	return NULL;
+}
+
+float CSegment::GetHeight() const
+{
+	return 0.f;
+}
+
+void CSegment::Transform(const CMatrix& tm)
+{
+
+}
+
+float CSegment::GetDistance(const IGeometry& oGeometry) const
+{
+	return 0.f;
+}
+
+void CSegment::Draw(IRenderer& oRenderer) const
+{
+
+}
+
+IGeometry::TFace CSegment::GetReactionYAlignedPlane(const CVector& firstPoint, const CVector& lastPoint, float planeHeight, CVector& R)
+{
+	return eNone;
+}
+IGeometry::TFace CSegment::GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeometry& lastPositionBox, CVector& R)
+{
+	return eNone;
+}
+
+const IPersistantObject& CSegment::operator >> (CBinaryFileStorage& store) const
+{
+	return *this;
+}
+
+IPersistantObject& CSegment::operator << (CBinaryFileStorage& store)
+{
+	return *this;
+}
+
+const IPersistantObject& CSegment::operator >> (CAsciiFileStorage& store) const
+{
+	return *this;
+}
+
+IPersistantObject& CSegment::operator << (CAsciiFileStorage& store)
+{
+	return *this;
+}
+
+const IPersistantObject& CSegment::operator >> (CStringStorage& store) const
+{
+	return *this;
+}
+
+IPersistantObject& CSegment::operator << (CStringStorage& store)
+{
+	return *this;
+}
+
 CSegment2D::CSegment2D( const CVector2D& first, const CVector2D& last ):
 m_oFirst( first ),
 m_oLast( last )

@@ -35,6 +35,8 @@ void CBSELoader::WriteObject( CSceneObjInfos* pObjInfos, FILE* pFile )
 	{
 		WriteString( pFile, pEntityInfos->m_sTypeName );
 		WriteString( pFile, pEntityInfos->m_sAnimationFileName );
+		WriteAnimationSpeed(pFile, pEntityInfos->m_mAnimationSpeed);
+
 		fwrite( &pEntityInfos->m_fWeight, sizeof( float ), 1, pFile );
 		int nChildCount = pEntityInfos->m_vSubEntityInfos.size();
 		fwrite( &nChildCount, sizeof( int ), 1, pFile );
@@ -53,17 +55,49 @@ void CBSELoader::WriteObject( CSceneObjInfos* pObjInfos, FILE* pFile )
 	}
 }
 
+void CBSELoader::WriteAnimationSpeed(FILE* pFile, const map< string, float>& mapAnimationName)
+{
+	int animationCount = mapAnimationName.size();
+	fwrite(&animationCount, sizeof(int), 1, pFile);
+	for (map< string, float>::const_iterator it = mapAnimationName.begin();	it != mapAnimationName.end(); it++) {
+		int n = it->first.size();
+		fwrite(&n, sizeof(int), 1, pFile);
+		fwrite(it->first.c_str(), sizeof(char), it->first.size(), pFile);
+		fwrite(&it->second, sizeof(float), 1, pFile);
+	}
+}
+
+void CBSELoader::ReadAnimationSpeed(FILE* pFile, map< string, float>& mapAnimationSpeed)
+{
+	int animationCount = 0;
+	Read(&animationCount, sizeof(int), 1, pFile);
+	for (int i = 0; i < animationCount; i++) {
+		int n = 0;
+		char animName[64];
+		float speed = 0.f;
+		Read(&n, sizeof(int), 1, pFile);
+		Read(animName, sizeof(char), n, pFile);
+		animName[n] = '\0';
+		Read(&speed, sizeof(float), 1, pFile);
+		string sAnimName = animName;
+		mapAnimationSpeed[sAnimName] = speed;
+	}
+}
+
 void CBSELoader::Export( string sFileName, const IRessourceInfos& ri )
 {
 	const CSceneInfos* pInfos = static_cast< const CSceneInfos* >( &ri );
 	FILE* pFile = m_oFileSystem.OpenFile( sFileName, "wb" );
 	WriteString( pFile, pInfos->m_sSceneFileName );
+	WriteString(pFile, pInfos->m_sOriginalSceneFileName);
 	WriteString( pFile, pInfos->m_sName );
+	fwrite(&pInfos->m_oBackgroundColor.m_x, sizeof(float), 1, pFile);
+	fwrite(&pInfos->m_oBackgroundColor.m_y, sizeof(float), 1, pFile);
+	fwrite(&pInfos->m_oBackgroundColor.m_z, sizeof(float), 1, pFile);
 	int nObjectCount = ( int )pInfos->m_vObject.size();
 	fwrite( &nObjectCount, sizeof( int ), 1, pFile );
 	for( unsigned int i = 0; i < pInfos->m_vObject.size(); i++ )
 		WriteObject( pInfos->m_vObject.at( i ), pFile );
-	WriteString( pFile, pInfos->m_sPersoName );
 	fclose( pFile );
 }
 
@@ -111,6 +145,7 @@ ILoader::CSceneObjInfos* CBSELoader::ReadObject( FILE* pFile )
 		CEntityInfos* pEntityInfos = static_cast< CEntityInfos* >( pObjInfos );
 		ReadString( pFile, pEntityInfos->m_sTypeName );
 		ReadString( pFile, pEntityInfos->m_sAnimationFileName );
+		ReadAnimationSpeed(pFile, pEntityInfos->m_mAnimationSpeed);
 		Read( &pEntityInfos->m_fWeight, sizeof( float ), 1, pFile );
 		int nChildCount = 0;
 		Read( &nChildCount, sizeof( int ), 1, pFile );
@@ -149,7 +184,11 @@ void CBSELoader::Load( string sFileName, IRessourceInfos& si, IFileSystem& )
 	}
 
 	ReadString( pFile, pSceneInfos->m_sSceneFileName );
+	ReadString(pFile, pSceneInfos->m_sOriginalSceneFileName);
 	ReadString( pFile, pSceneInfos->m_sName );
+	Read(&pSceneInfos->m_oBackgroundColor.m_x, sizeof(float), 1, pFile);
+	Read(&pSceneInfos->m_oBackgroundColor.m_y, sizeof(float), 1, pFile);
+	Read(&pSceneInfos->m_oBackgroundColor.m_z, sizeof(float), 1, pFile);
 	int nObjectCount;
 	Read( &nObjectCount, sizeof( int ), 1, pFile );
 	for( int i = 0; i < nObjectCount; i++ )
@@ -157,6 +196,5 @@ void CBSELoader::Load( string sFileName, IRessourceInfos& si, IFileSystem& )
 		CSceneObjInfos* pObjInfos = ReadObject( pFile );
 		pSceneInfos->m_vObject.push_back( pObjInfos );
 	}
-	ReadString( pFile, pSceneInfos->m_sPersoName );
 	fclose( pFile );
 }

@@ -48,7 +48,7 @@ public:
 		std::string		m_sShaderDirectory;
 		std::string		m_sDefaultShader;
 		Desc( IWindow& oWindow, IFileSystem& oFileSystem ):
-			CPlugin::Desc( NULL, "" ),
+			CPlugin::Desc( NULL, "Renderer" ),
 			m_oFileSystem( oFileSystem ),
 			m_oWindow( oWindow ){}
 	};
@@ -157,10 +157,10 @@ public:
 	virtual void			GetDebugString( std::string& ) const = 0;
 	virtual void			DisplayDebugInfos( bool ) = 0;
 	virtual bool			IsDisplayDebugInfos() const = 0;
-	//virtual void			SetCurrentObjectWorldTM( CMatrix& m ) = 0;
 	virtual void			SetCurrentObjectLocalTM( CMatrix& m ) = 0;
 	virtual void			SetCurrentCameraMatrix( CMatrix& m ) = 0;
-	virtual void			SetBackgroundColor( int r, int g, int b, int a = 255 ) = 0;
+	virtual void			SetBackgroundColor(const CVector& vColor) = 0;
+	virtual void			SetBackgroundColor( float r, float g, float b, float a = 1.f ) = 0;
 	virtual void			GetBackgroundColor( CVector& vColor ) = 0;
 	virtual void			ReadPixels( int x, int y, int width, int height, vector< unsigned char >& vPixels, TPixelFormat format ) = 0;
 

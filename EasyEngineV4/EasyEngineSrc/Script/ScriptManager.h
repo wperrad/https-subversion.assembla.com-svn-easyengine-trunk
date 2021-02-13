@@ -1,5 +1,6 @@
 #include "IScriptManager.h"
 #include "IFileSystem.h"
+#include "AsmGenerator.h"
 
 #include <vector>
 
@@ -20,6 +21,7 @@ class CScriptManager : public IScriptManager
 	CAsmGenerator*					m_pCodeGenerator;
 	CBinGenerator*					m_pBinGenerator;
 	CVirtualProcessor*				m_pProc;
+	map<string, CRegister::TType>	m_mRegisterFromName;
 	
 public:
 	CScriptManager( const Desc& oDesc );
@@ -28,6 +30,7 @@ public:
 	void	ExecuteCommand( std::string sCommand );
 	void	GetRegisteredFunctions( vector< string >& vFuncNames );
 	float	GetVariableValue(string variableName);
+	float	GetRegisterValue(string sRegisterName);
 };
 
 extern "C" _declspec(dllexport) IScriptManager* CreateScriptManager( IScriptManager::Desc& oDesc );

@@ -19,7 +19,7 @@ public:
 		int					m_nResX;
 		int					m_nResY;
 		Desc( IEventDispatcher& oEventDispatcher ) : 
-			CPlugin::Desc( NULL, "" ),
+			CPlugin::Desc( NULL, "InputManager" ),
 			m_oEventDispatcher( oEventDispatcher ), 
 			m_nResX(0), 
 			m_nResY(0){}

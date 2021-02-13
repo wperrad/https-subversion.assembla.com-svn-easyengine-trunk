@@ -54,6 +54,7 @@ protected:
 	ICollisionMesh*							m_pCollisionMesh;
 	IGeometry*								m_pBoundingGeometry;
 	float									m_fMaxStepHeight;
+	pair<LoadRessourceCallback, CPlugin*>	m_oPairLoadRessourceCallback;
 
 
 	void				SetNewBonesMatrixArray( std::vector< CMatrix >& vMatBones );
@@ -114,6 +115,7 @@ public:
 	void				LinkAndUpdateMatrices(CEntity* pEntity);
 	virtual float		GetGroundHeight(float x, float z);
 	virtual void		UpdateRessource();
+	void				SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin);
 };
 
 #endif // ENTITY_H

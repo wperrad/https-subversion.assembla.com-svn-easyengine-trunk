@@ -1,4 +1,6 @@
 #include "EntityManager.h"
+#include "ICameraManager.h"
+#include "ICamera.h"
 #include "Entity.h"
 #include "Repere.h"
 #include "BoxEntity.h"
@@ -20,12 +22,12 @@ IEntityManager( oDesc ),
 m_oRessourceManager( oDesc.m_oRessourceManager ),
 m_oRenderer( oDesc.m_oRenderer ),
 m_nLastEntityID( -1 ),
-m_pPerso( NULL ),
 m_oFileSystem( oDesc.m_oFileSystem ),
 m_oCollisionManager( oDesc.m_oCollisionManager ),
 m_oGeometryManager( oDesc.m_oGeometryManager ),
 m_oPathFinder(oDesc.m_oPathFinder),
-m_oCameraManager(oDesc.m_oCameraManager)
+m_oCameraManager(oDesc.m_oCameraManager),
+m_pPlayer(NULL)
 {
 	m_itCurrentParsedEntity = m_mCollideEntities.end();
 	m_itCurrentIAEntity = m_mIAEntities.end();
@@ -55,6 +57,13 @@ IEntity* CEntityManager::CreateEntity( std::string sFileName, string sTypeName, 
 		pEntity = new CEntity( sFileName, m_oRessourceManager, oRenderer, this, m_oGeometryManager, m_oCollisionManager, bDuplicate );
 	else if( sTypeName == "Human" )
 		pEntity = new CMobileEntity( sFileName, m_oRessourceManager, oRenderer, this, &m_oFileSystem, m_oCollisionManager, m_oGeometryManager );
+	else if (sTypeName == "NPC")
+		pEntity = new CNPCEntity(sFileName, m_oRessourceManager, oRenderer, this, &m_oFileSystem, m_oCollisionManager, m_oGeometryManager, m_oPathFinder);
+	else if( sTypeName == "Player")
+		pEntity = new CPlayer(sFileName, m_oRessourceManager, oRenderer, this, &m_oFileSystem, m_oCollisionManager, m_oGeometryManager, *m_pGUIManager);
+	else if(sTypeName == "MapEntity")
+		pEntity = new CMapEntity(sFileName, m_oRessourceManager, oRenderer, this, m_oGeometryManager, m_oCollisionManager, m_oCameraManager);
+
 	string sName;
 	pEntity->GetName( sName );
 	CreateEntity( pEntity, sName );
@@ -158,6 +167,19 @@ IEntity* CEntityManager::CreatePlayer(string sFileName, IFileSystem* pFileSystem
 	IEntity* pEntity = new CPlayer(sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager, *m_pGUIManager);
 	CreateEntity(pEntity);
 	return pEntity;
+}
+
+void CEntityManager::SetPlayer(IPlayer* player)
+{
+	m_pPlayer = dynamic_cast<CPlayer*>(player);
+	ICamera* pCamera = m_oCameraManager.GetCameraFromType(ICameraManager::T_LINKED_CAMERA);
+	m_oCameraManager.SetActiveCamera(pCamera);
+	pCamera->Link(m_pPlayer);
+}
+
+IPlayer* CEntityManager::GetPlayer()
+{
+	return m_pPlayer;
 }
 
 IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem )
@@ -282,19 +304,6 @@ void CEntityManager::AddEntity( IEntity* pEntity, string sEntityName, int nID )
 void CEntityManager::SetZCollisionError( float e )
 {
 	CBody::SetZCollisionError( e );
-}
-
-void CEntityManager::SetPerso( IEntity* pPerso )
-{
-	if( m_pPerso )
-		m_pPerso->SetCurrentPerso( false );
-	m_pPerso = static_cast< CMobileEntity* >( pPerso );
-	m_pPerso->SetCurrentPerso( true );
-}
-
-IEntity* CEntityManager::GetPerso()
-{
-	return m_pPerso;
 }
 
 IEntity* CEntityManager::CreateSphere( float fSize )

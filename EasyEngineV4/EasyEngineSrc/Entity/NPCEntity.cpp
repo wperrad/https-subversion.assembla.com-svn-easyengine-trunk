@@ -13,6 +13,7 @@ CNPCEntity::CNPCEntity( string sFileName, IRessourceManager& oRessourceManager, 
 CMobileEntity( sFileName, oRessourceManager, oRenderer, pEntityManager, pFileSystem, oCollisionManager, oGeometryManager ),
 m_oPathFinder(oPathFinder)
 {
+	m_sTypeName = "NPC";
 	if( !m_pfnCollisionCallback )
 		m_pfnCollisionCallback = OnCollision;
 }

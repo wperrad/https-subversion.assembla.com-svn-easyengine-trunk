@@ -41,6 +41,7 @@ public:
 	float				GetBoundingSphereRadius() const { return 0.f; }
 	void				Goto(const CVector& oPosition, float fSpeed) { throw 1; }
 	void				DisplayViewCone(bool display);
+	void				SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) {}
 
 protected:
 	

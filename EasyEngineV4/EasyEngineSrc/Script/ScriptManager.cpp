@@ -18,6 +18,16 @@ IScriptManager( oDesc )
 	m_pCodeGenerator = new CAsmGenerator;
 	m_pBinGenerator = new CBinGenerator;
 	m_pProc = new CVirtualProcessor( m_pSemanticAnalyser );
+
+	m_mRegisterFromName["eax"] = CRegister::eax;
+	m_mRegisterFromName["ebx"] = CRegister::ebx;
+	m_mRegisterFromName["ecx"] = CRegister::ecx;
+	m_mRegisterFromName["edx"] = CRegister::edx;
+	m_mRegisterFromName["esp"] = CRegister::esp;
+	m_mRegisterFromName["ebp"] = CRegister::ebp;
+	m_mRegisterFromName["esi"] = CRegister::esi;
+	m_mRegisterFromName["edi"] = CRegister::edi;
+	
 }
 
 CScriptManager::~CScriptManager()
@@ -35,12 +45,8 @@ void CScriptManager::ExecuteCommand( std::string sCommand )
 	string s;
 	vector< CLexAnalyser::CLexem > vLexem;
 	m_pLexAnalyser->GetLexemArrayFromScript( sCommand, vLexem );
-	if( vLexem.size() == 0 )
-	{
-		CCompilationErrorException e( 1, 1 );
-		e.SetErrorMessage( "Commande non reconnue" );
-		throw e;		
-	}
+	if (vLexem.size() == 0)
+		return;
 	CSyntaxNode oTree;
 	m_pSyntaxAnalyser->GetSyntaxicTree( vLexem, oTree );
 	m_pSemanticAnalyser->CompleteSyntaxicTree( oTree );
@@ -65,6 +71,11 @@ void CScriptManager::GetRegisteredFunctions( vector< string >& vFuncNames )
 float CScriptManager::GetVariableValue(string variableName)
 {
 	return m_pProc->GetVariableValue(variableName);
+}
+
+float CScriptManager::GetRegisterValue(string sRegisterName)
+{
+	return m_pProc->GetRegisterValue(m_mRegisterFromName[sRegisterName]);
 }
 
 void CScriptManager::RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType )

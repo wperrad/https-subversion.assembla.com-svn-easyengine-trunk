@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define MEM_SIZE 64
+#define MEM_SIZE 128
 
 class CVirtualProcessor
 {
@@ -69,5 +69,6 @@ class CVirtualProcessor
 public:
 	CVirtualProcessor( CSemanticAnalyser* pSemanticAnalyser );
 	void	Execute( const vector< unsigned char >& vBinary, const vector< int >& vInstrSize );
-	float GetVariableValue(string varName);
+	float	GetVariableValue(string varName);
+	float	GetRegisterValue(CRegister::TType reg);
 };

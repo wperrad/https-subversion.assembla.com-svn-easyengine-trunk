@@ -25,7 +25,6 @@ protected:
 	const float									m_fMaxEyeRotationV;
 	const float									m_fMaxNeckRotationH;
 	const float									m_fMaxNeckRotationV;
-	bool										m_bPerso;
 	map< IEntity::TAnimation, IAnimation* >		m_mAnimations;
 	map< TAnimation, float >					m_mAnimationSpeedByType;
 	string										m_sAttackBoneName;
@@ -80,10 +79,10 @@ protected:
 public:
 	CMobileEntity( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager, IFileSystem* pFileSystem, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager );	
 
+	float					GetAnimationSpeed(IEntity::TAnimation eAnimationType);
 	void					SetAnimationSpeed( TAnimation eAnimationType, float fSpeed );
 	TAnimation				GetCurrentAnimationType() const;
 	void					RunAction( string sAction, bool bLoop );
-	void					SetCurrentPerso( bool bPerso );
 	void					Die();
 	void					WearArmor(string armorName);
 	void					Yaw(float fAngle);

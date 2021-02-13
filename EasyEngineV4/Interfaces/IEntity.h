@@ -53,6 +53,8 @@ class IEntity : public CNode
 {
 
 public:
+	typedef void(*LoadRessourceCallback)(CPlugin*);
+
 	enum TAnimation
 	{
 		eNone = 0,
@@ -103,6 +105,7 @@ public:
 	virtual void				GetEntityName(string& sName) = 0;
 	virtual void				SetEntityName( string sName ) = 0;
 	virtual void				Colorize(float r, float g, float b, float a) = 0;
+	virtual void				SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) = 0;
 };
 
 class IScene
@@ -111,6 +114,13 @@ public:
 	virtual void				RenderMap() = 0;
 	virtual ITexture*			GetMapTexture() = 0;
 	virtual void				DisplayMap(bool display) = 0;
+	virtual void				UpdateMapEntities() = 0;
+	virtual void				CollectMapEntities(vector<IEntity*>& entities) = 0;
+	virtual void				SetGroundMargin(float margin) = 0;
+	virtual float				GetGroundMargin() = 0;
+	virtual void				Export(string sFileName) = 0;
+	virtual void				GetOriginalSceneFileName(string& sFileName) = 0;
+	virtual void				SetOriginalSceneFileName(string sFileName) = 0;
 };
 
 class IFighterEntityInterface
@@ -138,7 +148,7 @@ public:
 
 class IEntityManager : public CPlugin
 {
-public:
+public:	
 	struct Desc : public CPlugin::Desc
 	{
 		IRessourceManager&		m_oRessourceManager;
@@ -150,7 +160,7 @@ public:
 		ICameraManager&			m_oCameraManager;
 		Desc( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IFileSystem& oFileSystem, ICollisionManager& oCollisionManager, 
 			IGeometryManager& oGeometryManager, IPathFinder& oPathFinder, ICameraManager&	oCameraManager) :
-			CPlugin::Desc( NULL, "" ),
+			CPlugin::Desc( NULL, "EntityManager" ),
 			m_oRessourceManager( oRessourceManager ),
 			m_oRenderer(oRenderer),
 			m_oFileSystem( oFileSystem ),
@@ -178,8 +188,6 @@ public:
 	virtual void				DestroyAll() = 0;
 	virtual void				Clear() = 0;
 	virtual void				AddEntity( IEntity* pEntity, string sEntityName = "noname", int nID = -1 ) = 0;
-	virtual void				SetPerso( IEntity* pPerso ) = 0;
-	virtual IEntity*			GetPerso() = 0;
 	virtual IEntity*			CreateSphere( float fSize ) = 0;
 	virtual IEntity*			CreateBox( IRenderer& oRenderer, const CVector& oDimension ) = 0;
 	virtual IEntity*			CreateQuad(float lenght, float width) = 0;
@@ -199,9 +207,10 @@ public:
 	virtual void				Kill(int entityId) = 0;
 	virtual void				WearArmor(int entityId, string armorName) = 0;
 	virtual void				SerializeMobileEntities(CNode* pRoot, string& sText) = 0;
-
 	virtual IGUIManager* 		GetGUIManager() = 0;
 	virtual void				SetGUIManager(IGUIManager* pGUIManager) = 0;
+	virtual void				SetPlayer(IPlayer* player) = 0;
+	virtual IPlayer*			GetPlayer() = 0;
 };
 
 class ISceneManager : public CPlugin

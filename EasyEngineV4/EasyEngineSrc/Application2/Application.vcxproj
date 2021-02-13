@@ -160,6 +160,7 @@
     <ClInclude Include="..\..\Interfaces\ICollisionManager.h" />
     <ClInclude Include="..\..\Interfaces\IConsole.h" />
     <ClInclude Include="..\..\Interfaces\IDrawTool.h" />
+    <ClInclude Include="..\..\Interfaces\Interface.h" />
     <ClInclude Include="..\..\Interfaces\IEntity.h" />
     <ClInclude Include="..\..\Interfaces\IEventDispatcher.h" />
     <ClInclude Include="..\..\Interfaces\IFileSystem.h" />

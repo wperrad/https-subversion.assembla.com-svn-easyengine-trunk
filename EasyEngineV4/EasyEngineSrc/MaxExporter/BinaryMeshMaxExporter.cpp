@@ -13,7 +13,6 @@
 #define BINARYMESHPLUGIN_CLASS_ID	Class_ID(0x85548e0c, 0x4a26450d)
 
 CBinaryMeshMaxExporter* CBinaryMeshMaxExporter::s_pCurrentInstance = NULL;
-map<string, CPlugin*> CPlugin::s_mPlugins;
 
 
 void* CBinaryMeshMaxExporterClassDesc::Create( BOOL loading )

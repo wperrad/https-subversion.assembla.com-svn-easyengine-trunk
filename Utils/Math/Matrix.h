@@ -55,6 +55,9 @@ public:
 	void				Set( const float* arr );
 	void				Set( const vector< float >& vData );
 	void				GetAffinePart( CVector& v );
+	void				GetxBase(CVector& v) const;
+	void				GetyBase(CVector& v) const;
+	void				GetzBase(CVector& v) const;
 	void				GetInf(float& nInfx,float& nInfy,float& nInfz) const;
 	void				GetSup(float& nSupx,float& nSupy,float& nSupz) const;
 	CMatrix				GetTranspose() const;

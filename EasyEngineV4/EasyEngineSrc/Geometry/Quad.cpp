@@ -9,6 +9,22 @@ CQuad::CQuad(float fLenght, float fWidth) :
 
 }
 
+void CQuad::GetLineIntersection(const CVector& A, const CVector& B, CVector& I)
+{	
+	static float d = m_oTM.GetPosition().Norm();
+	CVector n;
+	ComputeNormal(n);
+	n.m_w = 0.f;
+	CVector D = B - A;
+	D.Normalize();
+	float num = A*n;
+	float den = n*D;
+	float fract = num / den;
+	float t2 = (d - num) / den;
+	float t = (d - A*n) / (n * D);
+	I = A + D * t;
+}
+
 void CQuad::GetDimension(float& lenght, float& width)
 {
 	m_fLenght = lenght;
@@ -17,12 +33,29 @@ void CQuad::GetDimension(float& lenght, float& width)
 
 bool CQuad::IsIntersect(const IGeometry& oGeometry) const
 {
-	/*CSegment* segment = dynamic_cast<CSegment*>(&oGeometry);
+	const CSegment* segment = dynamic_cast<const CSegment*>(&oGeometry);
 	if (segment) {
+		CVector A, B;
+		segment->GetPoints(A, B);
+		float d = m_fLenght;
+		CVector O = A;
 
-	}*/
+		CVector n;
+		ComputeNormal(n);
+		CVector D = B - A;
+		float t = -(d + O*n) / (n * D);
+
+	}
 	throw 1;
 	return false;
+}
+
+void CQuad::ComputeNormal(CVector& n) const
+{
+	CVector ex, ey, ez;
+	m_oTM.GetxBase(ex);
+	m_oTM.GetzBase(ez);	
+	n = ez ^ ex;
 }
 
 void CQuad::SetTM(const CMatrix& oTM)
@@ -84,7 +117,6 @@ IGeometry::TFace CQuad::GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeo
 {
 	return eNone;
 }
-
 
 const IPersistantObject& CQuad::operator >> (CBinaryFileStorage& store) const
 {

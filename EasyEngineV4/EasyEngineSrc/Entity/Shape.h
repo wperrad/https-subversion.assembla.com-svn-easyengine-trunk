@@ -50,6 +50,7 @@ public:
 	void			Goto( const CVector& oPosition, float fSpeed ){ throw 1; }
 	void			SetEntityName( string sName ){ throw 1; }
 	void			ReloadShader();
+	void			SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) {}
 };
 
 #endif // SHAPE_H

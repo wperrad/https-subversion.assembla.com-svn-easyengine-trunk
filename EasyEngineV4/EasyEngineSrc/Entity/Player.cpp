@@ -15,7 +15,9 @@ CPlayer::CPlayer(
 	m_oGUIManager(oGUIManager),
 	m_pPlayerWindow(NULL)
 {
+	m_sTypeName = "Player";
 	m_pPlayerWindow = m_oGUIManager.CreatePlayerWindow(600, 800);
+	pEntityManager->SetPlayer(this);
 }
 
 

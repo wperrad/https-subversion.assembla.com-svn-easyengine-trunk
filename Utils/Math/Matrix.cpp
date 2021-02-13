@@ -772,6 +772,30 @@ void CMatrix::GetAffinePart( CVector& v )
 	v.m_z = m_23;
 }
 
+void CMatrix::GetxBase(CVector& v) const
+{
+	v.m_x = m_00;
+	v.m_y = m_01;
+	v.m_z = m_02;
+	v.m_w = 1.f;
+}
+
+void CMatrix::GetyBase(CVector& v) const
+{
+	v.m_x = m_10;
+	v.m_y = m_11;
+	v.m_z = m_12;
+	v.m_w = 1.f;
+}
+
+void CMatrix::GetzBase(CVector& v) const
+{
+	v.m_x = m_20;
+	v.m_y = m_21;
+	v.m_z = m_22;
+	v.m_w = 1.f;
+}
+
 void CMatrix::GetAxeAngleRotation( float x, float y, float z, float fAngle, CMatrix& mOut )
 {
 	float c = cos( fAngle );
