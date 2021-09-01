@@ -77,9 +77,20 @@ INT_PTR CALLBACK CBinaryMeshMaxExporter::ExportDlgProc(HWND hWnd, UINT msg, WPAR
 	case WM_COMMAND:
 		switch( wParam )
 		{
+		case IDC_CHECKOPENGLCOORD:
+			s_pCurrentInstance->m_bOpenglCoord = SendMessageA(GetDlgItem(hWnd, IDC_CHECKOPENGLCOORD), BM_GETCHECK, 0, 0);
+			if(s_pCurrentInstance->m_bOpenglCoord)
+				s_pCurrentInstance->m_bOpenglCoord2 = SendMessageA(GetDlgItem(hWnd, IDC_CHECKOPENGLCOORD2), BM_SETCHECK, false, 0);
+			break;
+		case IDC_CHECKOPENGLCOORD2:
+			s_pCurrentInstance->m_bOpenglCoord2 = SendMessageA(GetDlgItem(hWnd, IDC_CHECKOPENGLCOORD2), BM_GETCHECK, 0, 0);
+			if(s_pCurrentInstance->m_bOpenglCoord2)
+				s_pCurrentInstance->m_bOpenglCoord = SendMessageA(GetDlgItem(hWnd, IDC_CHECKOPENGLCOORD), BM_SETCHECK, false, 0);
+			break;
 		case IDEXPORT:
 			s_pCurrentInstance->m_bFlipNormals = SendMessageA( GetDlgItem(hWnd, IDC_CHECKFLIPNORMALS), BM_GETCHECK, 0, 0 );
 			s_pCurrentInstance->m_bOpenglCoord = SendMessageA( GetDlgItem(hWnd, IDC_CHECKOPENGLCOORD), BM_GETCHECK, 0, 0 );
+			s_pCurrentInstance->m_bOpenglCoord2 = SendMessageA(GetDlgItem(hWnd, IDC_CHECKOPENGLCOORD2), BM_GETCHECK, 0, 0);
 			s_pCurrentInstance->m_bExportSkinning = SendMessageA( GetDlgItem(hWnd, IDC_CHECKSKINNING), BM_GETCHECK, 0, 0 );
 			s_pCurrentInstance->m_bLog = SendMessageA( GetDlgItem(hWnd, IDC_CHECK_LOG), BM_GETCHECK, 0, 0 );
 			s_pCurrentInstance->m_bExportBoundingBox = SendMessageA( GetDlgItem(hWnd, IDC_CHECKBOUNDINGBOX ), BM_GETCHECK, 0, 0 );
@@ -368,6 +379,8 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 		mi.m_oMaterialInfos.m_bExists = false;
 
 	CMatrix mTransform( -1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1 );
+	if(m_bOpenglCoord2)
+		mTransform = CMatrix(1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
 	
 	for ( int iVertex = 0; iVertex < oMesh.getNumVerts(); iVertex ++ )
 	{
@@ -432,13 +445,10 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	copy( vIndexedNormal.begin(), vIndexedNormal.end(), mi.m_vNormalVertex.begin() );
 
 	mi.m_pBoundingBox = m_pGeometryManager->CreateBox();
-	if( m_bOpenglCoord )
+	if( m_bOpenglCoord || m_bOpenglCoord2)
 	{
-		CMatrix mTransform( -1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1 );
-
 		// Vertex
-		for( int i = 0; i < mi.m_vVertex.size() / 3; i++ )
-		{
+		for( int i = 0; i < mi.m_vVertex.size() / 3; i++ ) {
 			CVector v( mi.m_vVertex[ 3 * i ], mi.m_vVertex[ 3 * i + 1 ], mi.m_vVertex[ 3 * i + 2 ] );
 			CVector v2 = mTransform * v;
 			mi.m_vVertex[ 3 * i ] = v2.m_x;
@@ -447,10 +457,8 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 			mi.m_pBoundingBox->AddPoint( v2 );
 		}
 	}
-	else
-	{
-		for( int i = 0; i < mi.m_vVertex.size() / 3; i++ )
-		{
+	else {
+		for( int i = 0; i < mi.m_vVertex.size() / 3; i++ ) {
 			CVector v( mi.m_vVertex[ 3 * i ], mi.m_vVertex[ 3 * i + 1 ], mi.m_vVertex[ 3 * i + 2 ] );
 			mi.m_pBoundingBox->AddPoint( v );
 		}
@@ -464,8 +472,7 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	oObjLocalTM.SetPosition( oBBoxCenter.m_x, oBBoxCenter.m_y, oBBoxCenter.m_z );
 	oObjLocalTM.GetInverse( oObjLocalTMInv );
 
-	for( int iVertex = 0; iVertex < mi.m_vVertex.size() / 3; iVertex++ )
-	{
+	for( int iVertex = 0; iVertex < mi.m_vVertex.size() / 3; iVertex++ ) {
 		CVector vOrg = CVector( mi.m_vVertex[ 3 * iVertex ], mi.m_vVertex[ 3 * iVertex + 1 ], mi.m_vVertex[ 3 * iVertex + 2 ] );
 		CVector v = oObjLocalTMInv * vOrg;
 		mi.m_vVertex[ 3 * iVertex ] = v.m_x;
@@ -473,26 +480,22 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 		mi.m_vVertex[ 3 * iVertex + 2 ] = v.m_z;
 	}
 
-	if( m_bOpenglCoord )
-	{
+	if( m_bOpenglCoord || m_bOpenglCoord2) {
 		// index
-		for( int i = 0; i < mi.m_vIndex.size() / 3; i++ )
-		{
+		for( int i = 0; i < mi.m_vIndex.size() / 3; i++ ) {
 			unsigned int nTemp = mi.m_vIndex[ 3 * i ];
 			mi.m_vIndex[ 3 * i ] = mi.m_vIndex[ 3 * i + 2 ];
 			mi.m_vIndex[ 3 * i + 2 ] = nTemp;
 		}
 
 		// Normals
-		for( int i = 0; i < mi.m_vNormalVertex.size() / 3; i++ )
-		{
+		for( int i = 0; i < mi.m_vNormalVertex.size() / 3; i++ ) {
 			CVector n( mi.m_vNormalVertex[ 3 * i ], mi.m_vNormalVertex[ 3 * i + 1 ], mi.m_vNormalVertex[ 3 * i + 2 ] );
 			CVector n2 = mTransform * n;
 			mi.m_vNormalVertex[ 3 * i ] = n2.m_x;
 			mi.m_vNormalVertex[ 3 * i + 1 ] = n2.m_y;
 			mi.m_vNormalVertex[ 3 * i + 2 ] = n2.m_z;
 		}
-
 	}
 	
 	mi.m_bCanBeIndexed = m_nMaterialCount <= 1;

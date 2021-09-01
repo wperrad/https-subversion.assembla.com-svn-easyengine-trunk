@@ -54,6 +54,7 @@ public:
 	void								SetGameMouseSensibility(float fSensibility);
 	void								SetGUIMouseSensibility(float fSensibility);	
 	void								ForceActionState( string sActionName, IInputManager::KEY_STATE eState );
+	string								GetName() override;
 };
 
 extern "C" _declspec(dllexport) IActionManager* CreateActionManager( IActionManager::Desc& oDesc );

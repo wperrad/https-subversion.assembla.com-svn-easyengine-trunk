@@ -1,4 +1,5 @@
 #include "EEPlugin.h"
+#include "IEventDispatcher.h"
 
 class IGUIManager;
 
@@ -6,16 +7,10 @@ class IHud : public CPlugin
 {
 public:
 
-	struct Desc : public CPlugin::Desc
-	{
-		IGUIManager&	m_oGUIManager;
-		Desc(IGUIManager& oGUIManager):
-			CPlugin::Desc(NULL, "Hud"),
-			m_oGUIManager(oGUIManager)
-		{
-		}
-	};
-
-	IHud(const Desc& oDesc) : CPlugin(oDesc.m_pParent, oDesc.m_sName) {}
-
+	IHud() :
+	CPlugin(nullptr, ""){}
+	virtual int Print(string text, int x, int y) = 0;
+	virtual void RemoveText(int index) = 0;
+	virtual void Clear() = 0;
+	virtual int GetLineCount() = 0;
 };

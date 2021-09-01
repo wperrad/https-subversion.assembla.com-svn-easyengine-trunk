@@ -1,4 +1,6 @@
 #include "Scene.h"
+#include "Interface.h"
+#include <algorithm>
 #include "IRenderer.h"
 #include "FreeCamera.h"
 #include "ICameraManager.h"
@@ -7,7 +9,6 @@
 #include "IEntity.h"
 #include "LightEntity.h"
 #include "ICollisionManager.h"
-#include "ISystems.h"
 #include "Utils2/StringUtils.h"
 #include "Utils2/TimeManager.h"
 #include "IPathFinder.h"
@@ -15,6 +16,9 @@
 #include "MobileEntity.h"
 #include "MapEntity.h"
 #include "SphereEntity.h"
+#include "IShader.h"
+#include "IConsole.h"
+#include "Bone.h"
 
 using namespace std;
 
@@ -30,30 +34,38 @@ m_oCollisionManager( oCollisionManager ),
 m_oGeometryManager( oGeometryManager ),
 m_oPathFinder(oPathFinder)
 {
-	m_pEntityManager = pEntityManager;
+m_pEntityManager = pEntityManager;
 }
 
-CScene::CScene( const Desc& oDesc ):
-CEntity( oDesc.m_sFileName, oDesc.m_oRessourceManager, oDesc.m_oRenderer, NULL, oDesc.m_oGeometryManager, oDesc.m_oCollisionManager ),
-m_pCamera( oDesc.m_pCamera ),
-m_oCameraManager( oDesc.m_oCameraManager ),
-m_oLoaderManager( oDesc.m_oLoaderManager ),
-m_oCollisionManager( oDesc.m_oCollisionManager ),
-m_oPathFinder(oDesc.m_oPathFinder),
-m_nHeightMapID( -1 ),
-m_bCollisionMapCreated(true),
-m_bHeightMapCreated(true),
-m_pCollisionGrid(NULL),
-m_sMapFirstPassShaderName("mapFirstPass"),
-m_sMapSecondPassShaderName("mapSecondPass2D"),
-m_pPlayer(NULL),
-m_bDisplayMap(false),
-m_fGroundMargin(-10.f)
+CScene::CScene(EEInterface& oInterface, string ressourceFileName, string diffuseFileName) :
+	CEntity(oInterface, ressourceFileName),
+	m_oCameraManager(static_cast<ICameraManager&>(*oInterface.GetPlugin("CameraManager"))),
+	m_oLoaderManager(static_cast<ILoaderManager&>(*oInterface.GetPlugin("LoaderManager"))),
+	m_oCollisionManager(static_cast<ICollisionManager&>(*oInterface.GetPlugin("CollisionManager"))),
+	m_oRessourceManager(static_cast<IRessourceManager&>(*oInterface.GetPlugin("RessourceManager"))),
+	m_oPathFinder(static_cast<IPathFinder&>(*oInterface.GetPlugin("PathFinder"))),
+	m_nHeightMapID(-1),
+	m_bCollisionMapCreated(true),
+	m_bHeightMapCreated(true),
+	m_pCollisionGrid(NULL),
+	m_sMapFirstPassShaderName("mapFirstPass"),
+	m_sMapSecondPassShaderName("mapSecondPass2D"),
+	m_pPlayer(NULL),
+	m_bDisplayMinimap(false),
+	m_fGroundMargin(-10.f),
+	m_pGroundShader(NULL),
+	m_pHeightMaptexture(NULL),
+	m_bUseDisplacementMap(false),
+	m_fDisplacementRatioHeightSize(0.04),
+	m_fTiling(200.f),
+	m_sDiffuseFileName(diffuseFileName),
+	m_nMapLength(1000),
+	m_fMapHeight(10)
 {
-	SetName( "Scene" );
+	SetName("Scene");
 	SetEntityName("Scene");
 	m_pRessource = NULL;
-	m_pEntityManager = static_cast<CEntityManager*>(oDesc.m_pEntityManager);
+	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 
 
 	ICamera* pMapCamera = m_oCameraManager.CreateCamera(ICameraManager::T_MAP_CAMERA, 40.f, *m_pEntityManager);
@@ -63,9 +75,9 @@ m_fGroundMargin(-10.f)
 	m_pMapCamera->SetWorldPosition(0, 40000, 0);
 	m_pMapCamera->Pitch(-90);
 
-	m_pMapTexture = CreateMapTexture();
+	m_pMinimapTexture = CreateMinimapTexture();
 
-	m_pPlayerMapSphere = static_cast<CEntity*>(m_pEntityManager->CreateEntity("playerPointer.bme", "", m_oRenderer));
+	m_pPlayerMapSphere = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity("playerPointer.bme", ""));
 	m_pPlayerMapSphere->SetShader(m_oRenderer.GetShader(m_sMapFirstPassShaderName));
 
 	m_StringToAnimation["run"] = IEntity::eRun;
@@ -75,37 +87,96 @@ CScene::~CScene()
 {
 }
 
-ITexture* CScene::CreateMapTexture()
+ITexture* CScene::CreateMinimapTexture()
 {
-	int nMapWidth, nMapHeight;
-	m_oRenderer.GetResolution(nMapWidth, nMapHeight);
-	ITexture* pMapTexture = m_oRessourceManager.CreateRenderTexture(nMapWidth, nMapHeight, m_sMapSecondPassShaderName);
-	return pMapTexture;
+	int nMinimapWidth, nMinimapHeight;
+	m_oRenderer.GetResolution(nMinimapWidth, nMinimapHeight);
+	ITexture* pMinimapTexture = m_oRessourceManager.CreateRenderTexture(nMinimapWidth, nMinimapHeight, m_sMapSecondPassShaderName);
+	return pMinimapTexture;
 }
 
-ITexture* CScene::GetMapTexture()
+ITexture* CScene::GetMinimapTexture()
 {
-	return m_pMapTexture;
+	return m_pMinimapTexture;
 }
 
-void CScene::SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate )
+void CScene::SetRessource(string sFileName, bool bDuplicate)
 {
-	CEntity::SetRessource( sFileName, oRessourceManager, oRenderer, bDuplicate );
+	string ext;
+	int nExtPos = (int)sFileName.find(".");
+	if (nExtPos != -1) {
+		ext = sFileName.substr(nExtPos + 1, 3);
+		string extLower = ext;
+		std::transform(ext.begin(), ext.end(), extLower.begin(), tolower);
+		if (extLower == "bme")
+			m_bUseDisplacementMap = false;
+		else if (extLower == "bmp")
+			m_bUseDisplacementMap = true;
+	}
+	else
+	{
+		exception e("CScene::SetRessource() : Erreur, vous devez indiquer une extention pour le fichier de ressource de la scene");
+		throw e;
+	}
+
 	int nDotPos = (int)sFileName.find('.');
-	m_sHMFileName = string("hm_") + sFileName.substr(0, nDotPos) + ".bmp";
+	if (m_bUseDisplacementMap) {
+		m_sHMFileName = sFileName;
+		int sliceCount = m_nMapLength / 500;
+		string levelFileName = m_sHMFileName.substr(m_sHMFileName.find_last_of("/HMA_") + 1);
+		string levelName = levelFileName.substr(0, levelFileName.find('.'));
+		string levelPath = string("/levels/") + levelName + "/" + levelName + ".bme";
+		try {
+			IAnimatableMesh* pAnimatableMesh = dynamic_cast<IAnimatableMesh*>(m_oRessourceManager.GetRessource(levelPath));
+			m_pRessource = pAnimatableMesh->GetMesh(0);
+		}
+		catch (CFileException& e) {
+			m_pRessource = m_oRessourceManager.CreatePlane2(sliceCount, m_nMapLength, m_fMapHeight, m_sHMFileName, m_sDiffuseFileName);
+			string levelFullPath = string("../Data") + levelPath;
+			if (!CopyFileA("../Data/tmp/Ground.bme", levelFullPath.c_str(), false)) {
+				CFileException e("Impossible de copier le fichier");
+				e.m_sFileName = "../Data/tmp/Ground.bme";
+				throw e;
+			}
+		}
+	}
+	else {
+		m_sHMFileName = string("hm_") + sFileName.substr(0, nDotPos) + ".bmp";
+		CEntity::SetRessource(sFileName, bDuplicate);
+	}
 	IMesh* pMesh = static_cast< IMesh* >(m_pRessource);
 
 	try
 	{
-		m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pMesh );
+		if (m_bUseDisplacementMap) {
+			int w, h;
+			pMesh->GetTexture(0)->GetDimension(w, h);
+			m_fTiling = 4.f * pMesh->GetBBox()->GetDimension().m_x / w;
+		}
+		IBox* pBox = pMesh->GetBBox();
+		m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pBox);
+		m_oCollisionManager.SetGroundBoxHeight(m_nHeightMapID, m_fMapHeight);
+		if (m_bUseDisplacementMap) {
+			IBox* groundBox = m_oCollisionManager.GetGroundBox(m_nHeightMapID);
+			CVector minPoint = groundBox->GetMinPoint();
+			minPoint.m_y -= m_fMapHeight / 2.f;
+			groundBox->SetMinPoint(minPoint);
+		}
 	}
 	catch( CFileNotFoundException& )
 	{
 		m_bHeightMapCreated = false;
 	}
 	
-	nDotPos = (int)sFileName.find('.');
-	m_sCollisionFileName = string("collision_") + sFileName.substr(0, nDotPos) + ".bmp";
+
+	if (m_bUseDisplacementMap) {
+		nDotPos = (int)m_sDiffuseFileName.find('.');
+		m_sCollisionFileName = string("collision_") + m_sDiffuseFileName.substr(0, nDotPos) + ".bmp";
+	}
+	else {
+		nDotPos = (int)sFileName.find('.');
+		m_sCollisionFileName = string("collision_") + sFileName.substr(0, nDotPos) + ".bmp";
+	}
 	try{
 		m_oCollisionManager.LoadCollisionMap(m_sCollisionFileName, this);
 		m_bCollisionMapCreated = true;
@@ -113,7 +184,14 @@ void CScene::SetRessource( string sFileName, IRessourceManager& oRessourceManage
 	}
 	catch (CFileNotFoundException& e) {
 		m_bCollisionMapCreated = false;
-	}	
+	}
+
+	m_pGroundShader = m_oRenderer.GetShader("ground");
+	m_pRessource->SetShader(m_pGroundShader);
+	
+	m_pHeightMaptexture = static_cast< ITexture* > (m_oRessourceManager.CreateTexture2D(m_sHMFileName, false));
+	m_pHeightMaptexture->SetUnitTexture(4);
+	m_pHeightMaptexture->SetUnitName("heightMap");
 }
 
 IGrid* CScene::GetCollisionGrid()
@@ -153,7 +231,7 @@ void CScene::CreateHeightMap()
 	m_oCollisionManager.CreateHeightMap(pMesh, ti, IRenderer::T_BGR);
 	ti.m_ePixelFormat = ILoader::eBGR;	
 	m_oLoaderManager.Export(m_sHMFileName, ti);
-	m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pMesh);
+	m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pMesh->GetBBox());
 	m_bHeightMapCreated = true;
 }
 
@@ -174,7 +252,7 @@ void CScene::CreateCollisionGrid()
 
 IEntity* CScene::Merge( string sRessourceName, string sEntityType, float x, float y, float z )
 {
-	IEntity* pEntity = m_pEntityManager->CreateEntity( sRessourceName, sEntityType, m_oRenderer );
+	IEntity* pEntity = m_pEntityManager->CreateEntity( sRessourceName, sEntityType);
 	pEntity->Link( this );
 	pEntity->SetLocalPosition( x, y, z );
 	return pEntity;
@@ -182,7 +260,7 @@ IEntity* CScene::Merge( string sRessourceName, string sEntityType, float x, floa
 
 IEntity* CScene::Merge( string sRessourceName, string sEntityType, CMatrix& oXForm )
 {
-	IEntity* pEntity = m_pEntityManager->CreateEntity( sRessourceName, sEntityType, m_oRenderer );
+	IEntity* pEntity = m_pEntityManager->CreateEntity( sRessourceName, sEntityType );
 	pEntity->SetLocalMatrix( oXForm );
 	pEntity->Link( this );
 	return pEntity;
@@ -191,10 +269,13 @@ IEntity* CScene::Merge( string sRessourceName, string sEntityType, CMatrix& oXFo
 void CScene::Update()
 {
 	static int counter = 0;
-	if (m_bHeightMapCreated && !m_bCollisionMapCreated && counter++ == 10) {
+	
+	/*if (m_bHeightMapCreated && !m_bCollisionMapCreated && counter++ == 10) {
 		CreateCollisionMap();
 		CreateCollisionGrid();
-	}	
+	}*/
+	if(!m_bCollisionMapCreated && counter++ == 20)
+		CreateCollisionMap();
 	
 	if (!m_bHeightMapCreated && counter++ == 20 ){
 		CreateHeightMap();
@@ -205,16 +286,16 @@ void CScene::Update()
 	CTimeManager::Instance()->Update();
 	RenderScene();
 
-	if (m_bDisplayMap) {
-		RenderMap();
+	if (m_bDisplayMinimap) {
+		RenderMinimap();
 		m_oRenderer.SetCurrentFBO(0);
 	}
 	
 }
 
-void CScene::DisplayMap(bool display)
+void CScene::DisplayMinimap(bool display)
 {
-	m_bDisplayMap = display;
+	m_bDisplayMinimap = display;
 }
 
 void CScene::SetGroundMargin(float margin)
@@ -231,13 +312,39 @@ void CScene::GetOriginalSceneFileName(string& sFileName)
 {
 	if (!m_sOriginalSceneFileName.empty())
 		sFileName = m_sOriginalSceneFileName;
-	else if(m_pRessource)
+	else if(m_pRessource && !m_bUseDisplacementMap)
 		m_pRessource->GetFileName(sFileName);
 }
 
 void CScene::SetOriginalSceneFileName(string sFileName)
 {
 	m_sOriginalSceneFileName = sFileName;
+}
+
+
+void CScene::SetDiffuseFileName(string diffuseFileName)
+{
+	m_sDiffuseFileName = diffuseFileName;
+}
+
+int CScene::GetCurrentHeightMapIndex()
+{
+	return m_nHeightMapID;
+}
+
+void CScene::SetLength(int length)
+{
+	m_nMapLength = length;
+}
+
+void CScene::SetHeight(float height)
+{
+	m_fMapHeight = height;
+}
+
+void CScene::SetHMFile(string sHMFile)
+{
+	m_sHMFileName = sHMFile;
 }
 
 void  CScene::RenderScene()
@@ -250,14 +357,21 @@ void  CScene::RenderScene()
 	}
 	CNode::Update();
 	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
-	if (m_pRessource)
+	if (m_pRessource) {
+		if (m_pHeightMaptexture) {
+			m_pHeightMaptexture->SetShader(m_pGroundShader);
+			m_pGroundShader->SendUniformValues("groundHeight", m_fMapHeight);
+			m_pGroundShader->SendUniformValues("tiling", m_fTiling);
+			m_pHeightMaptexture->Update();
+		}
 		m_pRessource->Update();
+	}
 }
 
-void CScene::RenderMap()
+void CScene::RenderMinimap()
 {
 	// first pass
-	m_oRenderer.SetCurrentFBO(m_pMapTexture->GetFrameBufferObjectId());
+	m_oRenderer.SetCurrentFBO(m_pMinimapTexture->GetFrameBufferObjectId());
 	DisplayEntities(m_vMapEntities);
 }
 
@@ -322,7 +436,7 @@ void CScene::DisplayEntities(vector<IEntity*>& entities)
 	pGround->SetShader(pBackupShader);
 
 	for (int i = 0; i < entities.size(); i++) {
-		CEntity* pEntity = static_cast<CEntity*>(entities[i]);
+		CEntity* pEntity = dynamic_cast<CEntity*>(entities[i]);
 		pBackupShader = pEntity->GetRessource()->GetShader();
 		pEntity->SetShader(pFirstPassShader);
 		m_oRenderer.SetModelMatrix(pEntity->GetWorldMatrix());
@@ -337,7 +451,7 @@ void CScene::DisplayEntities(vector<IEntity*>& entities)
 	m_oRenderer.SetInvCameraMatrix(oBackupInvCameraMatrix);
 }
 
-void CScene::GetSkeletonEntities( CNode* pRoot, vector< IEntity* >& vEntity, string sFileFilter )
+void CScene::GetSkeletonEntities( CBone* pRoot, vector< IEntity* >& vEntity, string sFileFilter )
 {
 	for( unsigned int iChild = 0; iChild < pRoot->GetChildCount(); iChild++ )
 	{
@@ -350,7 +464,7 @@ void CScene::GetSkeletonEntities( CNode* pRoot, vector< IEntity* >& vEntity, str
 				vEntity.push_back( pEntity );
 		}
 		else
-			GetSkeletonEntities( pRoot->GetChild( iChild ), vEntity, sFileFilter );
+			GetSkeletonEntities(dynamic_cast<CBone*>(pRoot->GetChild( iChild )), vEntity, sFileFilter );
 	}
 }
 
@@ -393,7 +507,10 @@ ILoader::CSceneObjInfos* CScene::GetEntityInfos( IEntity* pEntity )
 				ILoader::CEntityInfos* pEntityInfos = static_cast<ILoader::CEntityInfos*>(pInfos);
 				IAnimation* pAnimation = pEntity->GetCurrentAnimation();
 				if (pAnimation) {
-					pAnimation->GetFileName(pEntityInfos->m_sAnimationFileName);
+					string animFile;
+					pAnimation->GetFileName(animFile);
+					animFile = animFile.substr(animFile.find_last_of("/") + 1);
+					pEntityInfos->m_sAnimationFileName = animFile;
 					CMobileEntity* pMobileEntity = dynamic_cast<CMobileEntity*>(pEntity);
 					for (map<string, IEntity::TAnimation>::iterator it = m_StringToAnimation.begin(); it != m_StringToAnimation.end(); it++) {
 						float as = pMobileEntity->GetAnimationSpeed(it->second);
@@ -408,7 +525,7 @@ ILoader::CSceneObjInfos* CScene::GetEntityInfos( IEntity* pEntity )
 					vector< IEntity* > vSubEntity;
 					string sRessourceFileName;
 					pEntity->GetRessource()->GetFileName(sRessourceFileName);
-					GetSkeletonEntities(pSkeleton, vSubEntity, sRessourceFileName);
+					GetSkeletonEntities(dynamic_cast<CBone*>(pSkeleton), vSubEntity, sRessourceFileName);
 					for (unsigned int iSubEntity = 0; iSubEntity < vSubEntity.size(); iSubEntity++)
 					{
 						ILoader::CEntityInfos* pSubEntityInfo = dynamic_cast<ILoader::CEntityInfos*>(GetEntityInfos(vSubEntity[iSubEntity]));
@@ -439,13 +556,21 @@ ILoader::CSceneObjInfos* CScene::GetEntityInfos( IEntity* pEntity )
 
 void CScene::GetInfos( ILoader::CSceneInfos& si )
 {
-	m_pRessource->GetFileName( si.m_sSceneFileName );
+	si.m_bUseDisplacementMap = m_bUseDisplacementMap;	
+	if (m_bUseDisplacementMap) {
+		si.m_sDiffuseFileName = m_sDiffuseFileName;
+		si.m_sSceneFileName = m_sHMFileName;
+		si.m_nMapLength = m_nMapLength;
+		si.m_fMapHeight = m_fMapHeight;
+	}
+	else
+		m_pRessource->GetFileName(si.m_sSceneFileName);
 	si.m_sOriginalSceneFileName = m_sOriginalSceneFileName;
 	GetName( si.m_sName );
 	m_oRenderer.GetBackgroundColor(si.m_oBackgroundColor);
 	for( unsigned int i= 0; i < m_vChild.size(); i++ )
-	{		
-		IEntity* pEntity = static_cast< IEntity* >( m_vChild[ i ] );		
+	{
+		IEntity* pEntity = dynamic_cast< IEntity* >( m_vChild[ i ] );
 		ILoader::CSceneObjInfos* pInfos = GetEntityInfos( pEntity );
 		if( pInfos )
 			si.m_vObject.push_back( pInfos );
@@ -493,7 +618,7 @@ void CScene::LoadSceneObject( const ILoader::CSceneObjInfos* pSceneObjInfos, IEn
 		else
 		{
 			const ILoader::CEntityInfos* pEntityInfos = dynamic_cast< const ILoader::CEntityInfos* >( pSceneObjInfos );
-			IEntity* pEntity = m_pEntityManager->CreateEntity( sRessourceFileName, pEntityInfos->m_sTypeName, m_oRenderer );
+			IEntity* pEntity = m_pEntityManager->CreateEntity( sRessourceFileName, pEntityInfos->m_sTypeName );
 			pEntity->SetLocalMatrix( oXForm );
 
 			if( pEntityInfos->m_nParentBoneID != -1 )
@@ -532,8 +657,14 @@ void CScene::LoadSceneObject( const ILoader::CSceneObjInfos* pSceneObjInfos, IEn
 
 void CScene::Load( const ILoader::CSceneInfos& si )
 {
+	Clear();
 	m_oRenderer.SetBackgroundColor(si.m_oBackgroundColor);
-	SetRessource( si.m_sSceneFileName, m_oRessourceManager, m_oRenderer );
+	if (si.m_bUseDisplacementMap) {
+		m_nMapLength = si.m_nMapLength;
+		m_fMapHeight = si.m_fMapHeight;
+		m_sDiffuseFileName = si.m_sDiffuseFileName;
+	}
+	SetRessource(si.m_sSceneFileName);
 	m_sOriginalSceneFileName = si.m_sOriginalSceneFileName;
 	for( unsigned int i = 0; i < si.m_vObject.size(); i++ )
 	{
@@ -559,15 +690,17 @@ void CScene::Export( string sFileName )
 
 void CScene::Clear()
 {
+	m_oCameraManager.UnlinkCameras();
 	int nChildCount = (int)m_vChild.size();
 	for( int i = 0; i < nChildCount; i++ )
 	{
-		IEntity* pChild = static_cast< IEntity* >( m_vChild[ 0 ] );
+		IEntity* pChild = dynamic_cast< IEntity* >( m_vChild[ 0 ] );
 		pChild->Unlink();
 		m_pEntityManager->DestroyEntity( pChild );
 	}
 	m_pRessource = NULL;
 	m_pEntityManager->Clear();
+	m_oCollisionManager.ClearHeightMaps();
 }
 
 float CScene::GetGroundHeight( float x, float z )

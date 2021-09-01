@@ -24,16 +24,8 @@ public:
 
 class IXMLParser : public CPlugin
 {
-protected:
-	IXMLParser( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
 public:
-	struct Desc : public CPlugin::Desc
-	{ 
-		IFileSystem&	m_oFileSystem;
-		Desc( IFileSystem& oFileSystem ) : 
-			CPlugin::Desc( NULL, "" ),
-			m_oFileSystem( oFileSystem ){}
-	};
+	IXMLParser() : CPlugin(nullptr, "") {}
 	virtual void		OpenFile( const std::string& sXMLFileName ) = 0;
 	virtual void		CloseFile() = 0;
 	virtual void		GetProperty( const std::string& sFieldName, CPosition& Pos, int& nDimWidth, int& nDimHeight ) = 0;

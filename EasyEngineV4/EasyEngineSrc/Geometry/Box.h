@@ -23,15 +23,20 @@ public:
 
 	void				SetTM(const CMatrix& m);
 	const CVector&		GetMinPoint() const;
+	void				SetMinPoint(const CVector& oMinPoint);
 	void				GetTM( CMatrix& m ) const;
 	const CMatrix&		GetTM() const;
 	const CVector&		GetDimension() const;
+	void				GetDimension(CVector& dim) const;
 
 						CBox();
 						CBox( CVector& oMinPoint, CVector& oDimension );
 						CBox( const CBox& oBox );
 	void				Set( const CVector& oMinPoint, const CVector& oDimension );
 	void				GetCenter( CVector& oCenter ) const;
+	void				SetX(float x);
+	void				SetY(float y);
+	void				SetZ(float z);
 	void				AddPoint( const CVector& p );
 	float				GetBoundingSphereRadius() const;
 	float				ComputeBoundingSphereRadius()const;

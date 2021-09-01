@@ -87,9 +87,6 @@
     <ClInclude Include="..\..\Interfaces\IShader.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Interfaces\ISystems.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Interfaces\ITestMesh.h">
       <Filter>Interfaces</Filter>
     </ClInclude>

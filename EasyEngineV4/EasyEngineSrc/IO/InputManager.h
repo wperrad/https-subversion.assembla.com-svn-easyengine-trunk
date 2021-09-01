@@ -80,6 +80,7 @@ public:
 	void															SetMouseSensitivity( float s );
 	void															SetEditionMode( bool bEdition );
 	void															OnUpdate();
+	string															GetName() override;
 };
 
 extern "C" _declspec(dllexport) IInputManager* CreateInputManager( const IInputManager::Desc& );

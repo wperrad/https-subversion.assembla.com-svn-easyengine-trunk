@@ -176,7 +176,7 @@ void CBKELoader::ExportAscii( const std::string& sFileName, const ILoader::CAnim
 //	sOut = oss.str();
 //}
 
-void CBKELoader::Export( string sFileName, const ILoader::IRessourceInfos& ri )
+void CBKELoader::Export( string sFileName, ILoader::IRessourceInfos& ri )
 {
 	string sExt;
 	CStringUtils::GetExtension( sFileName, sExt );

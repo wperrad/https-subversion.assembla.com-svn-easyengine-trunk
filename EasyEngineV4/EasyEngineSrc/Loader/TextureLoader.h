@@ -45,15 +45,13 @@ struct TGA
 class ITextureLoader : public ILoader
 {
 public:
-
 };
 
 
 class CBMPLoader :	public CSingleton<CBMPLoader> , public ITextureLoader
 {
 	friend class CSingleton<CBMPLoader>;
-	void			FlipImage( CTextureInfos& ti );
-
+	void			FlipImage(CTextureInfos& ti);
 
 public:
 					CBMPLoader(void);								
@@ -61,7 +59,7 @@ public:
 	bool			Load( const std::string& sFileName, CChunk& chunk, IFileSystem& oFileSystem );
 	void			Load( string sFileName, IRessourceInfos& ti, IFileSystem& oFileSystem );
 	void			Load( std::string sFileName, IRessourceInfos& mi ){}
-	void			Export( string sFileName, const ILoader::IRessourceInfos& ri );
+	void			Export( string sFileName, ILoader::IRessourceInfos& ri );
 	void			CreateBMPFromData( const vector< unsigned char >& vData, int nWidth, int nHeight, int nBitPerPixel, string sFileName );
 	void			ReadBMP(string sFileName, vector< unsigned char >& vData, int& nWidth, int& nHeight, int& nBitPerPixel);
 };
@@ -78,7 +76,7 @@ public:
 	void			Load( string sFileName, CTextureInfos& ti, IFileSystem& oFileSystem );
 	void			Load( string sFileName, IRessourceInfos& ti, IFileSystem& oFileSystem );
 	void			Load( string sFileName, IRessourceInfos& mi ){}
-	void			Export( string sFileName, const ILoader::IRessourceInfos& ri ){throw 1;}
+	void			Export( string sFileName, ILoader::IRessourceInfos& ri ){throw 1;}
 };
 
 

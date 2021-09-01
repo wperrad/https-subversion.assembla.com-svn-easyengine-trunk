@@ -17,7 +17,6 @@
 #include "IGUIManager.h"
 #include "ICollisionManager.h"
 #include "IShader.h"
-#include "ISystems.h"
 #include "IGeometry.h"
 #include "IHud.h"
 #include "Editor.h"
@@ -29,7 +28,8 @@
 #include <sstream>
 #include <algorithm>
 
-extern IEntity*				m_pScene;
+extern EEInterface*			pInterface;
+extern IScene*				m_pScene;
 extern IScriptManager*		m_pScriptManager;
 extern IConsole*			m_pConsole;
 extern IWindow*				m_pWindow;
@@ -45,10 +45,12 @@ extern IRessourceManager*	m_pRessourceManager;
 extern IFileSystem*			m_pFileSystem;
 extern CDebugTool*			m_pDebugTool;
 extern IGeometryManager*	m_pGeometryManager;
-extern IEntity*				m_pRepere;
 extern bool					m_bRenderScene;
 extern IEventDispatcher*	m_pEventDispatcher;
 extern CEditor*				m_pEditor;
+
+IEntity* m_pRepere = NULL;
+vector< string > g_vStringsResumeMode;
 
 enum TObjectType
 {
@@ -58,7 +60,7 @@ enum TObjectType
 };
 
 TObjectType	m_eSelectionType = eNone;
-CNode*	m_pSelectedNode = NULL;
+INode*	m_pSelectedNode = NULL;
 
 struct CNodeInfos
 {
@@ -73,7 +75,7 @@ IEntity* LoadEntity( string sName )
 	IEntity* pEntity = NULL;
 	try
 	{
-		pEntity = m_pEntityManager->CreateEntity( sName, "", *m_pRenderer );
+		pEntity = m_pEntityManager->CreateEntity(sName, "");
 		ostringstream oss;
 		oss << "L'entité \"" << sName << "\"a été chargée avec l'identifiant " << m_pEntityManager->GetEntityID( pEntity ) << ".";
 		m_pConsole->Println( oss.str() );
@@ -102,13 +104,28 @@ IEntity* LoadEntity( string sName )
 	return pEntity;
 }
 
+void DisplayOpenglVersion(IScriptState* pState)
+{
+	string sVersion;
+	m_pRenderer->GetOpenglVersion(sVersion);
+	m_pConsole->Println(sVersion);
+}
+
+void DisplayGlslVersion(IScriptState* pState)
+{
+	string sVersion;
+	m_pRenderer->GetGlslVersion(sVersion);
+	m_pConsole->Println(sVersion);
+}
+
 void SetEditionMode(IScriptState* pState)
 {
 	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
-	m_pEditor->SetEditionMode(pEnable->m_nValue == 0 ? false : true);
+	bool enable = pEnable->m_nValue != 0;
+	m_pEditor->SetEditionMode(enable);
 }
 
-void PutEntityIntoScene(IScriptState* pState)
+void SpawnEntity(IScriptState* pState)
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
 	string sName = pName->m_sValue;
@@ -119,7 +136,7 @@ void PutEntityIntoScene(IScriptState* pState)
 	try
 	{
 		m_pEditor->SetEditionMode(true);
-		m_pEditor->AddEntity(sName);
+		m_pEditor->SpawnEntity(sName);
 	}
 	catch (CFileNotFoundException& e)
 	{
@@ -145,13 +162,11 @@ void PutEntityIntoScene(IScriptState* pState)
 	m_pRessourceManager->EnableCatchingException(bak);
 }
 
-void SaveGround(IScriptState* pState)
+void SaveLevel(IScriptState* pState)
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
 	string sName = pName->m_sValue;
-	if (sName.find(".bme") == -1)
-		sName += ".bme";
-	m_pEditor->SaveGround(sName);
+	m_pEditor->SaveLevel(sName);
 }
 
 void ShowGUICursor(IScriptState* pState)
@@ -235,7 +250,7 @@ void CreateBox( IScriptState* pState )
 	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
-	IEntity* pBox = m_pEntityManager->CreateBox( *m_pRenderer, CVector( px->m_fValue, py->m_fValue, pz->m_fValue ) );
+	IEntity* pBox = m_pEntityManager->CreateBox(CVector( px->m_fValue, py->m_fValue, pz->m_fValue ) );
 	pBox->Link( m_pScene );
 	ostringstream oss;
 	int id = m_pEntityManager->GetEntityID(pBox);
@@ -303,8 +318,10 @@ void CreateRepere( IScriptState* pState )
 	IEntity* pRepere = m_pEntityManager->CreateRepere(*m_pRenderer);
 	pRepere->Link(m_pScene);
 	ostringstream oss;
-	oss << "Le repère a été créé avec l'identifiant " << m_pEntityManager->GetEntityID( pRepere )  << ".";
+	int id = m_pEntityManager->GetEntityID(pRepere);
+	oss << "Le repère a été créé avec l'identifiant " << id  << ".";
 	m_pConsole->Println( oss.str() );
+	pState->SetReturnValue(id);
 }
 
 void Test( IScriptState* pState )
@@ -865,7 +882,7 @@ void CreateMobileEntity( IScriptState* pState )
 		ostringstream oss;
 		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
 		m_pConsole->Println( oss.str() );
-		pState->SetReturnValue(id);
+		pState->SetReturnValue((float)id);
 	}
 	catch( CFileNotFoundException& e )
 	{		
@@ -1188,7 +1205,7 @@ void LinkToName(IScriptState* pState)
 	IEntity* pEntity1 = m_pEntityManager->GetEntity(pIDEntity1->m_nValue);
 	if (pEntity1)
 	{
-		CNode* pNode1 = NULL;
+		INode* pNode1 = NULL;
 		bool bEntity1 = false;
 		bool bBone2 = false;
 		IBone* pBone2 = NULL;
@@ -1205,7 +1222,7 @@ void LinkToName(IScriptState* pState)
 		else
 		{
 			IEntity* pEntity2 = m_pEntityManager->GetEntity(pIDEntity2->m_nValue);
-			CNode* pNode2 = NULL;
+			INode* pNode2 = NULL;
 			if (!pIDNode2->m_sValue.empty())
 			{
 				IBone* pSkeletonRoot = pEntity2->GetSkeletonRoot();
@@ -1259,7 +1276,7 @@ void LinkToId( IScriptState* pState )
 	IEntity* pEntity1 = m_pEntityManager->GetEntity( pIDEntity1->m_nValue );
 	if( pEntity1 )
 	{
-		CNode* pNode1 = NULL;
+		INode* pNode1 = NULL;
 		bool bEntity1 = false;
 		bool bBone2 = false;
 		IBone* pBone2 = NULL;
@@ -1276,7 +1293,7 @@ void LinkToId( IScriptState* pState )
 		else
 		{
 			IEntity* pEntity2 = m_pEntityManager->GetEntity( pIDEntity2->m_nValue );
-			CNode* pNode2 = NULL;
+			INode* pNode2 = NULL;
 			if( pIDNode2->m_nValue != -1 )
 			{
 				IBone* pSkeletonRoot = pEntity2->GetSkeletonRoot();
@@ -1429,7 +1446,7 @@ void Roll( IScriptState* pState )
 	}
 }
 
-void GetSkeletonInfos( CNode* pNode, vector< CNodeInfos >& vInfos )
+void GetSkeletonInfos( INode* pNode, vector< CNodeInfos >& vInfos )
 {
 	IBone* pBone = dynamic_cast< IBone* >( pNode );
 	if( pBone )
@@ -1465,7 +1482,7 @@ void DisplayEntitySkeletonInfos( IScriptState* pState )
 
 void reset( IScriptState* pState )
 {
-	m_pSceneManager->ClearScene( m_pScene );	
+	m_pScene->Clear();
 	RunScript( "start.eas" );
 }
 
@@ -1503,12 +1520,13 @@ void SetAnimation( IScriptState* pState )
 void PlayCurrentAnimation( IScriptState* pState )
 {
 	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
+	CScriptFuncArgInt* pLoop = static_cast< CScriptFuncArgInt* >(pState->GetArg(1));
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
 	if( pEntity )
 	{
 		IAnimation* pAnimation = pEntity->GetCurrentAnimation();
 		if( pAnimation )
-			pAnimation->Play( true );
+			pAnimation->Play(pLoop->m_nValue != 0);
 		else
 			m_pConsole->Println( "Errreur : L'entité sélectionnée est animable mais ne contient pas l'animation demandée." );
 	}
@@ -1600,20 +1618,40 @@ void DisplaySceneChilds( IScriptState* pState )
 	}
 }
 
+
+
+
+string g_sBegin;
+void DisplayFonctionList(void* params)
+{
+	int lineCount = m_pConsole->GetClientHeight() / m_pConsole->GetLineHeight();
+	vector<string>::iterator it = g_vStringsResumeMode.begin();
+	int index = 0;
+	while(it != g_vStringsResumeMode.end())
+	{
+		string sFuncName = *it;
+		string sFuncNameLow = sFuncName;
+		it = g_vStringsResumeMode.erase(it);
+		transform(sFuncName.begin(), sFuncName.end(), sFuncNameLow.begin(), tolower);
+		if (sFuncNameLow.find(g_sBegin) != -1) {
+			m_pConsole->Println(sFuncName);
+			index++;
+			if (index > lineCount) {
+				break;
+			}
+		}
+	}
+	if(g_vStringsResumeMode.size() > 0)
+		m_pConsole->SetPauseModeOn(DisplayFonctionList, nullptr);
+}
+
 void flist( IScriptState* pState )
 {
 	CScriptFuncArgString* pString = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	string sBegin = pString->m_sValue;
-	transform( pString->m_sValue.begin(), pString->m_sValue.end(), sBegin.begin(), tolower );
-	vector< string > vFuncNames;
-	m_pScriptManager->GetRegisteredFunctions( vFuncNames );
-	for( unsigned int i = 0; i < vFuncNames.size(); i++ )
-	{
-		string sFuncNameLow = vFuncNames[ i ];
-		transform( vFuncNames[ i ].begin(), vFuncNames[ i ].end(), sFuncNameLow.begin(), tolower );
-		if( sFuncNameLow.find( sBegin ) != -1 )
-			m_pConsole->Println( vFuncNames[ i ] );
-	}
+	m_pScriptManager->GetRegisteredFunctions(g_vStringsResumeMode);
+	g_sBegin = pString->m_sValue;
+	transform( pString->m_sValue.begin(), pString->m_sValue.end(), g_sBegin.begin(), tolower );
+	DisplayFonctionList(nullptr);
 }
 
 void DisplayLightIntensity( IScriptState* pState )
@@ -1696,6 +1734,8 @@ DWORD WINAPI ExportBMEToAsciiCallback(void* lpThreadParameter)
 	ILoader::CAnimatableMeshData oData;
 	ILoader* pLoader = m_pLoaderManager->GetLoader("bme");
 	pLoader->Load(sBMEName, oData, *m_pFileSystem);
+	string rootDirectory;
+	m_pFileSystem->GetLastDirectory(rootDirectory);
 	for (int i = 0; i < oData.m_vMessages.size(); i++) {
 		m_pConsole->Println(oData.m_vMessages[i]);
 	}
@@ -1705,7 +1745,8 @@ DWORD WINAPI ExportBMEToAsciiCallback(void* lpThreadParameter)
 	oData.m_vMessages.clear();
 	pLoader->SetAsciiExportPrecision(7);
 	try {
-		pLoader->Export(sOutputName, oData);
+		string outputPath = rootDirectory + "\\" + sOutputName;
+		pLoader->Export(outputPath, oData);
 		m_pConsole->Println("Export terminé");
 	}
 	catch (exception& e) {
@@ -1741,24 +1782,6 @@ void ExportBMEToAscii( IScriptState* pState )
 	CreateThread(NULL, 0, ExportBMEToAsciiCallback, callbackArg, 0, &threadID);
 
 	m_pConsole->EnableInput(false);
-
-	return;
-	ILoader::CAnimatableMeshData oData;
-	ILoader* pLoader = m_pLoaderManager->GetLoader( "bme" );
-	pLoader->Load( sBMEName, oData, *m_pFileSystem );	
-	for (int i = 0; i < oData.m_vMessages.size(); i++) {
-		m_pConsole->Println(oData.m_vMessages[i]);
-	}
-	pLoader->SetAsciiExportPrecision( 7 );
-	try{ 
-		pLoader->Export(sOutputName, oData);
-		m_pConsole->Println("Export terminé");
-	}
-	catch (exception& e) {
-		char msg[256];
-		sprintf(msg, "Error while accessing \"%s\"", e.what());
-		m_pConsole->Println(msg);
-	}
 }
 
 void ExportBKEToAscii( IScriptState* pState )
@@ -1785,6 +1808,34 @@ void ExportBKEToAscii( IScriptState* pState )
 	m_pConsole->Println( sMessage );
 }
 
+void ExportBSEToAscii(IScriptState* pState)
+{
+	CScriptFuncArgString* pFileName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sBSEName = pFileName->m_sValue;
+	int nExtPos = (int)sBSEName.find(".bse");
+	string sFileNameWithoutExt;
+	if (nExtPos == -1)
+	{
+		sFileNameWithoutExt = sBSEName;
+		sBSEName += ".bse";
+	}
+	else
+		sFileNameWithoutExt = sBSEName.substr(0, nExtPos);
+
+	string root;
+	m_pFileSystem->GetLastDirectory(root);
+	string sTXTName = root + "/" + sFileNameWithoutExt + ".txt";
+	sBSEName = root + "/" + sBSEName;
+
+	ILoader::CSceneInfos oData;
+	ILoader* pLoader = m_pLoaderManager->GetLoader("bse");
+	pLoader->Load(sBSEName, oData, *m_pFileSystem);
+	//pLoader->SetAsciiExportPrecision(pPrecision->m_nValue);
+	pLoader->Export(sTXTName, oData);
+	string sMessage = string("Fichier exporté dans \"") + sTXTName + "\"";
+	m_pConsole->Println(sMessage);
+}
+
 void ClearScene( IScriptState* pState )
 {
 	ICamera* pLinkedCamera = m_pCameraManager->GetCameraFromType( ICameraManager::T_LINKED_CAMERA );
@@ -1793,7 +1844,7 @@ void ClearScene( IScriptState* pState )
 	CMatrix oLinkedMatrix;
 	pLinkedCamera->SetLocalMatrix( oLinkedMatrix );
 
-	m_pSceneManager->ClearScene( m_pScene );
+	m_pScene->Clear();
 
 	ICamera* pCamera = m_pCameraManager->GetCameraFromType( ICameraManager::T_FREE_CAMERA );
 	m_pCameraManager->SetActiveCamera( pCamera );
@@ -1808,16 +1859,21 @@ void ClearScene( IScriptState* pState )
 
 void SetSceneMap( IScriptState* pState )
 {
-	CScriptFuncArgString* pFileName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	string sFileName = pFileName->m_sValue;
-	int nExtPos = (int)pFileName->m_sValue.find( ".bme" );
-	if( nExtPos == -1 )
-		sFileName = pFileName->m_sValue + ".bme";
+	CScriptFuncArgString* pRessourceFileName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
+	CScriptFuncArgString* pDiffuseFileName = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
+	CScriptFuncArgInt* pLength = static_cast< CScriptFuncArgInt* >(pState->GetArg(2));
+	CScriptFuncArgFloat* pHeight = static_cast< CScriptFuncArgFloat* >(pState->GetArg(3));
+	string ressourceFileName = pRessourceFileName->m_sValue;
+	string diffuseFileName = pDiffuseFileName->m_sValue;
+
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException( false );
 	try
 	{
-		m_pScene->SetRessource( sFileName, *m_pRessourceManager, *m_pRenderer );
+		m_pScene->SetLength(pLength->m_nValue);
+		m_pScene->SetHeight(pHeight->m_fValue);
+		m_pScene->SetDiffuseFileName(diffuseFileName);
+		m_pScene->SetRessource(ressourceFileName);
 		string sError;
 		m_pRessourceManager->PopErrorMessage( sError );
 		if( sError.size() > 0 )
@@ -1842,7 +1898,7 @@ void SetSceneMap( IScriptState* pState )
 	}
 	catch( CEException&  )
 	{
-		string sMessage = string( "\"" ) + sFileName + "\" introuvable";
+		string sMessage = string( "\"" ) + ressourceFileName + "\" introuvable";
 		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
@@ -1899,6 +1955,23 @@ void GetFreeFileName( string sPrefixName, string sExtension, string& sFileName )
 	sFileName = ossFile.str();
 }
 
+
+bool g_bHMHackEnabled = false;
+
+void EnableHMHack(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEnable = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
+	g_bHMHackEnabled = (pEnable->m_nValue == 1);
+
+	m_pCollisionManager->EnableHMHack(false);
+	m_pCollisionManager->EnableHMHack2(false);
+	
+
+	ostringstream oss;
+	oss << "Height map hack " << g_bHMHackEnabled ? " enabled" : "disabled";
+	m_pConsole->Println(oss.str());
+}
+
 void CreateHM( IScriptState* pState )
 {
 	CScriptFuncArgString* pString = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
@@ -1908,7 +1981,7 @@ void CreateHM( IScriptState* pState )
 	IEntity* pEntity = NULL;
 	try
 	{
-		pEntity = m_pEntityManager->CreateEntity( sFileName, "",  *m_pRenderer );
+		pEntity = m_pEntityManager->CreateEntity(sFileName, "");
 	}
 	catch( CEException& e )
 	{
@@ -1924,11 +1997,18 @@ void CreateHM( IScriptState* pState )
 		{
 			IMesh* pGround = static_cast<IMesh*>(m_pScene->GetRessource());
 			string sSceneFileName;
-			pGround->GetFileName(sSceneFileName);
-			if (sSceneFileName == sFileName)
-				m_pCollisionManager->EnableHMHack(true);
-			else
-				m_pCollisionManager->EnableHMHack2(true);
+			if(pGround)
+				pGround->GetFileName(sSceneFileName);
+			if (g_bHMHackEnabled) {
+				if (sSceneFileName == sFileName) {
+					m_pCollisionManager->EnableHMHack(true);
+					m_pCollisionManager->EnableHMHack2(false);
+				}
+				else {
+					m_pCollisionManager->EnableHMHack(false);
+					m_pCollisionManager->EnableHMHack2(true);
+				}
+			}
 			ILoader::CTextureInfos ti;
 			m_pCollisionManager->CreateHeightMap( pMesh, ti, IRenderer::T_BGR );
 			ti.m_ePixelFormat = ILoader::eBGR;
@@ -1964,7 +2044,7 @@ void CreateCollisionMap(IScriptState* pState)
 {
 	try
 	{
-		m_pSceneManager->CreateCollisionMap(m_pScene);
+		m_pScene->CreateCollisionMap();
 	}
 	catch (CEException& e)
 	{
@@ -2109,7 +2189,49 @@ void SetEntityShader( IScriptState* pState )
 	pEntity->SetShader( pShader );
 }
 
-void DisplayNodeInfos( CNode* pNode, int nLevel = 0 )
+void SetEntitySpecular(IScriptState* pState)
+{
+	CScriptFuncArgInt* pID = (CScriptFuncArgInt*)pState->GetArg(0);
+	CScriptFuncArgFloat* pr = (CScriptFuncArgFloat*)pState->GetArg(1);
+	CScriptFuncArgFloat* pg = (CScriptFuncArgFloat*)pState->GetArg(2);
+	CScriptFuncArgFloat* pb = (CScriptFuncArgFloat*)pState->GetArg(3);
+	IEntity* pEntity = m_pEntityManager->GetEntity(pID->m_nValue);
+	IMesh* pMesh = dynamic_cast<IMesh*>(pEntity->GetRessource());
+	if (pMesh) {
+		for (int i = 0; i < pMesh->GetMaterialCount(); i++) {
+			pMesh->GetMaterial(i)->SetSpecular(pr->m_fValue, pr->m_fValue, pr->m_fValue, 1.f);
+		}
+	}
+}
+
+void SetEntityShininess(IScriptState* pState)
+{
+	CScriptFuncArgInt* pID = (CScriptFuncArgInt*)pState->GetArg(0);
+	CScriptFuncArgFloat* pShininess = (CScriptFuncArgFloat*)pState->GetArg(1);
+	IEntity* pEntity = m_pEntityManager->GetEntity(pID->m_nValue);
+	IMesh* pMesh = dynamic_cast<IMesh*>(pEntity->GetRessource());
+	if (pMesh) {
+		for (int i = 0; i < pMesh->GetMaterialCount(); i++) {
+			pMesh->GetMaterial(i)->SetShininess(pShininess->m_fValue);
+		}
+	}
+}
+
+void ColorizeEntity(IScriptState* pState)
+{
+	CScriptFuncArgInt* pID = (CScriptFuncArgInt*)pState->GetArg(0);
+	CScriptFuncArgFloat* pr = (CScriptFuncArgFloat*)pState->GetArg(1);
+	CScriptFuncArgFloat* pg = (CScriptFuncArgFloat*)pState->GetArg(2);
+	CScriptFuncArgFloat* pb = (CScriptFuncArgFloat*)pState->GetArg(3);
+	IEntity* pEntity = m_pEntityManager->GetEntity(pID->m_nValue);
+	if (pEntity) {
+		IMesh* pMesh = dynamic_cast<IMesh*>(pEntity->GetRessource());
+		if (pMesh)
+			pMesh->Colorize(pr->m_fValue, pg->m_fValue, pb->m_fValue, 0.f);
+	}
+}
+
+void GetNodeInfos( INode* pNode, int nLevel = 0 )
 {
 	IEntity* pEntity = dynamic_cast< IEntity* >( pNode );
 	if( pEntity ) {
@@ -2121,13 +2243,13 @@ void DisplayNodeInfos( CNode* pNode, int nLevel = 0 )
 		if (sEntityName.empty())
 			pEntity->GetName(sEntityName);
 		sLine << "Entity name = " << sEntityName << ", ID = " << m_pEntityManager->GetEntityID(pEntity);
-		m_pConsole->Println(sLine.str());
-		CNode* pSkeleton = pEntity->GetSkeletonRoot();
+		g_vStringsResumeMode.push_back(sLine.str());
+		INode* pSkeleton = pEntity->GetSkeletonRoot();
 		if( pSkeleton )
-			DisplayNodeInfos( pSkeleton );
+			GetNodeInfos( pSkeleton );
 	}
 	for( unsigned int i = 0; i < pNode->GetChildCount(); i++ )
-		DisplayNodeInfos( pNode->GetChild( i ), nLevel + 1 );
+		GetNodeInfos( pNode->GetChild( i ), nLevel + 1 );
 }
 
 void Kill(IScriptState* pState)
@@ -2143,9 +2265,32 @@ void WearArmor(IScriptState* pState)
 	m_pEntityManager->WearArmor(pId->m_nValue, pArmor->m_sValue);
 }
 
+void DisplayRayPicking(IScriptState* pState)
+{
+	CScriptFuncArgInt* pDisplay = (CScriptFuncArgInt*)(pState->GetArg(0));
+	m_pEditor->DisplayPickingRay(pDisplay->m_nValue > 0);
+}
+
+void DisplayEntitiesResume(void* params)
+{
+	int maxLineCount = m_pConsole->GetClientHeight() / m_pConsole->GetLineHeight();
+	vector<string>::iterator it = g_vStringsResumeMode.begin();
+	int index = 0;
+	while (it != g_vStringsResumeMode.end()) {
+		m_pConsole->Println(*it);
+		it = g_vStringsResumeMode.erase(it);
+		if (index++ >= maxLineCount)
+			break;
+	}
+	if (g_vStringsResumeMode.size() > 0)
+		m_pConsole->SetPauseModeOn(DisplayEntitiesResume, nullptr);
+}
+
 void DisplayEntities( IScriptState* pState )
 {
-	DisplayNodeInfos( m_pScene );
+	g_vStringsResumeMode.clear();
+	GetNodeInfos( m_pScene );
+	DisplayEntitiesResume(nullptr);
 }
 
 void DisplayMobileEntities(IScriptState* pState)
@@ -2265,6 +2410,12 @@ void Exit( IScriptState* pState )
 	m_pWindow->Close();
 }
 
+void GenerateAssemblerListing(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)(pState->GetArg(0));
+	m_pScriptManager->GenerateAssemblerListing(pEnable->m_nValue);
+}
+
 void LoadEntity( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
@@ -2275,7 +2426,7 @@ void LoadEntity( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( false );
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateEntity( sName, "", *m_pRenderer );
+		IEntity* pEntity = m_pEntityManager->CreateEntity(sName, "");
 		pEntity->Link( m_pScene );
 		//pEntity->Pitch( -90.f );
 		int id = m_pEntityManager->GetEntityID(pEntity);
@@ -2316,8 +2467,7 @@ void SaveScene( IScriptState* pState )
 		string sFileName = pName->m_sValue;
 		if( pName->m_sValue.find( '.' ) == -1 )
 			sFileName += ".bse";
-		m_pSceneManager->Export( m_pScene, sFileName );
-		//m_pScene->Export( sFileName );
+		m_pScene->Export( sFileName );
 		m_pConsole->Println( "Scène sauvegardée" );
 	}
 	catch( exception e )
@@ -2326,19 +2476,27 @@ void SaveScene( IScriptState* pState )
 	}
 }
 
-void LoadScene( IScriptState* pState )
+void LoadLevel( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
 	string sFileName = pName->m_sValue;
-	if( sFileName.find( '.' ) == -1 )
+	string folderName;
+	int dotPos = sFileName.find('.');
+	if (dotPos == -1) {
+		folderName = sFileName;
 		sFileName += ".bse";
+	}
+	else
+		folderName = sFileName.substr(0, dotPos);
+	string root;
+	m_pFileSystem->GetLastDirectory(root);
 	try
 	{
-		m_pSceneManager->Load( m_pScene, sFileName );
+		m_pScene->Load(root + "/levels/" + folderName + "/" + sFileName);
 	}
-	catch( CFileNotFoundException )
+	catch( CFileNotFoundException& e )
 	{
-		string s = string("Fichier \"") + sFileName + "\" introuvable";
+		string s = string("Fichier \"") + e.what() + "\" introuvable";
 		m_pConsole->Println( s );
 	}
 	catch( CExtensionNotFoundException )
@@ -2364,7 +2522,7 @@ void Merge( IScriptState* pState )
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 3 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 4 ) );
 	
-	m_pSceneManager->Merge( m_pScene, pString->m_sValue, pType->m_sValue, px->m_fValue, py->m_fValue, pz->m_fValue );
+	m_pScene->Merge(pString->m_sValue, pType->m_sValue, px->m_fValue, py->m_fValue, pz->m_fValue);
 }
 
 void TestMessageBox( IScriptState* pState )
@@ -2650,9 +2808,60 @@ void DisplayGroundMargin(IScriptState* pState)
 	m_pConsole->Println(pScene->GetGroundMargin());
 }
 
+void CreatePlaneEntity(IScriptState* pState)
+{
+	CScriptFuncArgInt* pSlices = (CScriptFuncArgInt*)pState->GetArg(0);
+	CScriptFuncArgInt* pSize = (CScriptFuncArgInt*)pState->GetArg(1);
+	CScriptFuncArgString* pHeightTextureName = (CScriptFuncArgString*)pState->GetArg(2);
+	CScriptFuncArgString* pDiffuseTextureName = (CScriptFuncArgString*)pState->GetArg(3);
+	IEntity* pEntity = m_pEntityManager->CreatePlaneEntity(pSlices->m_nValue, pSize->m_nValue, pHeightTextureName->m_sValue, pDiffuseTextureName->m_sValue);
+	pEntity->Link(m_pScene);
+	pState->SetReturnValue(m_pEntityManager->GetEntityID(pEntity));
+}
+
 void RegisterAllFunctions( IScriptManager* pScriptManager )
 {
 	vector< TFuncArgType > vType;
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("GenerateAssemblerListing", GenerateAssemblerListing, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("ColorizeEntity", ColorizeEntity, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("SetEntityShininess", SetEntityShininess, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("SetEntitySpecular", SetEntitySpecular, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eInt);
+	vType.push_back(eString);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("CreatePlaneEntity", CreatePlaneEntity, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("GetOpenglVersion", DisplayOpenglVersion, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayGlslVersion", DisplayGlslVersion, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("EnableHMHack", EnableHMHack, vType);
 
 	vType.clear();
 	vType.push_back(eFloat);
@@ -2671,7 +2880,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("PutEntityIntoScene", PutEntityIntoScene, vType);
+	m_pScriptManager->RegisterFunction("SpawnEntity", SpawnEntity, vType);
 
 	vType.clear();
 	vType.push_back(eString);
@@ -2683,7 +2892,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("SaveGround", SaveGround, vType);
+	m_pScriptManager->RegisterFunction("SaveLevel", SaveLevel, vType);
 
 	vType.clear();
 	vType.push_back(eInt);
@@ -2760,7 +2969,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eString );
-	m_pScriptManager->RegisterFunction( "LoadScene", LoadScene, vType );
+	m_pScriptManager->RegisterFunction( "LoadLevel", LoadLevel, vType );
 
 	vType.clear();
 	vType.push_back( eString );
@@ -2848,6 +3057,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetLightIntensity", SetLightIntensity, vType );
 
 	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("DisplayLightIntensity", DisplayLightIntensity, vType);
+
+	vType.clear();
 	vType.push_back( eInt );
 	m_pScriptManager->RegisterFunction( "DisplayBBoxInfos", DisplayBBoxInfos, vType );
 
@@ -2878,7 +3091,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "ClearScene", ClearScene, vType );
 
 	vType.clear();
-	vType.push_back( eString );
+	vType.push_back(eString);
+	vType.push_back(eString);
+	vType.push_back(eInt);
+	vType.push_back(eFloat);
 	m_pScriptManager->RegisterFunction( "SetSceneMap", SetSceneMap, vType );
 
 	vType.clear();
@@ -2890,6 +3106,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back( eString );
 	vType.push_back( eInt );
 	m_pScriptManager->RegisterFunction( "ExportBKEToAscii", ExportBKEToAscii, vType );
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("ExportBSEToAscii", ExportBSEToAscii, vType);
 
 	vType.clear();
 	vType.push_back( eInt );
@@ -2955,6 +3175,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eInt );
+	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction( "PlayCurrentAnimation", PlayCurrentAnimation, vType );
 
 	vType.clear();

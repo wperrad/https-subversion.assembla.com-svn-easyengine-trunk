@@ -52,6 +52,7 @@ public:
 	virtual void			Setfocus() = 0;
 	virtual void			SetForeground() = 0;
 	virtual void			ShowModal() = 0;
+	virtual void			SetFullScreenMode(bool fullscreen) = 0;
 	//virtual void			SetUpdateCallback( void (*pfnOnUpdate)(const IWindow* ) ) = 0;
 };
 

@@ -6,7 +6,7 @@
 
 class CSceneManager : public ISceneManager
 {
-
+	EEInterface&					m_oInterface;
 	IRessourceManager&				m_oRessourceManager;
 	IRenderer&						m_oRenderer;
 	ICameraManager&					m_oCameraManager;
@@ -21,17 +21,12 @@ class CSceneManager : public ISceneManager
 
 public:
 
-	CSceneManager( const ISceneManager::Desc& oDesc );
-	~CSceneManager();
+	CSceneManager(EEInterface& oInterface);
+	virtual ~CSceneManager();
 
-	IEntity*	CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager, IPathFinder& oPathFinder);
-	IEntity*	GetScene( std::string sSceneName );
-	IEntity*	Merge( IEntity* pScene, string sRessourceName, string sEntityType, CMatrix& oXForm );
-	IEntity*	Merge( IEntity* pScene, const std::string& sRessourceName, string sEntityType, float x = 0, float y = 0, float z = 0, bool bIsAnimated = false );
-	void		Load( IEntity* pScene, string sFileName );
-	void		Export( IEntity* pScene, string sFileName );
-	void		ClearScene( IEntity* pScene );
-	void		CreateCollisionMap(IEntity* pScene);
+	IScene*	CreateScene(string sSceneName, string sRessourceFileName, string diffuseFileName) override;
+	IScene*		GetScene( std::string sSceneName );
+	string		GetName() override;
 };
 
-extern "C" _declspec(dllexport) ISceneManager* CreateSceneManager( const ISceneManager::Desc& oDesc );
+extern "C" _declspec(dllexport) ISceneManager* CreateSceneManager(EEInterface& oInterface);

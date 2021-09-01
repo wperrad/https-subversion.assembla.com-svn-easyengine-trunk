@@ -67,7 +67,7 @@ class CGUIManager : public IGUIManager
 	IEntityManager&							m_oEntityManager;
 	IXMLParser&								m_oXMLParser;
 	IInputManager&							m_oInputManager;
-	IScene&									m_oScene;
+	IScene*									m_pScene;
 	IRessource*								m_pFontMaterial;
 	map< int, IAnimatableMesh* >			m_mStaticText;
 	std::map< int, CGUIWidget* >			m_mWidget;
@@ -97,8 +97,8 @@ class CGUIManager : public IGUIManager
 	
 public:
 
-					CGUIManager( const Desc& desc );
-	virtual			~CGUIManager(void);
+					CGUIManager(EEInterface& oInterface);
+	virtual			~CGUIManager();
 	void			SetVisibility( int hWindow, bool bVisible );
 	void			AddWidget( int hWindow, int hWidget );
 	void			AddWindow(IGUIWindow* pWindow);
@@ -126,8 +126,9 @@ public:
 	void			ToggleDisplayMap();
 	void			SetGUIMode(bool bGUIMode);
 	bool			GetGUIMode();
-	int				GetCurrentFontEspacementY();	
+	int				GetCurrentFontEspacementY();
+	string			GetName() override;
 };
 
-extern "C" _declspec(dllexport) IGUIManager* CreateGUIManager( const IGUIManager::Desc& );
+extern "C" _declspec(dllexport) IGUIManager* CreateGUIManager(EEInterface& oInterface);
 #endif

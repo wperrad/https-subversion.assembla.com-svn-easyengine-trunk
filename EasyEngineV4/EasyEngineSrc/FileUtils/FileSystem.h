@@ -20,15 +20,16 @@ class CFileSystem : public IFileSystem
 
 public:
 
-	CFileSystem( const IFileSystem::Desc& oDesc );
+	CFileSystem(EEInterface& oInterface);
 	~CFileSystem();
 
 	void		Mount( std::string sDirectory );
 	FILE*		OpenFile( const std::string& sFileName, const std::string& sMode );
 	HANDLE		FindFirstFile_EE( const std::string& sMask, WIN32_FIND_DATAA& data ) const;
 	void		GetLastDirectory( std::string& sRootDirectory ) const;
+	string		GetName() override;
 };
 
-extern "C" _declspec(dllexport) IFileSystem* CreateFileSystem( const IFileSystem::Desc& );
+extern "C" _declspec(dllexport) IFileSystem* CreateFileSystem(EEInterface& oInterface);
 
 #endif // FILESYSTEM_H

@@ -53,7 +53,7 @@ void IFighterEntity::Hit()
 
 void IFighterEntity::OnEndHitAnimation()
 {
-	if (m_nLife <= 0)
+	if (m_nLife > 0)
 		Stand();
 }
 

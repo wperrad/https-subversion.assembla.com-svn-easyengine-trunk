@@ -54,6 +54,8 @@ public:
 	HWND									GetHandle();
 	void									GetDimension( int& nWidth, int& nHeight )const;
 	void									AddChild( IWidget* pChild );
+	string									GetName() override;
+	void									SetFullScreenMode(bool fullscreen) override;
 };
 
 extern "C" _declspec(dllexport) IWindow* CreateWindow2( const IWindow::Desc& );

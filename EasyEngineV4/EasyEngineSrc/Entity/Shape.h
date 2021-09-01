@@ -1,13 +1,14 @@
 #ifndef SHAPE_H
 #define SHAPE_H
 
-#include "IEntity.h"
 
+#include "IEntity.h"
+#include "Node.h"
 
 class IRenderer;
 class IShader;
 
-class CShape : public IEntity
+class CShape : public IEntity, public CNode
 {
 protected:
 	IRenderer&	m_oRenderer;
@@ -19,8 +20,6 @@ public:
 	virtual void	Update() = 0;
 	void			SetAxesLength( float r, float g, float b );
 	void			SetAxesColor( int r, int g, int b );
-	void			SetName( std::string );
-	void			GetName( std::string& );
 	void			GetRessourceFileName( string& sFileName );
 	void			DrawBoundingBox( bool bDraw );
 	void			SetShader( IShader* pShader );
@@ -28,7 +27,7 @@ public:
 	IRessource*		GetRessource(){ return NULL; }
 	void			SetWeight( float fWeight ){}
 	float			GetWeight(){ return 0.f; }
-	void			SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false ){throw 1;}
+	void			SetRessource( string sFileName, bool bDuplicate = false ){throw 1;}
 	void			AddAnimation( std::string sAnimationFile ){}
 	void			SetCurrentAnimation( std::string sAnimation ){}
 	IAnimation*		GetCurrentAnimation(){ return NULL; }

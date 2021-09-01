@@ -6,15 +6,7 @@ class ICamera;
 class CMapEntity : public CEntity
 {
 public:
-	CMapEntity(
-		const string& sFileName, 
-		IRessourceManager& oRessourceManager, 
-		IRenderer& oRenderer, 
-		IEntityManager* pEntityManager, 
-		IGeometryManager& oGeometryManager, 
-		ICollisionManager& oCollisionManager,
-		ICameraManager&	oCameraManager,
-		bool bDuplicate = false);
+	CMapEntity(EEInterface& oInterface, const string& sFileName, bool bDuplicate = false);
 
 	~CMapEntity();
 

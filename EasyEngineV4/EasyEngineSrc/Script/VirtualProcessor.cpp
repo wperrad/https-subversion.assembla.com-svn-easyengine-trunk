@@ -79,6 +79,7 @@ m_nEax( -1 ), m_nEbx( -1 ), m_nEcx( -1 ), m_nEdx( -1 ), m_nEsi( -1 ), m_nEdi( -1
 #endif // 0
 
 	m_mInstrFunc[ CBinGenerator::eRet ] = Ret;
+	m_mInstrFunc[ CBinGenerator::eReturn] = Return;
 
 	m_vRegAddr.resize( 8 );
 	m_vRegAddr[CRegister::eax] = &m_nEax;
@@ -259,7 +260,7 @@ void CVirtualProcessor::SubRegImm( unsigned char* pOperand )
 	int r = (int)pOperand[ 0 ];
 	float f;
 	memcpy( &f, &pOperand[ 1 ], 4 );
-	s_pCurrentInstance->m_nEax = *s_pCurrentInstance->m_vRegAddr[ r ] - f;
+	*s_pCurrentInstance->m_vRegAddr[r] -= f;
 }
 
 void CVirtualProcessor::DivRegReg( unsigned char* pOperand )
@@ -322,4 +323,9 @@ void CVirtualProcessor::Ret( unsigned char* pOperand )
 		s_pCurrentInstance->m_bEnd = true;
 	else
 		MessageBox( NULL, "RET : Problème de pile incohérente", "", MB_ICONERROR );
+}
+
+void CVirtualProcessor::Return(unsigned char* pOperand)
+{
+	s_pCurrentInstance->m_bEnd = true;
 }

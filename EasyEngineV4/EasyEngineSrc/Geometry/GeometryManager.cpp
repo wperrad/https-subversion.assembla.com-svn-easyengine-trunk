@@ -88,6 +88,11 @@ IQuad* CGeometryManager::CreateQuad(float lenght, float width)
 	return new CQuad(lenght, width);
 }
 
+string CGeometryManager::GetName()
+{
+	return "GeometryManager";
+}
+
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc )
 {
 	return new CGeometryManager( oDesc );

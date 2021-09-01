@@ -7,32 +7,19 @@
 class IActionManager;
 class IScriptManager;
 class IGUIManager;
+class IInputManager;
 
 using namespace std;
 
 class IConsole : public CPlugin
 {
 protected:
-	IConsole( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
+	IConsole() : CPlugin( nullptr, ""){}
 
 public:
-	struct Desc : public CPlugin::Desc
-	{		
-		IInputManager&		m_oInputManager;
-		IScriptManager&		m_oScriptManager;
-		IGUIManager&		m_oGUIManager;
-		int					xPos;
-		int 				yPos;
-		int					m_nWidth;
-		int					m_nHeight;
-		Desc( IInputManager& oInputManager, IGUIManager& oGUIManager, IScriptManager& oScriptManager ) :
-			CPlugin::Desc( NULL, "" ),
-			m_oInputManager( oInputManager ),
-			m_oGUIManager( oGUIManager ),
-			m_oScriptManager( oScriptManager ),
-			m_nWidth( 420 ),
-			m_nHeight( 300 ){}
-	};
+	typedef void(*ResumeProc)(void*);
+
+
 	virtual void	Update() = 0;
 	virtual bool	IsOpen() = 0;
 	virtual void	Open( bool bOpen ) = 0;
@@ -45,6 +32,9 @@ public:
 	virtual int		GetConsoleShortCut() = 0;
 	virtual void	SetConsoleShortCut(int key) = 0;
 	virtual void	EnableInput(bool enable) = 0;
+	virtual int		GetLineHeight() = 0;
+	virtual int		GetClientHeight() = 0;
+	virtual void	SetPauseModeOn(ResumeProc callback, void* params) = 0;
 };
 
 #endif // _ICONSOLE_H_

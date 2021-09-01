@@ -15,17 +15,17 @@
 class ITexture;
 class IRenderer;
 
-class CMaterial : public IRessource
+class CMaterial : public IMaterial
 {
 	std::vector< float >		m_vAmbient;
 	std::vector< float >		m_vDiffuse;	
 	std::vector< float >		m_vSpecular;
 	std::vector< float >		m_vEmissive;
 	float						m_fShininess;
-	ITexture*					m_pTexture;
+	ITexture*					m_pDiffuseTexture;
 	IShader*					m_pShader;
 	vector<float>				m_vAdditionalColor;
-	bool						m_bUseAdditionalColor;
+	bool						m_bUseAdditiveColor;
 
 public:
 	enum TMaterialType
@@ -44,7 +44,7 @@ public:
 		std::vector< float >	m_vSpecular;
 		std::vector< float >	m_vEmissive;
 		float					m_fShininess;
-		ITexture*				m_pTexture;
+		ITexture*				m_pDiffuseTexture;
 		Desc( IRenderer& oRenderer, IShader* pShader );
 	};
 								CMaterial( const Desc& oDesc );
@@ -53,9 +53,14 @@ public:
 	void						GetMaterialMatrix( CMatrix& );
 	void						SetShader( IShader* pShader );
 	IShader*					GetShader() const { return m_pShader; }
-	void						SetAdditionalColor(float r, float g, float b, float a);
+	void						SetAdditionalColor(float r, float g, float b, float a) override;
+	void						ClearAdditionalColor();
 	ITexture*					GetTexture();
 	void						SetTexture(ITexture* pTexture);
+	void						SetAmbient(float r, float g, float b, float a) override;
+	void						SetDiffuse(float r, float g, float b, float a) override;
+	void						SetSpecular(float r, float g, float b, float a) override;
+	void						SetShininess(float shininess) override;
 };
 
 

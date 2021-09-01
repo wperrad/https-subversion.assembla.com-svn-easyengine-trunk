@@ -1,6 +1,5 @@
 #include "FightSystem.h"
 #include "IEntity.h"
-#include "ISystems.h"
 #include "IGeometry.h"
 #include "ICollisionManager.h"
 #include "IAEntity.h"

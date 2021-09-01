@@ -38,16 +38,6 @@ void CShape::SetAxesColor( int r, int g, int b )
 {
 }
 
-void CShape::SetName( std::string sName )
-{
-	IEntity::SetName( sName );
-}
-
-void CShape::GetName( std::string& sName )
-{
-	IEntity::GetName( sName );
-}
-
 void CShape::GetRessourceFileName( string& sFileName )
 {
 	sFileName = "EE_Repere_19051978";

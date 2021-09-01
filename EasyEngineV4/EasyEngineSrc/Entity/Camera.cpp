@@ -1,9 +1,11 @@
 #include "Camera.h"
+#include "Interface.h"
 
-CCamera::CCamera(float fFov, IRenderer& oRenderer):
+CCamera::CCamera(EEInterface& oInterface, float fFov):
+CEntity(oInterface),
 m_bFreeze( false ),
 m_fFov( fFov ),
-m_oRenderer(oRenderer),
+m_oRenderer(static_cast<IRenderer&>(*oInterface.GetPlugin("Renderer"))),
 m_bDisplayViewCone(false)
 {
 }
@@ -31,7 +33,7 @@ void CCamera::DisplayViewCone(bool display)
 
 void CCamera::Update()
 {
-	CNode::Update();
+	CEntity::Update();
 	if (m_bDisplayViewCone) {
 		m_oRenderer.CullFace(0);
 		CMatrix backupModelMatrix;

@@ -2,8 +2,7 @@
 
 using namespace std;
 
-CEventDispatcher::CEventDispatcher( const IEventDispatcher::Desc& oDesc ) :
-IEventDispatcher( oDesc ),
+CEventDispatcher::CEventDispatcher(EEInterface& oInterface) :
 m_bDispatcherWorking(true)
 {
 }
@@ -83,8 +82,12 @@ void CEventDispatcher::StopDispatcher()
 	m_bDispatcherWorking = false;
 }
 
-
-extern "C" _declspec(dllexport) IEventDispatcher* CreateEventDispatcher( const IEventDispatcher::Desc& oDesc )
+string CEventDispatcher::GetName()
 {
-	return new CEventDispatcher( oDesc );
+	return "EventDispatcher";
+}
+
+extern "C" _declspec(dllexport) IEventDispatcher* CreateEventDispatcher(EEInterface& oInterface)
+{
+	return new CEventDispatcher(oInterface);
 }

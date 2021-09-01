@@ -1,5 +1,5 @@
 #define CAMERAMANAGER_CPP
-
+#include "Interface.h"
 #include "CameraManager.h"
 #include "FreeCamera.h"
 #include "LinkedCamera.h"
@@ -8,12 +8,12 @@
 
 using namespace std;
 
-CCameraManager::CCameraManager( const ICameraManager::Desc& oDesc ) : 
-ICameraManager( oDesc ),
+CCameraManager::CCameraManager(EEInterface& oInterface) :
+m_oInterface(oInterface),
 m_pActiveCamera( NULL )
 {
-	for ( unsigned int i = 0; i < oDesc.m_vRenderer.size(); i++ )
-		m_vRenderer.push_back( oDesc.m_vRenderer[ i ] );
+	IRenderer* pRenderer = static_cast<IRenderer*>(oInterface.GetPlugin("Renderer"));
+	m_vRenderer.push_back(pRenderer);
 }
 
 CCameraManager::~CCameraManager()
@@ -27,23 +27,25 @@ ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityMana
 	switch( type )
 	{
 	case ICameraManager::T_FREE_CAMERA:
-		pCamera = new CFreeCamera( fFov, *m_vRenderer[0]);
+		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "FreeCamera";
+		/*if (!m_pActiveCamera)
+			m_pActiveCamera = pCamera;*/
 		break;
 	case ICameraManager::T_LINKED_CAMERA:
-		pCamera = new CLinkedCamera( fFov, *m_vRenderer[0]);
+		pCamera = new CLinkedCamera(m_oInterface, fFov);
 		sCameraName = "LinkedCamera";
 		break;
 	case ICameraManager::T_MAP_CAMERA:
-		pCamera = new CFreeCamera(fFov, *m_vRenderer[0]);
+		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "MapCamera";
 		break;
 	case ICameraManager::T_GUI_MAP_CAMERA:
-		pCamera = new CFreeCamera(fFov, *m_vRenderer[0]);
+		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "GuiMapCamera";
 		break;
 	default:
-		pCamera = new CFreeCamera(fFov, *m_vRenderer[0]);
+		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "noNameCamera";
 		break;
 	}
@@ -80,7 +82,20 @@ ICamera* CCameraManager::GetCameraFromType( TCameraType type )
 	return m_mCamera[ type ];
 }
 
-extern "C" _declspec(dllexport) ICameraManager* CreateCameraManager( const ICameraManager::Desc& oDesc )
+string CCameraManager::GetName()
 {
-	return new CCameraManager( oDesc );
+	return "CameraManager";
+}
+
+void CCameraManager::UnlinkCameras()
+{
+	for (map< TCameraType, ICamera* >::iterator it = m_mCamera.begin(); it != m_mCamera.end(); it++) {
+		it->second->Unlink();
+	}
+	
+}
+
+extern "C" _declspec(dllexport) ICameraManager* CreateCameraManager(EEInterface& oInterface)
+{
+	return new CCameraManager(oInterface);
 }

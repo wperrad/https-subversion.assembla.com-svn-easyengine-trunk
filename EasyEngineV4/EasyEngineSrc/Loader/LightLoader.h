@@ -10,7 +10,7 @@ public:
 	virtual			~CLightLoader(void);
 	void			Export( const std::string& szFileName, const CChunk& chunk);
 	void			Load( string sFileName, ILoader::IRessourceInfos& ri, IFileSystem& );
-	void			Export( string sFileName, const ILoader::IRessourceInfos& ri ){throw 1;}
+	void			Export( string sFileName, ILoader::IRessourceInfos& ri ){throw 1;}
 };
 
 

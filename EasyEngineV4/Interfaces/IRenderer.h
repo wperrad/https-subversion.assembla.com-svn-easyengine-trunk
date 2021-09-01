@@ -37,21 +37,9 @@ protected:
 	CMatrix			m_oCameraMatrix;
 	std::string		m_sDebugString;
 	bool			m_bDisplayDebugInfos;
-	IRenderer( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
+	IRenderer() : CPlugin( nullptr, "" ){}
 
 public:
-
-	struct Desc : public CPlugin::Desc
-	{
-		IFileSystem&	m_oFileSystem;
-		IWindow&		m_oWindow;
-		std::string		m_sShaderDirectory;
-		std::string		m_sDefaultShader;
-		Desc( IWindow& oWindow, IFileSystem& oFileSystem ):
-			CPlugin::Desc( NULL, "Renderer" ),
-			m_oFileSystem( oFileSystem ),
-			m_oWindow( oWindow ){}
-	};
 
 	typedef void	( *TRenderEventCallback )( IRenderer* );	
 
@@ -73,7 +61,7 @@ public:
 
 	enum TShaderType{ T_PIXEL_SHADER = 0, T_VERTEX_SHADER };
 	enum TNumberType{ T_FLOAT = 0, T_INT };
-	enum TDrawStyle{ T_POINTS = 0, T_LINES , T_TRIANGLES, T_LINE_LOOP };
+	enum TDrawStyle{ T_POINTS = 0, T_LINES , T_TRIANGLES, T_LINE_LOOP, T_LINE_STRIP, T_QUADS };
 	enum TTextureDimension{ T_1D = 0, T_2D, T_3D };
 		
 	virtual void			SetRenderType( TRenderType t ) = 0;
@@ -182,6 +170,8 @@ public:
 	virtual float			GetScreenRatio() = 0;
 	virtual void			SetModelViewToIdentity() = 0;
 	virtual void			ClearFrameBuffer() = 0;
+	virtual void			GetGlslVersion(string& sVersion) = 0;
+	virtual void			GetOpenglVersion(string& sVersion) = 0;
 };
 
 

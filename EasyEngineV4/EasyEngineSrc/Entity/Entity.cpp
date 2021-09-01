@@ -7,11 +7,13 @@
 // engine
 #include "IRenderer.h"
 #include "IRessource.h"
-#include "ISystems.h"
 #include "IShader.h"
 #include "IGeometry.h"
 #include "ICollisionManager.h"
+#include "Interface.h"
 #include "EntityManager.h"
+#include "PlaneEntity.h"
+#include "Bone.h"
 
 // Utils
 #include "Utils2/TimeManager.h"
@@ -21,9 +23,12 @@ using namespace std;
 
 const float g_fMaxHeight = 80;
 
-CEntity::CEntity( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager, IGeometryManager& oGeometryManager, ICollisionManager& oCollisionManager ):
-m_oRessourceManager( oRessourceManager ),
-m_oRenderer( oRenderer ),
+CEntity::CEntity(EEInterface& oInterface):
+m_oRessourceManager(*static_cast<IRessourceManager*>(oInterface.GetPlugin("RessourceManager"))),
+m_oRenderer(*static_cast<IRenderer*>(oInterface.GetPlugin("Renderer"))),
+m_oGeometryManager(*static_cast<IGeometryManager*>(oInterface.GetPlugin("GeometryManager"))),
+m_oCollisionManager(*static_cast<ICollisionManager*>(oInterface.GetPlugin("CollisionManager"))),
+m_oInterface(oInterface),
 m_pCurrentAnimation( NULL ),
 m_pOrgSkeletonRoot( NULL ),
 m_pSkeletonRoot( NULL ),
@@ -33,51 +38,50 @@ m_bUsePositionKeys( false ),
 m_eRenderType( IRenderer::eFill ),
 m_pBoundingSphere( NULL ),
 m_fBoundingSphereRadius( -1 ),
-m_oGeometryManager( oGeometryManager ),
 m_bDrawAnimationBoundingBox( false ),
-m_oCollisionManager( oCollisionManager ),
 m_pfnCollisionCallback( NULL ),
-m_bUseAdditionalColor(false),
 m_pBoundingGeometry(NULL),
 m_pRessource(NULL),
 m_fMaxStepHeight(g_fMaxHeight),
 m_pCollisionMesh(NULL),
 m_bDrawBoundingBox(false),
 m_pScene(NULL),
-m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL))
+m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL)),
+m_pMesh(nullptr)
 {
-	m_pEntityManager = static_cast<CEntityManager*>(pEntityManager);
+	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 }
 
-CEntity::CEntity( const string& sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager, IGeometryManager& oGeometryManager, ICollisionManager& oCollisionManager, bool bDuplicate ):
-m_oRenderer( oRenderer ),
-m_oRessourceManager( oRessourceManager ),
+CEntity::CEntity(EEInterface& oInterface, const string& sFileName, bool bDuplicate ):
+m_oInterface(oInterface),
+m_oRessourceManager(*static_cast<IRessourceManager*>(oInterface.GetPlugin("RessourceManager"))),
+m_oRenderer(*static_cast<IRenderer*>(oInterface.GetPlugin("Renderer"))),
+m_oGeometryManager(*static_cast<IGeometryManager*>(oInterface.GetPlugin("GeometryManager"))),
+m_oCollisionManager(*static_cast<ICollisionManager*>(oInterface.GetPlugin("CollisionManager"))),
+m_pEntityManager(static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"))),
 m_pCurrentAnimation( NULL ),
 m_pOrgSkeletonRoot( NULL ),
 m_pSkeletonRoot( NULL ),
 m_bHidden( false ),
 m_pEntityRoot( NULL ),
-m_pEntityManager( (CEntityManager*)pEntityManager ),
 m_bUsePositionKeys( false ),
 m_eRenderType( IRenderer::eFill ),
 m_pBoundingSphere( NULL ),
 m_fBoundingSphereRadius( -1 ),
-m_oGeometryManager( oGeometryManager ),
 m_bDrawAnimationBoundingBox( false ),
-m_oCollisionManager( oCollisionManager ),
 m_pfnCollisionCallback( NULL ),
-m_bUseAdditionalColor(false),
 m_pCollisionMesh(NULL),
 m_pRessource(NULL),
 m_pBoundingGeometry(NULL),
 m_fMaxStepHeight(g_fMaxHeight),
 m_bDrawBoundingBox(false),
 m_pScene(NULL),
-m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL))
+m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL)),
+m_pMesh(nullptr)
 {
 	if( sFileName.size() > 0 )
 	{
-		SetRessource( sFileName, oRessourceManager, oRenderer );
+		SetRessource( sFileName);
 		if (m_pBoundingGeometry)
 			m_fBoundingSphereRadius = m_pBoundingGeometry->ComputeBoundingSphereRadius();
 	}
@@ -100,7 +104,7 @@ void CEntity::SetRenderingType( IRenderer::TRenderType t )
 }
 
 
-void CEntity::SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate )
+void CEntity::SetRessource( string sFileName, bool bDuplicate )
 {
 	int nPos = static_cast< int >( sFileName.find_last_of( "." ) );
 	string sExt = sFileName.substr( nPos + 1, 3 );
@@ -108,16 +112,17 @@ void CEntity::SetRessource( string sFileName, IRessourceManager& oRessourceManag
 	transform( sExt.begin(), sExt.end(), sExtLower.begin(), tolower );
 	if ( sExtLower == "ale" )
 		bDuplicate = true;
-	IAnimatableMesh* pAMesh = dynamic_cast< IAnimatableMesh* >( oRessourceManager.GetRessource( sFileName, bDuplicate ) );
+	IAnimatableMesh* pAMesh = dynamic_cast< IAnimatableMesh* >( m_oRessourceManager.GetRessource( sFileName, bDuplicate ) );
 	if( pAMesh )
 	{
 		if( pAMesh->GetMeshCount() > 0 )
 		{
 			m_pRessource = pAMesh->GetMesh( 0 );
+			m_pMesh = dynamic_cast< IMesh* >(m_pRessource);
 			m_pRessource->GetName( m_sName );
-			m_pOrgSkeletonRoot = pAMesh->GetSkeleton();
+			m_pOrgSkeletonRoot = dynamic_cast<CBone*>(pAMesh->GetSkeleton());
 			if (m_pOrgSkeletonRoot) {
-				m_pSkeletonRoot = static_cast<IBone*>(m_pOrgSkeletonRoot->DuplicateHierarchy());
+				m_pSkeletonRoot = dynamic_cast<CBone*>(m_pOrgSkeletonRoot->DuplicateHierarchy());
 				m_pSkeletonRoot->Link(this);
 			}
 
@@ -129,7 +134,7 @@ void CEntity::SetRessource( string sFileName, IRessourceManager& oRessourceManag
 					IBone* pParentBone = static_cast< IBone* >( m_pSkeletonRoot->GetChildBoneByID( pMesh->GetParentBoneID() ) );
 					string sName;
 					pMesh->GetName( sName );
-					CEntity* pEntity = static_cast< CEntity* >( m_pEntityManager->CreateEntity( sName ) );
+					CEntity* pEntity = dynamic_cast< CEntity* >( m_pEntityManager->CreateEntity( sName ) );
 					pEntity->SetMesh( pMesh );
 					
 					pEntity->SetName( sName );
@@ -159,7 +164,7 @@ void CEntity::SetRessource( string sFileName, IRessourceManager& oRessourceManag
 
 void CEntity::CreateAndLinkCollisionChildren(string sFileName)
 {
-	int dotPos = sFileName.find('.');
+	int dotPos = (int)sFileName.find('.');
 	string sPrefix = sFileName.substr(0, dotPos);
 	string sCollisionFileName = sPrefix + ".col";
 	try {
@@ -168,7 +173,7 @@ void CEntity::CreateAndLinkCollisionChildren(string sFileName)
 			IGeometry* pGeometry = m_pCollisionMesh->GetGeometry(i);
 			ostringstream oss;
 			oss << sPrefix << "_CollisionPrimitive" << i;
-			CEntity* pChild = static_cast<CEntity*>(m_pEntityManager->CreateEntity(oss.str()));
+			CEntity* pChild = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity(oss.str()));
 			pChild->SetLocalMatrix(pGeometry->GetTM());
 			pChild->ForceAssignBoundingGeometry(pGeometry);
 			pChild->m_fBoundingSphereRadius = pGeometry->ComputeBoundingSphereRadius();
@@ -177,7 +182,7 @@ void CEntity::CreateAndLinkCollisionChildren(string sFileName)
 		}
 	}
 	catch (CFileNotFoundException& e) {
-
+		e = e;
 	}
 }
 
@@ -230,7 +235,7 @@ void CEntity::UpdateCollision()
 	}
 }
 
-bool CEntity::TestEntityCollision(CEntity* pEntity)
+bool CEntity::TestCollision(INode* pEntity)
 {
 	if (GetBoundingSphereDistance(pEntity) < 0)
 	{
@@ -262,28 +267,27 @@ void CEntity::LinkAndUpdateMatrices(CEntity* pEntity)
 float CEntity::GetGroundHeight(float x, float z)
 {
 	float fGroundHeight = 0.f;
-	CEntity* pParent = dynamic_cast<CEntity*>(m_pParent);
-	if (pParent) {
+	if (m_pParent) {
 		CVector localPos(x, 0, z);
 		CVector worldPosition = m_oWorldMatrix * localPos;
-		fGroundHeight = pParent->GetGroundHeight(worldPosition.m_x, worldPosition.m_z) - GetY();
+		fGroundHeight = m_pParent->GetGroundHeight(worldPosition.m_x, worldPosition.m_z) - GetY();
 	}
 	return fGroundHeight;
 }
 
-void CEntity::GetEntitiesCollision(vector<CEntity*>& entities)
+void CEntity::GetEntitiesCollision(vector<INode*>& entities)
 {
-	for (int i = 0; i < m_pParent->GetChildCount(); i++) {
-		CEntity* pEntity = dynamic_cast<CEntity*>(m_pParent->GetChild(i));
+	for (unsigned int i = 0; i < m_pParent->GetChildCount(); i++) {
+		INode* pEntity = m_pParent->GetChild(i);
 		if (!pEntity || pEntity == this)
 			continue;
 
-		if (TestEntityCollision(pEntity))
+		if (TestCollision(pEntity))
 			entities.push_back(pEntity);
 	}
 }
 
-float CEntity::GetBoundingSphereDistance(CEntity* pEntity)
+float CEntity::GetBoundingSphereDistance(INode* pEntity)
 {
 	CVector oThisPosition, oEntityWorldPosition;
 	GetWorldPosition(oThisPosition);
@@ -306,18 +310,15 @@ void CEntity::UpdateRessource()
 {
 	if (!m_bHidden)
 	{
-		IMesh* pMesh = dynamic_cast< IMesh* >(m_pRessource);
-		if (pMesh)
+		if (m_pMesh)
 		{
-			pMesh->SetRenderingType(m_eRenderType);
-			pMesh->DrawAnimationBoundingBox(m_bDrawAnimationBoundingBox);
-			if (m_bUseAdditionalColor)
-				pMesh->Colorize(m_oAdditionalColor.m_x, m_oAdditionalColor.m_y, m_oAdditionalColor.m_z, m_oAdditionalColor.m_w);
+			m_pMesh->SetRenderingType(m_eRenderType);
+			m_pMesh->DrawAnimationBoundingBox(m_bDrawAnimationBoundingBox);
 		}
 		if (m_pRessource)
 			m_pRessource->Update();
-		if (pMesh)
-			pMesh->SetRenderingType(IRenderer::eFill);
+		if (m_pMesh)
+			m_pMesh->SetRenderingType(IRenderer::eFill);
 	}
 }
 
@@ -359,8 +360,8 @@ void CEntity::LocalTranslate(float dx, float dy, float dz)
 		CVector oThisPos, oEntityPos;
 		GetWorldPosition(oThisPos);
 
-		CEntity* pEntity = NULL;
-		vector<CEntity*> entities;
+		INode* pEntity = NULL;
+		vector<INode*> entities;
 		GetEntitiesCollision(entities);
 
 		CMatrix oTemp = m_oLocalMatrix;	
@@ -406,9 +407,9 @@ void CEntity::LocalTranslate(float dx, float dy, float dz)
 		CNode::LocalTranslate(dx, dy, dz);
 }
 
-bool CEntity::ManageBoxCollision(vector<CEntity*>& vCollideEntities, float dx, float dy, float dz, const CMatrix& oBackupMatrix)
+bool CEntity::ManageBoxCollision(vector<INode*>& vCollideEntities, float dx, float dy, float dz, const CMatrix& oBackupMatrix)
 {
-	CEntity* pCollideEntity = vCollideEntities[0];
+	INode* pCollideEntity = vCollideEntities[0];
 	float stepHeight = dy != 0 ? 50.f : 0.f;
 	bool bCollision = false;
 	if (dx == 0 && dy != 0 && dz == 0) {
@@ -451,7 +452,7 @@ bool CEntity::ManageGroundCollision(const CMatrix& olastLocalTM)
 	CVector localPos, worldPos;
 	m_oLocalMatrix.GetPosition(localPos);
 	m_oWorldMatrix.GetPosition(worldPos);
-	float fGroundHeight = static_cast<CEntity*>(m_pParent)->GetGroundHeight(worldPos.m_x, worldPos.m_z) + m_pScene->GetGroundMargin();
+	float fGroundHeight = m_pParent->GetGroundHeight(worldPos.m_x, worldPos.m_z) + m_pScene->GetGroundMargin();
 	float fEntityY = localPos.m_y - h / 2.f;
 	if (fEntityY <= fGroundHeight + CBody::GetEpsilonError()) {
 		m_oBody.m_oSpeed.m_x = 0;
@@ -486,13 +487,12 @@ void CEntity::LinkEntityToBone( IEntity* pChild, IBone* pParentBone, IEntity::TL
 		pChild->SetLocalMatrix( oIdentity );
 	}
 	pChild->Link( pParentBone );
-	CEntity* pChildEntity = static_cast< CEntity* >( pChild );
 	IMesh* pMesh = dynamic_cast< IMesh* >( pChild->GetRessource() );
 	if(pMesh)
 		pChild->LocalTranslate( pMesh->GetOrgMaxPosition().m_x, pMesh->GetOrgMaxPosition().m_y, pMesh->GetOrgMaxPosition().m_z);
 }
 
-void CEntity::Link( CNode* pParent )
+void CEntity::Link( INode* pParent )
 {
 	CNode::Link( pParent );
 	CScene* pScene = dynamic_cast< CScene* >(pParent);
@@ -512,7 +512,7 @@ void CEntity::Hide( bool bHide )
 	m_bHidden = bHide;
 }
 
-void CEntity::GetBonesMatrix( CNode* pInitRoot, CNode* pCurrentRoot, vector< CMatrix >& vMatrix )
+void CEntity::GetBonesMatrix( INode* pInitRoot, INode* pCurrentRoot, vector< CMatrix >& vMatrix )
 {
 	// m0 = base du node dans sa position initiale, m0i = inverse de m0
 	// m1 = base du node dans sa position actuelle
@@ -605,7 +605,7 @@ void CEntity::AddAnimation( string sAnimationFile )
 {
 	if( m_pSkeletonRoot )
 	{
-		IAnimation* pAnimation =  static_cast< IAnimation* >( m_oRessourceManager.GetRessource( sAnimationFile, true ) );
+		IAnimation* pAnimation =  static_cast< IAnimation* >( m_oRessourceManager.GetRessource( "/Animations/" + sAnimationFile, true ) );
 		m_mAnimation[ sAnimationFile ] =  pAnimation;
 		IMesh* pMesh = static_cast< IMesh* >( m_pRessource );
 		pAnimation->SetSkeleton( m_pSkeletonRoot );
@@ -661,12 +661,12 @@ void CEntity::DrawBoundingSphere( bool bDraw )
 	if( bDraw )
 	{
 		if( !m_pBoundingSphere )
-			m_pBoundingSphere = m_pEntityManager->CreateEntity( "sphere.bme", "", m_oRenderer );
+			m_pBoundingSphere = m_pEntityManager->CreateEntity("sphere.bme", "");
 		if( pSkeleton )
 			LinkEntityToBone( m_pBoundingSphere, pSkeleton );
 		else
 			m_pBoundingSphere->Link( this );
-		m_pBoundingSphere->SetScaleFactor( m_fBoundingSphereRadius / 2.f, m_fBoundingSphereRadius / 2.f, m_fBoundingSphereRadius / 2.f );
+		m_pBoundingSphere->SetScaleFactor( m_fBoundingSphereRadius, m_fBoundingSphereRadius, m_fBoundingSphereRadius );
 		m_pBoundingSphere->SetRenderingType( IRenderer::eLine );
 	}
 	else
@@ -680,7 +680,7 @@ void CEntity::DrawBoneBoundingSphere( int nID, bool bDraw )
 	{
 		map< int, IEntity* >::iterator itBone = m_mBonesBoundingSphere.find( nID );
 		if( itBone == m_mBonesBoundingSphere.end() )
-			m_mBonesBoundingSphere[ nID ] = m_pEntityManager->CreateEntity( "sphere.bme", "", m_oRenderer );
+			m_mBonesBoundingSphere[ nID ] = m_pEntityManager->CreateEntity("sphere.bme", "");
 		if( bDraw )
 		{		
 			if( pBone )
@@ -736,11 +736,9 @@ void CEntity::Colorize(float r, float g, float b, float a)
 {
 	IMesh* pMesh = dynamic_cast<IMesh*>(m_pRessource);
 	if (pMesh) {
-		m_bUseAdditionalColor = true;
-		m_oAdditionalColor.m_x = r;
-		m_oAdditionalColor.m_y = g;
-		m_oAdditionalColor.m_z = b;
-		m_oAdditionalColor.m_w = a;
+		for (int i = 0; i < pMesh->GetMaterialCount(); i++) {
+			pMesh->GetMaterial(i)->SetAdditionalColor(r, g, b, a);
+		}
 	}
 }
 

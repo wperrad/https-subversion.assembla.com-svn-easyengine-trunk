@@ -24,7 +24,8 @@ public:
 		eAPIFunction,
 		eProg,
 		eVecArgs,
-		ePar
+		ePar,
+		eCommand
 	};
 
 	CSyntaxNode();

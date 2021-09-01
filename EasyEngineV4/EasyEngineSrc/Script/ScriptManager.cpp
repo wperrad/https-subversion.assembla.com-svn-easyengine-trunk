@@ -1,3 +1,4 @@
+#include "Interface.h"
 #include "ScriptManager.h"
 #include "LexAnalyser.h"
 #include "SyntaxAnalyser.h"
@@ -9,10 +10,11 @@
 
 //#define CREATE_ASSEMBLING_LISTING
 
-CScriptManager::CScriptManager( const Desc& oDesc ):
-IScriptManager( oDesc )
+CScriptManager::CScriptManager(EEInterface& oInterface) :
+m_bGeneratedAssemblerListing(false)
 {
-	m_pLexAnalyser = new CLexAnalyser( "lexanalyser.csv", &oDesc.m_oFileSystem );
+	IFileSystem* pFileSystem = static_cast<IFileSystem*>(oInterface.GetPlugin("FileSystem"));
+	m_pLexAnalyser = new CLexAnalyser( "lexanalyser.csv", pFileSystem);
 	m_pSyntaxAnalyser = new CSyntaxAnalyser;
 	m_pSemanticAnalyser = new CSemanticAnalyser;
 	m_pCodeGenerator = new CAsmGenerator;
@@ -40,6 +42,11 @@ CScriptManager::~CScriptManager()
 	delete m_pProc;
 }
 
+void CScriptManager::GenerateAssemblerListing(bool generate)
+{
+	m_bGeneratedAssemblerListing = generate;
+}
+
 void CScriptManager::ExecuteCommand( std::string sCommand )
 {
 	string s;
@@ -53,11 +60,9 @@ void CScriptManager::ExecuteCommand( std::string sCommand )
 	vector< CAsmGenerator::CInstr > vAssembler;
 	map< string, int > mFuncAddr;
 	m_pSemanticAnalyser->GetFunctionAddress( mFuncAddr );
-	
 	m_pCodeGenerator->GenAssembler( oTree, vAssembler, mFuncAddr, m_pSemanticAnalyser->GetVarMap() );
-#ifdef CREATE_ASSEMBLING_LISTING
-	m_pCodeGenerator->CreateAssemblerListing( vAssembler, "test.asm" );
-#endif // CREATE_ASSEMBLING_LISTING
+	if(m_bGeneratedAssemblerListing)
+		m_pCodeGenerator->CreateAssemblerListing( vAssembler, "test.asm" );
 	vector< unsigned char > vBin;
 	m_pBinGenerator->GenBinary( vAssembler, vBin );
 	m_pProc->Execute( vBin, CBinGenerator::s_vInstrSize );
@@ -78,12 +83,17 @@ float CScriptManager::GetRegisterValue(string sRegisterName)
 	return m_pProc->GetRegisterValue(m_mRegisterFromName[sRegisterName]);
 }
 
+string CScriptManager::GetName()
+{
+	return "ScriptManager";
+}
+
 void CScriptManager::RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType )
 {
 	m_pSemanticAnalyser->RegisterFunction( sFunctionName, Function, vArgsType );
 }
 
-extern "C" _declspec(dllexport) IScriptManager* CreateScriptManager( IScriptManager::Desc& oDesc )
+extern "C" _declspec(dllexport) IScriptManager* CreateScriptManager(EEInterface& oInterface)
 {
-	return new CScriptManager( oDesc );
+	return new CScriptManager(oInterface);
 }

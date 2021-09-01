@@ -8,10 +8,12 @@
 
 using namespace std;
 
+//#define OLD_VERSION
+
 CMaterial::Desc::Desc( IRenderer& oRenderer, IShader* pShader ):
 IRessource::Desc( oRenderer, pShader ),
 m_fShininess( 0 ),
-m_pTexture( NULL )
+m_pDiffuseTexture( NULL )
 {
 	for (unsigned int i=0 ; i<4 ; i++)
 	{
@@ -23,17 +25,22 @@ m_pTexture( NULL )
 }
 
 CMaterial::CMaterial( const Desc& oDesc ) :
-IRessource( oDesc ),
-m_pTexture(NULL),
+IMaterial( oDesc ),
+m_pDiffuseTexture(NULL),
 m_pShader( oDesc.m_pShader ),
-m_bUseAdditionalColor(false)
+m_bUseAdditiveColor(false)
 {
 	m_vAmbient = oDesc.m_vAmbient;
 	m_vDiffuse = oDesc.m_vDiffuse;
 	m_vSpecular = oDesc.m_vSpecular;
 	m_vEmissive = oDesc.m_vEmissive;
 	m_fShininess = oDesc.m_fShininess;
-	m_pTexture = oDesc.m_pTexture;
+	m_pDiffuseTexture = oDesc.m_pDiffuseTexture;
+	if (m_pDiffuseTexture) {
+		for (int i = 0; i < 3; i++)
+			m_vDiffuse[i] = 0.f;
+		m_vDiffuse[3] = 1.f;
+	}
 }
 
 CMaterial::~CMaterial(void)
@@ -42,35 +49,47 @@ CMaterial::~CMaterial(void)
 
 void CMaterial::Update()
 {
-	if ( m_pTexture )
+	if ( m_pDiffuseTexture )
 	{
-		m_pTexture->SetShader( m_pShader );
-		m_pTexture->Update();
+		m_pDiffuseTexture->SetShader( m_pShader );
+		m_pDiffuseTexture->Update();
 	}
 	else
 	{
 		GetRenderer().BindTexture( 0, 0, IRenderer::T_2D );
 		m_pShader->SendUniformValues( "ValueTexture0", 0 );
 	}	
-
-	if (!m_bUseAdditionalColor) {
+#ifdef OLD_VERSION
+	if (!m_bUseAdditiveColor) {
 		GetRenderer().SetMaterialAmbient(&m_vAmbient[0]);
-		GetRenderer().SetMaterialDiffuse(&m_vDiffuse[0]);
+		if (!m_pDiffuseTexture)
+			GetRenderer().SetMaterialDiffuse(&m_vDiffuse[0]);
 	}
 	else {
 		vector<float> newAmbient, newDiffuse;
 		for (int i = 0; i < 3; i++) {
 			newAmbient.push_back(m_vAmbient[i] * (1 - m_vAdditionalColor[3]) + m_vAdditionalColor[i] * m_vAdditionalColor[3]);
-			newDiffuse.push_back(m_vDiffuse[i] * (1 - m_vAdditionalColor[3]) + m_vAdditionalColor[i] * m_vAdditionalColor[3]);
+			if (!m_pDiffuseTexture)
+				newDiffuse.push_back(m_vDiffuse[i] * (1 - m_vAdditionalColor[3]) + m_vAdditionalColor[i] * m_vAdditionalColor[3]);
 		}
 		GetRenderer().SetMaterialAmbient(&newAmbient[0]);
-		GetRenderer().SetMaterialDiffuse(&newDiffuse[0]);
-		m_bUseAdditionalColor = false;
+		if (!m_pDiffuseTexture)
+			GetRenderer().SetMaterialDiffuse(&newDiffuse[0]);
+		m_bUseAdditiveColor = false;
 	}
 
 	GetRenderer().SetMaterialSpecular(&m_vSpecular[0]);
 	GetRenderer().SetMaterialEmissive(&m_vEmissive[0]);
 	GetRenderer().SetMaterialShininess(m_fShininess);
+
+#else
+
+	GetRenderer().SetMaterialAmbient(&m_vAmbient[0]);
+	GetRenderer().SetMaterialDiffuse(&m_vDiffuse[0]);
+	GetRenderer().SetMaterialSpecular(&m_vSpecular[0]);
+	GetRenderer().SetMaterialEmissive(&m_vEmissive[0]);
+	GetRenderer().SetMaterialShininess(m_fShininess);
+#endif // OLD_VERSION
 }
 
 void CMaterial::GetMaterialMatrix( CMatrix& m )
@@ -83,25 +102,76 @@ void CMaterial::GetMaterialMatrix( CMatrix& m )
 
 void CMaterial::SetShader( IShader* pShader )
 {
-	//m_pTexture->SetShader( pShader );
 	m_pShader = pShader;
 }
 
 void CMaterial::SetAdditionalColor(float r, float g, float b, float a)
 {
+#ifdef OLD_VERSION
 	m_vAdditionalColor.push_back(r);
 	m_vAdditionalColor.push_back(g);
 	m_vAdditionalColor.push_back(b);
 	m_vAdditionalColor.push_back(a);
-	m_bUseAdditionalColor = true;
+	m_bUseAdditiveColor = true;
+#else
+	m_vAmbient[0] += r;
+	m_vAmbient[1] += g;
+	m_vAmbient[2] += b;
+	m_vAmbient[3] += a;
+
+	m_vDiffuse[0] += r;
+	m_vDiffuse[1] += g;
+	m_vDiffuse[2] += b;
+	m_vDiffuse[3] += a;
+#endif // OLD_VERSION
+}
+
+void CMaterial::ClearAdditionalColor()
+{
+	m_vDiffuse[0] = 0.f;
+	m_vDiffuse[1] = 0.f;
+	m_vDiffuse[2] = 0.f;
+	m_vDiffuse[3] = 1.f;
 }
 
 ITexture* CMaterial::GetTexture()
 {
-	return m_pTexture;
+	return m_pDiffuseTexture;
 }
 
 void CMaterial::SetTexture(ITexture* pTexture)
 {
-	m_pTexture = pTexture;
+	m_pDiffuseTexture = pTexture;
+}
+
+void CMaterial::SetAmbient(float r, float g, float b, float a)
+{
+	m_vAmbient.clear();
+	m_vAmbient.push_back(r);
+	m_vAmbient.push_back(g);
+	m_vAmbient.push_back(b);
+	m_vAmbient.push_back(a);
+}
+
+void CMaterial::SetDiffuse(float r, float g, float b, float a)
+{
+	m_vDiffuse.clear();
+	m_vDiffuse.push_back(r);
+	m_vDiffuse.push_back(g);
+	m_vDiffuse.push_back(b);
+	m_vDiffuse.push_back(a);
+}
+
+void CMaterial::SetSpecular(float r, float g, float b, float a)
+{
+	m_vSpecular.clear();
+	m_vSpecular.push_back(r);
+	m_vSpecular.push_back(g);
+	m_vSpecular.push_back(b);
+	m_vSpecular.push_back(a);
+}
+
+void CMaterial::SetShininess(float shininess)
+{
+	m_fShininess = shininess;
 }

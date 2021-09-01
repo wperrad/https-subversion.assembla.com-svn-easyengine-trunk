@@ -14,7 +14,7 @@ class CEventDispatcher : public IEventDispatcher
 
 public:
 
-	CEventDispatcher( const IEventDispatcher::Desc& oDesc );
+	CEventDispatcher(EEInterface& oInterface);
 
 	void 			AbonneToKeyEvent( CPlugin* pPlugin, TKeyCallback pfnCallback );
 	void 			AbonneToMouseEvent( CPlugin* pPlugin, TMouseCallback pfnCallback );
@@ -28,8 +28,9 @@ public:
 
 	void			StopDispatcher();
 	void			StartDispatcher();
+	string			GetName() override;
 };
 
-extern "C" _declspec(dllexport) IEventDispatcher* CreateEventDispatcher( const IEventDispatcher::Desc& );
+extern "C" _declspec(dllexport) IEventDispatcher* CreateEventDispatcher(EEInterface& oInterface);
 
 #endif // EVENTDISPATCHER_H

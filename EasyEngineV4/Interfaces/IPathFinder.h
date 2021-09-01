@@ -57,10 +57,7 @@ class IPathFinder : public CPlugin
 {
 public:
 
-	struct Desc : public CPlugin::Desc
-	{
-		Desc(CPlugin* pParent, std::string sName) : CPlugin::Desc(pParent, sName) {}
-	};
+	IPathFinder() : CPlugin(nullptr, "") {}
 
 	virtual IGrid* CreateGrid(int rowCount, int columnCount) = 0;
 	virtual void FindPath(IGrid* grid) = 0;

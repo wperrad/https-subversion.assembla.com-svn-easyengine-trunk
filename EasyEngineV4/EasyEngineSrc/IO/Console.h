@@ -20,6 +20,32 @@ class IPlugin;
 
 class CConsole : public IConsole
 {
+public:
+	
+													CConsole(EEInterface& oInterface);
+	virtual											~CConsole(void);
+
+	void											Open();
+	bool											IsOpen();
+	void											Update();
+	void											Close();
+	void											Cls();
+	void											Open( bool bOpen );
+	void											Print(string s);
+	void											Print(int i);
+	void											Print(float f);
+	void											Println(string s);
+	void											Println(int i);
+	void											Println(float f);
+	void											Print2D(string s);
+	void											SetBlink( bool blink );
+	int												GetConsoleShortCut();
+	void											SetConsoleShortCut(int key);
+	void											EnableInput(bool enable);
+	string											GetName() override;
+
+private:
+
 	bool											m_bIsOpen;
 	std::vector< std::string >						m_vLines;
 	IInputManager&									m_oInputManager;
@@ -46,47 +72,31 @@ class CConsole : public IConsole
 	bool											m_bInputEnabled;
 	int												m_nAutoCompletionLastIndexFound;
 	string											m_sCompletionPrefix;
+	bool											m_bPauseMode;
 
-	void											OnKeyPress( unsigned char key );
-	void											OnKeyRelease( unsigned char key );
-	void											AddString( string s );
+	void											OnKeyPress(unsigned char key);
+	void											OnKeyRelease(unsigned char key);
+	void											AddString(string s);
 	void											NewLine();
-	void											ReplaceString( string s, int nLine = -1 );
+	void											ReplaceString(string s, int nLine = -1);
 	unsigned int									ComputePixelCursorPos();
 	void											ManageAutoCompletion();
-	void											UpdateBlink( int nFontHeight );
+	void											UpdateBlink(int nFontHeight);
 	void											OnPressEnter();
 	void											GetClipboardContent(string& text);
 	void											InitCompletion();
-	
-	static void										OnKeyAction( CPlugin*, unsigned int key, IInputManager::KEY_STATE );	
+	int												GetLineHeight() override;
+	int												GetClientHeight() override;
+	void											SetPauseModeOn(ResumeProc callback, void* params) override;
+	void											SetPauseModeOff();
+	void											UpdateConsoleHeight();
 
+	ResumeProc										m_PauseCallback;
+	void*											m_PauseCallbackParams;
 
-public:
-
-	
-													CConsole( const IConsole::Desc& oDesc );
-	virtual											~CConsole(void);
-
-	void											Open();
-	bool											IsOpen();
-	void											Update();
-	void											Close();
-	void											Cls();
-	void											Open( bool bOpen );
-	void											Print(string s);
-	void											Print(int i);
-	void											Print(float f);
-	void											Println(string s);
-	void											Println(int i);
-	void											Println(float f);
-	void											Print2D(string s);
-	void											SetBlink( bool blink );
-	int												GetConsoleShortCut();
-	void											SetConsoleShortCut(int key);
-	void											EnableInput(bool enable);	
+	static void										OnKeyAction(CPlugin*, unsigned int key, IInputManager::KEY_STATE);
 };
 
-extern "C" _declspec(dllexport) IConsole* CreateConsole( IConsole::Desc& oDesc );
+extern "C" _declspec(dllexport) IConsole* CreateConsole(EEInterface& oInterface);
 
 #endif // CONSOLE_H

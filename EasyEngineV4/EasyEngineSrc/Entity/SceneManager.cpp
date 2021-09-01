@@ -1,17 +1,19 @@
+#include "Interface.h"
 #include "SceneManager.h"
 #include "Scene.h"
 #include "ICameraManager.h"
+#include "ICollisionManager.h"
 
 using namespace std;
 
-CSceneManager::CSceneManager( const ISceneManager::Desc& oDesc ) :
-ISceneManager( oDesc ),
-m_oCameraManager( oDesc.m_oCameraManager ),
-m_oRenderer( oDesc.m_oRenderer ),
-m_oRessourceManager( oDesc.m_oRessourceManager ),
-m_oEntityManager( oDesc.m_oEntityManager ),
-m_oLoaderManager( oDesc.m_oLoaderManager ),
-m_oCollisionManager( oDesc.m_oCollisionManager )
+CSceneManager::CSceneManager(EEInterface& oInterface) :
+m_oInterface(oInterface),
+m_oCameraManager(static_cast<ICameraManager&>(*oInterface.GetPlugin("CameraManager"))),
+m_oRenderer(static_cast<IRenderer&>(*oInterface.GetPlugin("Renderer"))),
+m_oRessourceManager(static_cast<IRessourceManager&>(*oInterface.GetPlugin("RessourceManager"))),
+m_oEntityManager(static_cast<IEntityManager&>(*oInterface.GetPlugin("EntityManager"))),
+m_oLoaderManager(static_cast<ILoaderManager&>(*oInterface.GetPlugin("LoaderManager"))),
+m_oCollisionManager(static_cast<ICollisionManager&>(*oInterface.GetPlugin("CollisionManager")))
 {
 }
 
@@ -21,15 +23,12 @@ CSceneManager::~CSceneManager()
 		delete itScene->second;
 }
 
-IEntity* CSceneManager::CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager, IPathFinder& oPathFinder)
+IScene* CSceneManager::CreateScene(string sSceneName, string sRessourceFileName, string diffuseFileName)
 {
 	map< string, CScene* >::iterator itScene = m_mStringScene.find( sSceneName );
 	if ( itScene == m_mStringScene.end() )
 	{
-		CScene::Desc oSceneDesc( m_oRessourceManager, m_oRenderer, &m_oEntityManager, m_oCameraManager.GetActiveCamera(), m_oCameraManager, 
-			m_oLoaderManager, m_oCollisionManager, oGeometryManager, oPathFinder);
-		oSceneDesc.m_sFileName = sMeshFileName;
-		CScene* pScene = new CScene( oSceneDesc );
+		CScene* pScene = new CScene(m_oInterface, sRessourceFileName, diffuseFileName);
 		m_mStringScene[ sSceneName ] = pScene;
 		m_mSceneString[ pScene ] = sSceneName;
 		m_oEntityManager.AddEntity( pScene, "SceneGame", 0 );
@@ -38,7 +37,7 @@ IEntity* CSceneManager::CreateScene( std::string sSceneName, std::string sMeshFi
 	return itScene->second;
 }
 
-IEntity* CSceneManager::GetScene( std::string sSceneName )
+IScene* CSceneManager::GetScene( std::string sSceneName )
 {
 	map< string, CScene* >::iterator itScene = m_mStringScene.find( sSceneName );
 	if ( itScene == m_mStringScene.end() )
@@ -62,63 +61,12 @@ CScene* CSceneManager::GetScene( IEntity* pScene )
 	return NULL;
 }
 
-IEntity* CSceneManager::Merge( IEntity* pScene, string sRessourceName, string sEntityType, CMatrix& oXForm )
+string CSceneManager::GetName()
 {
-	CScene* pCastScene = GetScene( pScene );
-	if( pCastScene )
-		return pCastScene->Merge( sRessourceName, sEntityType, oXForm );
-	CBadTypeException e( "CSceneManager::Merge() : pScene n'est pas une scene valide" );
-	throw e;
+	return "SceneManager";
 }
 
-IEntity* CSceneManager::Merge( IEntity* pScene, const std::string& sRessourceName, string sEntityType, float x, float y, float z, bool bIsAnimated )
+extern "C" _declspec(dllexport) ISceneManager* CreateSceneManager(EEInterface& oInterface)
 {
-	CMatrix oXForm;
-	oXForm.m_03 = x;
-	oXForm.m_13 = y;
-	oXForm.m_23 = z;
-	return Merge( pScene, sRessourceName, sEntityType, oXForm );
-}
-
-void CSceneManager::Load( IEntity* pScene, string sFileName )
-{
-	CScene* pCastScene = GetScene( pScene );
-	if( pCastScene )
-		pCastScene->Load( sFileName );
-	else
-	{
-		CBadTypeException e( "CSceneManager::Load() : pScene n'est pas une scene valide" );
-		throw e;
-	}
-}
-
-void CSceneManager::Export( IEntity* pScene, string sFileName )
-{
-	CScene* pCastScene = GetScene( pScene );
-	if( pCastScene )
-		pCastScene->Export( sFileName );
-	else
-	{
-		CBadTypeException e( "CSceneManager::Load() : pScene n'est pas une scene valide" );
-		throw e;
-	}
-}
-
-void CSceneManager::ClearScene( IEntity* pScene )
-{
-	CScene* pCastScene = GetScene( pScene );
-	if( pCastScene )
-		pCastScene->Clear();
-}
-
-void CSceneManager::CreateCollisionMap(IEntity* pScene)
-{
-	CScene* pCastScene = GetScene(pScene);
-	if (pCastScene)
-		pCastScene->CreateCollisionMap();
-}
-
-extern "C" _declspec(dllexport) ISceneManager* CreateSceneManager( const ISceneManager::Desc& oDesc )
-{
-	return new CSceneManager( oDesc );
+	return new CSceneManager(oInterface);
 }

@@ -17,17 +17,20 @@ class CCameraManager : public ICameraManager
 	map< ICamera*, TCameraType >	m_mCameraType;
 	ICamera*					m_pActiveCamera;
 	vector< IRenderer*	>		m_vRenderer;
+	EEInterface&				m_oInterface;
 	
 
 public:
-	CCameraManager( const ICameraManager::Desc& oDesc );
+	CCameraManager(EEInterface& oInterface);
 	~CCameraManager();
 	ICamera*		CreateCamera( TCameraType, float fFov, IEntityManager& oEntityManager );
 	void			SetActiveCamera( ICamera* pCamera );
 	ICamera*		GetActiveCamera();
 	TCameraType		GetCameraType( ICamera* pCamera ) ;
 	ICamera*		GetCameraFromType( TCameraType type );
+	string			GetName() override;
+	void			UnlinkCameras() override;
 };
-extern "C" _declspec(dllexport) ICameraManager* CreateCameraManager( const ICameraManager::Desc& );
+extern "C" _declspec(dllexport) ICameraManager* CreateCameraManager(EEInterface& oInterface);
 
 #endif // CAMERAMANAGER_H

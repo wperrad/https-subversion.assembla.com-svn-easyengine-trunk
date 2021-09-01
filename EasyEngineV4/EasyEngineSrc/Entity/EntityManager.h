@@ -10,9 +10,11 @@ class CMobileEntity;
 class IAEntity;
 class CEntity;
 class CPlayer;
+class CNode;
 
 class CEntityManager : public IEntityManager
 {
+	EEInterface&							m_oInterface;
 	map< CEntity*, int >::const_iterator	m_itCurrentParsedEntity;
 	IRessourceManager&						m_oRessourceManager;
 	IGeometryManager&						m_oGeometryManager;
@@ -38,8 +40,8 @@ class CEntityManager : public IEntityManager
 	CPlayer*								m_pPlayer;
 
 public:
-	CEntityManager( const Desc& oDesc );
-	IEntity*			CreateEntity( string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate = false );
+	CEntityManager(EEInterface& oInterface);
+	IEntity*			CreateEntity(string sFileName, string sTypeName, bool bDuplicate = false );
 	IEntity*			CreateEntity( string sName = "noname" );
 	IEntity*			CreateRepere( IRenderer& oRenderer );
 	IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem );
@@ -47,6 +49,7 @@ public:
 	IEntity*			CreateTestEntity(string sFileName, IFileSystem* pFileSystem);
 	IEntity*			CreateMobileEntity( string sFileNamee, IFileSystem* pFileSystem );
 	IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem);
+	IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) override;
 	void				SetPlayer(IPlayer* player);
 	IPlayer*			GetPlayer();
 	IEntity*			GetEntity( int nEntityID );
@@ -54,7 +57,8 @@ public:
 	int					GetEntityID( IEntity* pEntity );
 	int					GetEntityCount();
 	IEntity*			CreateLightEntity( CVector Color, IRessource::TLight type, float fIntensity );
-	void				SetLightIntensity( int nID, float fIntensity );
+	float				GetLightIntensity(int nID) override;
+	void				SetLightIntensity( int nID, float fIntensity ) override;
 	void				DestroyEntity( IEntity* pEntity );
 	void				DestroyAll();
 	void				Clear();
@@ -62,11 +66,11 @@ public:
 	void				SetZCollisionError( float e );
 	IEntity*			CreateSphere( float fSize );
 	IEntity*			CreateQuad(float lenght, float width);
-	IEntity*			CreateBox( IRenderer& oRenderer, const CVector& oDimension );
+	IEntity*			CreateBox(const CVector& oDimension ) override;
 	ISphere&			GetSphere( IEntity* pSphereEntity );
 	IBox&				GetBox( IEntity* pBoxEntity );
-	void				AddCollideEntity( IEntity* pEntity );
-	void				RemoveCollideEntity( IEntity* pEntity );
+	void				AddCollideEntity( CEntity* pEntity );
+	void				RemoveCollideEntity( CEntity* pEntity );
 	CEntity*			GetFirstCollideEntity();
 	CEntity*			GetNextCollideEntity();
 	int					GetCollideEntityID( CEntity* pEntity );
@@ -83,11 +87,12 @@ public:
 	void				Kill(int entityId);
 	void				WearArmor(int entityId, string armorName);
 	template<class T>
-	void				SerializeNodeInfos(CNode* pNode, ostringstream& sLine, int nLevel = 0);
-	void				SerializeMobileEntities(CNode* pRoot,  string& sText);
-	
+	void				SerializeNodeInfos(INode* pNode, ostringstream& sLine, int nLevel = 0);
+	void				SerializeMobileEntities(INode* pRoot,  string& sText);
+	string				GetName() override;
+	IBone*				CreateBone() const override;
 };
 
-extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& );
+extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager(EEInterface& oInterface);
 
 #endif // ENTITYMANAGER_H

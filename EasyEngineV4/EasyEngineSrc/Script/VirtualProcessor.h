@@ -59,6 +59,7 @@ class CVirtualProcessor
 	static void IntImm( unsigned char* pOperand );
 
 	static void Ret( unsigned char* pOperand );
+	static void Return(unsigned char* pOperand);
 
 	static CVirtualProcessor* s_pCurrentInstance;
 	static CSemanticAnalyser* s_pSemanticAnalyser;

@@ -1,3 +1,4 @@
+#include "Interface.h"
 #include "EntityManager.h"
 #include "ICameraManager.h"
 #include "ICamera.h"
@@ -8,7 +9,6 @@
 #include "Exception.h"
 #include "SphereEntity.h"
 #include "IGeometry.h"
-#include "ISystems.h"
 #include "NPCEntity.h"
 #include "LineEntity.h"
 #include "CylinderEntity.h"
@@ -16,17 +16,22 @@
 #include "MapEntity.h"
 #include "TestEntity.h"
 #include "QuadEntity.h"
+#include "PlaneEntity.h"
+#include "IFileSystem.h"
+#include "ICollisionManager.h"
+#include "Bone.h"
 
-CEntityManager::CEntityManager( const Desc& oDesc ):
-IEntityManager( oDesc ),
-m_oRessourceManager( oDesc.m_oRessourceManager ),
-m_oRenderer( oDesc.m_oRenderer ),
+CEntityManager::CEntityManager(EEInterface& oInterface):
+IEntityManager(oInterface),
+m_oInterface(oInterface),
+m_oRessourceManager(static_cast<IRessourceManager&>(*m_oInterface.GetPlugin("RessourceManager"))),
+m_oRenderer(static_cast<IRenderer&>(*m_oInterface.GetPlugin("Renderer"))),
+m_oFileSystem(static_cast<IFileSystem&>(*m_oInterface.GetPlugin("FileSystem"))),
+m_oCollisionManager(static_cast<ICollisionManager&>(*m_oInterface.GetPlugin("CollisionManager"))),
+m_oGeometryManager(static_cast<IGeometryManager&>(*m_oInterface.GetPlugin("GeometryManager"))),
+m_oPathFinder(static_cast<IPathFinder&>(*m_oInterface.GetPlugin("PathFinder"))),
+m_oCameraManager(static_cast<ICameraManager&>(*m_oInterface.GetPlugin("CameraManager"))),
 m_nLastEntityID( -1 ),
-m_oFileSystem( oDesc.m_oFileSystem ),
-m_oCollisionManager( oDesc.m_oCollisionManager ),
-m_oGeometryManager( oDesc.m_oGeometryManager ),
-m_oPathFinder(oDesc.m_oPathFinder),
-m_oCameraManager(oDesc.m_oCameraManager),
 m_pPlayer(NULL)
 {
 	m_itCurrentParsedEntity = m_mCollideEntities.end();
@@ -50,19 +55,19 @@ void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
 		m_mFighterEntities[ pFighterEntity ] = 1;
 }
 
-IEntity* CEntityManager::CreateEntity( std::string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate )
+IEntity* CEntityManager::CreateEntity(std::string sFileName, string sTypeName, bool bDuplicate )
 {
 	CEntity* pEntity = NULL;
 	if( sTypeName.size() == 0 )
-		pEntity = new CEntity( sFileName, m_oRessourceManager, oRenderer, this, m_oGeometryManager, m_oCollisionManager, bDuplicate );
+		pEntity = new CEntity(m_oInterface, sFileName, bDuplicate );
 	else if( sTypeName == "Human" )
-		pEntity = new CMobileEntity( sFileName, m_oRessourceManager, oRenderer, this, &m_oFileSystem, m_oCollisionManager, m_oGeometryManager );
+		pEntity = new CMobileEntity(m_oInterface, sFileName);
 	else if (sTypeName == "NPC")
-		pEntity = new CNPCEntity(sFileName, m_oRessourceManager, oRenderer, this, &m_oFileSystem, m_oCollisionManager, m_oGeometryManager, m_oPathFinder);
+		pEntity = new CNPCEntity(m_oInterface, sFileName);
 	else if( sTypeName == "Player")
-		pEntity = new CPlayer(sFileName, m_oRessourceManager, oRenderer, this, &m_oFileSystem, m_oCollisionManager, m_oGeometryManager, *m_pGUIManager);
+		pEntity = new CPlayer(m_oInterface, sFileName);
 	else if(sTypeName == "MapEntity")
-		pEntity = new CMapEntity(sFileName, m_oRessourceManager, oRenderer, this, m_oGeometryManager, m_oCollisionManager, m_oCameraManager);
+		pEntity = new CMapEntity(m_oInterface, sFileName);
 
 	string sName;
 	pEntity->GetName( sName );
@@ -72,7 +77,7 @@ IEntity* CEntityManager::CreateEntity( std::string sFileName, string sTypeName, 
 
 IEntity* CEntityManager::CreateEntity( string sName )
 {
-	CEntity* pEntity = new CEntity( m_oRessourceManager, m_oRenderer, this, m_oGeometryManager, m_oCollisionManager );
+	CEntity* pEntity = new CEntity(m_oInterface);
 	CreateEntity( pEntity );
 	m_mNameEntities[ sName ] = pEntity;
 	m_mEntitiesName[ pEntity ] = sName;
@@ -134,11 +139,11 @@ IEntity* CEntityManager::CreateRepere( IRenderer& oRenderer )
 	return pEntity;
 }
 
-IEntity* CEntityManager::CreateBox( IRenderer& oRenderer, const CVector& oDimension )
+IEntity* CEntityManager::CreateBox(const CVector& oDimension )
 {
 	IBox* pBox = m_oGeometryManager.CreateBox();
-	pBox->Set( -oDimension / 2.f, oDimension );
-	CBoxEntity* pBoxEntity = new CBoxEntity( oRenderer, *pBox );	
+	pBox->Set( -oDimension / 2.f, oDimension );	
+	CBoxEntity* pBoxEntity = new CBoxEntity(m_oRenderer, *pBox );
 	CreateEntity( pBoxEntity );
 	return pBoxEntity;
 }
@@ -157,16 +162,23 @@ IBox& CEntityManager::GetBox( IEntity* pEntity )
 
 IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFileSystem )
 {
-	IEntity* pEntity = new CMobileEntity( sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager );
+	IEntity* pEntity = new CMobileEntity(m_oInterface, sFileName);
 	CreateEntity( pEntity );
 	return pEntity;
 }
 
 IEntity* CEntityManager::CreatePlayer(string sFileName, IFileSystem* pFileSystem)
 {
-	IEntity* pEntity = new CPlayer(sFileName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager, *m_pGUIManager);
+	IEntity* pEntity = new CPlayer(m_oInterface, sFileName);
 	CreateEntity(pEntity);
 	return pEntity;
+}
+
+IEntity* CEntityManager::CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture)
+{
+	CPlaneEntity* planeEntity = new CPlaneEntity(m_oRenderer, m_oRessourceManager, slices, size, heightTexture, diffuseTexture);
+	CreateEntity(planeEntity, "PlaneEntity");
+	return planeEntity;
 }
 
 void CEntityManager::SetPlayer(IPlayer* player)
@@ -187,7 +199,7 @@ IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem )
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
-	IEntity* pEntity = new CNPCEntity(sName, m_oRessourceManager, m_oRenderer, this, pFileSystem, m_oCollisionManager, m_oGeometryManager, m_oPathFinder );
+	IEntity* pEntity = new CNPCEntity(m_oInterface, sName);
 	CreateEntity( pEntity );
 	return pEntity;
 }
@@ -199,7 +211,7 @@ IEntity* CEntityManager::CreateMapEntity(string sFileName, IFileSystem* pFileSys
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
-	IEntity* pEntity = new CMapEntity(sName, m_oRessourceManager, m_oRenderer, this, m_oGeometryManager, m_oCollisionManager, m_oCameraManager);
+	IEntity* pEntity = new CMapEntity(m_oInterface, sName);
 	CreateEntity(pEntity);
 	return pEntity;
 }
@@ -209,7 +221,7 @@ IEntity* CEntityManager::CreateTestEntity(string sFileName, IFileSystem* pFileSy
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
-	IEntity* pEntity = new CTestEntity(sName, m_oRessourceManager, m_oRenderer, this, m_oGeometryManager, m_oCollisionManager);
+	IEntity* pEntity = new CTestEntity(m_oInterface, sName);
 	CreateEntity(pEntity);
 	return pEntity;
 }
@@ -230,9 +242,20 @@ int CEntityManager::GetEntityCount()
 IEntity* CEntityManager::CreateLightEntity( CVector Color, IRessource::TLight type, float fIntensity )
 {
 	IRessource* pLight = m_oRessourceManager.CreateLight(Color, type, fIntensity);
-	CLightEntity* pLightEntity = new CLightEntity( pLight, m_oRessourceManager, m_oRenderer, m_oGeometryManager, m_oCollisionManager );
+	CLightEntity* pLightEntity = new CLightEntity(m_oInterface, pLight);
 	CreateEntity( pLightEntity );
 	return pLightEntity;
+}
+
+float CEntityManager::GetLightIntensity(int nID)
+{
+	CLightEntity* pLightEntity = dynamic_cast< CLightEntity* >(m_mIDEntities[nID]);
+	if (!pLightEntity)
+	{
+		CBadTypeException e;
+		throw e;
+	}
+	return pLightEntity->GetIntensity();
 }
 
 void CEntityManager::SetLightIntensity( int nID, float fIntensity )
@@ -273,6 +296,7 @@ void CEntityManager::Clear()
 	m_mNameEntities.clear();
 	m_mEntitiesName.clear();
 	m_nLastEntityID = -1;
+	m_pPlayer = nullptr;
 }
 
 void CEntityManager::DestroyAll()
@@ -308,7 +332,7 @@ void CEntityManager::SetZCollisionError( float e )
 
 IEntity* CEntityManager::CreateSphere( float fSize )
 {
-	IEntity* pSphere = CreateEntity( "sphere.bme", "", m_oRenderer );
+	IEntity* pSphere = CreateEntity("sphere.bme", "");
 	pSphere->SetScaleFactor( fSize, fSize, fSize );
 	CreateEntity( pSphere, "Sphere" );
 	return pSphere;
@@ -322,15 +346,15 @@ IEntity* CEntityManager::CreateQuad(float lenght, float width)
 	return pQuadEntity;
 }
 
-void CEntityManager::AddCollideEntity( IEntity* pEntity )
+void CEntityManager::AddCollideEntity( CEntity* pEntity )
 {
 	int nID = (int)m_mCollideEntities.size();
-	m_mCollideEntities[ (CEntity*)pEntity ] = nID;
+	m_mCollideEntities[ pEntity ] = nID;
 }
 
-void CEntityManager::RemoveCollideEntity( IEntity* pEntity )
+void CEntityManager::RemoveCollideEntity( CEntity* pEntity )
 {
-	map< CEntity*, int >::iterator itEntity = m_mCollideEntities.find( (CEntity*)pEntity );
+	map< CEntity*, int >::iterator itEntity = m_mCollideEntities.find(pEntity );
 	if( itEntity != m_mCollideEntities.end() )
 		m_mCollideEntities.erase( itEntity );
 }
@@ -384,7 +408,7 @@ IEntity* CEntityManager::CreateLineEntity( const CVector& first, const CVector& 
 
 IEntity* CEntityManager::CreateCylinder( float fRadius, float fHeight )
 {
-	return new CCylinderEntity( m_oGeometryManager, m_oRenderer, m_oRessourceManager, m_oCollisionManager, fRadius, fHeight );
+	return new CCylinderEntity(m_oInterface, fRadius, fHeight );
 }
 
 void CEntityManager::SetGUIManager(IGUIManager* pGUIManager)
@@ -412,7 +436,7 @@ void CEntityManager::WearArmor(int entityId, string sArmorName)
 }
 
 template<class T>
-void CEntityManager::SerializeNodeInfos(CNode* pNode, ostringstream& oss, int nLevel)
+void CEntityManager::SerializeNodeInfos(INode* pNode, ostringstream& oss, int nLevel)
 {
 	IEntity* pEntity = dynamic_cast< T* >(pNode);
 	if (pEntity) {
@@ -424,7 +448,7 @@ void CEntityManager::SerializeNodeInfos(CNode* pNode, ostringstream& oss, int nL
 		if (sEntityName.empty())
 			pEntity->GetName(sEntityName);
 		oss << "Entity name = " << sEntityName << ", ID = " << GetEntityID(pEntity) << "\n";
-		CNode* pSkeleton = pEntity->GetSkeletonRoot();
+		IBone* pSkeleton = pEntity->GetSkeletonRoot();
 		if (pSkeleton)
 			SerializeNodeInfos<T>(pSkeleton, oss);
 	}
@@ -432,14 +456,24 @@ void CEntityManager::SerializeNodeInfos(CNode* pNode, ostringstream& oss, int nL
 		SerializeNodeInfos<T>(pNode->GetChild(i), oss, nLevel + 1);
 }
 
-void CEntityManager::SerializeMobileEntities(CNode* pRoot, string& sText)
+void CEntityManager::SerializeMobileEntities(INode* pRoot, string& sText)
 {
 	ostringstream oss;
 	SerializeNodeInfos<CMobileEntity>(pRoot, oss, 0);
 	sText = oss.str();
 }
 
-extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager( const IEntityManager::Desc& oDesc )
+string CEntityManager::GetName()
 {
-	return new CEntityManager( oDesc );
+	return "EntityManager";
+}
+
+IBone* CEntityManager::CreateBone() const
+{
+	return new CBone(m_oGeometryManager);
+}
+
+extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager(EEInterface& oInterface)
+{
+	return new CEntityManager(oInterface);
 }

@@ -19,9 +19,6 @@ void main()
 	vec4 vViewVertexPos = gl_ProjectionMatrix * vModelVertexPos;
 	N = normalize(gl_NormalMatrix * gl_Normal);
 	V = -normalize(vModelVertexPos.xyz);
-	
 	Texcoord    = gl_MultiTexCoord0.xy;
-	
-	//gl_Position = vec4(0, 0, 0, 1); // vViewVertexPos; //ftransform();
 	gl_Position = vViewVertexPos;
 }

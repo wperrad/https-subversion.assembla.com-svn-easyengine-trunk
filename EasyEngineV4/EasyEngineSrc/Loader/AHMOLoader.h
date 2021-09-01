@@ -17,7 +17,7 @@ public:
 	CAHMOLoader(void){}
 	~CAHMOLoader(void){}
 	bool						Load( const std::string&, CChunk& chunk, IFileSystem& oFileSystem ){return true;}
-	void						Export( const std::string& sFileName, const CChunk& chunk ){}
+	void						Export( const std::string& sFileName, CChunk& chunk ){}
 
 };
 

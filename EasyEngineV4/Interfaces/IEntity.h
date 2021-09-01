@@ -6,7 +6,6 @@
 
 // Engine
 #include "INode.h"
-#include "../Utils2/Node.h"
 #include "EEPlugin.h"
 #include "ILoader.h"
 #include "Math/matrix.h"
@@ -31,6 +30,18 @@ using namespace std;
 
 #define orgEpsilonError 0.001f
 
+
+struct CKey
+{
+	enum TKey { eRotKey = 0, ePosKey };
+	CKey() : m_nTimeValue(0) {}
+	int				m_nTimeValue;
+	CMatrix			m_oWorldTM;
+	CMatrix			m_oLocalTM;
+	CQuaternion		m_oQuat;
+	TKey			m_eType;
+};
+
 class CBody
 {
 	static float	s_fEpsilonError;
@@ -49,7 +60,7 @@ public:
 
 float GetGravity();
 
-class IEntity : public CNode
+class IEntity : virtual public INode
 {
 
 public:
@@ -82,7 +93,7 @@ public:
 	virtual IRessource*			GetRessource() = 0;
 	virtual void				SetWeight( float fWeight ) = 0;
 	virtual float				GetWeight() = 0;
-	virtual void				SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false ) = 0;
+	virtual void				SetRessource( string sFileName, bool bDuplicate = false ) = 0;
 	virtual void				AddAnimation( std::string sAnimationFile ) = 0;
 	virtual void				SetCurrentAnimation( std::string sAnimation ) = 0;
 	virtual IAnimation*			GetCurrentAnimation() = 0;
@@ -108,12 +119,12 @@ public:
 	virtual void				SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) = 0;
 };
 
-class IScene
+class IScene : virtual public IEntity
 {
 public:
-	virtual void				RenderMap() = 0;
-	virtual ITexture*			GetMapTexture() = 0;
-	virtual void				DisplayMap(bool display) = 0;
+	virtual void				RenderMinimap() = 0;
+	virtual ITexture*			GetMinimapTexture() = 0;
+	virtual void				DisplayMinimap(bool display) = 0;
 	virtual void				UpdateMapEntities() = 0;
 	virtual void				CollectMapEntities(vector<IEntity*>& entities) = 0;
 	virtual void				SetGroundMargin(float margin) = 0;
@@ -121,6 +132,15 @@ public:
 	virtual void				Export(string sFileName) = 0;
 	virtual void				GetOriginalSceneFileName(string& sFileName) = 0;
 	virtual void				SetOriginalSceneFileName(string sFileName) = 0;
+	virtual void				Clear() = 0;
+	virtual void				Load(string sFileName) = 0;
+	virtual IEntity*			Merge(string sRessourceName, string sEntityType, float x, float y, float z) = 0;
+	virtual void				CreateCollisionMap() = 0;
+	virtual void				SetDiffuseFileName(string diffuseFileName) = 0;
+	virtual int					GetCurrentHeightMapIndex() = 0;
+	virtual void				SetLength(int length) = 0;
+	virtual void				SetHeight(float height) = 0;
+	virtual void				SetHMFile(string sHMFile) = 0;
 };
 
 class IFighterEntityInterface
@@ -139,7 +159,7 @@ public:
 	virtual void Attack(IFighterEntityInterface* pEntity) = 0;
 };
 
-class IPlayer 
+class IPlayer : virtual public IEntity
 {
 public:
 	virtual void Action() = 0;
@@ -148,29 +168,9 @@ public:
 
 class IEntityManager : public CPlugin
 {
-public:	
-	struct Desc : public CPlugin::Desc
-	{
-		IRessourceManager&		m_oRessourceManager;
-		IRenderer&				m_oRenderer;
-		IFileSystem&			m_oFileSystem;
-		ICollisionManager&		m_oCollisionManager;
-		IGeometryManager&		m_oGeometryManager;
-		IPathFinder&			m_oPathFinder;
-		ICameraManager&			m_oCameraManager;
-		Desc( IRessourceManager& oRessourceManager, IRenderer& oRenderer, IFileSystem& oFileSystem, ICollisionManager& oCollisionManager, 
-			IGeometryManager& oGeometryManager, IPathFinder& oPathFinder, ICameraManager&	oCameraManager) :
-			CPlugin::Desc( NULL, "EntityManager" ),
-			m_oRessourceManager( oRessourceManager ),
-			m_oRenderer(oRenderer),
-			m_oFileSystem( oFileSystem ),
-			m_oCollisionManager( oCollisionManager ),
-			m_oGeometryManager( oGeometryManager ),
-			m_oPathFinder(oPathFinder),
-			m_oCameraManager(oCameraManager){}
-	};
-	IEntityManager( const Desc& oDesc ) : CPlugin( NULL, "" ){}
-	virtual IEntity*			CreateEntity( std::string sFileName, string sTypeName, IRenderer& oRenderer, bool bDuplicate = false ) = 0;
+public:
+	IEntityManager(EEInterface& oInterface) : CPlugin( NULL, "" ){}
+	virtual IEntity*			CreateEntity(std::string sFileName, string sTypeName, bool bDuplicate = false ) = 0;
 	virtual IEntity*			CreateEntity( string sFileName = "noname" ) = 0;
 	virtual IEntity*			CreateRepere( IRenderer& oRenderer ) = 0;
 	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem ) = 0;
@@ -183,18 +183,17 @@ public:
 	virtual int					GetEntityID( IEntity* pEntity ) = 0;
 	virtual int					GetEntityCount() = 0;
 	virtual IEntity*			CreateLightEntity( CVector Color, IRessource::TLight type, float fIntensity ) = 0;
+	virtual float				GetLightIntensity(int nID) = 0;
 	virtual void				SetLightIntensity( int nID, float fIntensity ) = 0;
 	virtual void				DestroyEntity( IEntity* pEntity ) = 0;
 	virtual void				DestroyAll() = 0;
 	virtual void				Clear() = 0;
 	virtual void				AddEntity( IEntity* pEntity, string sEntityName = "noname", int nID = -1 ) = 0;
 	virtual IEntity*			CreateSphere( float fSize ) = 0;
-	virtual IEntity*			CreateBox( IRenderer& oRenderer, const CVector& oDimension ) = 0;
+	virtual IEntity*			CreateBox(const CVector& oDimension ) = 0;
 	virtual IEntity*			CreateQuad(float lenght, float width) = 0;
 	virtual ISphere&			GetSphere( IEntity* pSphereEntity ) = 0;
 	virtual IBox&				GetBox( IEntity* pBoxEntity ) = 0;
-	virtual void				AddCollideEntity( IEntity* pEntity ) = 0;
-	virtual void				RemoveCollideEntity( IEntity* pEntity ) = 0;
 	virtual void				SetZCollisionError( float e ) = 0;
 	virtual IAEntity*			GetFirstIAEntity() = 0;
 	virtual IAEntity*			GetNextIAEntity() = 0;
@@ -206,47 +205,47 @@ public:
 	virtual IEntity*			CreateCylinder( float fRadius, float fHeight ) = 0;
 	virtual void				Kill(int entityId) = 0;
 	virtual void				WearArmor(int entityId, string armorName) = 0;
-	virtual void				SerializeMobileEntities(CNode* pRoot, string& sText) = 0;
+	virtual void				SerializeMobileEntities(INode* pRoot, string& sText) = 0;
 	virtual IGUIManager* 		GetGUIManager() = 0;
 	virtual void				SetGUIManager(IGUIManager* pGUIManager) = 0;
 	virtual void				SetPlayer(IPlayer* player) = 0;
 	virtual IPlayer*			GetPlayer() = 0;
+	virtual IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) = 0;
+	virtual IBone*				CreateBone() const = 0;
 };
 
 class ISceneManager : public CPlugin
 {
 protected:
-	ISceneManager( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
+	ISceneManager() : CPlugin(nullptr, "" ){}
+	
 
 public:
-	struct Desc : public CPlugin::Desc
-	{
-		IRessourceManager&	m_oRessourceManager;
-		IRenderer&			m_oRenderer;
-		ICameraManager&		m_oCameraManager;
-		IEntityManager&		m_oEntityManager;
-		ILoaderManager&		m_oLoaderManager;
-		ICollisionManager&	m_oCollisionManager;
+	virtual ~ISceneManager() {}
+	virtual IScene*		CreateScene(string sSceneName, string sRessourceFileName, string diffuseFileName) = 0;
+	virtual IScene*		GetScene( std::string sSceneName ) = 0;
+};
 
-		Desc(	IRessourceManager& oRessourceManager, IRenderer& oRenderer, ICameraManager& oCameraManager, 
-				IEntityManager& oEntityManager, ILoaderManager& oLoaderManager, ICollisionManager& oCollisionManager ):
-			CPlugin::Desc( NULL, "" ),
-			m_oRessourceManager( oRessourceManager ),
-			m_oRenderer( oRenderer ),
-			m_oCameraManager( oCameraManager ),
-			m_oEntityManager ( oEntityManager ),
-			m_oLoaderManager( oLoaderManager ),
-			m_oCollisionManager( oCollisionManager ){}
-	};
 
-	virtual IEntity*	CreateScene( std::string sSceneName, std::string sMeshFileName, IGeometryManager& oGeometryManager, IPathFinder& oPathFinder ) = 0;
-	virtual IEntity*	GetScene( std::string sSceneName ) = 0;
-	virtual IEntity*	Merge( IEntity* pScene, const std::string& sRessourceName, string sEntityType, float x = 0, float y = 0, float z = 0, bool bIsAnimated = false ) = 0;
-	virtual IEntity*	Merge( IEntity* pScene, string sRessourceName, string sEntityType, CMatrix& oXForm ) = 0;
-	virtual void		Load( IEntity* pScene, string sFileName ) = 0;
-	virtual void		Export( IEntity* pScene, string sFileName ) = 0;
-	virtual void		ClearScene( IEntity* pScene ) = 0;
-	virtual void		CreateCollisionMap(IEntity* pScene) = 0;
+
+
+class IBone : virtual public INode
+{
+public:
+	virtual void			AddKey(string sAnimation, int nTimeValue, const CMatrix& m, const CQuaternion& q) = 0;
+	virtual void			AddKey(string sAnimation, CKey& oKey) = 0;
+	virtual void			NextKey() = 0;
+	virtual void			Rewind() = 0;
+	virtual void			UpdateTime(float fTime) = 0;
+	virtual void			GetKeyByIndex(int nIndex, CKey& oKey) const = 0;
+	virtual void			GetKeyByTime(int nTime, CKey& oKey) const = 0;
+	virtual int				GetKeyCount() const = 0;
+	virtual void			SetCurrentAnimation(string sAnimation) = 0;
+	virtual void			SetBoundingBox(IBox* oBox) = 0;
+	virtual const IBox*		GetBoundingBox() = 0;
+	virtual const ISphere*	GetBoundingSphere() = 0;
+	virtual IBone*			GetChildBoneByID( int nID ) = 0;
+	virtual IBone*			GetChildBoneByName( string sName ) = 0;
 };
 
 #endif // IENTITY_H

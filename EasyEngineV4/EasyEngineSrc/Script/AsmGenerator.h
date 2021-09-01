@@ -97,6 +97,7 @@ public:
 		ePush,
 		ePop,
 		eRet,
+		eReturn,
 		eDB,
 		eMnemonicCount
 	};
@@ -129,12 +130,16 @@ private:
 	void					GenPushImm( float val, vector< CInstr >& vAssembler );
 	void					GenPushMemory(CMemory* pMemory, vector< CInstr >& vAssembler);
 	void					GenCall( const CSyntaxNode& oNode, vector< CInstr >& );
+	void					GenRet(vector< CInstr >&);
+	void					GenReturn(vector< CInstr >&);
 	void					GenMov( CRegister::TType a, CRegister::TType b, vector< CInstr >& );
 	CMemory*				CreateMemoryRegister(CRegister::TType eBase, CRegister::TType eIndex, int nDisplacement);
 	void					GenMovAddrImm(CMemory* pMemory, VarMap& mVar, const CSyntaxNode& oImm, vector< CInstr >& vAssembler );
 	void					GenMovAddrReg(CRegister::TType scrReg, CMemory* pdestMem, vector< CInstr >& vAssembler);
 	void					GenMovRegAddr(CRegister::TType destReg, CMemory* pSrcMemory, vector< CInstr >& vAssembler);
 	void					GenMovAddrAddr(CMemory* pSrcMemory, CMemory* pDestMemory, vector< CInstr >& vAssembler);
+	void					GenAddRegImm(CRegister::TType, int val, vector< CInstr >&);
+	void					GenSubRegImm(CRegister::TType, int val, vector< CInstr >&);
 	void					GenPop( CRegister::TType, vector< CInstr >& );
 	void					FillOperandFromSyntaxNode( CNumeric* oOperand, const CSyntaxNode& oTree );
 	void					ResolveAddresses( vector< CInstr >& vCodeOut );

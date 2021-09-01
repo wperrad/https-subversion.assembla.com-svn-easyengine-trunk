@@ -1,8 +1,8 @@
 #include "LightEntity.h"
 
 
-CLightEntity::CLightEntity( IRessource* pLight, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IGeometryManager& oGeometryManager, ICollisionManager& oCollisionManager ):
-CEntity( oRessourceManager, oRenderer, NULL, oGeometryManager, oCollisionManager )
+CLightEntity::CLightEntity(EEInterface& oInterface, IRessource* pLight):
+CEntity(oInterface)
 {	
 	m_pRessource = pLight;
 	SetEntityName("Light");

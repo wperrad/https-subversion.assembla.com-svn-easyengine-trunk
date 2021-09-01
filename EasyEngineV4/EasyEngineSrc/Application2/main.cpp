@@ -7,7 +7,6 @@
 #include <sstream>
 
 // Engine 
-#include "../Utils2/Node.h"
 #include "../Utils2/DebugTool.h"
 #include "IInputManager.h"
 #include "IGUIManager.h"
@@ -31,7 +30,6 @@
 #include "Exception.h"
 #include "ScriptRegistration.h"
 #include "ICollisionManager.h"
-#include "ISystems.h"
 #include "IGeometry.h"
 #include "IPathFinder.h"
 #include "Editor.h"
@@ -70,26 +68,16 @@ IConsole*				m_pConsole = NULL;
 ISceneManager*			m_pSceneManager  = NULL;
 IActionManager*			m_pActionManager = NULL;
 ICollisionManager*		m_pCollisionManager= NULL;
-ISystemsManager*		m_pSystemsManager = NULL;
 IEventDispatcher*		m_pEventDispatcher = NULL;
 IXMLParser*				m_pXMLParser = NULL;
 IGeometryManager*		m_pGeometryManager = NULL;
 IPathFinder*			m_pPathFinder = NULL;
 
-IEntity* m_pRepere = NULL;
-
-string s_strMessage = "none";
-vector< CNode* > vRotateEntities;
-vector< CNode* > vMarkedEntities;
-CNode* m_pBase;
-CNode* m_pTestMesh;
-vector< IEntity* > m_vAnimatedEntities;
-
 vector< IEntity* > m_vLight;
 bool	m_bFirstTimeOpenFile = true;
 CDebugTool* m_pDebugTool = NULL;
 CNode* m_pEntity = NULL;
-IEntity* m_pScene = NULL;
+IScene* m_pScene = NULL;
 CEditor* m_pEditor = NULL;
 
 float m_nDeltaTickCount = 0;
@@ -143,8 +131,15 @@ void UpdateCamera()
 
 	if ( eLessSpeed == IInputManager::JUST_PRESSED )
 		m_pCameraManager->GetActiveCamera()->SetSpeed( m_pCameraManager->GetActiveCamera()->GetSpeed() / 2.f );
-	if ( eMoreSpeed == IInputManager::JUST_PRESSED )
-		m_pCameraManager->GetActiveCamera()->SetSpeed( m_pCameraManager->GetActiveCamera()->GetSpeed() * 2.f );
+	if (eMoreSpeed == IInputManager::JUST_PRESSED) {
+		if(m_pCameraManager->GetActiveCamera())
+			m_pCameraManager->GetActiveCamera()->SetSpeed(m_pCameraManager->GetActiveCamera()->GetSpeed() * 2.f);
+		else
+		{
+			m_pConsole->Open(true);
+			m_pConsole->Println("Error : No active camera selected");
+		}
+	}
 	m_pActionManager->GetGameMousePos( m_nLastGameMousePosx, m_nLastGameMousePosy );
 
 	ICamera* pActiveCamera = m_pCameraManager->GetActiveCamera();
@@ -175,7 +170,8 @@ void OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE s
 			else if (key == 'E')
 			{
 				IPlayer* pPlayer = m_pEntityManager->GetPlayer();
-				pPlayer->Action();
+				if(pPlayer)
+					pPlayer->Action();
 			}
 		}
 	}
@@ -183,11 +179,11 @@ void OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE s
 
 void UpdatePerso()
 {
-	if( !m_pConsole->IsOpen() && !m_pGUIManager->GetGUIMode())
-	{
-		IEntity* pPerso = dynamic_cast<IEntity*>(m_pEntityManager->GetPlayer());
-		if( pPerso )
-		{
+	IPlayer* pPerso = m_pEntityManager->GetPlayer();
+	if(pPerso && !m_pConsole->IsOpen() && !m_pGUIManager->GetGUIMode())
+	{		
+		ICamera* pCamera = m_pCameraManager->GetActiveCamera();
+		if( pPerso && (m_pCameraManager->GetCameraType(pCamera) == ICameraManager::T_LINKED_CAMERA) ) {
 			IInputManager::KEY_STATE eStateWalk = m_pActionManager->GetKeyActionState( "AvancerPerso");
 			if( eStateWalk == IInputManager::JUST_PRESSED || eStateWalk == IInputManager::PRESSED )
 			{
@@ -242,9 +238,6 @@ void UpdatePerso()
 
 void OnUpdateWindow()
 {
-	for ( unsigned int i = 0; i < vRotateEntities.size(); i++ )
-		vRotateEntities[ i ]->Yaw( 0.2f );
-
 	int nTickCount = GetTickCount();
 	m_nDeltaTickCount = nTickCount - m_nLastTickCount;
 	m_nLastTickCount = (float)nTickCount;
@@ -293,17 +286,13 @@ EEInterface* InitPlugins( string sCmdLine )
 	CGFXOption oOption;
 	GetOptionsByCommandLine( sCmdLine, oOption );
 
-	IPathFinder::Desc oPathFinderDesc(NULL, "PathFinder");
-	m_pPathFinder = static_cast<IPathFinder*>(CPlugin::Create(oPathFinderDesc, sDirectoryName + "IA.dll", "CreatePathFinder"));
-
+	m_pPathFinder = static_cast<IPathFinder*>(CPlugin::Create(*pInterface, sDirectoryName + "IA.dll", "CreatePathFinder"));
 		
-	IFileSystem::Desc oFileSystemDesc( NULL, "FileSystem" );
-	m_pFileSystem = static_cast< IFileSystem* > ( CPlugin::Create( oFileSystemDesc, sDirectoryName + "FileUtils.dll", "CreateFileSystem" ) );
+	m_pFileSystem = static_cast< IFileSystem* > ( CPlugin::Create( *pInterface, sDirectoryName + "FileUtils.dll", "CreateFileSystem" ) );
 	m_pFileSystem->Mount( "..\\data" );
 	m_pFileSystem->Mount( "..\\..\\EasyEngine\\data" );
 
-	IEventDispatcher::Desc oEventDispatcherDesc( NULL, "EventDispatcher" );
-	m_pEventDispatcher = static_cast< IEventDispatcher* >( CPlugin::Create( oEventDispatcherDesc, sDirectoryName + "WindowsGUI.dll", "CreateEventDispatcher" ) );
+	m_pEventDispatcher = static_cast< IEventDispatcher* >( CPlugin::Create(*pInterface, sDirectoryName + "WindowsGUI.dll", "CreateEventDispatcher" ) );
 
 	RECT rect;
 	GetWindowRect(GetDesktopWindow(), &rect);
@@ -323,69 +312,30 @@ EEInterface* InitPlugins( string sCmdLine )
 	oWindowDesc.m_sName = "Window";
 	m_pWindow = static_cast< IWindow* >( CPlugin::Create( oWindowDesc, sDirectoryName + "WindowsGUI.dll", "CreateWindow2" ) );
 
-	IRenderer::Desc oRendererDesc( *m_pWindow, *m_pFileSystem );
-	oRendererDesc.m_sDefaultShader = "PerPixelLighting";
-	oRendererDesc.m_sShaderDirectory = "Shaders";
-	m_pRenderer = static_cast< IRenderer* >( CPlugin::Create( oRendererDesc, sDirectoryName + "Renderer.dll", "CreateRenderer" ) );	
+	m_pRenderer = static_cast< IRenderer* >( CPlugin::Create( *pInterface, sDirectoryName + "Renderer.dll", "CreateRenderer" ) );	
 
 	IGeometryManager::Desc oGeometryManagerDesc( NULL, "GeometryManager" );
 	m_pGeometryManager = static_cast< IGeometryManager* >( CPlugin::Create( oGeometryManagerDesc, "Geometry.dll", "CreateGeometryManager" ) );
-
-	ILoaderManager::Desc oLoaderDesc( *m_pFileSystem, *m_pGeometryManager );
-	oLoaderDesc.m_sName = "LoaderManager";
-	m_pLoaderManager =  static_cast< ILoaderManager* >( CPlugin::Create( oLoaderDesc, sDirectoryName + "Loader.dll", "CreateLoaderManager" ) );
-
-	ISystemsManager::Desc oSystemsDesc( *m_pGeometryManager );
-	m_pSystemsManager = static_cast< ISystemsManager* >( CPlugin::Create( oSystemsDesc, sDirectoryName + "Systems.dll", "CreateSystemsManager" ) );
-
-	IRessourceManager::Desc oRessourceManagerDesc( *m_pRenderer, *m_pFileSystem, *m_pLoaderManager, *m_pSystemsManager );
-	oRessourceManagerDesc.m_sName = "RessourceManager";
-	m_pRessourceManager = static_cast< IRessourceManager* >( CPlugin::Create( oRessourceManagerDesc, sDirectoryName + "Ressource.dll", "CreateRessourceManager" ) );
-
-	ICollisionManager::Desc oCollisionManagerDesc( *m_pRenderer, *m_pLoaderManager, *m_pGeometryManager);
-	oCollisionManagerDesc.m_pFileSystem = m_pFileSystem;
-	m_pCollisionManager = static_cast< ICollisionManager* >( CPlugin::Create( oCollisionManagerDesc, "Collision.dll", "CreateCollisionManager" ) );	
-
-	vector< IRenderer* > vRenderer;
-	vRenderer.push_back( m_pRenderer );
-	if ( m_pSoftRenderer )
-		vRenderer.push_back( m_pSoftRenderer );
-	ICameraManager::Desc oCameraManagerDesc( vRenderer );
-	oCameraManagerDesc.m_sName = "CameraManager";
-	m_pCameraManager = static_cast< ICameraManager* >( CPlugin::Create( oCameraManagerDesc, sDirectoryName + "Entity.dll", "CreateCameraManager" ) );
-
-	IEntityManager::Desc oEntityManagerDesc(*m_pRessourceManager, *m_pRenderer, *m_pFileSystem, *m_pCollisionManager, *m_pGeometryManager, *m_pPathFinder, *m_pCameraManager);
-	m_pEntityManager = static_cast< IEntityManager* >(CPlugin::Create(oEntityManagerDesc, sDirectoryName + "Entity.dll", "CreateEntityManager"));
+	m_pLoaderManager =  static_cast< ILoaderManager* >( CPlugin::Create(*pInterface, sDirectoryName + "Loader.dll", "CreateLoaderManager" ) );
+	m_pRessourceManager = static_cast< IRessourceManager* >( CPlugin::Create(*pInterface, sDirectoryName + "Ressource.dll", "CreateRessourceManager" ) );
+	m_pCollisionManager = static_cast< ICollisionManager* >( CPlugin::Create(*pInterface, "Collision.dll", "CreateCollisionManager" ));
+	m_pCameraManager = static_cast< ICameraManager* >( CPlugin::Create( *pInterface, sDirectoryName + "Entity.dll", "CreateCameraManager" ) );
+	m_pEntityManager = static_cast< IEntityManager* >(CPlugin::Create(*pInterface, sDirectoryName + "Entity.dll", "CreateEntityManager"));
 	m_pCollisionManager->SetEntityManager(m_pEntityManager);
 
-	ISceneManager::Desc oSceneManagerDesc( *m_pRessourceManager, *m_pRenderer, *m_pCameraManager, *m_pEntityManager, *m_pLoaderManager, *m_pCollisionManager );
-	m_pSceneManager = static_cast< ISceneManager* >( CPlugin::Create( oSceneManagerDesc, sDirectoryName + "Entity.dll", "CreateSceneManager" ) );
+	m_pSceneManager = static_cast< ISceneManager* >( CPlugin::Create(*pInterface, sDirectoryName + "Entity.dll", "CreateSceneManager" ) );
 
-	IXMLParser::Desc oXMLParserDesc( *m_pFileSystem );
-	m_pXMLParser = static_cast< IXMLParser* >( CPlugin::Create( oXMLParserDesc, sDirectoryName + "FileUtils.dll", "CreateXMLParser" ) );
+	//IXMLParser::Desc oXMLParserDesc( *m_pFileSystem );
+	m_pXMLParser = static_cast< IXMLParser* >( CPlugin::Create( *pInterface, sDirectoryName + "FileUtils.dll", "CreateXMLParser" ) );
 
-	m_pScene = m_pSceneManager->CreateScene("Game", "", *m_pGeometryManager, *m_pPathFinder);
-
-	IScene* pScene = dynamic_cast<IScene*>(m_pScene);
-	IGUIManager::Desc oGUIManagerDesc( *m_pRenderer, *m_pRessourceManager, *m_pXMLParser, *m_pInputManager, *m_pCameraManager, *m_pEntityManager, *pScene);
-	oGUIManagerDesc.m_sName = "GUIManager";
-	m_pGUIManager = static_cast< IGUIManager* >( CPlugin::Create( oGUIManagerDesc, sDirectoryName + "GUI.dll", "CreateGUIManager" ) );
-
+	m_pScene = m_pSceneManager->CreateScene("Game", "", "");
+	m_pGUIManager = static_cast< IGUIManager* >( CPlugin::Create(*pInterface, sDirectoryName + "GUI.dll", "CreateGUIManager" ) );
 	m_pEntityManager->SetGUIManager(m_pGUIManager);
-
-	//IHud::Desc oHudDesc(*m_pGUIManager);
-	//m_pHud = static_cast< IHud* >(CPlugin::Create(oGUIManagerDesc, sDirectoryName + "GUI.dll", "CreateHud"));
-
-
-	IScriptManager::Desc oScriptManagerDesc( *m_pFileSystem );
-	m_pScriptManager = static_cast< IScriptManager* >( CPlugin::Create( oScriptManagerDesc, sDirectoryName + "Script.dll", "CreateScriptManager" ) );
+	m_pHud = static_cast< IHud* >(CPlugin::Create(*pInterface, sDirectoryName + "IO.dll", "CreateHud"));
+	m_pScriptManager = static_cast< IScriptManager* >(CPlugin::Create(*pInterface, sDirectoryName + "Script.dll", "CreateScriptManager" ));
 	RegisterAllFunctions( m_pScriptManager );
 
-	IConsole::Desc oConsoleDesc( *m_pInputManager, *m_pGUIManager, *m_pScriptManager );
-	oConsoleDesc.xPos = 50;
-	oConsoleDesc.yPos = 100;
-	oConsoleDesc.m_nHeight = 800;
-	m_pConsole = static_cast< IConsole* >( CPlugin::Create( oConsoleDesc, sDirectoryName + "IO.dll", "CreateConsole" ) );
+	m_pConsole = static_cast< IConsole* >( CPlugin::Create(*pInterface, sDirectoryName + "IO.dll", "CreateConsole" ) );
 	m_pConsole->SetConsoleShortCut(192);
 
 	return pInterface;
@@ -495,63 +445,10 @@ void  OnWindowEvent( CPlugin* pPlugin, IEventDispatcher::TWindowEvent e, int nWi
 	}
 }
 
-//
-//void OnPic01( IGUIManager::ENUM_EVENT eEvent )
-//{
-//	if ( eEvent == IGUIManager::EVENT_NONE )
-//		return;
-//	bool bDisplayMessage = false;
-//	switch ( eEvent )
-//	{
-//	case IGUIManager::EVENT_LMOUSECLICK:
-//		{
-//			s_strMessage = "Click";
-//			bDisplayMessage = true;
-//			break;
-//		}
-//	case IGUIManager::EVENT_LMOUSERELEASED:
-//		{
-//			s_strMessage = "Released";
-//			break;
-//		}
-//	case IGUIManager::EVENT_MOUSEMOVE:
-//		{
-//			s_strMessage = "Mouse move";
-//			break;
-//		}
-//	case IGUIManager::EVENT_MOUSEENTERED:
-//		{
-//			s_strMessage = "Mouse entered";			
-//			break;
-//		}
-//	case IGUIManager::EVENT_MOUSEEXITED:
-//		{
-//			s_strMessage = "Mouse exited";
-//			break;
-//		}	
-//	}
-//	if ( bDisplayMessage )
-//		MessageBoxA( NULL, s_strMessage.c_str(), "", MB_OK );
-//}
 
 
 void OnInitGUI()
 {
-	//int hAnitaWidget = g_pCore->GUI_CreateImage( "anita.TETE",303,242 );
-	//g_pCore->GUI_SetPosition( hAnitaWidget, 20, 500 );
-	//
-	//int hAnitaWidget2 = g_pCore->GUI_CreateImage("anita.SEIN", 263,136);
-	//g_pCore->GUI_SetPosition( hAnitaWidget2, 400, 20 );
-
-	//s_hWindow = g_pCore->GUI_CreateWindow( 0, 0, 1280, 1024 );
-	//g_pCore->GUI_AddWidget( s_hWindow , hAnitaWidget );
-	//g_pCore->GUI_AddWidget( s_hWindow , hAnitaWidget2 );
-	////g_pCore->GUI_AddWidget( s_hWindow , hAnitaWidget3 );
-
-	//int hAnitaListener = g_pCore->GUI_CreateListener( OnPic01 );
-	//g_pCore->GUI_AddEventListener( hAnitaWidget2, hAnitaListener );
-	//g_pCore->GUI_AddWindow( s_hWindow );
-	//g_pCore->GUI_SetVisibility( s_hWindow, false );
 }
 
 
