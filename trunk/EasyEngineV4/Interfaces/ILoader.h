@@ -12,7 +12,6 @@
 
 class IFileSystem;
 class CChunk;
-class CNode;
 class ITexture;
 class IBox;
 class IGeometryManager;
@@ -37,13 +36,20 @@ public:
 		eBGRA
 	};
 
-	struct IRessourceInfos
+	struct IRessourceInfos : public IPersistantObject
 	{
-		virtual ~IRessourceInfos() = 0{}
+		virtual ~IRessourceInfos() = 0 {}
 		string	m_sFileName;
 		string	m_sName;
 		string	m_sFileVersion;
 		vector<string> m_vMessages;
+
+		const IPersistantObject& operator >> (CBinaryFileStorage& store) const { return *this; }
+		IPersistantObject& operator << (CBinaryFileStorage& store) { return *this; }
+		const IPersistantObject& operator >> (CAsciiFileStorage& store) const { return *this; }
+		IPersistantObject& operator << (CAsciiFileStorage& store) { return *this; }
+		const IPersistantObject& operator >> (CStringStorage& store) const { return *this; }
+		IPersistantObject& operator << (CStringStorage& store) { return *this; }
 	};
 
 	struct CMaterialInfos : public IRessourceInfos
@@ -126,6 +132,11 @@ public:
 		int							m_nEndTime;
 	};
 
+	struct CCollisionModelInfos : public IRessourceInfos
+	{
+		vector<IGeometry*> m_vPrimitives;
+	};
+
 	struct CLightInfos : public IRessourceInfos
 	{
 		enum TLight
@@ -140,7 +151,7 @@ public:
 		float		m_fIntensity;
 	};
 
-	struct CSceneObjInfos
+	struct CSceneObjInfos : public IPersistantObject
 	{
 		CSceneObjInfos() : m_nParentBoneID(-1){}
 		CMatrix		m_oXForm;
@@ -149,7 +160,90 @@ public:
 		string		m_sObjectName;
 		string		m_sParentName;
 		int			m_nParentBoneID;
-		virtual		~CSceneObjInfos() = 0{}
+		virtual		~CSceneObjInfos() = 0 {}
+
+		virtual const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
+		{
+			store << m_sRessourceName << m_sRessourceFileName << m_oXForm << m_sParentName << m_nParentBoneID;
+			return *this;
+		}
+
+		IPersistantObject& operator << (CBinaryFileStorage& store) override 
+		{
+			store >> m_sRessourceName >> m_sRessourceFileName >> m_oXForm >> m_sParentName >> m_nParentBoneID;
+			return *this; 
+		}
+
+		const IPersistantObject& operator >> (CAsciiFileStorage& store) const override 
+		{
+			store << "\nRessource name : " << m_sRessourceName 
+				<< "\nRessource file name : " << m_sRessourceFileName 
+				<< "\nXForm : \n" << m_oXForm 
+				<< "\nParent name : " << m_sParentName 
+				<< "\nParent bone id : " << m_nParentBoneID;
+			return *this; 
+		}
+		IPersistantObject& operator << (CAsciiFileStorage& store) override { return *this; }
+		const IPersistantObject& operator >> (CStringStorage& store) const override { return *this; }
+		IPersistantObject& operator << (CStringStorage& store) override { return *this; }
+	};
+
+	struct CSceneInfos : public IRessourceInfos
+	{
+		vector< CSceneObjInfos* >	m_vObject;
+		string						m_sSceneFileName;
+		string						m_sOriginalSceneFileName;
+		CVector						m_oBackgroundColor;
+		string						m_sDiffuseFileName;
+		bool						m_bUseDisplacementMap;
+		int							m_nMapLength;
+		float						m_fMapHeight;
+
+		const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
+		{
+			int nObjectCount = (int)m_vObject.size();
+			store << m_sSceneFileName << m_sOriginalSceneFileName << m_sName << m_oBackgroundColor << m_bUseDisplacementMap << m_sDiffuseFileName << nObjectCount << m_nMapLength << m_fMapHeight;
+			for (unsigned int i = 0; i < nObjectCount; i++)
+				store << *m_vObject.at(i);
+			//store << m_vObject;
+			return *this;
+		}
+
+		IPersistantObject& operator << (CBinaryFileStorage& store) override
+		{
+			int nObjectCount = 0;
+			store >> m_sSceneFileName >> m_sOriginalSceneFileName >> m_sName >> m_oBackgroundColor >> m_bUseDisplacementMap >> m_sDiffuseFileName >> nObjectCount >> m_nMapLength >> m_fMapHeight;
+			for (unsigned int i = 0; i < nObjectCount; i++) {
+				int type = 0;
+				store >> type;
+				CSceneObjInfos* pInfos = nullptr;
+				if (type == ILoader::eEntity)
+					pInfos = new CEntityInfos;
+				else if(type == ILoader::eLight)
+					pInfos = new CLightEntityInfos;
+				store >> *pInfos;
+				m_vObject.push_back(pInfos);
+			}
+			return *this; 
+		}
+
+
+		const IPersistantObject& operator >> (CAsciiFileStorage& store) const override
+		{
+			int nObjectCount = (int)m_vObject.size();
+			store << string("\nScene file name : ") << m_sSceneFileName 
+				<< "\nOriginal scene file name : " << m_sOriginalSceneFileName 
+				<< "\nName : " << m_sName 
+				<< "\nBackground color :" << m_oBackgroundColor 
+				<< "\nUse displacement map : " <<m_bUseDisplacementMap 
+				<< "\nDiffuse file name : " << m_sDiffuseFileName 
+				<< "\nObject count : " << nObjectCount 
+				<< "\nMap length : " << m_nMapLength 
+				<< "\nMap height : " << m_fMapHeight;
+			for (unsigned int i = 0; i < nObjectCount; i++)
+				store << *m_vObject.at(i);
+			return *this;
+		}
 	};
 
 	struct CEntityInfos : public CSceneObjInfos
@@ -159,6 +253,47 @@ public:
 		float								m_fWeight;
 		string								m_sTypeName;
 		vector< CEntityInfos* >				m_vSubEntityInfos;
+
+		const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
+		{
+			store << (int)eEntity;
+			ILoader::CSceneObjInfos::operator >> (store);
+			store << m_sTypeName << m_sAnimationFileName;
+			store << m_mAnimationSpeed;
+			store << m_fWeight << (int)m_vSubEntityInfos.size();
+			for (int iChild = 0; iChild < m_vSubEntityInfos.size(); iChild++)
+				store << *m_vSubEntityInfos[iChild];
+			return *this;
+		}
+
+		const IPersistantObject& operator >> (CAsciiFileStorage& store) const override
+		{
+			store << "\nEntity type : " << (int)eEntity;
+			ILoader::CSceneObjInfos::operator >> (store);
+			store << "\nType name : " << m_sTypeName << "\nAnimation file name : " << m_sAnimationFileName;
+			//store << m_mAnimationSpeed;
+			store << "\nWeight : " << m_fWeight << "\nSub entity count : " << (int)m_vSubEntityInfos.size();
+			for (int iChild = 0; iChild < m_vSubEntityInfos.size(); iChild++)
+				store << *m_vSubEntityInfos[iChild];
+			return *this;
+		}
+
+		IPersistantObject& operator << (CBinaryFileStorage& store)
+		{
+			ILoader::CSceneObjInfos::operator << (store);
+			store >> m_sTypeName >> m_sAnimationFileName;
+			store >> m_mAnimationSpeed;
+			int subEntityCount = 0;
+			store >> m_fWeight >> subEntityCount;
+			for (int iChild = 0; iChild < subEntityCount; iChild++) {
+				CEntityInfos* pSubEntityInfos = new CEntityInfos;
+				int type = 0;
+				store >> type;
+				store >> *pSubEntityInfos;
+				m_vSubEntityInfos.push_back(pSubEntityInfos);
+			}
+			return *this;
+		}
 	};
 
 	struct CLightEntityInfos : public CSceneObjInfos
@@ -166,20 +301,31 @@ public:
 		CLightInfos::TLight		m_eType;
 		CVector					m_oColor;
 		float					m_fIntensity;
-	};
 
-	struct CSceneInfos : public IRessourceInfos
-	{
-		vector< CSceneObjInfos* >	m_vObject;
-		string						m_sSceneFileName;
-		string						m_sOriginalSceneFileName;
-		CVector						m_oBackgroundColor;
-	};
+		const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
+		{
+			store << (int)eLight;
+			ILoader::CSceneObjInfos::operator >> (store);
+			store << (int)m_eType << m_fIntensity << m_oColor;
+			return *this;
+		}
 
-	struct CCollisionModelInfos : public IRessourceInfos
-	{
-		vector<IGeometry*> m_vPrimitives;
-	};
+		const IPersistantObject& operator >> (CAsciiFileStorage& store) const override
+		{
+			ILoader::CSceneObjInfos::operator >> (store);
+			store << "\nType : " << (int)m_eType << "\n Intensity : " << m_fIntensity << "\nColor : " << m_oColor;
+			return *this;
+		}
+
+		IPersistantObject& operator << (CBinaryFileStorage& store) override
+		{
+			ILoader::CSceneObjInfos::operator << (store);
+			int type = 0;
+			store >> type >> m_fIntensity >> m_oColor;
+			m_eType = (CLightInfos::TLight)type;
+			return *this;
+		}
+	};	
 
 	enum TObjScene
 	{
@@ -197,14 +343,14 @@ public:
 	public:	
 		ILoader() : m_nFileOffset( 0 ), m_nAsciiExportPrecision( 3 ){}
 		virtual void		Load( string sFileName, ILoader::IRessourceInfos& ri, IFileSystem& ) = 0;
-		virtual void		Export( string sFileName, const ILoader::IRessourceInfos& ri ) = 0;
+		virtual void		Export( string sFileName, ILoader::IRessourceInfos& ri ) = 0;
 		virtual void		SetAsciiExportPrecision( int nPrecision );
 };
 
 class ILoaderManager : public CPlugin
 {
 protected:
-	ILoaderManager( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
+	ILoaderManager() : CPlugin( nullptr, ""){}
 
 public:
 	class CBadExtension : public CEException
@@ -225,7 +371,7 @@ public:
 	virtual ILoader*		GetLoader( std::string sExtension ) = 0;
 	virtual void			LoadTexture( string sFileName, ILoader::CTextureInfos& ti ) = 0;
 	virtual void			Load( string sFileName, ILoader::IRessourceInfos& ri ) = 0;
-	virtual void			Export( string sFileName, const ILoader::IRessourceInfos& ri ) = 0;
+	virtual void			Export( string sFileName, ILoader::IRessourceInfos& ri ) = 0;
 	virtual void			CreateBMPFromData( const vector< unsigned char >& vData, int nWidth, int nHeight, int nBitPerPixel, string sFileName ) = 0;
 };
 

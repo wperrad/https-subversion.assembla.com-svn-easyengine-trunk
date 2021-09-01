@@ -13,6 +13,6 @@ void main()
 	gl_Position = vVertex / scale;
 	gl_Position.w = 1.;	
 	
-	float color = 1. - ( vVertex.z - zMin ) / h;
+	float color = ( vVertex.z - zMin ) / h;
 	vColor = vec4(color, color, color, 1);
 }

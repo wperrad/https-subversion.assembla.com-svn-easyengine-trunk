@@ -1,7 +1,7 @@
 #define GUIMANAGER_CPP
 
 #include <algorithm>
-
+#include "Interface.h"
 #include "Guimanager.h"
 #include "IXMLParser.h"
 #include "exception.h"
@@ -31,26 +31,25 @@ using namespace std;
 //-----------------------------------------------------------------------------------------------------
 
 
-CGUIManager::CGUIManager( const Desc &oDesc ):
-IGUIManager( oDesc ),
-m_oRenderer( oDesc.m_oRenderer ),
-m_oRessourceManager( oDesc.m_oRessourceManager ),
-m_oXMLParser( oDesc.m_oXMLParser ),
-m_oInputManager( oDesc.m_oInputManager ),
+CGUIManager::CGUIManager(EEInterface& oInterface):
+IGUIManager(),
+m_oRenderer(static_cast<IRenderer&>(*oInterface.GetPlugin("Renderer"))),
+m_oRessourceManager(static_cast<IRessourceManager&>(*oInterface.GetPlugin("RessourceManager"))),
+m_oXMLParser(static_cast<IXMLParser&>(*oInterface.GetPlugin("XMLParser"))),
+m_oInputManager(static_cast<IInputManager&>(*oInterface.GetPlugin("InputManager"))),
+m_oCameraManager(static_cast<ICameraManager&>(*oInterface.GetPlugin("CameraManager"))),
+m_oEntityManager(static_cast<IEntityManager&>(*oInterface.GetPlugin("EntityManager"))),
 m_bActive( true ),
 m_nCharspace( 1 ),
 m_bGUIMode(false),
-m_oCameraManager(oDesc.m_oCameraManager),
-m_oEntityManager(oDesc.m_oEntityManager),
-m_oScene(oDesc.m_oScene),
-m_bDisplayMap(false)
+m_bDisplayMap(false),
+m_pScene(nullptr)
 {
+	ISceneManager* pSceneManager = static_cast<ISceneManager*>(oInterface.GetPlugin("SceneManager"));
+	m_pScene = dynamic_cast<IScene*>(pSceneManager->GetScene("Game"));
 	int nResWidth, nResHeight;
-	m_oRenderer.GetResolution( nResWidth, nResHeight );
-	
-	if ( oDesc.m_sShaderName == "" )
-		m_pShader = m_oRenderer.GetShader( "GUI" );
-
+	m_oRenderer.GetResolution( nResWidth, nResHeight );	
+	m_pShader = m_oRenderer.GetShader( "GUI" );
 	CGUIWidget::Init( nResWidth, nResHeight, m_pShader );
 
 #ifdef DISPLAYCURSOR
@@ -66,7 +65,7 @@ m_bDisplayMap(false)
 	m_pTopicsWindow->AddTopic("Service", "Pour l'instant la ville est toute récente donc vous ne trouverez pas grand chose en dehors d'un forgeron.", -1);
 	m_pTopicsWindow->AddTopic("Mission", "je n'ai pas de mission à vous confier.", -1);
 
-	m_pMapWindow = new CMapWindow(this, m_oScene, m_oRessourceManager, m_oRenderer, 512, 512);
+	m_pMapWindow = new CMinimapWindow(this, *m_pScene, m_oRessourceManager, m_oRenderer, 512, 512);
 }
 
 
@@ -657,6 +656,11 @@ int CGUIManager::GetCurrentFontEspacementY()
 	return (int)m_mWidgetFontWhite['A']->GetDimension().GetHeight() + 2;
 }
 
+string CGUIManager::GetName()
+{
+	return "GUIManager";
+}
+
 void CGUIManager::ToggleDisplayMap()
 {
 	m_bDisplayMap = !m_bDisplayMap;
@@ -664,7 +668,7 @@ void CGUIManager::ToggleDisplayMap()
 		AddWindow(m_pMapWindow);
 	else
 		RemoveWindow(m_pMapWindow);
-	m_oScene.DisplayMap(m_bDisplayMap);
+	m_pScene->DisplayMinimap(m_bDisplayMap);
 }
 
 unsigned int CGUIManager::GetCurrentFontHeight() const
@@ -714,7 +718,7 @@ IGUIWindow* CGUIManager::CreatePlayerWindow(int nWidth, int nHeight)
 	return playerWindow;
 }
 
-extern "C" _declspec(dllexport) IGUIManager* CreateGUIManager( const IGUIManager::Desc& oDesc )
+extern "C" _declspec(dllexport) IGUIManager* CreateGUIManager(EEInterface& oInterface)
 {
-	return new CGUIManager( oDesc );
+	return new CGUIManager(oInterface);
 }

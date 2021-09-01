@@ -10,7 +10,7 @@ class IRenderer;
 class CLightEntity : public CEntity
 {
 public:
-	CLightEntity( IRessource* pLight, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IGeometryManager& oGeometryManager, ICollisionManager& oCollisionManager );
+	CLightEntity(EEInterface& oInterface, IRessource* pLight);
 	~CLightEntity();
 	void				SetIntensity( float fInstensity );
 	float				GetIntensity();

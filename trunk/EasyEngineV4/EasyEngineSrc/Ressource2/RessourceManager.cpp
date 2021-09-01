@@ -1,4 +1,4 @@
-#ifndef RESSOURCE_MANAGER_H
+#ifndef RESSOURCE_MANAGER_
 #define RESSOURCE_MANAGER_H
 
 #define RESSOURCEMANAGER_CPP
@@ -6,7 +6,6 @@
 
 // Engine
 #include "../Utils2/EasyFile.h"
-#include "../Utils2/Node.h"
 #include "../Utils2/Dimension.h"
 #include "../Utils2/StringUtils.h"
 
@@ -21,24 +20,27 @@
 #include "Exception.h"
 
 // Interfaces
+#include "Interface.h"
 #include "ILoader.h"
-#include "ISystems.h"
 #include "IGeometry.h"
+#include "ICollisionManager.h"
 
 // stl
 #include <algorithm>
 
 using namespace std;
 
-CRessourceManager::CRessourceManager( const Desc& oDesc ) :
-IRessourceManager( oDesc ),
+CRessourceManager::CRessourceManager(EEInterface& oInterface) :
+m_oInterface(oInterface),
 m_nLightCount(0),
-m_oLoaderManager( oDesc.m_oLoaderManager ),
+m_oLoaderManager(*static_cast<ILoaderManager*>(oInterface.GetPlugin("LoaderManager"))),
+m_oRenderer(*static_cast<IRenderer*>(oInterface.GetPlugin("Renderer"))),
+m_oGeometryManager(*static_cast<IGeometryManager*>(oInterface.GetPlugin("GeometryManager"))),
 m_pCurrentRenderer( NULL ),
 m_pDrawTool( NULL ),
 m_bCatchException( true ),
-m_oSystemManager( oDesc.m_oSystemManager ),
-m_oRenderer(oDesc.m_oRenderer)
+m_pEntityManager(nullptr),
+m_pCollisionManager(nullptr)
 {
 	m_mRessourceCreation[ "ase" ] = CreateMesh;
 	m_mRessourceCreation[ "ame" ] = CreateMesh;
@@ -78,6 +80,46 @@ ITexture* CRessourceManager::CreateTexture2D( IShader* pShader, int nUnitTexture
 	oDesc.m_nUnitTexture = nUnitTexture;
 	CTexture2D* pTexture = new CTexture2D( oDesc );
 	return pTexture;
+}
+
+ITexture* CRessourceManager::CreateTexture2D(string sFileName, bool bGenerateMipmaps)
+{
+	ILoader::CTextureInfos ti;
+	m_oLoaderManager.LoadTexture(sFileName, ti);
+	ti.m_sFileName = sFileName;
+	IRenderer::TPixelFormat format = IRenderer::T_FormatNone;
+	switch (ti.m_ePixelFormat)
+	{
+	case ILoader::eRGB:
+		format = IRenderer::T_RGB;
+		break;
+	case ILoader::eRGBA:
+		format = IRenderer::T_RGBA;
+		break;
+	case ILoader::eBGR:
+		format = IRenderer::T_BGR;
+		break;
+	case ILoader::eBGRA:
+		format = IRenderer::T_BGRA;
+		break;
+	default:
+	{
+		ostringstream oss;
+		oss << "Error : \"" << sFileName << "\" : Bad Texture format";
+		CRessourceException e(oss.str());
+		throw e;
+	}
+	}
+
+	CTexture2D::CDesc desc(m_oRenderer, NULL, 0);
+	desc.m_nWidth = ti.m_nWidth;
+	desc.m_nHeight = ti.m_nHeight;
+	desc.m_eFormat = format;
+	desc.m_vTexels.swap(ti.m_vTexels);
+	desc.m_nUnitTexture = 3;
+	desc.m_bGenerateMipmaps = bGenerateMipmaps;
+	CTexture2D* pTexture = new CTexture2D(desc);
+	return static_cast< ITexture* > (pTexture);
 }
 
 //-------------------------------------------------------------------------------------------
@@ -124,9 +166,9 @@ IRessource*	CRessourceManager::CreateMaterial( ILoader::CMaterialInfos& mi, ITex
 	CMaterial::Desc oDesc(m_oRenderer, pShader );
 	oDesc.m_fShininess = mi.m_fShininess;
 	if( !pAlternative && !mi.m_sDiffuseMapName.empty())
-		oDesc.m_pTexture = static_cast< ITexture* >( GetRessource(mi.m_sDiffuseMapName) );
+		oDesc.m_pDiffuseTexture = static_cast< ITexture* >( GetRessource(mi.m_sDiffuseMapName) );
 	else
-		oDesc.m_pTexture = pAlternative;
+		oDesc.m_pDiffuseTexture = pAlternative;
 	oDesc.m_sName = mi.m_sFileName;
 	std::copy( mi.m_vAmbient.begin(), mi.m_vAmbient.end(), oDesc.m_vAmbient.begin() );
 	std::copy( mi.m_vDiffuse.begin(), mi.m_vDiffuse.end(), oDesc.m_vDiffuse.begin() );
@@ -253,6 +295,127 @@ IAnimatableMesh* CRessourceManager::CreateMesh( ILoader::CAnimatableMeshData& oD
 	return pAMesh;
 }
 
+IMesh* CRessourceManager::CreatePlane(int slices, int size, string diffuseTexture)
+{
+	ILoader::CMeshInfos mi;
+	float quadSize = (float)size / (float)slices;
+	for (int l = 0; l < slices; l++) {
+		float z =  (float)l * quadSize - 1.f/2.f * size;
+		float zuv = (float)l * quadSize;
+
+		for (int c = 0; c < slices; c++) {
+			float x = (float)c * quadSize - 1.f / 2.f * size;
+			float xuv = (float)c * quadSize;
+
+			mi.m_vVertex.push_back(x + quadSize);
+			mi.m_vVertex.push_back(0);
+			mi.m_vVertex.push_back(z);
+
+			mi.m_vNormalVertex.push_back(0.f);
+			mi.m_vNormalVertex.push_back(1.f);
+			mi.m_vNormalVertex.push_back(0.f);
+
+			mi.m_vUVVertex.push_back((xuv + quadSize) / size);
+			mi.m_vUVVertex.push_back(zuv / size);
+
+			mi.m_vVertex.push_back(x);
+			mi.m_vVertex.push_back(0);
+			mi.m_vVertex.push_back(z);
+
+			mi.m_vNormalVertex.push_back(0.f);
+			mi.m_vNormalVertex.push_back(1.f);
+			mi.m_vNormalVertex.push_back(0.f);
+
+			mi.m_vUVVertex.push_back(xuv / size);
+			mi.m_vUVVertex.push_back(zuv / size);
+
+			mi.m_vVertex.push_back(x + quadSize);
+			mi.m_vVertex.push_back(0);
+			mi.m_vVertex.push_back(z + quadSize);
+
+			mi.m_vNormalVertex.push_back(0.f);
+			mi.m_vNormalVertex.push_back(1.f);
+			mi.m_vNormalVertex.push_back(0.f);
+
+			mi.m_vUVVertex.push_back((xuv + quadSize) / size);
+			mi.m_vUVVertex.push_back((zuv + quadSize) / size);
+
+			mi.m_vVertex.push_back(x);
+			mi.m_vVertex.push_back(0);
+			mi.m_vVertex.push_back(z + quadSize);
+
+			mi.m_vNormalVertex.push_back(0.f);
+			mi.m_vNormalVertex.push_back(1.f);
+			mi.m_vNormalVertex.push_back(0.f);
+
+			mi.m_vUVVertex.push_back(xuv / size);
+			mi.m_vUVVertex.push_back((zuv + quadSize) / size);
+		}
+	}
+
+	for (int l = 0; l < slices; l++) {
+		for (int c = 0; c < slices; c++) {
+			int offset = 4 * c + 4 * l * slices;
+			mi.m_vIndex.push_back(offset + 3);			
+			mi.m_vIndex.push_back(offset + 2);
+			mi.m_vIndex.push_back(offset + 0);
+
+			mi.m_vIndex.push_back(offset + 0);			
+			mi.m_vIndex.push_back(offset + 1);
+			mi.m_vIndex.push_back(offset + 3);
+			
+			mi.m_vNormalFace.push_back(0.f);
+			mi.m_vNormalFace.push_back(0.f);
+			mi.m_vNormalFace.push_back(1.f);
+
+			mi.m_vNormalFace.push_back(0.f);
+			mi.m_vNormalFace.push_back(0.f);
+			mi.m_vNormalFace.push_back(1.f);
+
+			mi.m_vUVIndex.push_back(offset + 3);			
+			mi.m_vUVIndex.push_back(offset + 2);
+			mi.m_vUVIndex.push_back(offset + 0);
+
+			mi.m_vUVIndex.push_back(offset + 0);			
+			mi.m_vUVIndex.push_back(offset + 1);
+			mi.m_vUVIndex.push_back(offset + 3);
+		}
+	}
+
+	mi.m_bCanBeIndexed = true;
+	mi.m_pBoundingBox = m_oGeometryManager.CreateBox();
+	mi.m_pBoundingBox->Set(CVector(-(float)size / 2.f, 0.f, -(float)size / 2.f), CVector(size, 0, size));
+
+	mi.m_oMaterialInfos.m_sDiffuseMapName = diffuseTexture;
+
+	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
+	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
+	mi.m_oMaterialInfos.m_vAmbient.push_back(0.f);
+	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
+
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(0.f);
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
+
+	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
+	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
+	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
+	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
+	mi.m_oMaterialInfos.m_nID = 0;
+	mi.m_oMaterialInfos.m_fShininess = 1.f;
+	
+
+	ILoader::CAnimatableMeshData ami;
+	ami.m_bMultiMaterialActivated = false;
+	ami.m_vMeshes.push_back(mi);
+	IAnimatableMesh* pAMesh = CreateMesh(ami, nullptr);
+	IMesh* pMesh = pAMesh->GetMesh(0);
+	pMesh->SetFileName(diffuseTexture);
+	return pMesh;
+}
+
+
 IRessource* CRessourceManager::CreateCollisionMesh(string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer)
 {
 	ILoader::CCollisionModelInfos cmi;
@@ -264,6 +427,8 @@ IRessource* CRessourceManager::CreateCollisionMesh(string sFileName, CRessourceM
 IBone* CRessourceManager::LoadSkeleton( ILoader::CAnimatableMeshData& oData )
 {
 	IBone* pRoot = NULL;
+	if (!m_pEntityManager)
+		m_pEntityManager = static_cast<IEntityManager*>(m_oInterface.GetPlugin("EntityManager"));
 	if ( oData.m_mHierarchyBones.size() > 0 )
 	{
 		map< int, IBone* > mBone;
@@ -271,7 +436,7 @@ IBone* CRessourceManager::LoadSkeleton( ILoader::CAnimatableMeshData& oData )
 		for (  itHierarchyBone; itHierarchyBone != oData.m_mHierarchyBones.end(); ++itHierarchyBone )
 		{
 			int nBoneID = itHierarchyBone->first;
-			IBone* pBone = m_oSystemManager.CreateBone();
+			IBone* pBone = m_pEntityManager->CreateBone();
 			pBone->SetID( nBoneID );
 			pBone->SetName( oData.m_mBones[ nBoneID ].first );
 			CMatrix& m = oData.m_mBones[ itHierarchyBone->first ].second;
@@ -336,6 +501,11 @@ ITexture* CRessourceManager::CreateRenderTexture(int width, int height, string s
 	return pTexture;
 }
 
+string CRessourceManager::GetName()
+{
+	return "RessourceManager";
+}
+
 void CRessourceManager::CollectMaterials( const ILoader::CMaterialInfos& oMaterialInfos, IRenderer& oRenderer, IShader* pShader, IRessourceManager* pRessourceManager, std::map< int, CMaterial* >& mMaterials )
 {
 	mMaterials[ oMaterialInfos.m_nID ] = CreateMaterial( &oMaterialInfos, oRenderer, pShader, pRessourceManager );
@@ -362,7 +532,7 @@ CMaterial* CRessourceManager::CreateMaterial( const ILoader::CMaterialInfos* pMa
 		oMatDesc.m_vSpecular.resize( pMaterialInfos->m_vSpecular.size() );
 		memcpy( &oMatDesc.m_vSpecular[ 0 ], &pMaterialInfos->m_vSpecular[ 0 ], pMaterialInfos->m_vSpecular.size() * sizeof( float ) );
 
-		if ( pMaterialInfos->m_sDiffuseMapName != "NONE" )
+		if ( pMaterialInfos->m_sDiffuseMapName != "NONE" && pMaterialInfos->m_sDiffuseMapName != "")
 		{
 			ITexture* pTexture = static_cast< ITexture* > ( pRessourceManager->GetRessource( pMaterialInfos->m_sDiffuseMapName) );
 			if ( !pTexture )
@@ -372,7 +542,7 @@ CMaterial* CRessourceManager::CreateMaterial( const ILoader::CMaterialInfos* pMa
 				throw e;
 			}
 			pTexture->SetShader( pShader );
-			oMatDesc.m_pTexture = pTexture;
+			oMatDesc.m_pDiffuseTexture = pTexture;
 		}		
 	}
 	return new CMaterial( oMatDesc );
@@ -393,7 +563,7 @@ IRessource* CRessourceManager::CreateAnimation( string sFileName, CRessourceMana
 	for ( int i = 0; i < ai.m_nBoneCount; i++ )
 	{
 		unsigned int nBoneID = ai.m_vBonesIDArray[ i ];
-		pAnimation->AddBone( nBoneID, pRessourceManager->m_oSystemManager );
+		pAnimation->AddBone( nBoneID);
 		int nKeyCount = ai.m_vKeyCountArray[ i ];
 		for ( int iKey = 0; iKey < nKeyCount; iKey++ )
 		{
@@ -517,9 +687,135 @@ void CRessourceManager::SetCurrentRenderer( IRenderer* pRenderer )
 	m_pCurrentRenderer = pRenderer;
 }
 
-extern "C" _declspec(dllexport) IRessourceManager* CreateRessourceManager( IRessourceManager::Desc& oDesc )
+IMesh* CRessourceManager::CreatePlane2(int slices, int size, float height, string heightTexture, string diffuseTexture)
 {
-	return new CRessourceManager( oDesc );
+	if (!m_pCollisionManager)
+		m_pCollisionManager = static_cast<ICollisionManager*>(m_oInterface.GetPlugin("CollisionManager"));
+	IBox* pBox = m_oGeometryManager.CreateBox();
+	pBox->Set(CVector(-size / 2.f, 0.f, -size / 2.f), CVector(size, height, size));
+	int hmID = m_pCollisionManager->LoadHeightMap(heightTexture, pBox);
+	IHeightMap* pHeightMap = m_pCollisionManager->GetHeightMap(hmID);
+	ILoader::CMeshInfos mi;
+	float quadSize = (float)size / (float)slices;
+
+	for (int l = 0; l < slices + 1; l++) {
+		for (int c = 0; c < slices + 1; c++) {
+			mi.m_vVertex.push_back(c * quadSize - size / 2);
+			mi.m_vVertex.push_back(0);
+			mi.m_vVertex.push_back(l * quadSize - size / 2);
+
+			mi.m_vUVVertex.push_back((float)c * quadSize / size);
+			mi.m_vUVVertex.push_back((float)l * quadSize / size);
+		}
+	}
+
+	for (int l = 0; l < slices; l++) {
+		for (int c = 0; c < slices; c++) {
+			mi.m_vIndex.push_back(l * (slices + 1) + c + 1);
+			mi.m_vIndex.push_back((l + 1) * (slices + 1) + c);
+			mi.m_vIndex.push_back((l + 1) * (slices + 1) + c + 1);
+
+			mi.m_vIndex.push_back(l * (slices + 1) + c + 1);
+			mi.m_vIndex.push_back(l * (slices + 1) + c);
+			mi.m_vIndex.push_back((l + 1) * (slices + 1) + c);
+
+			mi.m_vUVIndex.push_back(l * (slices + 1) + c + 1);
+			mi.m_vUVIndex.push_back((l + 1) * (slices + 1) + c);
+			mi.m_vUVIndex.push_back((l + 1) * (slices + 1) + c + 1);
+
+			mi.m_vUVIndex.push_back(l * (slices + 1) + c + 1);
+			mi.m_vUVIndex.push_back(l * (slices + 1) + c);
+			mi.m_vUVIndex.push_back((l + 1) * (slices + 1) + c);
+		}
+	}
+
+	ComputeNormals(mi, slices, pHeightMap);
+	
+	mi.m_bCanBeIndexed = true;
+	mi.m_pBoundingBox = m_oGeometryManager.CreateBox();
+	mi.m_pBoundingBox->Set(CVector(-(float)size / 2.f, 0.f, -(float)size / 2.f), CVector(size, 0, size));
+
+	mi.m_oMaterialInfos.m_sDiffuseMapName = diffuseTexture;
+
+	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
+	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
+	mi.m_oMaterialInfos.m_vAmbient.push_back(0.f);
+	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
+
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(0.f);
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
+
+	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
+	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
+	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
+	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
+	mi.m_oMaterialInfos.m_nID = 0;
+	mi.m_oMaterialInfos.m_fShininess = 1.f;
+	mi.m_oMaterialInfos.m_bExists = true;
+
+	ILoader::CAnimatableMeshData ami;
+	ami.m_bMultiMaterialActivated = false;
+	ami.m_vMeshes.push_back(mi);
+
+	m_oLoaderManager.Export("tmp/ground.bme", ami);
+
+	IAnimatableMesh* pAMesh = CreateMesh(ami, nullptr);
+	IMesh* pMesh = pAMesh->GetMesh(0);
+	pMesh->SetFileName(diffuseTexture);
+	return pMesh;
+}
+
+void CRessourceManager::ComputeNormals(ILoader::CMeshInfos& mi, int slices, IHeightMap* pHeightMap)
+{
+	// Compute face normals
+	int num = 0;
+	map<int, vector<CVector>> mIndexToNormals;
+	for (int l = 0; l < slices; l++) {
+		for (int c = 0; c < slices; c++) {
+			for (int tri = 0; tri < 2; tri++) {
+				vector<int> indices;
+				vector<CVector> face;
+				for (int i = 0; i < 3; i++) {
+					int idx = mi.m_vIndex[num++];
+					indices.push_back(idx);
+					float vx = mi.m_vVertex[3 * idx];
+					float vz = mi.m_vVertex[3 * idx + 2];
+					float vy = pHeightMap->GetHeight(vx, vz);
+					CVector v = CVector(vx, vy, vz);
+					face.push_back(v);
+				}
+				CVector t = face[1] - face[0];
+				CVector b = face[2] - face[0];
+				CVector n = (t ^ b);
+				n.Normalize();
+				mi.m_vNormalFace.push_back(n.m_x);
+				mi.m_vNormalFace.push_back(n.m_y);
+				mi.m_vNormalFace.push_back(n.m_z);
+				for (int k = 0; k < indices.size(); k++)
+					mIndexToNormals[indices[k]].push_back(n);
+			}
+		}
+	}
+
+	// compute vertex normals
+	mi.m_vNormalVertex.resize(mi.m_vVertex.size());
+	for (map<int, vector<CVector>>::iterator it = mIndexToNormals.begin(); it != mIndexToNormals.end(); it++) {
+		CVector n;
+		for (int i = 0; i < it->second.size(); i++) {
+			n += it->second[i];
+		}
+		n.Normalize();
+		mi.m_vNormalVertex[3 * it->first] = n.m_x;
+		mi.m_vNormalVertex[3 * it->first + 1] = n.m_y;
+		mi.m_vNormalVertex[3 * it->first + 2] = n.m_z;
+	}
+}
+
+extern "C" _declspec(dllexport) IRessourceManager* CreateRessourceManager(EEInterface& oInterface)
+{
+	return new CRessourceManager(oInterface);
 }
 
 

@@ -35,6 +35,21 @@ void CBox::GetCenter( CVector& oCenter ) const
 	oCenter = m_oMinPoint +  m_oDimension / 2.f;
 }
 
+void CBox::SetX(float x)
+{
+	m_oDimension.m_x = x;
+}
+
+void CBox::SetY(float y)
+{
+	m_oDimension.m_y = y;
+}
+
+void CBox::SetZ(float z)
+{
+	m_oDimension.m_z = z;
+}
+
 void CBox::AddPoint( const CVector& p )
 {
 	if( !m_bInitialized )
@@ -67,7 +82,7 @@ float CBox::ComputeBoundingSphereRadius() const
 {
 	CVector oCenter;
 	GetCenter( oCenter );
-	float fBoundingSphereRadius = 2 * ( m_oMinPoint - oCenter ).Norm();
+	float fBoundingSphereRadius = ( m_oMinPoint - oCenter ).Norm();
 	return fBoundingSphereRadius;
 }
 
@@ -277,6 +292,11 @@ const CVector& CBox::GetMinPoint() const
 	return m_oMinPoint;
 }
 	
+void CBox::SetMinPoint(const CVector& oMinPoint)
+{
+	m_oMinPoint = oMinPoint;
+}
+
 void CBox::GetTM( CMatrix& m ) const
 {
 	m = m_oTM;
@@ -295,6 +315,11 @@ void CBox::SetTM(const CMatrix& m)
 const CVector& CBox::GetDimension() const
 {
 	return m_oDimension;
+}
+
+void CBox::GetDimension(CVector& dim) const
+{
+	dim = m_oDimension;
 }
 
 IBox& CBox::operator=( const IBox& oBox )

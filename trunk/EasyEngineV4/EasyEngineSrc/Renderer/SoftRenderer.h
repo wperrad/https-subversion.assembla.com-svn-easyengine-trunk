@@ -77,7 +77,7 @@ protected:
 	static void		DisplayDebugInfos( CSoftRenderer& oRenderer, const CMatrix& matWeight, const CVector& gl_Vertex );
 
 public:
-	CSoftRenderer( const Desc& oDesc );
+	CSoftRenderer(EEInterface& oInterface);
 	IBuffer*	CreateGeometry(	const std::vector< float >&	vVertexArray, const std::vector< unsigned int >& vIndexArray, 
 								const std::vector< float >& vUVVertexArray, const std::vector< unsigned int >& vUVIndexArray, 
 								const std::vector< float >& vNormalFaceArray, const std::vector< float >& vNormalVertexArray );
@@ -108,6 +108,7 @@ public:
 	void 			SetMaterialEmissive( float* fEmissive );
 	void 			SetMaterialShininess( float fShininess );
 	void			LoadShader(string sShaderName);
+	string			GetName() override;
 };
 
-extern "C" _declspec(dllexport) IRenderer* CreateSoftRenderer( IRenderer::Desc& oDesc );
+extern "C" _declspec(dllexport) IRenderer* CreateSoftRenderer(EEInterface& oInterface);

@@ -22,15 +22,18 @@ class CScriptManager : public IScriptManager
 	CBinGenerator*					m_pBinGenerator;
 	CVirtualProcessor*				m_pProc;
 	map<string, CRegister::TType>	m_mRegisterFromName;
-	
+	bool							m_bGeneratedAssemblerListing;
+
 public:
-	CScriptManager( const Desc& oDesc );
+	CScriptManager(EEInterface& oInterface);
 	~CScriptManager();
-	void	RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType );
-	void	ExecuteCommand( std::string sCommand );
-	void	GetRegisteredFunctions( vector< string >& vFuncNames );
-	float	GetVariableValue(string variableName);
-	float	GetRegisterValue(string sRegisterName);
+	void	RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType ) override;
+	void	ExecuteCommand( std::string sCommand ) override;
+	void	GetRegisteredFunctions( vector< string >& vFuncNames ) override;
+	float	GetVariableValue(string variableName) override;
+	float	GetRegisterValue(string sRegisterName) override;
+	string	GetName() override;
+	void	GenerateAssemblerListing(bool generate) override;
 };
 
-extern "C" _declspec(dllexport) IScriptManager* CreateScriptManager( IScriptManager::Desc& oDesc );
+extern "C" _declspec(dllexport) IScriptManager* CreateScriptManager(EEInterface& oInterface);

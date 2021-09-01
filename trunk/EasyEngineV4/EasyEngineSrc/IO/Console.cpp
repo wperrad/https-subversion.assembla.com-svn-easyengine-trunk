@@ -9,6 +9,7 @@
 #include <algorithm>
 
 // Engine
+#include "Interface.h"
 #include "IInputManager.h"
 #include "ActionManager.h"
 #include "IScriptManager.h"
@@ -19,16 +20,15 @@ using namespace std;
 
 
 
-CConsole::CConsole( const IConsole::Desc& oDesc ):
-IConsole( oDesc ),
+CConsole::CConsole(EEInterface& oInterface):
 m_bIsOpen(false),
 m_xPos( 0 ),
 m_yPos( 0 ),
-m_oInputManager( oDesc.m_oInputManager ),
-m_oGUIManager( oDesc.m_oGUIManager ),
-m_oScriptManager( oDesc.m_oScriptManager ),
-m_nWidth( oDesc.m_nWidth ),
-m_nHeight( oDesc.m_nHeight ),
+m_oInputManager(static_cast<IInputManager&>(*oInterface.GetPlugin("InputManager"))),
+m_oGUIManager(static_cast<IGUIManager&>(*oInterface.GetPlugin("GUIManager"))),
+m_oScriptManager(static_cast<IScriptManager&>(*oInterface.GetPlugin("ScriptManager"))),
+m_nWidth(500),
+m_nHeight( 800 ),
 m_nCurrentLineWidth( 0 ),
 m_nCurrentHeight( 0 ),
 m_nCursorPos( 0 ),
@@ -41,11 +41,14 @@ m_nStaticTextID( -1 ),
 m_nConsoleShortCut( 0 ),
 m_bHasToUpdateStaticTest(false),
 m_bInputEnabled(true),
-m_nAutoCompletionLastIndexFound(-1)
+m_nAutoCompletionLastIndexFound(-1),
+m_bPauseMode(false),
+m_PauseCallback(nullptr),
+m_PauseCallbackParams(nullptr)
 {
 	m_oInputManager.AbonneToKeyEvent( static_cast< CPlugin* > ( this ), OnKeyAction );
-	m_xPos = oDesc.xPos;
-	m_yPos = oDesc.yPos;
+	m_xPos = 30;
+	m_yPos = 50;
 	m_sLinePrefix = "> ";
 	NewLine();
 }
@@ -103,8 +106,7 @@ void CConsole::UpdateBlink( int nFontHeight )
 		m_bCursorBlinkState = !m_bCursorBlinkState;
 	}
 
-	if( m_bCursorBlinkState )
-	{
+	if( m_bCursorBlinkState && !m_bPauseMode ) {
 		int nLastIndice = m_vLines.size() - 1;
 		unsigned int PixelCursorPos = ComputePixelCursorPos() - 1;
 		m_oGUIManager.Print( '|', m_xPos + PixelCursorPos, m_yPos + nLastIndice * nFontHeight );
@@ -123,13 +125,40 @@ void CConsole::Update()
 			m_bHasToUpdateStaticTest = false;
 		}
 		m_oGUIManager.PrintStaticText( m_nStaticTextID );
-		string sLine = m_sLinePrefix + m_vLines[ m_vLines.size() - 1 ];
+		string sLine;
+		if (!m_bPauseMode)
+			sLine = m_sLinePrefix;
+		sLine += m_vLines[ m_vLines.size() - 1 ];
 		if(m_bInputEnabled || (sLine.size()!=2) )
 			m_oGUIManager.Print( sLine, m_xPos, m_yPos + ( m_vLines.size() - 1 ) * nFontHeight );
 		
 		if(m_bInputEnabled)
 			UpdateBlink( nFontHeight );
 	}
+}
+
+int CConsole::GetLineHeight()
+{
+	return m_oGUIManager.GetCurrentFontHeight();;
+}
+
+int CConsole::GetClientHeight()
+{
+	return m_nHeight;
+}
+
+void CConsole::SetPauseModeOn(ResumeProc callback, void* params)
+{
+	m_PauseCallback = callback;
+	m_PauseCallbackParams = params;
+	m_bPauseMode = true;
+	Println("");
+	Println("Appuyez sur une touche pour continuer");
+}
+
+void CConsole::SetPauseModeOff()
+{
+	m_bPauseMode = false;
 }
 
 unsigned int CConsole::ComputePixelCursorPos()
@@ -164,14 +193,11 @@ void CConsole::OnPressEnter()
 {
 	string sCommand = m_vLines.back();
 	m_vLines.back() = m_sLinePrefix + m_vLines.back();
-
-
 	if (m_nStaticTextID != -1)
 		m_oGUIManager.DestroyStaticTest(m_nStaticTextID);
 	m_nStaticTextID = m_oGUIManager.CreateStaticText(m_vLines, m_xPos, m_yPos);
-
-
 	m_vLines.resize( m_vLines.size() + 1 );
+	UpdateConsoleHeight();
 	m_nCursorPos = 0;
 	try
 	{
@@ -195,6 +221,11 @@ void CConsole::OnPressEnter()
 		AddString( "Erreur : " );
 		AddString( e.what() );
 	}
+	catch (CFileException& e) {
+		string msg;
+		e.GetErrorMessage(msg);
+		Println(string("Erreur a l'ouverture du ficher '") + msg + "'");
+	}
 	catch (CEException& e) {
 		string msg;
 		e.GetErrorMessage(msg);
@@ -215,6 +246,12 @@ void CConsole::OnKeyPress( unsigned char key )
 {
 	if (!m_bInputEnabled)
 		return;
+	if (m_bPauseMode) {
+		m_bPauseMode = false;
+		if (m_PauseCallback)
+			m_PauseCallback(nullptr);
+		return;
+	}
 	SetBlink( false );
 	string& sLine = m_vLines[ m_vLines.size() - 1 ];
 	if ( key == VK_BACK )
@@ -380,17 +417,21 @@ void CConsole::AddString( string s )
 		m_vLines.back().insert( m_vLines.back().end(), s.begin(), s.end() );
 }
 
+void CConsole::UpdateConsoleHeight()
+{
+	m_nCurrentHeight = m_vLines.size() * m_oGUIManager.GetCurrentFontHeight();
+	while (m_nCurrentHeight > m_nHeight)
+	{
+		m_vLines.erase(m_vLines.begin());
+		m_nCurrentHeight = (int)m_vLines.size() * m_oGUIManager.GetCurrentFontHeight();
+	}
+}
+
 void CConsole::NewLine()
 {
 	m_vLines.resize( m_vLines.size() + 1 );
-	m_nCurrentHeight = m_vLines.size() * m_oGUIManager.GetCurrentFontHeight();
 	m_nCurrentLineWidth = 0;
-	while( m_nCurrentHeight > m_nHeight )
-	{
-		m_vLines.erase( m_vLines.begin() );
-		m_nCurrentHeight = (int)m_vLines.size() * m_oGUIManager.GetCurrentFontHeight();
-	}
-	
+	UpdateConsoleHeight();
 }
 
 bool CConsole::IsOpen()
@@ -463,7 +504,12 @@ void CConsole::EnableInput(bool enable)
 	m_bInputEnabled = enable;
 }
 
-extern "C" _declspec(dllexport) IConsole* CreateConsole( IConsole::Desc& oDesc )
+string CConsole::GetName()
 {
-	return new CConsole( oDesc );
+	return "Console";
+}
+
+extern "C" _declspec(dllexport) IConsole* CreateConsole(EEInterface& oInterface)
+{
+	return new CConsole(oInterface);
 }

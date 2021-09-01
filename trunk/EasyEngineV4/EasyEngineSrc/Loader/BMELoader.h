@@ -66,7 +66,7 @@ class CBMELoader : public ILoader
 public:
 	CBMELoader( IFileSystem& oFileSystem, IGeometryManager& oGeometryManager );
 	void			Load( string sFileName, ILoader::IRessourceInfos& ri, IFileSystem& );
-	void			Export( string sFileName, const ILoader::IRessourceInfos& ri );
+	void			Export( string sFileName, ILoader::IRessourceInfos& ri );
 };
 
 #endif // BMELOADER_H

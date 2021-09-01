@@ -37,6 +37,7 @@ void main()
 	
 	vVertexPos = gl_ModelViewMatrix * gl_Vertex;
 	N = normalize(gl_NormalMatrix * gl_Normal);
+	N = mat3(matWeight) * N;
 	V = -normalize(vVertexPos.xyz);
 	
 	Texcoord    = gl_MultiTexCoord0.xy;

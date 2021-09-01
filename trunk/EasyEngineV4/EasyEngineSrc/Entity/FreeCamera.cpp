@@ -1,8 +1,8 @@
 #include "FreeCamera.h"
 #include "IRenderer.h"
 
-CFreeCamera::CFreeCamera( float fFov, IRenderer& oRenderer ):
-CCamera( fFov, oRenderer),
+CFreeCamera::CFreeCamera(EEInterface& oInterface, float fFov):
+CCamera(oInterface, fFov),
 m_fYaw( 0.f ),
 m_fPitch( 0.f ),
 m_fSpeed(1.f),

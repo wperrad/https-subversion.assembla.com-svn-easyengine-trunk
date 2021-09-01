@@ -1,6 +1,7 @@
 #ifndef SEMANTICANALYSER_H
 #define SEMANTICANALYSER_H
 
+#include <set>
 #include "SyntaxAnalyser.h"
 #include "IScriptManager.h"
 
@@ -32,6 +33,7 @@ class CSemanticAnalyser
 	typedef map< string, pair< ScriptFunction, vector< TFuncArgType > > > FuncMap;
 	
 	FuncMap					m_mInterruption;
+	set<string>				m_vCommand;
 	map< string, int >		m_mStringAddress;
 	map< int, string >		m_mAddressString;
 	VarMap					m_mVar;

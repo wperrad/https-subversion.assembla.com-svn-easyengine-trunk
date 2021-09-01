@@ -2,7 +2,6 @@
 
 #include "Animation.h"
 #include <windows.h> // GetTickCount()
-#include "ISystems.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -42,7 +41,7 @@ void CAnimation::NextFrame()
 	m_nCurrentAnimationTime += 160;
 }
 
-void CAnimation::AddBone( int nBoneID, const ISystemsManager& oSystemManager )
+void CAnimation::AddBone( int nBoneID)
 {
 	vector< CKey > vKey;
 	m_mBoneKeys.insert( map< int, vector< CKey > >::value_type( nBoneID, vKey ) );
@@ -81,18 +80,20 @@ void CAnimation::AddKey( int nBoneID, int nTimeValue, CKey::TKey eKeyType, const
 
 void CAnimation::SetSkeleton( IBone* pBone )
 {
-	if( !m_pSkeletonRoot )
-		m_pSkeletonRoot = pBone;
-	map< int, vector< CKey > >::iterator itBone = m_mBoneKeys.find( pBone->GetID() );
-	if( itBone != m_mBoneKeys.end() )
-	{
-		m_mBones[ pBone->GetID() ] = pBone;
-		vector< CKey >& vKeys = m_mBoneKeys[ pBone->GetID() ];
-		for( unsigned int iKey = 0; iKey < vKeys.size(); iKey++ )
-			pBone->AddKey( m_sName, vKeys[ iKey ] );
+	if (pBone) {
+		if (!m_pSkeletonRoot)
+			m_pSkeletonRoot = pBone;
+		map< int, vector< CKey > >::iterator itBone = m_mBoneKeys.find(pBone->GetID());
+		if (itBone != m_mBoneKeys.end())
+		{
+			m_mBones[pBone->GetID()] = pBone;
+			vector< CKey >& vKeys = m_mBoneKeys[pBone->GetID()];
+			for (unsigned int iKey = 0; iKey < vKeys.size(); iKey++)
+				pBone->AddKey(m_sName, vKeys[iKey]);
+		}
+		for (unsigned int iBone = 0; iBone < pBone->GetChildCount(); iBone++)
+			SetSkeleton(dynamic_cast<IBone*>(pBone->GetChild(iBone)));
 	}
-	for( unsigned int iBone = 0; iBone < pBone->GetChildCount(); iBone++ )
-		SetSkeleton( static_cast< IBone* >( pBone->GetChild( iBone ) ) );
 }
 
 void CAnimation::UpdateAnimationTime()

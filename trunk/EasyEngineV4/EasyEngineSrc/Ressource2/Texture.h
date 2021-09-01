@@ -22,6 +22,7 @@ protected:
 	int							m_nUnitTexture;
 	IShader*					m_pShader;
 	int							m_nFrameBufferObjectId;
+	string						m_sUnitName;
 
 public:
 	struct CDesc : public IRessource::Desc
@@ -36,6 +37,8 @@ public:
 	virtual void		Update() = 0;
 	void				SetShader( IShader* pShader );
 	unsigned int		GetFrameBufferObjectId();
+	void				SetUnitTexture(int nUnitTexture);
+	void				SetUnitName(string sUnitName);
 };
 
 class CTexture1D : public CTextureBase

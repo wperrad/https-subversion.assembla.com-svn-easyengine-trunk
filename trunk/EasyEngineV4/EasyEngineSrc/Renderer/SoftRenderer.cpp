@@ -12,8 +12,8 @@
 
 using namespace std;
 
-CSoftRenderer::CSoftRenderer( const Desc& oDesc ):
-CRenderer( oDesc ),
+CSoftRenderer::CSoftRenderer(EEInterface& oInterface):
+CRenderer(oInterface),
 m_bUseTransposeMatrix( false ),
 m_nCurrentProgram( T_SKINNING_PROGRAM ),
 m_nBindedVertexBuffer( -1 ),
@@ -22,7 +22,7 @@ m_fRotSpeed( 0 ),
 m_pMatBones( NULL )
 {
 	//m_mShader.clear();
-	LoadShaderDirectory( oDesc.m_sShaderDirectory + "\\Software");
+	LoadShaderDirectory( m_sShaderDirectory + "\\Software");
 	m_bUseTransposeMatrix = false;
 	int nVarID = 1;
 	m_mProgramID[ T_PER_PIXEL_LIGHTING_PROGRAM ] = VertexShaderPerPixelLighting;	
@@ -435,8 +435,13 @@ void CSoftRenderer::SetMaterialShininess( float fShininess )
 
 void CSoftRenderer::LoadShader(string sShaderName)
 {
-
 }
+
+string CSoftRenderer::GetName()
+{
+	return "SoftRenderer";
+}
+
 //
 //void CSoftRenderer::SetDebugString( std::string s )
 //{
@@ -448,7 +453,7 @@ void CSoftRenderer::LoadShader(string sShaderName)
 //	IRenderer::DisplayDebugInfos( bDisplay );
 //}
 
-extern "C" _declspec(dllexport) IRenderer* CreateSoftRenderer( IRenderer::Desc& oDesc )
+extern "C" _declspec(dllexport) IRenderer* CreateSoftRenderer(EEInterface& oInterface)
 {
-	return new CSoftRenderer( oDesc );
+	return new CSoftRenderer(oInterface);
 }

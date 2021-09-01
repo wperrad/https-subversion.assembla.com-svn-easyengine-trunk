@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -27,7 +25,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
@@ -72,7 +70,7 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG  0, 0, 172, 76
+IDD_ABOUTBOX DIALOG 0, 0, 172, 76
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About ASCII Export"
 FONT 8, "MS Sans Serif"
@@ -82,7 +80,7 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,7,7,158,44
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -90,10 +88,8 @@ END
 // French (Canada) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRC)
-#ifdef _WIN32
 LANGUAGE LANG_FRENCH, SUBLANG_FRENCH_CANADIAN
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -101,14 +97,14 @@ LANGUAGE LANG_FRENCH, SUBLANG_FRENCH_CANADIAN
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_EXPORT, DIALOG
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 250
         TOPMARGIN, 7
-        BOTTOMMARGIN, 112
+        BOTTOMMARGIN, 129
     END
 
     IDD_ANIMEXPORT, DIALOG
@@ -127,7 +123,7 @@ END
 // Dialog
 //
 
-IDD_EXPORT DIALOGEX 0, 0, 257, 119
+IDD_EXPORT DIALOGEX 0, 0, 257, 136
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Export options"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -136,12 +132,11 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,200,23,50,14
     CONTROL         "Flip normals",IDC_CHECKFLIPNORMALS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,15,53,10
     CONTROL         "OpenGL coordinates",IDC_CHECKOPENGLCOORD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,30,81,10
-    CONTROL         "Activer le log",IDC_CHECK_LOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,60,103,10
-    CONTROL         "Skinning",IDC_CHECKSKINNING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,45,82,10
-    CONTROL         "Exporter les boites de collision",IDC_CHECKBOUNDINGBOX,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,75,116,10
-    CONTROL         "Exporter la boite de collision a chaque clé",IDC_CHECKEXPORTBBOXATKEY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,90,169,10
+	CONTROL         "OpenGL coordinates 2",IDC_CHECKOPENGLCOORD2, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 16, 45, 87, 10
+	CONTROL         "Skinning", IDC_CHECKSKINNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 16, 60, 82, 10
+    CONTROL         "Activer le log",IDC_CHECK_LOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,75,103,10 
+    CONTROL         "Exporter les boites de collision",IDC_CHECKBOUNDINGBOX, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,90,116,10
+    CONTROL         "Exporter la boite de collision a chaque clé",IDC_CHECKEXPORTBBOXATKEY, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,105,169,10    
 END
 
 IDD_ANIMEXPORT DIALOGEX 0, 0, 288, 114
@@ -156,6 +151,17 @@ BEGIN
     EDITTEXT        ID_EDITFIRST,67,44,30,12,ES_AUTOHSCROLL
     EDITTEXT        ID_EDITLAST,120,45,31,12,ES_AUTOHSCROLL
     LTEXT           "To",IDC_STATIC,103,47,14,11
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_EXPORT AFX_DIALOG_LAYOUT
+BEGIN
+    0
 END
 
 #endif    // French (Canada) resources

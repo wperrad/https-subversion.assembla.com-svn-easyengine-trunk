@@ -4,8 +4,7 @@
 
 using namespace std;
 
-CFileSystem::CFileSystem( const Desc& oDesc ):
-IFileSystem( oDesc )
+CFileSystem::CFileSystem(EEInterface& oInterface)
 {
 	m_vDirectory.push_back( "" );
 }
@@ -86,7 +85,12 @@ void CFileSystem::GetLastDirectory( std::string& sRootDirectory ) const
 	sRootDirectory = m_sLastDirectory;
 }
 
-extern "C" _declspec(dllexport) IFileSystem* CreateFileSystem( const IFileSystem::Desc& oDesc )
+string CFileSystem::GetName()
 {
-	return new CFileSystem( oDesc );
+	return "FileSystem";
+}
+
+extern "C" _declspec(dllexport) IFileSystem* CreateFileSystem(EEInterface& oInterface)
+{
+	return new CFileSystem(oInterface);
 }

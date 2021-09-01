@@ -21,6 +21,7 @@ public:
 	ICircle*		CreateCircle( const CVector2D& oCenter, float fRadius );
 	ISegment2D*		CreateSegment2D( const CVector2D& first, const CVector2D& last );
 	IQuad*			CreateQuad(float lenght, float width);
+	string			GetName() override;
 };
 
 extern "C" _declspec(dllexport) IGeometryManager* CreateGeometryManager( IGeometryManager::Desc& oDesc );

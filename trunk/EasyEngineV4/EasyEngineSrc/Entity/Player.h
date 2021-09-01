@@ -6,15 +6,7 @@ class IGUIWindow;
 class CPlayer :	public CMobileEntity, public IPlayer
 {
 public:
-	CPlayer(
-		string sFileName, 
-		IRessourceManager& oRessourceManager, 
-		IRenderer& oRenderer, 
-		IEntityManager* pEntityManager, 
-		IFileSystem* pFileSystem, 
-		ICollisionManager& oCollisionManager, 
-		IGeometryManager& oGeometryManager,
-		IGUIManager& oGUIManager);
+	CPlayer(EEInterface& oInterface, string sFileName);
 	virtual ~CPlayer();
 
 	void	Action();

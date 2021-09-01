@@ -13,7 +13,7 @@ class IEntityManager;
 class ICameraManager : public CPlugin
 {
 protected:
-	ICameraManager( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
+	ICameraManager() : CPlugin( nullptr, ""){}
 
 public:
 	struct Desc : public CPlugin::Desc
@@ -41,6 +41,7 @@ public:
 	virtual ICamera*		GetActiveCamera() = 0;
 	virtual TCameraType		GetCameraType( ICamera* pCamera ) = 0;
 	virtual ICamera*		GetCameraFromType( TCameraType type ) = 0;
+	virtual void			UnlinkCameras() = 0;
 };
 
 #endif // ICAMERAMANAGER_H

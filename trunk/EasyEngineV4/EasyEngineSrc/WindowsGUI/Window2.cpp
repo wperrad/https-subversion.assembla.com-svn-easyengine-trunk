@@ -342,6 +342,15 @@ void CWindow2::AddChild( IWidget* pChild )
 	CWidget::AddChild( pChild );
 }
 
+string CWindow2::GetName()
+{
+	return "Window";
+}
+
+void CWindow2::SetFullScreenMode(bool fullscreen)
+{
+	m_bFullscreen = fullscreen;
+}
 
 extern "C" _declspec(dllexport) IWindow* CreateWindow2( const IWindow::Desc& oDesc )
 {

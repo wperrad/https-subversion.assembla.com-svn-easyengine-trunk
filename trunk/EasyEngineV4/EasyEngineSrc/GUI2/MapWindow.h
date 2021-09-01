@@ -4,11 +4,11 @@
 class CGUIManager;
 class ITexture;
 
-class CMapWindow :	public CGUIWindow
+class CMinimapWindow :	public CGUIWindow
 {
 public:
-	CMapWindow(IGUIManager* pGUIManager, IScene& oScene, IRessourceManager& oRessourceManager, IRenderer& oRenderer, int nWidth, int nHeight);
-	~CMapWindow();
+	CMinimapWindow(IGUIManager* pGUIManager, IScene& oScene, IRessourceManager& oRessourceManager, IRenderer& oRenderer, int nWidth, int nHeight);
+	~CMinimapWindow();
 
 	void				Display();
 
@@ -18,6 +18,6 @@ private:
 	CGUIManager*		m_pGUIManager;
 	IScene&				m_oScene;
 	IRenderer&			m_oRenderer;
-	CGUIWidget			m_oMap;
+	CGUIWidget			m_oMinimap;
 };
 

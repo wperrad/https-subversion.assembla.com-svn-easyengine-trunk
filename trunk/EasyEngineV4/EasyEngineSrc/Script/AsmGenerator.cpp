@@ -93,6 +93,7 @@ CAsmGenerator::CAsmGenerator():
 	m_mMnemonicToString[ eInt ] = "int";
 	m_mMnemonicToString[ eDB ] = "db";
 	m_mMnemonicToString[ eRet ] = "ret";
+	m_mMnemonicToString[eReturn] = "return";
 	CRegister::InitRegisterToStringMap();
 }
 
@@ -165,6 +166,11 @@ void CAsmGenerator::GenAssembler( const CSyntaxNode& oTree, vector< CInstr >& vC
 
 void CAsmGenerator::GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CInstr >& vAssembler, const map<string, int>& mFuncAddr, VarMap& mVar )
 {
+	if (oTree.m_Type == CSyntaxNode::eProg) {
+		VarMap::iterator itScope = mVar.find(m_nCurrentScopeNumber);
+		if (itScope != mVar.end())
+			GenSubRegImm(CRegister::esp, itScope->second.size(), vAssembler);
+	}
 	if( oTree.m_Lexem.IsOperation() )
 	{
 		if(oTree.m_vChild.size() > 0 && oTree.m_vChild[ 0 ].m_vChild.size() == 0 && oTree.m_vChild[ 1 ].m_vChild.size() == 0 )
@@ -227,10 +233,7 @@ void CAsmGenerator::GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CIn
 	{
 		CVar& v1 = mVar[ m_nCurrentScopeNumber ][ oTree.m_vChild[ 0 ].m_Lexem.m_sValue ];
 		if( !v1.m_bIsDeclared )
-		{
-			GenPushImm( 0, vAssembler );
 			v1.m_bIsDeclared = true;
-		}
 		
 		const CSyntaxNode& destNode = oTree.m_vChild[1];
 		CMemory* pDestMemory = CreateMemoryRegister(CRegister::ebp, CRegister::TType::eNone, -4 * v1.m_nRelativeStackPosition);
@@ -245,6 +248,9 @@ void CAsmGenerator::GenAssemblerFirstPass( const CSyntaxNode& oTree, vector< CIn
 			GenAssemblerFirstPass(oTree.m_vChild[1], vAssembler, mFuncAddr, mVar);
 			GenMovAddrReg(CRegister::eax, pDestMemory, vAssembler);
 		}
+	}
+	else if (oTree.m_Type == CSyntaxNode::eCommand) {
+		GenReturn(vAssembler);
 	}
 	else
 	{
@@ -284,6 +290,20 @@ void CAsmGenerator::GenCall( const CSyntaxNode& oNode, vector< CInstr >& vAssemb
 	CNumeric* pNumeric = new CNumeric( oNode.m_nAddress );
 	oInstr.m_vOperand.push_back( pNumeric );
 	vAssembler.push_back( oInstr );
+}
+
+void CAsmGenerator::GenRet(vector< CInstr >& vAssembler)
+{
+	CInstr oInstr;
+	oInstr.m_eMnem = CAsmGenerator::eRet;
+	vAssembler.push_back(oInstr);
+}
+
+void CAsmGenerator::GenReturn(vector< CInstr >& vAssembler)
+{
+	CInstr oInstr;
+	oInstr.m_eMnem = CAsmGenerator::eReturn;
+	vAssembler.push_back(oInstr);
 }
 
 void CAsmGenerator::GenPop( CRegister::TType reg, vector< CInstr >& vAssembler )
@@ -369,6 +389,28 @@ void CAsmGenerator::GenMovAddrAddr(CMemory* pSrcMemory, CMemory* pDestMemory, ve
 	GenMovAddrReg(CRegister::eax, pDestMemory, vAssembler);
 	if (m_bEaxBusy)
 		GenPop(CRegister::eax, vAssembler);
+}
+
+void CAsmGenerator::GenAddRegImm(CRegister::TType destReg, int val, vector< CInstr >& vAssembler)
+{
+	CInstr oInstr;
+	oInstr.m_eMnem = CAsmGenerator::eAdd;
+	CRegister* pRegister = new CRegister(destReg);
+	CNumeric* pNumeric = new CNumeric(val);
+	oInstr.m_vOperand.push_back(pRegister);
+	oInstr.m_vOperand.push_back(pNumeric);
+	vAssembler.push_back(oInstr);
+}
+
+void CAsmGenerator::GenSubRegImm(CRegister::TType destReg, int val, vector< CInstr >& vAssembler)
+{
+	CInstr oInstr;
+	oInstr.m_eMnem = CAsmGenerator::eSub;
+	CRegister* pRegister = new CRegister(destReg);
+	CNumeric* pNumeric = new CNumeric(val);
+	oInstr.m_vOperand.push_back(pRegister);
+	oInstr.m_vOperand.push_back(pNumeric);
+	vAssembler.push_back(oInstr);
 }
 
 void CAsmGenerator::GenPush( const CSyntaxNode& oNode, vector< CInstr >& vAssembler )

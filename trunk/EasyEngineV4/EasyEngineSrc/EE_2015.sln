@@ -6,34 +6,71 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utils2", "Utils2\Utils2.vcxproj", "{37912A60-CFF0-4129-9AFA-26E625F10F67}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileUtils", "FileUtils\FileUtils.vcxproj", "{F0ABC274-D13F-47CC-B916-D2EFC0E2CC78}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Renderer", "Renderer\Renderer.vcxproj", "{867522E7-D6B6-45E3-B7EC-05D0390996CA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application", "Application2\Application.vcxproj", "{F08FC9B7-2CFB-48FC-9019-66D778C474BD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsGUI", "WindowsGUI\WindowsGUI.vcxproj", "{0DE6836A-D857-4E49-9244-704DE658EA98}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IO", "IO\IO.vcxproj", "{5B7681D8-B095-498D-8F6C-1E01263ABC56}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Geometry", "Geometry\Geometry.vcxproj", "{5B2B6A77-E62B-4985-AC2F-73488B5A80E3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Loader", "Loader\Loader.vcxproj", "{9646310A-B0CA-464C-AF46-BABFBE9302B2}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Systems", "Systems\Systems.vcxproj", "{8DEC909F-3F2B-4135-8BA5-43984624F68F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ressource", "Ressource2\Ressource.vcxproj", "{E90E3ED3-7457-4188-A659-AADAAAD89002}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Collision", "Collision\Collision.vcxproj", "{62B04933-84EC-4B2E-8F59-CF3603A26D3A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Entity", "Entity\Entity.vcxproj", "{F8746752-77AC-4A3B-8BC6-246B49F9542A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUI", "GUI2\GUI.vcxproj", "{9853A575-F4E9-4F24-A0D5-2D3B7F6AB2D4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Script", "Script\Script.vcxproj", "{F8466FBE-E7FC-43EC-9342-C84F9D1806C7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IA", "IA\IA.vcxproj", "{B29A8320-2A6C-47C4-890E-977FCD9A8552}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testPathFinder", "testFenetre\testFenetre.vcxproj", "{8856E7D5-706D-40F6-99DE-7B489FEBA465}"
+	ProjectSection(ProjectDependencies) = postProject
+		{37912A60-CFF0-4129-9AFA-26E625F10F67} = {37912A60-CFF0-4129-9AFA-26E625F10F67}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -107,14 +144,6 @@ Global
 		{9646310A-B0CA-464C-AF46-BABFBE9302B2}.Release|x64.Build.0 = Release|x64
 		{9646310A-B0CA-464C-AF46-BABFBE9302B2}.Release|x86.ActiveCfg = Release|Win32
 		{9646310A-B0CA-464C-AF46-BABFBE9302B2}.Release|x86.Build.0 = Release|Win32
-		{8DEC909F-3F2B-4135-8BA5-43984624F68F}.Debug|x64.ActiveCfg = Debug|x64
-		{8DEC909F-3F2B-4135-8BA5-43984624F68F}.Debug|x64.Build.0 = Debug|x64
-		{8DEC909F-3F2B-4135-8BA5-43984624F68F}.Debug|x86.ActiveCfg = Debug|Win32
-		{8DEC909F-3F2B-4135-8BA5-43984624F68F}.Debug|x86.Build.0 = Debug|Win32
-		{8DEC909F-3F2B-4135-8BA5-43984624F68F}.Release|x64.ActiveCfg = Release|x64
-		{8DEC909F-3F2B-4135-8BA5-43984624F68F}.Release|x64.Build.0 = Release|x64
-		{8DEC909F-3F2B-4135-8BA5-43984624F68F}.Release|x86.ActiveCfg = Release|Win32
-		{8DEC909F-3F2B-4135-8BA5-43984624F68F}.Release|x86.Build.0 = Release|Win32
 		{E90E3ED3-7457-4188-A659-AADAAAD89002}.Debug|x64.ActiveCfg = Debug|x64
 		{E90E3ED3-7457-4188-A659-AADAAAD89002}.Debug|x64.Build.0 = Debug|x64
 		{E90E3ED3-7457-4188-A659-AADAAAD89002}.Debug|x86.ActiveCfg = Debug|Win32

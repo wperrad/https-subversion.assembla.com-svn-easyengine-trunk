@@ -479,8 +479,7 @@ void CGrid::InsertToClose(CCell* b)
 }
 
 
-CPathFinder::CPathFinder(const Desc& oDesc) 
-	: IPathFinder(oDesc) 
+CPathFinder::CPathFinder(EEInterface& oInterface)
 {
 }
 
@@ -498,7 +497,12 @@ void CPathFinder::FindPath(IGrid* grid)
 	pGrid->BuildPath();
 }
 
-extern "C" _declspec(dllexport) CPathFinder* CreatePathFinder(const CPathFinder::Desc& oDesc)
+string CPathFinder::GetName()
 {
-	return new CPathFinder(oDesc);
+	return "PathFinder";
+}
+
+extern "C" _declspec(dllexport) CPathFinder* CreatePathFinder(EEInterface& oInterface)
+{
+	return new CPathFinder(oInterface);
 }

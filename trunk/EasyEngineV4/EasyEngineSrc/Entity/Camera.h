@@ -2,20 +2,17 @@
 #define CAMERA_H
 
 #include "ICamera.h"
-#include "../Utils2/Node.h"
+#include "Entity.h"
 
-
-class CCamera : public ICamera
+class CCamera : public ICamera, public CEntity
 {
 public:
-	CCamera( float fFov, IRenderer& oRenderer);
+	CCamera(EEInterface& oInterface, float fFov);
 	virtual ~CCamera();
 	void				Freeze( bool bFreeze);	
 	float				GetFov();
 	IGeometry*			GetBoundingGeometry() { return NULL; }
 	void				Update();
-	void				DrawBoundingBox(bool bDraw) {}
-	void				SetShader(IShader* pShader) {}
 	IBox*				GetBBox() { return NULL; }
 	IRessource*			GetRessource() { return NULL; }
 	void				SetWeight(float fWeight) {}

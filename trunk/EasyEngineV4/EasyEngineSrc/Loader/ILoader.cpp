@@ -5,7 +5,6 @@ void ILoader::Read( void* pDestBuffer, unsigned int nElementSize, unsigned int n
 	int nSizeRead = (int)fread( pDestBuffer, nElementSize, nElementCount, pFile );
 	if( nSizeRead == 0 )
 	{
-		//MessageBox( NULL, "ILoader::Read() : Erreur de lecture du loader", "Erreur de lecture", MB_ICONERROR );
 		fclose( pFile );
 		CBadFileFormat e( "ILoader::Read() : Erreur de lecture du loader" );
 		throw e;
@@ -14,7 +13,6 @@ void ILoader::Read( void* pDestBuffer, unsigned int nElementSize, unsigned int n
 	m_nFileOffset += nElementSize * nElementCount;
 	if( m_nFileOffset != nOffset )
 	{
-		//MessageBox( NULL, "ILoader::Read() : Problème d'offset fichier", "", MB_ICONERROR );
 		fclose( pFile );
 		CBadFileFormat e( "ILoader::Read() : Problème d'offset fichier" );
 		throw e;

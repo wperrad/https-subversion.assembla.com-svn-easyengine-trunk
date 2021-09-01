@@ -47,7 +47,7 @@ void CColLoader::Load(string sFileName, ILoader::IRessourceInfos& ri, IFileSyste
 	}
 }
 
-void CColLoader::Export(string sFileName, const ILoader::IRessourceInfos& ri)
+void CColLoader::Export(string sFileName, ILoader::IRessourceInfos& ri)
 {
 	const ILoader::CCollisionModelInfos* pCmi = dynamic_cast<const ILoader::CCollisionModelInfos*>(&ri);
 	if (pCmi) {

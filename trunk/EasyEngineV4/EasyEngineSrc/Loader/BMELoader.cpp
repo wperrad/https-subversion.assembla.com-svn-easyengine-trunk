@@ -11,7 +11,6 @@
 #include "IGeometry.h"
 
 #include "../Utils2/Chunk.h"
-#include "../Utils2/Node.h"
 #include "../Utils2/StringUtils.h"
 
 
@@ -225,7 +224,7 @@ void CBMELoader::LoadMaterial( CBinaryFileStorage& fs, CMaterialInfos& mi )
 		mi.m_sDiffuseMapName = "NONE";
 }
 
-void CBMELoader::Export( string sFileName, const IRessourceInfos& ri )
+void CBMELoader::Export( string sFileName, IRessourceInfos& ri )
 {
 	string sExt;
 	CStringUtils::GetExtension( sFileName, sExt );
@@ -283,7 +282,10 @@ void CBMELoader::ExportMaterialInfos( const ILoader::CMaterialInfos& mi, CAsciiF
 	store << "\n\nMaterial\n\n";
 	store.SetWidth( 0 );
 	store.DisplayVectorInLine( true );
-	store << "Ambient = ( " << mi.m_vAmbient << " )\nDiffuse = ( " << mi.m_vDiffuse << " )\nSpecular = ( " << mi.m_vSpecular << " )";
+	store << "Ambient = ( ";
+	store << mi.m_vAmbient << " )\nDiffuse = ( ";
+	store << mi.m_vDiffuse << " )\nSpecular = ( ";
+	store << mi.m_vSpecular << " )";
 	store.DisplayVectorInLine( false );
 	store << "\nShininess = " << mi.m_fShininess;
 	store << "\nDiffuse map = " << mi.m_sDiffuseMapName;

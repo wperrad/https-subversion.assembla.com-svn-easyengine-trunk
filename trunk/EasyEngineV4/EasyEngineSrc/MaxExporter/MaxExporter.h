@@ -49,6 +49,7 @@ protected:
 	vector< wstring >	m_vNonTCBBoneNames;
 	bool				g_bInterruptExport;
 	bool				m_bOpenglCoord;
+	bool				m_bOpenglCoord2;
 	IFileSystem*		m_pFileSystem;
 	IGeometryManager*	m_pGeometryManager;
 	ILoaderManager*		m_pLoaderManager;

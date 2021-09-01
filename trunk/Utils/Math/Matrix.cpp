@@ -157,6 +157,14 @@ CMatrix::CMatrix( float fDiag )
 	m_33 = fDiag;
 }
 
+bool CMatrix::IsIdentity() const
+{
+	return (m_00 == 1 && m_01 == 0 && m_02 == 0 && m_03 == 0 &&
+			m_10 == 0 && m_11 == 1 && m_12 == 0 && m_13 == 0 &&
+			m_20 == 0 && m_21 == 0 && m_22 == 1 && m_23 == 0 &&
+			m_30 == 0 && m_31 == 0 && m_32 == 0 && m_33 == 1);
+}
+
 //-----------------------------------------------------------------------------------------------------
 //											SetIdentity
 //-----------------------------------------------------------------------------------------------------
@@ -402,7 +410,7 @@ bool CMatrix::operator==(const CMatrix& mat) const
 //}
 
 
-CMatrix CMatrix::GetRotation()
+CMatrix CMatrix::GetRotation() const
 {
 	return CMatrix(m_00 	,	m_01	,	m_02	,	0 	,
 				   m_10 	,	m_11	,	m_12	,	0 	,	

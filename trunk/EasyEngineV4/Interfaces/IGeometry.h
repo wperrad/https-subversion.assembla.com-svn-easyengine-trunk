@@ -100,9 +100,14 @@ public:
 	virtual void				AddPoint( const CVector& p ) = 0;
 	virtual IBox&				operator=( const IBox& oBox ) = 0;
 	virtual void				Set( const CVector& oMinPoint, const CVector& oDimension ) = 0;
+	virtual void				GetDimension(CVector& dim) const = 0;
 	virtual void				SetTM(const CMatrix& m) = 0;
 	virtual void				GetPoints( vector< CVector >& vPoints ) = 0;
 	virtual void				GetCenter( CVector& oCenter ) const = 0;
+	virtual void				SetX(float x) = 0;
+	virtual void				SetY(float y) = 0;
+	virtual void				SetZ(float z) = 0;
+	virtual void				SetMinPoint(const CVector& oMinPoint) = 0;
 };
 
 class ICylinder : public IGeometry

@@ -18,7 +18,10 @@ public:
 
 	CPlugin* GetPlugin(string sName)
 	{
-		return m_mPlugins[sName];
+		map<string, CPlugin*>::iterator it = m_mPlugins.find(sName);
+		if (it != m_mPlugins.end())
+			return it->second;
+		return nullptr;
 	}
 
 private:

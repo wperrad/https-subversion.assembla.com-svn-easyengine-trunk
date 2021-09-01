@@ -74,12 +74,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(MSBuildProjectDirectory)\..\..\EasyEngine\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(MSBuildProjectDirectory)\..\..\EasyEngine\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -175,7 +177,6 @@
     <ClInclude Include="..\..\Interfaces\IRessource.h" />
     <ClInclude Include="..\..\Interfaces\IScriptManager.h" />
     <ClInclude Include="..\..\Interfaces\IShader.h" />
-    <ClInclude Include="..\..\Interfaces\ISystems.h" />
     <ClInclude Include="..\..\Interfaces\ITestMesh.h" />
     <ClInclude Include="..\..\Interfaces\ITestShaderManager.h" />
     <ClInclude Include="..\..\Interfaces\IWidget.h" />

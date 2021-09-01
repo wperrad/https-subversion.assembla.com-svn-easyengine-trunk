@@ -1,23 +1,18 @@
+#include "Interface.h"
 #include "Player.h"
 #include "NPCEntity.h"
 #include "IGUIManager.h"
 
-CPlayer::CPlayer(
-	string sFileName, 
-	IRessourceManager& oRessourceManager, 
-	IRenderer& oRenderer, 
-	IEntityManager* pEntityManager, 
-	IFileSystem* pFileSystem, 
-	ICollisionManager& oCollisionManager, 
-	IGeometryManager& oGeometryManager,
-	IGUIManager& oGUIManager) :
-	CMobileEntity(sFileName, oRessourceManager, oRenderer, pEntityManager, pFileSystem, oCollisionManager, oGeometryManager),
-	m_oGUIManager(oGUIManager),
+
+CPlayer::CPlayer(EEInterface& oInterface, string sFileName) :
+	CMobileEntity(oInterface, sFileName),
+	m_oGUIManager(static_cast<IGUIManager&>(*oInterface.GetPlugin("GUIManager"))),
 	m_pPlayerWindow(NULL)
 {
 	m_sTypeName = "Player";
 	m_pPlayerWindow = m_oGUIManager.CreatePlayerWindow(600, 800);
-	pEntityManager->SetPlayer(this);
+	IEntityManager* pEntityManager = static_cast<IEntityManager*>(oInterface.GetPlugin("EntityManager"));
+	 pEntityManager->SetPlayer(this);
 }
 
 

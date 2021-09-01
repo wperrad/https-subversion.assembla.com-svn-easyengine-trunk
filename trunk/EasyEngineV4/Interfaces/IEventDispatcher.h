@@ -6,7 +6,7 @@
 class IEventDispatcher : public CPlugin
 {
 protected:
-	IEventDispatcher( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
+	IEventDispatcher() : CPlugin( nullptr, ""){}
 
 public:
 	enum TKeyEvent

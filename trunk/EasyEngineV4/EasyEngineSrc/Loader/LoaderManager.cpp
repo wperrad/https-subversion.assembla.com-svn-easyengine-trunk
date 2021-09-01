@@ -8,6 +8,7 @@
 // Engine
 #include "../utils2/chunk.h"
 #include "../utils2/StringUtils.h"
+#include "Interface.h"
 #include "TextureLoader.h"
 #include "AseLoader.h"
 #include "ASMELoader.h"
@@ -18,21 +19,22 @@
 #include "BSELoader.h"
 #include "ColLoader.h"
 #include "IFileSystem.h"
+#include "IGeometry.h"
 
 using namespace std;
 
-CLoaderManager::CLoaderManager( const Desc& oDesc ):
-ILoaderManager( oDesc ),
-m_oFileSystem( oDesc.m_oFileSystem )
+CLoaderManager::CLoaderManager(EEInterface& oInterface):
+ILoaderManager(),
+m_oFileSystem(static_cast<IFileSystem&>(*oInterface.GetPlugin("FileSystem")))
 {
 	m_mLoaderByExtension[ "ase" ] = new CAseLoader;
 	m_mLoaderByExtension[ "ale" ] = new CLightLoader;
 	m_mLoaderByExtension[ "bmp" ] = new CBMPLoader;
 	m_mLoaderByExtension[ "tga" ] = new CTGALoader;
-	m_mLoaderByExtension[ "bme" ] = new CBMELoader( oDesc.m_oFileSystem, oDesc.m_oGeometryManager );
-	m_mLoaderByExtension[ "bke" ] = new CBKELoader( oDesc.m_oFileSystem );
-	m_mLoaderByExtension[ "bse" ] = new CBSELoader( oDesc.m_oFileSystem );
-	m_mLoaderByExtension[ "col" ] = new CColLoader(oDesc.m_oGeometryManager);
+	m_mLoaderByExtension[ "bme" ] = new CBMELoader(m_oFileSystem, static_cast<IGeometryManager&>(*oInterface.GetPlugin("GeometryManager")));
+	m_mLoaderByExtension[ "bke" ] = new CBKELoader(m_oFileSystem);
+	m_mLoaderByExtension[ "bse" ] = new CBSELoader(m_oFileSystem);
+	m_mLoaderByExtension[ "col" ] = new CColLoader(static_cast<IGeometryManager&>(*oInterface.GetPlugin("GeometryManager")));
 }
 
 CLoaderManager::~CLoaderManager()
@@ -88,7 +90,7 @@ void CLoaderManager::Load( string sFileName, ILoader::IRessourceInfos& ri )
 	}
 }
 
-void CLoaderManager::Export( string sFileName, const ILoader::IRessourceInfos& ri )
+void CLoaderManager::Export( string sFileName, ILoader::IRessourceInfos& ri )
 {
 	string sExtension;
 	CStringUtils::GetExtension( sFileName, sExtension );
@@ -131,7 +133,12 @@ void CLoaderManager::CreateBMPFromData( const vector< unsigned char >& vData, in
 	pLoader->CreateBMPFromData( vData, nWidth, nHeight, nBitPerPixel, sFileName );
 }
 
-extern "C" _declspec(dllexport) ILoaderManager* CreateLoaderManager( const ILoaderManager::Desc& oDesc )
+string CLoaderManager::GetName()
 {
-	return new CLoaderManager( oDesc );
+	return "LoaderManager";
+}
+
+extern "C" _declspec(dllexport) ILoaderManager* CreateLoaderManager(EEInterface& oInterface)
+{
+	return new CLoaderManager(oInterface);
 }

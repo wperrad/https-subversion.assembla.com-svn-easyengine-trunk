@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <sstream>
 
+#include "Interface.h"
 #include "Renderer.h"
 #include "Exception.h"
 #include <gl/gl.h>
@@ -26,13 +27,12 @@ using namespace std;
 #define VBO_RENDER
 
 
-CRenderer::CRenderer(const Desc& oDesc) :
-	IRenderer(oDesc),
+CRenderer::CRenderer(EEInterface& oInterface) :
+	m_oWindow(static_cast<IWindow&>(*oInterface.GetPlugin("Window"))),
+	m_oFileSystem(static_cast<IFileSystem&>(*oInterface.GetPlugin("FileSystem"))),
 	m_Mode(MODE_3D),
 	m_hRC(0),
-	m_oWindow(oDesc.m_oWindow),
 	m_nCurrentBufferID(-1),
-	m_oFileSystem(oDesc.m_oFileSystem),
 	m_nCurrentBufferOffset(0),
 	m_eCurrentRenderType(eFill),
 	m_bMustChangeFov(false),
@@ -43,6 +43,8 @@ CRenderer::CRenderer(const Desc& oDesc) :
 	m_mDrawStyle[ T_POINTS ] = GL_POINTS;
 	m_mDrawStyle[ T_TRIANGLES ] = GL_TRIANGLES;
 	m_mDrawStyle[ T_LINE_LOOP ] = GL_LINE_LOOP;
+	m_mDrawStyle[T_LINE_STRIP] = GL_LINE_STRIP;
+	m_mDrawStyle[ T_QUADS] = GL_QUADS;
 	m_mPixelFormat[ T_RGB ] = GL_RGB;
 	m_mPixelFormat[ T_RGBA ] = GL_RGBA;
 	m_mPixelFormat[ T_BGR ] = GL_BGR;
@@ -55,11 +57,11 @@ CRenderer::CRenderer(const Desc& oDesc) :
 	m_mRenderType[ eFill ] = GL_FILL;
 	m_mRenderType[ eLine ] = GL_LINE;
 	m_mRenderType[ ePoint ] = GL_POINT;
-	CreateOGLContext( oDesc );
+	CreateOGLContext();
 	InitGLExtensions();
 	InitOpengl();
-	m_sDefaultShader = oDesc.m_sDefaultShader;
-	m_sShadersDirectory = oDesc.m_sShaderDirectory;
+	m_sDefaultShader = "PerPixelLighting";
+	m_sShadersDirectory = "Shaders";
 	LoadShaderDirectory( m_sShadersDirectory + "\\Hardware");
 	TurnOffAllLight();
 }
@@ -237,7 +239,7 @@ void CRenderer::ResizeScreen( int nWidth, int nHeight )
 	glViewport( 0, 0, nWidth, nHeight );
 }
 
-void CRenderer::CreateOGLContext( const Desc& oDesc )
+void CRenderer::CreateOGLContext()
 {
 	HGLRC hRC = wglGetCurrentContext();
 	if ( !hRC )
@@ -517,6 +519,9 @@ void CRenderer::DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style )
 
 void CRenderer::DrawBase( const CMatrix& mBase, float fSize )
 {
+	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
+	LoadMatrix(oModelView);
+
 	CVector x = mBase * CVector( 1 * fSize, 0, 0, 1 );
 	CVector y = mBase * CVector( 0, 1 * fSize, 0, 1 );
 	CVector z = mBase * CVector( 0, 0, 1 * fSize, 1 );
@@ -1432,9 +1437,9 @@ void CRenderer::SetLineWidth(int width)
 	glLineWidth(width);
 }
 
-extern "C" _declspec(dllexport) IRenderer* CreateRenderer( const IRenderer::Desc& oDesc )
+extern "C" _declspec(dllexport) IRenderer* CreateRenderer(EEInterface& oInterface)
 {
-	return new CRenderer( oDesc );
+	return new CRenderer(oInterface);
 }
 
 void CRenderer::CreateFrameBufferObject(int width, int height, unsigned int& nFBOId, unsigned int& nTextureId)
@@ -1488,4 +1493,27 @@ float CRenderer::GetScreenRatio()
 	int nWidth, nHeight;
 	m_oWindow.GetDimension(nWidth, nHeight);
 	return ((float)nWidth / (float)nHeight);
+}
+
+void CRenderer::GetGlslVersion(string& sVersion)
+{
+	const GLubyte* version = glGetString(GL_SHADING_LANGUAGE_VERSION);
+	int i = 0;
+	do{
+		sVersion.push_back(version[i++]);
+	} while (version[i] != 0);
+}
+
+void CRenderer::GetOpenglVersion(string& sVersion)
+{
+	const GLubyte* version = glGetString(GL_VERSION);
+	int i = 0;
+	do {
+		sVersion.push_back(version[i++]);
+	} while (version[i] != 0);	
+}
+
+string CRenderer::GetName()
+{
+	return "Renderer";
 }

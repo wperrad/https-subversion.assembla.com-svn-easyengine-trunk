@@ -10,6 +10,7 @@
 class IFileSystem;
 class CPosition;
 class CDimension;
+class EEInterface;
 
 class CXMLInfo : public IXMLInfo
 {
@@ -35,12 +36,13 @@ class CXMLParser : public IXMLParser
 	void				CloseFile();
 
 public:
-						CXMLParser( const Desc& );
+						CXMLParser(EEInterface& oInterface);
 	
 	void				GetProperty( const std::string& sFieldName, CPosition& Pos, int& nDimWidth, int& nDimHeight );
 	void				ParseFile( const std::string& sFileName, std::vector< IXMLInfo* >& vInfos );
+	string				GetName() override;
 };
 
-extern "C" _declspec(dllexport) IXMLParser* CreateXMLParser( const IXMLParser::Desc& );
+extern "C" _declspec(dllexport) IXMLParser* CreateXMLParser(EEInterface& oInterface);
 
 #endif //XMLPARSER_H

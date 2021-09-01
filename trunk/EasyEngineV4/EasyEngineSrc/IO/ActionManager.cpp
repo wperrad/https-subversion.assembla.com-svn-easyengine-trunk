@@ -22,6 +22,11 @@ void CActionManager::ForceActionState( string sActionName, IInputManager::KEY_ST
 	itKey->second = eState;
 }
 
+string CActionManager::GetName()
+{
+	return "ActionManager";
+}
+
 void CActionManager::OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::KEY_STATE state )
 {
 	CActionManager* pActionManager = static_cast< CActionManager* > ( pPlugin );

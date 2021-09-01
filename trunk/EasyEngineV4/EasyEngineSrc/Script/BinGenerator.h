@@ -69,7 +69,8 @@ public:
 		eIntImm,
 		eIntAddr,
 
-		eRet
+		eRet,
+		eReturn
 	};
 
 private:

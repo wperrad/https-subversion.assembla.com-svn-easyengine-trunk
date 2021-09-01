@@ -78,7 +78,7 @@ bool CCylinder::IsIntersect(const IGeometry& oGeometry) const
 {
 	const CBox* pBox = dynamic_cast<const CBox*>(&oGeometry);
 	if (pBox)
-		return IsIntersect(*pBox);
+		return IsIntersect((const CBox&)*pBox);
 	throw 1;
 	return false;
 }

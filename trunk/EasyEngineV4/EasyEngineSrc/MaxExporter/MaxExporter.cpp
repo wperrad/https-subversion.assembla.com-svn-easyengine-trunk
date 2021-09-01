@@ -58,16 +58,14 @@ TCHAR *GetString(int id)
 
 CMaxExporter::CMaxExporter():
 g_bInterruptExport( false ),
-m_bOpenglCoord(true)
+m_bOpenglCoord(true),
+m_bOpenglCoord2(false)
 {
 	EEInterface* pInterface = new EEInterface;
 	CPlugin::SetEngineInterface(pInterface);
 	IGeometryManager::Desc oGMDesc(NULL, "");
 	m_pGeometryManager = static_cast< IGeometryManager* >(CPlugin::Create(oGMDesc, "stdplugs\\EasyEngine\\Geometry.dll", "CreateGeometryManager"));
-	IFileSystem::Desc oFSDesc(NULL, "");
-	m_pFileSystem = static_cast< IFileSystem* >(CPlugin::Create(oFSDesc, "stdplugs\\EasyEngine\\FileUtils.dll", "CreateFileSystem"));
-	ILoaderManager::Desc oLDesc(*m_pFileSystem, *m_pGeometryManager);
-	m_pLoaderManager = static_cast< ILoaderManager* >(CPlugin::Create(oLDesc, "stdplugs\\EasyEngine\\Loader.dll", "CreateLoaderManager"));
+	m_pLoaderManager = static_cast< ILoaderManager* >(CPlugin::Create(*pInterface, "stdplugs\\EasyEngine\\Loader.dll", "CreateLoaderManager"));
 
 	m_oMaxToOpenglMatrix = CMatrix(-1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
 }

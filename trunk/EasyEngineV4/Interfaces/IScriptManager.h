@@ -55,21 +55,17 @@ enum TFuncArgType
 class IScriptManager : public CPlugin
 {
 protected:
-	IScriptManager( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
+	IScriptManager() : CPlugin( nullptr, ""){}
 
 public:
 
-	struct Desc : public CPlugin::Desc
-	{
-		IFileSystem&	m_oFileSystem;
-		Desc( IFileSystem& oFileSystem ):CPlugin::Desc( NULL, "" ),m_oFileSystem(oFileSystem){}
-	};
 	
 	virtual void	RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType ) = 0;
 	virtual void	ExecuteCommand( std::string sCommand ) = 0;
 	virtual void	GetRegisteredFunctions( vector< string >& vFuncNames ) = 0;
 	virtual float	GetVariableValue(string variableName) = 0;
 	virtual float	GetRegisterValue(string sRegisterName) = 0;
+	virtual void	GenerateAssemblerListing(bool generate) = 0;
 };
 
 #endif // ISCRIPTMANAGER_H

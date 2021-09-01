@@ -1,9 +1,8 @@
 #include "LinkedCamera.h"
 #include "MobileEntity.h"
-#include "ISystems.h"
 
-CLinkedCamera::CLinkedCamera( float fFov, IRenderer& oRenderer):
-CCamera(fFov, oRenderer)
+CLinkedCamera::CLinkedCamera(EEInterface& oInterface, float fFov):
+CCamera(oInterface, fFov)
 {
 	m_sEntityName = "Linked camera";
 }
@@ -33,7 +32,7 @@ void CLinkedCamera::Zoom(int value)
 	LocalTranslate(0, 0, z);
 }
 
-void CLinkedCamera::Link(CNode* pNode)
+void CLinkedCamera::Link(INode* pNode)
 {
 	CMobileEntity* pPerso = dynamic_cast<CMobileEntity*>(pNode);
 	if (pPerso) {

@@ -31,6 +31,7 @@ IScriptFuncArg* CScriptState::GetArg( int iIndex )
 CSemanticAnalyser::CSemanticAnalyser():
 m_nCurrentScopeNumber( 0 )
 {
+	m_vCommand.insert("return");
 }
 
 void CSemanticAnalyser::RegisterFunction( std::string sFunctionName, ScriptFunction Function, const vector< TFuncArgType >& vArgsType  )
@@ -81,9 +82,9 @@ void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 		FuncMap::iterator it = m_mInterruption.find( oTree.m_Lexem.m_sValue );
 		if( it == m_mInterruption.end() )
 		{
-			string sMessage = string( "Fonction \"" ) + oTree.m_Lexem.m_sValue + "\" non définie";
-			CCompilationErrorException e( -1, -1 );
-			e.SetErrorMessage( sMessage );
+			string sMessage = string("Fonction \"") + oTree.m_Lexem.m_sValue + "\" non définie";
+			CCompilationErrorException e(-1, -1);
+			e.SetErrorMessage(sMessage);
 			throw e;
 		}
 		else
@@ -100,7 +101,10 @@ void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 		for( unsigned int i = 0; i < oTree.m_vChild.size(); i++ )
 			CompleteSyntaxicTree( oTree.m_vChild[ i ] );
 	}
-	else if( oTree.m_Type == CSyntaxNode::eVal )
+	else if( oTree.m_Type == CSyntaxNode::eVal || 
+		oTree.m_Type == CSyntaxNode::eInt || 
+		oTree.m_Type == CSyntaxNode::eFloat || 
+		oTree.m_Type == CSyntaxNode::eString )
 	{
 		if( oTree.m_vChild.size() == 0 )
 		{
@@ -143,8 +147,23 @@ void CSemanticAnalyser::CompleteSyntaxicTree( CSyntaxNode& oTree )
 				CompleteSyntaxicTree( oTree.m_vChild[ i ] );
 		}
 	}
+	else if (oTree.m_Type == CSyntaxNode::eCommand) {
+		set<string>::iterator itCommand = m_vCommand.find(oTree.m_Lexem.m_sValue);
+		if (itCommand == m_vCommand.end()) {
+			string sMessage = string("Commande \"") + oTree.m_Lexem.m_sValue + "\" non définie";
+			CCompilationErrorException e(-1, -1);
+			e.SetErrorMessage(sMessage);
+			throw e;
+		}
+	}
 	else
 	{
+		if (oTree.m_Type == CSyntaxNode::eInstr) {
+			if ((oTree.m_vChild.size() == 1) && (oTree.m_vChild[0].m_Lexem.m_eType == CLexAnalyser::CLexem::eVar)) {
+				oTree.m_vChild[0].m_Type = CSyntaxNode::eCommand;
+				oTree.m_vChild[0].m_Lexem.m_eType = CLexAnalyser::CLexem::eNone;
+			}
+		}
 		for( unsigned int i = 0; i < oTree.m_vChild.size(); i++ )
 			CompleteSyntaxicTree( oTree.m_vChild[ i ] );
 	}

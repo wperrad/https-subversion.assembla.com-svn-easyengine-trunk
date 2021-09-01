@@ -32,7 +32,9 @@ class ILoaderManager;
 class ITestMesh;
 class ITestShaderManager;
 class IDrawTool;
-class ISystemsManager;
+class IEntityManager;
+class ICollisionManager;
+class IHeightMap;
 struct CMaterialInfos;
 
 
@@ -42,16 +44,19 @@ class CRessourceManager : public IRessourceManager
 {
 	typedef IRessource*( *TRessourceCreation)(  string sFileName, CRessourceManager*, IRenderer& );
 	typedef ITestMesh*( *TTestRessourceCreation )( string sFileName, CRessourceManager*, ITestShaderManager&, IRenderer& );
+	EEInterface&									m_oInterface;
 	std::map< std::string, IRessource* >			m_mRessource;
 	ILoaderManager&									m_oLoaderManager;
-	ISystemsManager&								m_oSystemManager;
 	IRenderer&										m_oRenderer;
+	IGeometryManager&								m_oGeometryManager;
+	ICollisionManager*								m_pCollisionManager;
+	IEntityManager*									m_pEntityManager;
 
 	vector< string >								m_vErrorMessage;
 	IRessource*										GetRessourceByExtension( std::string sRessourceFileName);	
 	IRessource*										CreateMaterial( ILoader::CMaterialInfos& mi, ITexture* pAlternative = NULL );
-	IAnimatableMesh*								CreateMesh( ILoader::CAnimatableMeshData& oData, IRessource* pMaterial = NULL );
 	IBone*											LoadSkeleton( ILoader::CAnimatableMeshData& oData );
+	void											ComputeNormals(ILoader::CMeshInfos& mi, int slices, IHeightMap* pHeightMap);
 
 	static IRessource*								CreateMesh( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer );
 	static IRessource*								CreateCollisionMesh(string sFileName, CRessourceManager* pRessouceManager, IRenderer& oRenderer);
@@ -72,13 +77,17 @@ class CRessourceManager : public IRessourceManager
 public:
 
 
-						CRessourceManager( const Desc& desc );
+						CRessourceManager(EEInterface& oInterface);
 	virtual 			~CRessourceManager();
 	void				EnableCatchingException( bool bEnable );
 	bool				IsCatchingExceptionEnabled();
 	void				SetCurrentRenderer( IRenderer* pRenderer );
 	IRessource*			GetRessource( const std::string& sRessourceFileName, bool bDuplicate = false );
 	ITexture*			CreateTexture2D(IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat );
+	ITexture*			CreateTexture2D(string sFileName, bool bGenerateMipmaps);
+	IAnimatableMesh*	CreateMesh(ILoader::CAnimatableMeshData& oData, IRessource* pMaterial = NULL);
+	IMesh*				CreatePlane(int slices, int size, string diffuseTexture = "NONE") override;
+	IMesh*				CreatePlane2(int slices, int size, float height, string heightTexture, string diffuseTexture) override;
 	ITestMesh*			GetTestRessource( const std::string& sRessourceFileName, ITestShaderManager&);
 	int					GetLightCount();
 	void				SetDrawTool( IDrawTool* pDrawTool ){ m_pDrawTool = pDrawTool; }
@@ -91,10 +100,11 @@ public:
 	void				PopErrorMessage( string& sMessage );
 	void				DestroyAllRessources();
 	ITexture*			CreateRenderTexture(int width, int height, string sShaderName);
+	string				GetName() override;
 };
 
 
 
-extern "C" _declspec(dllexport) IRessourceManager* CreateRessourceManager( IRessourceManager::Desc& oDesc );
+extern "C" _declspec(dllexport) IRessourceManager* CreateRessourceManager(EEInterface& oInterface);
 
 #endif  //RESSOURCEMANAGER_H

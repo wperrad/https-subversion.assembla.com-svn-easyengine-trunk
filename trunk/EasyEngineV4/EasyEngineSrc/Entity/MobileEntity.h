@@ -9,6 +9,8 @@ class CMobileEntity : public CEntity, public virtual IFighterEntity
 
 protected:
 	typedef void (*TAction)( CMobileEntity*, bool );
+
+	EEInterface&								m_oInterface;
 	string										m_sFileNameWithoutExt;
 	bool										m_bInitSkeletonOffset;
 	CMatrix										m_oSkeletonOffset;
@@ -16,7 +18,7 @@ protected:
 	map< string, IBone* >						m_mPreloadedBones;
 	IEntity*									m_pLeftEye;
 	IEntity*									m_pRightEye;
-	CNode*										m_pNeck;
+	IBone*										m_pNeck;
 	float										m_fEyesRotH;
 	float										m_fEyesRotV;
 	float										m_fNeckRotH;
@@ -72,12 +74,12 @@ protected:
 	static void				Dying(CMobileEntity* pHuman, bool bLoop);
 	static void				Guard(CMobileEntity* pHuman, bool bLoop);
 	static void 			PlayReceiveHit( CMobileEntity* pHuman, bool bLoop );
-	static void 			OnCollision(CEntity* pThis, vector<CEntity*> entities);
+	static void 			OnCollision(CEntity* pThis, vector<INode*> entities);
 	static void				OnDyingCallback(IAnimation::TEvent e, void* data);
 
 
 public:
-	CMobileEntity( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager, IFileSystem* pFileSystem, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager );	
+	CMobileEntity(EEInterface& oInterface, string sFileName);
 
 	float					GetAnimationSpeed(IEntity::TAnimation eAnimationType);
 	void					SetAnimationSpeed( TAnimation eAnimationType, float fSpeed );

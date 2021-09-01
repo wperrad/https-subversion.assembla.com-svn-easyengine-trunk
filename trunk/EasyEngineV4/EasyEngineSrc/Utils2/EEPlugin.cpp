@@ -18,12 +18,6 @@ CPlugin::CPlugin(CPlugin* pParent, const std::string& sName) :
 CPlugin::~CPlugin() 
 {
 }
-
-string CPlugin::GetName()
-{
-	return m_sName;
-}
-
 void CPlugin::AddChildPlugin(const std::string& sName, CPlugin* pChild)
 {
 	m_mChild[sName] = pChild;
@@ -57,7 +51,6 @@ CPlugin* CPlugin::GetChildPlugin(const std::string& sPluginName)
 
 CPlugin* CPlugin::Create(const CPlugin::Desc& oDesc, std::string sDllPath, const std::string& sFuncName)
 {
-
 	HMODULE hDll = LoadLibraryA(sDllPath.c_str());
 	if (!hDll)
 	{
@@ -65,7 +58,8 @@ CPlugin* CPlugin::Create(const CPlugin::Desc& oDesc, std::string sDllPath, const
 		std::exception e(sMessage.c_str());
 		throw e;
 	}
-	CPlugin* (*pCreate)(const CPlugin::Desc&) = reinterpret_cast< CPlugin* (*)(const CPlugin::Desc&) > (GetProcAddress(hDll, sFuncName.c_str()));
+	typedef CPlugin* (*FuncCreatePluginOld)(const CPlugin::Desc&);
+	FuncCreatePluginOld pCreate = (FuncCreatePluginOld)GetProcAddress(hDll, sFuncName.c_str());
 	if (!pCreate)
 	{
 		std::string sMessage = std::string("Impossible de charger la fonction \"") + sFuncName + "\"  dans " + sDllPath;
@@ -74,7 +68,30 @@ CPlugin* CPlugin::Create(const CPlugin::Desc& oDesc, std::string sDllPath, const
 	}
 	CPlugin* plugin = pCreate(oDesc);
 	s_mPlugins[oDesc.m_sName] = plugin;
-	plugin->m_sName = oDesc.m_sName;
+	s_pEngineInterface->RegisterPlugin(plugin);
+	return plugin;
+}
+
+CPlugin* CPlugin::Create(EEInterface& oInterface, std::string sDllPath, const std::string& sFuncName)
+{
+	HMODULE hDll = LoadLibraryA(sDllPath.c_str());
+	if (!hDll)
+	{
+		std::string sMessage = sDllPath + " introuvable";
+		std::exception e(sMessage.c_str());
+		throw e;
+	}
+
+	typedef CPlugin* (*CreatePluginProc)(EEInterface& oInterface);
+	CreatePluginProc pCreate = (CreatePluginProc)GetProcAddress(hDll, sFuncName.c_str());
+	if (!pCreate)
+	{
+		std::string sMessage = std::string("Impossible de charger la fonction \"") + sFuncName + "\"  dans " + sDllPath;
+		std::exception e(sMessage.c_str());
+		throw e;
+	}
+	CPlugin* plugin = pCreate(oInterface);
+	s_mPlugins[plugin->GetName()] = plugin;
 	s_pEngineInterface->RegisterPlugin(plugin);
 	return plugin;
 }

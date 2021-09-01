@@ -47,6 +47,13 @@ IBaseStorage& CBinaryFileStorage::operator<<( int i )
 	return *this;
 }
 
+IBaseStorage& CBinaryFileStorage::operator << (bool b)
+{
+	int i = b ? 1 : 0;
+	fwrite(&i, sizeof(int), 1, m_pFile);
+	return *this;
+}
+
 IBaseStorage& CBinaryFileStorage::operator<<( unsigned int i )
 {
 	fwrite( &i, sizeof( unsigned int ), 1, m_pFile );
@@ -67,9 +74,25 @@ IBaseStorage& CBinaryFileStorage::operator<<( string s )
 	return *this;
 }
 
+IBaseStorage& CBinaryFileStorage::operator<<(char* sz)
+{
+	int nSize = strlen(sz);
+	fwrite(&nSize, sizeof(int), 1, m_pFile);
+	fwrite(sz, sizeof(char), nSize, m_pFile);
+	return *this;
+}
+
 IBaseStorage& CBinaryFileStorage::operator>>( int& i ) 
 {
 	fread( &i, sizeof( int ), 1, m_pFile );
+	return *this;
+}
+
+IBaseStorage& CBinaryFileStorage::operator >> (bool& b)
+{
+	int i = 0;
+	fread(&i, sizeof(int), 1, m_pFile);
+	b = (i > 0);
 	return *this;
 }
 
@@ -91,6 +114,16 @@ IBaseStorage& CBinaryFileStorage::operator>>( string& s )
 	fread( &nSize, sizeof( int ), 1, m_pFile );
 	s.resize( nSize );
 	fread( &s[0], sizeof( char ), nSize, m_pFile );
+	return *this;
+}
+
+IBaseStorage& CBinaryFileStorage::operator >> (char* sz)
+{
+	int nSize;
+	fread(&nSize, sizeof(int), 1, m_pFile);
+	sz = new char[nSize + 1];
+	fread(sz, sizeof(char), nSize, m_pFile);
+	sz[nSize] = 0;
 	return *this;
 }
 
@@ -194,6 +227,15 @@ IBaseStorage& CAsciiFileStorage::operator<<( int nVal )
 	return *this;
 }
 
+IBaseStorage& CAsciiFileStorage::operator<< (bool b)
+{
+	CStringStorage ss;
+	ss.SetWidth(m_nWidth);
+	ss << b;
+	*this << ss.GetValue();
+	return *this;
+}
+
 IBaseStorage& CAsciiFileStorage::operator<<( unsigned int nVal )
 {
 	//ostringstream oss;
@@ -217,15 +259,25 @@ IBaseStorage& CAsciiFileStorage::operator<<( float f )
 	return *this;
 }
 	
-CAsciiFileStorage& CAsciiFileStorage::operator<<( string s )
+IBaseStorage& CAsciiFileStorage::operator<<( string s )
 {
 	fwrite( s.c_str(), sizeof( char ), s.size(), m_pFile );
 	return *this;
 }
 
+IBaseStorage& CAsciiFileStorage::operator<<(char* sz)
+{
+	fwrite(sz, sizeof(char), strlen(sz), m_pFile);
+	return *this;
+}
 
 
 IBaseStorage& CAsciiFileStorage::operator>>( int& )
+{
+	return *this;
+}
+
+IBaseStorage& CAsciiFileStorage::operator >> (bool&)
 {
 	return *this;
 }
@@ -241,6 +293,11 @@ IBaseStorage& CAsciiFileStorage::operator>>( float& )
 }
 	
 IBaseStorage& CAsciiFileStorage::operator>>( string& )
+{
+	return *this;
+}
+
+IBaseStorage& CAsciiFileStorage::operator >> (char*)
 {
 	return *this;
 }
@@ -305,6 +362,14 @@ IBaseStorage& CStringStorage::operator<<( int nValue )
 	return *this;
 }
 
+IBaseStorage& CStringStorage::operator<<(bool b)
+{
+	ostringstream oss;
+	oss << setw(m_nWidth) << setprecision(m_nPrecision) << b;
+	*this << oss.str();
+	return *this;
+}
+
 IBaseStorage& CStringStorage::operator<<( unsigned int uValue )
 {
 	ostringstream oss;
@@ -327,7 +392,19 @@ IBaseStorage& CStringStorage::operator<<( string sValue )
 	return *this;
 }
 
+IBaseStorage& CStringStorage::operator<<(char* sz)
+{
+	string s = sz;
+	m_sValue += s;
+	return *this;
+}
+
 IBaseStorage& CStringStorage::operator>>( int& )
+{
+	return *this;
+}
+
+IBaseStorage& CStringStorage::operator >> (bool&)
 {
 	return *this;
 }
@@ -345,6 +422,12 @@ IBaseStorage& CStringStorage::operator>>( float& )
 IBaseStorage& CStringStorage::operator>>( string& sValue )
 {
 	sValue = m_sValue;
+	return *this;
+}
+
+IBaseStorage& CStringStorage::operator>>( char* szValue )
+{
+	strcpy(szValue, m_sValue.c_str());
 	return *this;
 }
 

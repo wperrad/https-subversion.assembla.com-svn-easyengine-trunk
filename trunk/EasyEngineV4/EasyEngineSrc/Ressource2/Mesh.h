@@ -25,6 +25,7 @@ class CNode;
 class IDrawTool;
 class CRessourceManager;
 class IShader;
+class INode;
 
 class CMesh : public IMesh
 {
@@ -52,10 +53,10 @@ private:
 	CVector								m_oOrgMaxPosition;
 	IRenderer::TRenderType				m_eRenderType;
 	map< string, IBox* >				m_mAnimationKeyBox;
-	bool								m_bUseAdditionalColor;
+	IRenderer::TDrawStyle				m_eDrawStyle;
 	
 	void				CreateMaterialTexture( const std::map< int, CMaterial* >& );
-	void				DisplaySkeletonInfo( CNode* pRoot, bool bRecurse = true );
+	void				DisplaySkeletonInfo( INode* pRoot, bool bRecurse = true );
 	void				CreateNonIndexedMaterialVertexArray( const std::vector< unsigned short >& vMtlFace, const std::vector< unsigned int >& vIndexArray, std::vector< float >& vOut );
 
 public:
@@ -101,6 +102,9 @@ public:
 	void				Colorize(float r, float g, float b, float a);
 	ITexture*			GetTexture(int nMaterialIndex);
 	void				SetTexture(ITexture* pTexture);
+	int					GetMaterialCount() override;
+	IMaterial*			GetMaterial(int index) override;
+	void				SetDrawStyle(IRenderer::TDrawStyle style) override;
 };
 
 #endif

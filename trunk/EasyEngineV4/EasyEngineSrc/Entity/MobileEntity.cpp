@@ -1,6 +1,6 @@
 #include "MobileEntity.h"
+#include "Interface.h"
 #include "IFileSystem.h"
-#include "ISystems.h"
 #include <algorithm>
 #include "ICollisionManager.h"
 #include "IGeometry.h"
@@ -8,14 +8,16 @@
 #include "Scene.h"
 #include "EntityManager.h"
 #include "IGUIManager.h"
+#include "Bone.h"
 
 map< string, IEntity::TAnimation >			CMobileEntity::s_mAnimationStringToType;
 map< IEntity::TAnimation, float > 			CMobileEntity::s_mOrgAnimationSpeedByType;
 map< string, CMobileEntity::TAction >				CMobileEntity::s_mActions;
 vector< CMobileEntity* >							CMobileEntity::s_vHumans;
 
-CMobileEntity::CMobileEntity( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, IEntityManager* pEntityManager , IFileSystem* pFileSystem, ICollisionManager& oCollisionManager, IGeometryManager& oGeometryManager ):
-CEntity( sFileName, oRessourceManager, oRenderer, pEntityManager, oGeometryManager, oCollisionManager ),
+CMobileEntity::CMobileEntity(EEInterface& oInterface, string sFileName):
+CEntity(oInterface, sFileName),
+m_oInterface(oInterface),
 m_bInitSkeletonOffset( false ),
 m_fMaxEyeRotationH( 15 ),
 m_fMaxEyeRotationV( 15 ),
@@ -58,10 +60,10 @@ m_bFirstUpdate(true)
 		m_mAnimationSpeedByType[ (TAnimation)i ] = s_mOrgAnimationSpeedByType[ (TAnimation)i ];
 
 	m_oBody.m_fWeight = 1.f;
-	int nDotPos = (int)sFileName.find( "." );
-	m_sFileNameWithoutExt = sFileName.substr( 0, nDotPos );
-	string sMask = m_sFileNameWithoutExt + "*" + ".bke";
+	string sMask = "Animations/*.bke";
 	WIN32_FIND_DATAA oData;
+
+	IFileSystem* pFileSystem = static_cast<IFileSystem*>(m_oInterface.GetPlugin("FileSystem"));
 	HANDLE hFirst = pFileSystem->FindFirstFile_EE( sMask, oData );
 	
 	if( hFirst != INVALID_HANDLE_VALUE )
@@ -72,7 +74,7 @@ m_bFirstUpdate(true)
 			string sFileNameLow = oData.cFileName;
 			transform( sFileNameFound.begin(), sFileNameFound.end(), sFileNameLow.begin(), tolower );
 			AddAnimation( sFileNameLow );
-			string sAnimationType = sFileNameLow.substr( m_sFileNameWithoutExt.size() + 1, sFileNameLow.size() - m_sFileNameWithoutExt.size() - 5 );
+			string sAnimationType = sFileNameLow.substr(0, sFileNameLow.size() - 4 );
 			m_mAnimations[ s_mAnimationStringToType[ sAnimationType ] ] = m_mAnimation[ sFileNameLow ] ;
 		}
 		while( FindNextFileA( hFirst, &oData ) );
@@ -87,10 +89,10 @@ m_bFirstUpdate(true)
 }
 
 
-void CMobileEntity::OnCollision(CEntity* pThis, vector<CEntity*> entities)
+void CMobileEntity::OnCollision(CEntity* pThis, vector<INode*> entities)
 {
 	for (int i = 0; i < entities.size(); i++) {
-		CEntity* pEntity = entities[i];
+		CEntity* pEntity = dynamic_cast<CEntity*>(entities[i]);
 		IMesh* pMesh = static_cast<IMesh*>(pThis->GetRessource());
 		ICollisionMesh* pCollisionMesh = pEntity ? pEntity->GetCollisionMesh() : NULL;
 		if (pCollisionMesh)
@@ -160,7 +162,7 @@ void CMobileEntity::UpdateCollision()
 	CMatrix oLocalMatrix = m_oLocalMatrix;
 	oLocalMatrix.m_13 -= h / 2.f - m_fMaxStepHeight;
 
-	vector<CEntity*> entities;
+	vector<INode*> entities;
 	if (!m_bFirstUpdate)
 		GetEntitiesCollision(entities);
 	else
@@ -178,7 +180,7 @@ void CMobileEntity::UpdateCollision()
 	bool bCollision = false;
 	float fMaxHeight = -999999.f;
 	for (int i = 0; i < entities.size(); i++) {
-		CEntity* pEntity = entities[i];
+		INode* pEntity = entities[i];
 		pEntity->GetBoundingGeometry()->SetTM(pEntity->GetLocalMatrix());
 		IGeometry* firstBox = GetBoundingGeometry()->Duplicate();
 		firstBox->SetTM(backupLocal);
@@ -204,8 +206,10 @@ void CMobileEntity::UpdateCollision()
 		}
 	}
 	// Ground collision
-	const float margin = 7.f;
-	float fGroundHeight = static_cast<CEntity*>(m_pParent)->GetGroundHeight(localPos.m_x, localPos.m_z) + margin;
+	const float margin = 10.f;
+	CVector nextPosition =  m_oLocalMatrix * CVector(0, 0, 100);
+	float fGroundHeight = m_pParent->GetGroundHeight(localPos.m_x, localPos.m_z) + margin;
+	float fGroundHeightNext = m_pParent->GetGroundHeight(nextPosition.m_x, nextPosition.m_z) + margin;
 	float fEntityY = last.m_y - h / 2.f;
 	if (fEntityY <= fGroundHeight + CBody::GetEpsilonError()) {
 		m_oBody.m_oSpeed.m_x = 0;
@@ -217,9 +221,9 @@ void CMobileEntity::UpdateCollision()
 	SetLocalPosition(last);
 
 	// Still into parent ?
-	CEntity* pParentEntity = static_cast<CEntity*>(m_pParent);
-	if (!TestEntityCollision(pParentEntity)) {
-		CEntity* pEntity = static_cast<CEntity*>(m_pParent->GetParent());
+	//CEntity* pParentEntity = static_cast<CEntity*>(m_pParent);
+	if (!TestCollision(m_pParent)) {
+		CEntity* pEntity = dynamic_cast<CEntity*>(m_pParent->GetParent());
 		if (pEntity)
 			LinkAndUpdateMatrices(pEntity);
 	}
@@ -242,7 +246,7 @@ void CMobileEntity::WearArmor(string armorName)
 	string arrayBone[count] = { "Cervicales", "Bassin", "TibiasD", "TibiasG", "AvantBrasD", "AvantBrasG", "EpauleD", "EpauleG" };
 
 	for (int i = 0; i < count; i++) {
-		CEntity* pArmorPiece = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity(path + arrayPiece[i] + ".bme", "", m_oRenderer));
+		CEntity* pArmorPiece = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity(path + arrayPiece[i] + ".bme", ""));
 		IBone* pBone = dynamic_cast<IBone*>(m_pSkeletonRoot->GetChildBoneByName(arrayBone[i]));
 		if (pBone)
 			LinkEntityToBone(pArmorPiece, pBone, ePreserveChildRelativeTM);
@@ -259,7 +263,7 @@ void CMobileEntity::RunAction( string sAction, bool bLoop )
 void CMobileEntity::SetPredefinedAnimation( string s, bool bLoop )
 {
 	IMesh* pMesh = static_cast< IMesh* >( m_pRessource );
-	string sAnimationName = m_sFileNameWithoutExt + "_" + s + ".bke";
+	string sAnimationName = s + ".bke";
 	string sAnimationNameLow = sAnimationName;
 	transform( sAnimationName.begin(), sAnimationName.end(), sAnimationNameLow.begin(), tolower );
 	SetCurrentAnimation( sAnimationNameLow );

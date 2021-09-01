@@ -20,16 +20,17 @@ class CLoaderManager : public ILoaderManager
 
 public:
 
-	CLoaderManager( const Desc& oDesc );
+	CLoaderManager(EEInterface& oInterface);
 	virtual ~CLoaderManager();
 	void			LoadTexture( string sFileName, ILoader::CTextureInfos& ti );
 	void			Load( string sFileName, ILoader::IRessourceInfos& ri );
 	void			ExportAHMO( const std::string& sFileName, CChunk& chunk);
-	void			Export( string sFileName, const ILoader::IRessourceInfos& ri );
+	void			Export( string sFileName, ILoader::IRessourceInfos& ri );
 	ILoader*		GetLoader( std::string sExtension );
 	void			CreateBMPFromData( const vector< unsigned char >& vData, int nWidth, int nHeight, int nBitPerPixel, string sFileName );
+	string			GetName() override;
 };
 
-extern "C" _declspec(dllexport) ILoaderManager* CreateLoaderManager( const ILoaderManager::Desc& oDesc );
+extern "C" _declspec(dllexport) ILoaderManager* CreateLoaderManager(EEInterface& oInterface);
 
 #endif //LOADERMANAGER_H

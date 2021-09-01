@@ -93,16 +93,16 @@ private:
 class CPathFinder : public IPathFinder
 {
 public:
-	CPathFinder(const Desc& oDesc);
+	CPathFinder(EEInterface& oInterface);
 	IGrid* CreateGrid(int rowCount, int columnCount);
 	void FindPath(IGrid* grid);
-
+	string GetName() override;
 
 private:
 
 };
 
 
-extern "C" _declspec(dllexport) CPathFinder* CreatePathFinder(const CPathFinder::Desc& oDesc);
+extern "C" _declspec(dllexport) CPathFinder* CreatePathFinder(EEInterface& oInterface);
 
 #endif // PATHFINDER_H

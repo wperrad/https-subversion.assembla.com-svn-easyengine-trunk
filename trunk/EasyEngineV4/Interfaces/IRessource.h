@@ -13,13 +13,11 @@ class IRenderer;
 class IShaderManager;
 class CMatrix;
 class IDrawTool;
-class CNode;
 class IFileSystem;
 class ILoaderManager;
 class CQuaternion;
 class CVector;
 class IShader;
-class ISystemsManager;
 class IBone;
 class IBox;
 struct CKey;
@@ -76,6 +74,8 @@ public:
 	ITexture( const IRessource::Desc& oDesc ) : IRessource( oDesc ){}
 	virtual void			GetDimension( int& nWidth, int& nHeight ) = 0;
 	virtual unsigned int	GetFrameBufferObjectId() = 0;
+	virtual void			SetUnitTexture(int nUnitTexture) = 0;
+	virtual void			SetUnitName(string sUnitName) = 0;
 };
 
 
@@ -113,6 +113,17 @@ public:
 	virtual void		GetBoneKeysMap( map< int, vector< CKey > >& mBoneKeys ) = 0;
 };
 
+class IMaterial : public IRessource
+{
+public:
+	IMaterial(const Desc& oDesc) : IRessource(oDesc) {}
+	virtual void SetAmbient(float r, float g, float b, float a) = 0;
+	virtual void SetDiffuse(float r, float g, float b, float a) = 0;
+	virtual void SetSpecular(float r, float g, float b, float a) = 0;
+	virtual void SetShininess(float shininess) = 0;
+	virtual void SetAdditionalColor(float r, float g, float b, float a) = 0;
+};
+
 class IMesh : public IRessource
 {
 public:
@@ -131,6 +142,9 @@ public:
 	virtual void			Colorize(float r, float g, float b, float a) = 0;
 	virtual ITexture*		GetTexture(int nMaterialIndex) = 0;
 	virtual void			SetTexture(ITexture* pTexture) = 0;	
+	virtual int				GetMaterialCount() = 0;
+	virtual IMaterial*		GetMaterial(int index) = 0;
+	virtual void			SetDrawStyle(IRenderer::TDrawStyle style) = 0;
 };
 
 class IAnimatableMesh : public IRessource
@@ -157,29 +171,30 @@ public:
 class IRessourceManager : public CPlugin
 {
 protected:
-	IRessourceManager( const Desc& oDesc ) : CPlugin( oDesc.m_pParent, oDesc.m_sName ){}
+	IRessourceManager() : CPlugin( nullptr, ""){}
 
 public:
 	struct Desc : public CPlugin::Desc
 	{
 		IFileSystem&		m_oFileSystem;
 		ILoaderManager&		m_oLoaderManager;
-		ISystemsManager&	m_oSystemManager;
 		IRenderer&			m_oRenderer;
-		Desc( IRenderer& oRenderer, IFileSystem& oFileSystem, ILoaderManager& oLoaderManager, ISystemsManager&	oSystemManager ):
+		EEInterface&		m_oEngineInterface;
+		Desc( IRenderer& oRenderer, IFileSystem& oFileSystem, ILoaderManager& oLoaderManager, EEInterface& oEngineInterface ):
 			CPlugin::Desc( NULL, "" ),
 			m_oFileSystem( oFileSystem ),
 			m_oLoaderManager( oLoaderManager ),
-			m_oSystemManager( oSystemManager),
-			m_oRenderer(oRenderer) {}
+			m_oRenderer(oRenderer),
+			m_oEngineInterface(oEngineInterface) {}
 	};
 
 	virtual IRessource*			GetRessource( const std::string& sRessourceFileName, bool bDuplicate = false ) = 0;
 	virtual IRessource*			CreateMaterial( ILoader::CMaterialInfos& mi, ITexture* pAlternative = NULL ) = 0;
 	virtual IAnimatableMesh*	CreateMesh( ILoader::CAnimatableMeshData& mi, IRessource* pMaterial ) = 0;
+	virtual IMesh*				CreatePlane(int slices, int size, string diffuseTexture = "NONE") = 0;
+	virtual IMesh*				CreatePlane2(int slices, int size, float height, string heightTexture, string diffuseTexture) = 0;
 	virtual int					GetLightCount() = 0;
 	virtual void				SetDrawTool( IDrawTool* pDrawTool ) = 0;
-	virtual ITexture*			CreateTexture2D(IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat ) = 0;
 	virtual IRessource*			CreateLight( CVector Color, IRessource::TLight type, float fIntensity) = 0;
 	virtual void				SetLightIntensity( IRessource* pLight, float fIntensity ) = 0;
 	virtual float				GetLightIntensity( IRessource* pRessource ) = 0;
@@ -191,6 +206,8 @@ public:
 	virtual void				PopErrorMessage( string& sMessage ) = 0;
 	virtual void				DestroyAllRessources() = 0;
 	virtual ITexture*			CreateRenderTexture(int width, int height, string sShaderName) = 0;
+	virtual ITexture*			CreateTexture2D(IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat) = 0;
+	virtual ITexture*			CreateTexture2D(string sFileName, bool bGenerateMipmaps) = 0;
 };
 
 #endif // IRESSOURCE_H

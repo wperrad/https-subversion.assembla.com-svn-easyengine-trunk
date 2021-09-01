@@ -3,11 +3,5 @@
 class CTestEntity : public CEntity
 {
 public:
-	CTestEntity(
-		string sFileName, 
-		IRessourceManager& oRessourceManager, 
-		IRenderer& oRenderer, 
-		IEntityManager* pEntityManager,
-		IGeometryManager& oGeometryManager, 
-		ICollisionManager& oCollisionManager);
+	CTestEntity(EEInterface& oInterface, string sFileName);
 };

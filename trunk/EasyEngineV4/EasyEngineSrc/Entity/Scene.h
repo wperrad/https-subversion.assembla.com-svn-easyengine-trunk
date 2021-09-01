@@ -47,7 +47,7 @@ public:
 		eMapMode
 	};
 
-	CScene( const Desc& desc );
+	CScene(EEInterface& oInterface, string ressourceFileName, string diffuseFileName);
 	~CScene();
 	
 	IEntity*							Merge( string sRessourceName, string sEntityType, float x, float y, float z );
@@ -57,25 +57,30 @@ public:
 	void								Export( string sFileName );
 	void								Clear();
 	float								GetGroundHeight( float x, float z );
-	void								SetRessource( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, bool bDuplicate = false );
+	void								SetRessource( string sFileName, bool bDuplicate = false );
 	IGrid*								GetCollisionGrid();
 	void								CreateCollisionMap();
 	void								RenderScene();
-	void								RenderMap();
-	ITexture*							CreateMapTexture();
-	ITexture*							GetMapTexture();
-	void								DisplayMap(bool display);
+	void								RenderMinimap();
+	ITexture*							CreateMinimapTexture();
+	ITexture*							GetMinimapTexture();
+	void								DisplayMinimap(bool display);
 	void								SetGroundMargin(float margin);
 	float								GetGroundMargin();
 	void								GetOriginalSceneFileName(string& sFileName);
 	void								SetOriginalSceneFileName(string sFileName);
+	void								SetDiffuseFileName(string diffuseFileName) override;
+	int									GetCurrentHeightMapIndex() override;
+	void								SetLength(int length) override;
+	void								SetHeight(float height) override;
+	void								SetHMFile(string sHMFile) override;
 
 
 private:
-	ICamera*							m_pCamera;
 	ICameraManager&						m_oCameraManager;
 	ILoaderManager&						m_oLoaderManager;
 	ICollisionManager&					m_oCollisionManager;
+	IRessourceManager&					m_oRessourceManager;
 	IPathFinder&						m_oPathFinder;
 	int									m_nHeightMapID;
 	string								m_sCollisionFileName;
@@ -86,19 +91,28 @@ private:
 	ICamera*							m_pMapCamera;
 	const string						m_sMapFirstPassShaderName;
 	const string						m_sMapSecondPassShaderName;
-	ITexture*							m_pMapTexture;
+	ITexture*							m_pMinimapTexture;
 	vector<IEntity*>					m_vMapEntities;
 	CEntity*							m_pPlayer;
 	CEntity*							m_pPlayerMapSphere;
-	bool								m_bDisplayMap;
+	bool								m_bDisplayMinimap;
 	float								m_fGroundMargin;
 	map<string, IEntity::TAnimation>	m_StringToAnimation;
 	string								m_sOriginalSceneFileName;
+	ITexture*							m_pHeightMaptexture;
+	IShader*							m_pGroundShader;
+	//float								m_fGroundBboxHeight;
+	bool								m_bUseDisplacementMap;
+	float								m_fDisplacementRatioHeightSize;
+	float								m_fTiling;
+	string								m_sDiffuseFileName;
+	int									m_nMapLength;
+	float								m_fMapHeight;
 
 	void								GetInfos(ILoader::CSceneInfos& si);
 	void								Load(const ILoader::CSceneInfos& si);
 	void								LoadSceneObject(const ILoader::CSceneObjInfos* pSceneObjInfos, IEntity* pParent);
-	void								GetSkeletonEntities(CNode* pRoot, vector< IEntity* >& vEntity, string sFileFilter);
+	void								GetSkeletonEntities(CBone* pRoot, vector< IEntity* >& vEntity, string sFileFilter);
 	ILoader::CSceneObjInfos*			GetEntityInfos(IEntity* pEntity);
 	void								CreateCollisionGrid();
 	void								CreateHeightMap();

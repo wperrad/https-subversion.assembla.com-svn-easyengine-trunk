@@ -12,9 +12,7 @@ SetEntityPos(light1, 0, 20000, 50000);
 light2=AddLightw("omni", 75000);
 SetEntityPos(light2, 0, 75000, -260000);
 
-
 perso=CreatePlayer("testExport15");
-
 SetEntityName(perso, "perso");
 SetCurrentPerso(perso);
 Stand(perso);

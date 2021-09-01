@@ -140,12 +140,14 @@ void CBMPLoader::FlipImage( CTextureInfos& ti )
 }
 
 
-void CBMPLoader::Export( string sFileName, const ILoader::IRessourceInfos& ri )
+void CBMPLoader::Export( string sFileName, ILoader::IRessourceInfos& ri )
 {
-	const ILoader::CTextureInfos* pInfos = static_cast< const ILoader::CTextureInfos* >( &ri );
+	ILoader::CTextureInfos* pInfos = static_cast< ILoader::CTextureInfos* >( &ri );
+	if (pInfos->m_bFlip)
+		FlipImage(*pInfos);
+
 	int nWidth = pInfos->m_nWidth;
 	int nHeight = pInfos->m_nHeight;
-
 	const vector< unsigned char >& vData = pInfos->m_vTexels;
 	int nBitPerPixel = 0;
 	switch( pInfos->m_ePixelFormat )
@@ -176,6 +178,10 @@ void CBMPLoader::CreateBMPFromData( const vector< unsigned char >& vData, int nW
 
 	// file header
 	FILE* pFile = fopen( sFileName.c_str(), "wb" );
+	if (!pFile) {
+		CFileException e(sFileName);
+		throw e;
+	}
 	char* sMagic = "BM";
 	fwrite( sMagic, 1, 2, pFile );	
 	int nSize = 0;

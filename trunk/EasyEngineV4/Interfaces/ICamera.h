@@ -3,7 +3,6 @@
 
 #define ENTITYCAMERA
 
-#include "../Utils2/Node.h"
 
 #ifdef ENTITYCAMERA
 #include "IEntity.h"
@@ -13,7 +12,7 @@
 
 
 
-class ICamera : public IEntity
+class ICamera : virtual public IEntity
 {
 
 public:

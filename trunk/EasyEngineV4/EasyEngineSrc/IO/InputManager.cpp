@@ -86,6 +86,11 @@ void CInputManager::OnUpdate()
 	}
 }
 
+string CInputManager::GetName()
+{
+	return "InputManager";
+}
+
 void CInputManager::SetEditionMode( bool bEdition )
 {
 	m_bEditionMode = bEdition;

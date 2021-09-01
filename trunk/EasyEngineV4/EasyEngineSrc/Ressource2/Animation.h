@@ -7,11 +7,10 @@
 
 
 #include "IRessource.h"
+#include "IEntity.h"
 #include "Math/Matrix.h"
 #include "Math/Quaternion.h"
-#include "ISystems.h"
 
-class ISystemsManager;
 
 using namespace std;
 
@@ -46,7 +45,7 @@ class CAnimation : public IAnimation
 public:
 	CAnimation( const IRessource::Desc& oDesc );
 	// TODO : Remplacer AddBone et AddKey par une initialisation dans la desc
-	void			AddBone( int nBoneID, const ISystemsManager& oSystemManager  );
+	void			AddBone( int nBoneID);
 	void			AddKey( int nBoneID, int nTimeValue, CKey::TKey eKeyType, const CMatrix& oLocalTM, const CMatrix& oWorldTM, const CQuaternion& q  );
 	void			SetSkeleton( IBone* pBone );
 

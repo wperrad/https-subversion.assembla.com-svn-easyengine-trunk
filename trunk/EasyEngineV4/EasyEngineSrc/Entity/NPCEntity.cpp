@@ -1,3 +1,4 @@
+#include "Interface.h"
 #include "NPCEntity.h"
 #include "IGeometry.h"
 #include "LineEntity.h"
@@ -7,11 +8,9 @@
 #include "Scene.h"
 #include "EntityManager.h"
 
-CNPCEntity::CNPCEntity( string sFileName, IRessourceManager& oRessourceManager, IRenderer& oRenderer, 
-	IEntityManager* pEntityManager, IFileSystem* pFileSystem, ICollisionManager& oCollisionManager, 
-	IGeometryManager& oGeometryManager, IPathFinder& oPathFinder):
-CMobileEntity( sFileName, oRessourceManager, oRenderer, pEntityManager, pFileSystem, oCollisionManager, oGeometryManager ),
-m_oPathFinder(oPathFinder)
+CNPCEntity::CNPCEntity(EEInterface& oInterface, string sFileName):
+CMobileEntity(oInterface, sFileName),
+m_oPathFinder(static_cast<IPathFinder&>(*oInterface.GetPlugin("PathFinder")))
 {
 	m_sTypeName = "NPC";
 	if( !m_pfnCollisionCallback )
@@ -136,7 +135,7 @@ void CNPCEntity::Turn( float fAngle )
 	Yaw( fAngle );
 }
 
-void CNPCEntity::OnCollision( CEntity* pThis, vector<CEntity*> entities)
+void CNPCEntity::OnCollision( CEntity* pThis, vector<INode*> entities)
 {
 	CNPCEntity* pNPC = static_cast< CNPCEntity* >(pThis);
 	IAEntity::OnCollision( pNPC );

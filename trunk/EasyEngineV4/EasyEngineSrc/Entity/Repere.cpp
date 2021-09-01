@@ -11,12 +11,8 @@ CShape( oRenderer )
 void CRepere::Update()
 {
 	CShape::Update();
-	if (!m_bHidden) {
-		CMatrix camInv;
-		m_oRenderer.GetInvCameraMatrix(camInv);
-		m_oRenderer.SetModelViewMatrix(camInv);
+	if (!m_bHidden)
 		m_oRenderer.DrawBase(m_oBase, 1000);
-	}
 }
 
 void CRepere::SetEntityName(string sName) 

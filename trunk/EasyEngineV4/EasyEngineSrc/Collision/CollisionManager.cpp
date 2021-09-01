@@ -7,31 +7,32 @@
 #include "Utils2/RenderUtils.h"
 #include "IEntity.h"
 #include "Interface.h"
+#include "IFileSystem.h"
 #include <set>
 
 IMesh* CCollisionManager::s_pMesh = NULL;
 
 CCollisionManager* g_pCurrentCollisionManager = NULL;
 
-CCollisionManager::CCollisionManager( const ICollisionManager::Desc& oDesc ):
-ICollisionManager( oDesc ),
-m_oRenderer( oDesc.m_oRenderer ),
-m_oLoaderManager( oDesc.m_oLoaderManager ),
+CCollisionManager::CCollisionManager(EEInterface& oInterface) :
+m_oInterface(oInterface),
+m_oRenderer(static_cast<IRenderer&>(*m_oInterface.GetPlugin("Renderer"))),
+m_oLoaderManager(static_cast<ILoaderManager&>(*m_oInterface.GetPlugin("LoaderManager"))),
+m_pFileSystem(static_cast<IFileSystem*>(m_oInterface.GetPlugin("FileSystem"))),
+m_oGeometryManager(static_cast<IGeometryManager&>(*m_oInterface.GetPlugin("GeometryManager"))),
 m_nHeightMapPrecision( 1 ),
-m_pFileSystem( oDesc.m_pFileSystem ),
-m_oGeometryManager( oDesc.m_oGeometryManager ),
 m_pGround(NULL),
 m_sCustomName("a"),
 m_fCustomValue(0.f),
 m_fGroundWidth(0),
 m_fGroundHeight(0),
-m_fGridCellSize(500.f),
+m_fGridCellSize(1000.f),
 m_fGridHeight(800.f),
 m_pCollisionGrid(NULL),
 m_pScene(NULL),
 m_fScreenRatio(m_fScreenRatio),
 m_pEntityManager(NULL),
-m_bEnableHMHack(true),
+m_bEnableHMHack(false),
 m_bEnableHMHack2(false)
 {
 	g_pCurrentCollisionManager = this;
@@ -160,7 +161,7 @@ void CCollisionManager::ComputeGroundMapDimensions(IMesh* pMesh, float& width, f
 		height = pBox->GetDimension().m_z * (float)m_nScreenWidth / pBox->GetDimension().m_x;
 		groundToScreenScaleFactor = pBox->GetDimension().m_x / 2.f;
 	}
-	width = ((int)width / 4) * 4;
+	width = (float)(((int)width / 4) * 4);
 	height = ((int)height / 4) * 4;
 }
 
@@ -262,7 +263,11 @@ void CCollisionManager::CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos&
 	if (!m_pGround)
 		m_pGround = pGround;
  	IShader* pOrgShader = pGround->GetShader();
-	IShader* pHMShader = m_oRenderer.GetShader("hm");
+	IShader* pHMShader = NULL;
+	if(!m_bEnableHMHack && !m_bEnableHMHack2)
+		pHMShader = m_oRenderer.GetShader("hm");
+	else
+		pHMShader = m_oRenderer.GetShader("hmHack");
 	pHMShader->Enable(true);
 	pGround->SetShader(pHMShader);
 
@@ -323,7 +328,7 @@ void CCollisionManager::CreateHeightMap(string sFileName)
 	IEntity* pEntity = NULL;
 	try
 	{
-		pEntity = m_pEntityManager->CreateEntity(sFileName, "", m_oRenderer);
+		pEntity = m_pEntityManager->CreateEntity(sFileName, "");
 	}
 	catch (CEException& e)
 	{
@@ -472,13 +477,19 @@ void CCollisionManager::OnRenderHeightMap( IRenderer* pRenderer )
 	pRenderer->SetProjectionMatrix( oBakProj );
 }
 
-int CCollisionManager::LoadHeightMap( string sFileName, IMesh* pMesh  )
+int CCollisionManager::LoadHeightMap( string sFileName, IBox* pBox)
 {
-	IBox* pBox = pMesh->GetBBox();
-	CHeightMap hm( sFileName, m_oLoaderManager, *pBox, m_oGeometryManager );
-	hm.SetPrecision( m_nHeightMapPrecision );
-	int nID = (int)m_mHeigtMap.size();
-	m_mHeigtMap[ nID ] = hm;
+	int nID = 0;
+	map<string, int>::iterator it = m_mMapFileToId.find(sFileName);
+	if (it == m_mMapFileToId.end()) {
+		CHeightMap hm(m_oInterface, sFileName, *pBox);
+		hm.SetPrecision(m_nHeightMapPrecision);
+		nID = (int)m_mHeigtMap.size();
+		m_mHeigtMap[nID] = hm;
+		m_mMapFileToId[sFileName] = nID;
+	}
+	else
+		nID = it->second;
 	return nID;
 }
 
@@ -705,6 +716,40 @@ bool CCollisionManager::IsSegmentRectIntersect( const CVector2D& S1, const CVect
 	return true;
 }
 
+void CCollisionManager::SetGroundBoxHeight(int nMapId, float height)
+{
+	m_mHeigtMap[nMapId].GetModelBBox()->SetY(height);
+}
+
+void CCollisionManager::SetGroundBoxMinPoint(int nMapId, float min)
+{
+	m_mHeigtMap[nMapId].GetModelBBox()->SetY(min);
+}
+
+IBox* CCollisionManager::GetGroundBox(int nMapId)
+{
+	return m_mHeigtMap[nMapId].GetModelBBox();
+}
+
+string CCollisionManager::GetName()
+{
+	return "CollisionManager";
+}
+
+IHeightMap*	CCollisionManager::GetHeightMap(int index)
+{
+	map< int, CHeightMap>::iterator it = m_mHeigtMap.find(index);
+	if(it != m_mHeigtMap.end())
+		return &m_mHeigtMap[index];
+	return nullptr;
+}
+
+void CCollisionManager::ClearHeightMaps()
+{
+	m_mHeigtMap.clear();
+	m_mMapFileToId.clear();
+}
+
 void CCollisionManager::SendCustomUniformValue(string name, float value)
 {
 	m_sCustomName = name;
@@ -837,13 +882,13 @@ void CCollisionManager::ConvertLinearToCoord(int pixelNumber, int& x, int& y)
 
 void CCollisionManager::EnableHMHack(bool enable)
 {
-	m_bEnableHMHack2 = !enable;
+	//m_bEnableHMHack2 = !enable;
 	m_bEnableHMHack = enable;
 }
 
 void CCollisionManager::EnableHMHack2(bool enable)
 {
-	m_bEnableHMHack = !enable;
+	//m_bEnableHMHack = !enable;
 	m_bEnableHMHack2 = enable;
 }
 
@@ -891,14 +936,11 @@ bool CCollisionManager::TestCellObstacle(int row, int column)
 float CCollisionManager::WorldToPixel(float worldLenght)
 {
 	float ret;
-	int nWidth, nHeight;
-	m_oRenderer.GetResolution(nWidth, nHeight);
-
 	IBox* pBox = m_pGround->GetBBox();
 	if (pBox->GetDimension().m_x <= pBox->GetDimension().m_z * m_fScreenRatio)
-		ret = (worldLenght * (float)nHeight) / pBox->GetDimension().m_z;
+		ret = (worldLenght * (float)m_oCollisionMap.m_nHeight) / pBox->GetDimension().m_z;
 	else
-		ret = worldLenght * (float)nWidth / pBox->GetDimension().m_x;
+		ret = worldLenght * (float)m_oCollisionMap.m_nWidth / pBox->GetDimension().m_x;
 	return ret;
 }
 
@@ -960,7 +1002,7 @@ void CCollisionManager::SetEntityManager(IEntityManager* pEntityManager)
 	m_pEntityManager = pEntityManager;
 }
 
-extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager( const CCollisionManager::Desc& oDesc )
+extern "C" _declspec(dllexport) CCollisionManager* CreateCollisionManager(EEInterface& oInterface)
 {
-	return new CCollisionManager( oDesc );
+	return new CCollisionManager(oInterface);
 }

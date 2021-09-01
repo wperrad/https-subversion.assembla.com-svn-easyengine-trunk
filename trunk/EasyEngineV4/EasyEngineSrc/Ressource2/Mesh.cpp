@@ -5,7 +5,6 @@
 #include "IRenderer.h"
 #include "Texture.h"
 #include "Material.h"
-#include "../Utils2/Node.h"
 #include "Exception.h"
 #include "IDrawTool.h"
 #include "RessourceManager.h"
@@ -54,7 +53,8 @@ m_oOrgMaxPosition( oDesc.m_oOrgMaxPosition ),
 m_eRenderType( IRenderer::eFill ),
 m_mAnimationKeyBox( oDesc.m_mAnimationKeyBox ),
 m_bDrawAnimationBoundingBox( false ),
-m_pCurrentAnimationBoundingBox( NULL )
+m_pCurrentAnimationBoundingBox( NULL ),
+m_eDrawStyle(IRenderer::T_TRIANGLES)
 {
 	m_pShader->Enable( true );
 	
@@ -147,6 +147,11 @@ void CMesh::CreateNonIndexedMaterialVertexArray( const std::vector< unsigned sho
 			vOut.push_back( (float)vMtlFace[ iFace ] + 1 );
 }
 
+void CMesh::SetDrawStyle(IRenderer::TDrawStyle style)
+{
+	m_eDrawStyle = style;
+}
+
 void CMesh::Update()
 {
 	m_pShader->Enable( true );
@@ -179,7 +184,7 @@ void CMesh::Update()
 	}
 
 	if ( m_bIndexedGeometry )
-		GetRenderer().DrawIndexedGeometry( m_pBuffer, IRenderer::T_TRIANGLES );
+		GetRenderer().DrawIndexedGeometry( m_pBuffer, m_eDrawStyle);
 	else
 	{
 		if ( m_mMaterials.size() > 1 )
@@ -234,7 +239,7 @@ void CMesh::Update()
 	GetRenderer().SetRenderType( IRenderer::eFill );
 }
 
-void CMesh::DisplaySkeletonInfo( CNode* pRoot, bool bRecurse )
+void CMesh::DisplaySkeletonInfo( INode* pRoot, bool bRecurse )
 {
 	CMatrix m;
 	pRoot->GetWorldMatrix( m );
@@ -312,9 +317,8 @@ void CMesh::Colorize(float r, float g, float b, float a)
 	if (m_mMaterials.size() == 1)
 	{
 		map< int, CMaterial* >::iterator itMat = m_mMaterials.begin();
-		itMat->second->SetAdditionalColor(r, g, b, a);
+		itMat->second->SetAdditionalColor(r, g, b, 1.f);
 	}
-	m_bUseAdditionalColor = true;
 }
 
 ITexture* CMesh::GetTexture(int nMaterialIndex)
@@ -325,4 +329,18 @@ ITexture* CMesh::GetTexture(int nMaterialIndex)
 void CMesh::SetTexture(ITexture* pTexture)
 {
 	m_mMaterials[0]->SetTexture(pTexture);
+}
+
+int CMesh::GetMaterialCount()
+{
+	return m_mMaterials.size();
+}
+
+IMaterial* CMesh::GetMaterial(int index)
+{
+	std::map< int, CMaterial* >::iterator itMat = m_mMaterials.find(index);
+	if(itMat != m_mMaterials.end()){
+		return itMat->second;
+	}
+	return nullptr;
 }

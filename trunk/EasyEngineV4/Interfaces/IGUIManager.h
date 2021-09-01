@@ -26,7 +26,7 @@ public:
 class IGUIManager : public CPlugin
 {
 protected:
-	IGUIManager( const Desc& oDesc ) : CPlugin( oDesc.m_pParent,  oDesc.m_sName ){}
+	IGUIManager() : CPlugin(nullptr,  ""){}
 
 public:
 	enum ENUM_EVENT

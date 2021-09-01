@@ -85,12 +85,12 @@ void CollisionModelExporter::GetPrimitives(Interface* pInterface, vector<IGeomet
 		wstring wTest = pNode->GetName();
 		Object* pObject = pNode->EvalWorldState(0).obj;
 		IGeometry* pGeometry = NULL;
-		if (IsBone(pObject))
+		/*if (IsBone(pObject))
 		{
 			vector<IGeometry*> primitives;
 			GetPrimitives(pInterface, primitives);
 			continue;
-		}
+		}*/
 		if (pObject->CanConvertToType(Class_ID(CYLINDER_CLASS_ID, 0)) == TRUE)
 		{
 			pGeometry = m_pGeometryManager->CreateCylinder();

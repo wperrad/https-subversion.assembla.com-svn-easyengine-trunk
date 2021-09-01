@@ -1,12 +1,16 @@
 // System
 #include <windows.h>
 
+// Utils
+#include "../Utils2/StringUtils.h"
+#include "../Utils2/Rectangle.h"
 
 // Engine
+#include "Interface.h"
 #include "xmlparser.h"
-#include "../Utils2/StringUtils.h"
 #include "Exception.h"
-#include "../Utils2/Rectangle.h"
+#include "IFileSystem.h"
+
 
 using namespace std;
 
@@ -43,9 +47,9 @@ void CXMLInfo::GetName( string& sName )
 //
 //---------------------------------------------------------------------------------
 
-CXMLParser::CXMLParser( const Desc& oDesc ):
-IXMLParser( oDesc ),
-m_oFileSystem( oDesc.m_oFileSystem ),
+CXMLParser::CXMLParser(EEInterface& oInterface) :
+IXMLParser(),
+m_oFileSystem(*static_cast<IFileSystem*>(oInterface.GetPlugin("FileSystem"))),
 m_bIsParsing( false )
 {
 }
@@ -170,7 +174,12 @@ void CXMLParser::ParseFile( const string& sFileName, vector< IXMLInfo* >& vInfos
 	CloseFile();	
 }
 
-extern "C" _declspec(dllexport) IXMLParser* CreateXMLParser( const IXMLParser::Desc& oDesc )
+string CXMLParser::GetName()
 {
-	return new CXMLParser( oDesc );
+	return "XMLParser";
+}
+
+extern "C" _declspec(dllexport) IXMLParser* CreateXMLParser(EEInterface& oInterface)
+{
+	return new CXMLParser(oInterface);
 }

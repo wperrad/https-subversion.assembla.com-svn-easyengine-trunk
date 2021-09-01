@@ -48,7 +48,8 @@ CBinGenerator::CBinGenerator()
 	s_tabInstr[ CAsmGenerator::eInt ][ eImm ][ 0 ] = iInstrNum++;
 	s_tabInstr[ CAsmGenerator::eInt ][ eAddr ][ 0 ] = iInstrNum++;
 
-	s_tabInstr[ CAsmGenerator::eRet ][ 0 ][ 0 ] = iInstrNum++;	
+	s_tabInstr[ CAsmGenerator::eRet ][ 0 ][ 0 ] = iInstrNum++;
+	s_tabInstr[CAsmGenerator::eReturn][0][0] = iInstrNum++;
 
 	s_vInstrSize.push_back( -1 ); // pour démarrer à 1
 
@@ -83,7 +84,8 @@ CBinGenerator::CBinGenerator()
 	s_vInstrSize.push_back( 5 );
 	s_vInstrSize.push_back( 6 );
 
-	s_vInstrSize.push_back( 1 );
+	s_vInstrSize.push_back( 1 ); // eRet
+	s_vInstrSize.push_back( 1 ); // eReturn
 }
 
 //int	CBinGenerator::GetInstrSize( int nInstrNum )

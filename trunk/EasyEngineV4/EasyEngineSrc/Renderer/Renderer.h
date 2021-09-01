@@ -77,7 +77,7 @@ protected:
 
 	void						LoadMatrix( const CMatrix& m );
 	void						MultMatrix( const CMatrix& m );
-	virtual void				CreateOGLContext( const Desc& oDesc );
+	virtual void				CreateOGLContext();
 	void						InitOpengl();
 	void						InitGLExtensions();
 	void						LoadShaderDirectory(const std::string& sShaderDirectory);
@@ -88,7 +88,7 @@ protected:
 
 public:	
 
-								CRenderer( const Desc & desc );
+								CRenderer(EEInterface& oInterface);
 								~CRenderer();
 	void						SetRenderType( TRenderType t );
 	void						ResizeScreen( int nWidth, int nHeight );
@@ -230,9 +230,12 @@ public:
 	void						CreateFrameBufferObject(int width, int height, unsigned int& nFBOId, unsigned int& nTextureId);
 	void						SetCurrentFBO(int fbo);
 	float						GetScreenRatio();
+	void						GetGlslVersion(string& sVersion);
+	void						GetOpenglVersion(string& sVersion);
+	string						GetName() override;
 };
 
-extern "C" _declspec(dllexport) IRenderer* CreateRenderer( const IRenderer::Desc& );
+extern "C" _declspec(dllexport) IRenderer* CreateRenderer(EEInterface& oInterface );
 
 
 

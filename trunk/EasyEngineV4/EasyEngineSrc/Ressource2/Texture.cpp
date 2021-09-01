@@ -20,7 +20,8 @@ ITexture( oDesc ),
 m_nUnitTexture( oDesc.m_nUnitTexture ),
 m_nID( -1 ),
 m_pShader( oDesc.m_pShader ),
-m_nFrameBufferObjectId(oDesc.m_nFrameBufferObjectId)
+m_nFrameBufferObjectId(oDesc.m_nFrameBufferObjectId),
+m_sUnitName("baseMap")
 {
 }
 
@@ -32,6 +33,16 @@ void CTextureBase::SetShader( IShader* pShader )
 unsigned int CTextureBase::GetFrameBufferObjectId()
 {
 	return m_nFrameBufferObjectId;
+}
+
+void CTextureBase::SetUnitTexture(int nUnitTexture)
+{
+	m_nUnitTexture = nUnitTexture;
+}
+
+void CTextureBase::SetUnitName(string sUnitName)
+{
+	m_sUnitName = sUnitName;
 }
 
 CTexture1D::CDesc::CDesc( IRenderer& oRenderer, IShader* pShader, int nUnitTexture ) :
@@ -127,7 +138,7 @@ IShader* CTexture2D::GetShader() const
 void CTexture2D::Update()
 {
 	GetRenderer().BindTexture( m_nID, m_nUnitTexture, IRenderer::T_2D );
-	m_pShader->SendUniformValues( "baseMap", m_nUnitTexture );
+	m_pShader->SendUniformValues(m_sUnitName, m_nUnitTexture);
 	try
 	{
 		m_pShader->SendUniformValues( "ValueTexture0", m_nID );

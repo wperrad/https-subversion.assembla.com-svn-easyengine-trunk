@@ -22,9 +22,14 @@ struct CText
 class CHud : public IHud 
 {
 public:
-	CHud(const IHud::Desc& oDesc);
+	CHud(EEInterface& oInterface);
 	void Update();
-	void Print(string text, int x, int y);
+	int Print(string text, int x, int y) override;
+	void RemoveText(int index) override;
+	string GetName() override;
+	void Clear() override;
+	int GetLineCount() override;
+	static void WindowCallback(CPlugin* plugin, IEventDispatcher::TWindowEvent e, int, int);
 
 private:
 	IGUIManager&	m_oGUIManager;
@@ -32,4 +37,4 @@ private:
 	
 };
 
-extern "C" _declspec(dllexport) IHud* CreateHud(const IHud::Desc& oDesc);
+extern "C" _declspec(dllexport) IHud* CreateHud(EEInterface& oInterface);

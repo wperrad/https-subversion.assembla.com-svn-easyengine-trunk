@@ -14,7 +14,8 @@ m_fAngleRemaining( 0.f ),
 m_bArriveAtDestination( true ),
 m_fDestinationDeltaRadius( 100.f ),
 m_nCurrentPathPointNumber( 0 ),
-m_pCurrentEnemy(NULL)
+m_pCurrentEnemy(NULL),
+m_bFaceToTarget(false)
 {
 }
 
@@ -214,7 +215,7 @@ void IAEntity::UpdateGoto()
 
 void IAEntity::Update()
 {
-	if (GetLife() > 0) {
+	if ( (m_eFightState != eNoFight) && (GetLife() > 0) ) {
 		UpdateFaceTo();
 		UpdateGoto();
 		UpdateFightState();
