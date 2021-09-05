@@ -64,6 +64,9 @@ m_bOpenglCoord2(false)
 	EEInterface* pInterface = new EEInterface;
 	CPlugin::SetEngineInterface(pInterface);
 	IGeometryManager::Desc oGMDesc(NULL, "");
+	m_pFileSystem = static_cast< IFileSystem* > (CPlugin::Create(*pInterface, "stdplugs\\EasyEngine\\FileUtils.dll", "CreateFileSystem"));
+	m_pFileSystem->Mount("..\\data");
+	m_pFileSystem->Mount("..\\..\\EasyEngine\\data");
 	m_pGeometryManager = static_cast< IGeometryManager* >(CPlugin::Create(oGMDesc, "stdplugs\\EasyEngine\\Geometry.dll", "CreateGeometryManager"));
 	m_pLoaderManager = static_cast< ILoaderManager* >(CPlugin::Create(*pInterface, "stdplugs\\EasyEngine\\Loader.dll", "CreateLoaderManager"));
 

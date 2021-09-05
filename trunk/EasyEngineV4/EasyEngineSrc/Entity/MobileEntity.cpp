@@ -204,6 +204,9 @@ void CMobileEntity::UpdateCollision()
 				last.m_y -= m_fMaxStepHeight;
 			}
 		}
+		else {			
+			bCollision = true;
+		}
 	}
 	// Ground collision
 	const float margin = 10.f;

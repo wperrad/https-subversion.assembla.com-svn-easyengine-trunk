@@ -1202,6 +1202,20 @@ void LinkToName(IScriptState* pState)
 	CScriptFuncArgString* pIDNode2 = static_cast< CScriptFuncArgString* >(pState->GetArg(3));
 	CScriptFuncArgString* pLinkType = static_cast< CScriptFuncArgString* >(pState->GetArg(4));
 
+	IEntity::TLinkType t;
+	if(pLinkType->m_sValue == "normal")
+		t = IEntity::eNormal;
+	else if (pLinkType->m_sValue == "preserve")
+		t = IEntity::ePreserveChildRelativeTM;
+	else if (pLinkType->m_sValue == "settoparent")
+		t = IEntity::eSetChildToParentTM;
+	else {	
+		ostringstream oss;
+		oss << "Error : argument 5 \"" << pLinkType->m_sValue << "\" unexpected, you must choose \"preserve\" or \"settoparent\"";
+		m_pConsole->Println(oss.str());
+		return;		
+	}
+
 	IEntity* pEntity1 = m_pEntityManager->GetEntity(pIDEntity1->m_nValue);
 	if (pEntity1)
 	{
@@ -1225,6 +1239,12 @@ void LinkToName(IScriptState* pState)
 			INode* pNode2 = NULL;
 			if (!pIDNode2->m_sValue.empty())
 			{
+				if (!pEntity2) {
+					ostringstream oss;
+					oss << "Erreur : Entité " << pIDEntity2->m_nValue << " introuvable pour la deuxieme entité";
+					m_pConsole->Println(oss.str());
+					return;
+				}
 				IBone* pSkeletonRoot = pEntity2->GetSkeletonRoot();
 				if (pSkeletonRoot)
 				{
@@ -1245,22 +1265,32 @@ void LinkToName(IScriptState* pState)
 				pNode2 = pEntity2;
 
 			if (bEntity1 && bBone2)
-			{
-				IEntity::TLinkType t;
-				if (pLinkType->m_sValue == "preserve")
-					t = IEntity::ePreserveChildRelativeTM;
-				else if (pLinkType->m_sValue == "settoparent")
-					t = IEntity::eSetChildToParentTM;
+				pEntity2->LinkEntityToBone(pEntity1, pBone2, t);
+			else {
+				if (pNode1) {
+					if (pNode2) {
+						if (t == IEntity::eNormal)
+							pNode1->Link(pNode2);
+						else if (t == IEntity::TLinkType::eSetChildToParentTM) {
+							pNode1->Link(pNode2);
+							pEntity1->Unlink();
+							delete pEntity1;
+						}
+					}
+					else {
+						ostringstream oss;
+						oss << "Error : node \"" << pIDNode2->m_sValue << "\" not found for the second entity, please check the case (bone names are case sensitive)";
+						m_pConsole->Println(oss.str());
+						return;
+					}
+				}
 				else {
 					ostringstream oss;
-					oss << "Error : argument 5 \"" << pLinkType->m_sValue << "\" unexpected, you must choose \"preserve\" or \"settoparent\"";
+					oss << "Error : node \"" << pIDNode1->m_sValue << "\" not found for the first entity";
 					m_pConsole->Println(oss.str());
 					return;
 				}
-				pEntity2->LinkEntityToBone(pEntity1, pBone2, t);
 			}
-			else
-				pNode1->Link(pNode2);
 		}
 	}
 }
@@ -1324,8 +1354,16 @@ void LinkToId( IScriptState* pState )
 					t = IEntity::eSetChildToParentTM;
 				pEntity2->LinkEntityToBone( pEntity1, pBone2, t );
 			}
-			else
-				pNode1->Link( pNode2 );
+			else {
+				if(pNode1)
+					pNode1->Link(pNode2);
+				else {
+					ostringstream oss;
+					oss << "Erreur : il n'existe pas de node ayant l'identifiant " << pIDNode1->m_nValue << " dans la premiere entite";
+					m_pConsole->Println(oss.str());
+					return;
+				}
+			}
 		}
 	}
 }

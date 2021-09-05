@@ -1,5 +1,11 @@
 SetBkgColor(0, 100, 255);
 LoadLevel("hopital");
+SetAnimationSpeed(19, "run", 10);
+SetCameraType("free");
+npc1=CreateNPC("meshes/bodies/body01");
+Stand(npc1);
+h=LoadEntity("meshes/hairs/hairs01");
+//LinkToName(h, "DummyHairs", npc1, "BodyDummyHairs", "settoparent");
 return;
 
 //CullFace(0);

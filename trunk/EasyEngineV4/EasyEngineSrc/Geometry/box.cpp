@@ -1,6 +1,7 @@
 #include "box.h"
 #include "IRenderer.h"
 #include "Cylinder.h"
+#include "Exception.h"
 
 CBox::CBox():
 m_bInitialized( false )
@@ -525,6 +526,12 @@ IGeometry::TFace CBox::GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeom
 	if (collision)
 		R = m_oTM * RLocal;	
 	return face;
+}
+
+bool CBox::IsIncludedInto(const IGeometry& oGeometry)
+{
+	throw CMethodNotImplementedException("CBox::IsIncludedInto()");
+	return true;
 }
 
 IGeometry::TFace CBox::GetReactionYAlignedPlane(const CVector& firstPoint, const CVector& lastPoint, float planeHeight, CVector& R)

@@ -157,4 +157,9 @@ public:
 	CBadTypeException( string sMessage ) : CEException( sMessage ){}
 };
 
+class CMethodNotImplementedException : public CEException
+{
+public:
+	CMethodNotImplementedException(string message) : CEException(message) {}
+};
 #endif
