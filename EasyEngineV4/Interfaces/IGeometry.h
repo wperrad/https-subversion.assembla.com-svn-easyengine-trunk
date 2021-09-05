@@ -4,6 +4,7 @@
 #include "EEPlugin.h"
 #include <vector>
 #include "Math/Vector.h"
+#include "Exception.h"
 
 using namespace std;
 
@@ -67,6 +68,7 @@ public:
 	virtual void				Draw(IRenderer& oRenderer) const = 0;
 	virtual TFace				GetReactionYAlignedPlane(const CVector& firstPoint, const CVector& lastPoint, float planeHeight, CVector& R) = 0;
 	virtual TFace				GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeometry& lastPositionBox, CVector& R) = 0;
+	virtual bool				IsIncludedInto(const IGeometry& oGeometry) = 0;
 };
 
 class ILine
@@ -80,6 +82,7 @@ class IQuad : public IGeometry
 public:
 	virtual void				GetDimension(float& lenght, float& width) = 0;
 	virtual void				GetLineIntersection(const CVector& A, const CVector& B, CVector& I) = 0;
+	virtual bool				IsIncludedInto(const IGeometry& oGeometry) override { return false; }
 };
 
 class IBox : public IGeometry
@@ -108,6 +111,7 @@ public:
 	virtual void				SetY(float y) = 0;
 	virtual void				SetZ(float z) = 0;
 	virtual void				SetMinPoint(const CVector& oMinPoint) = 0;
+	virtual bool				IsIncludedInto(const IGeometry& oGeometry) override = 0;
 };
 
 class ICylinder : public IGeometry
@@ -118,6 +122,7 @@ public:
 	virtual void		Set(const CMatrix& oBase, float fRadius, float fHeight) = 0;
 	virtual void		ComputeTangent(const CVector& oLinePoint, CVector& oTangentPoint, bool bLeft) = 0;
 	virtual bool		IsPointIntoCylinder(const CVector& oPoint) const = 0;
+	virtual bool		IsIncludedInto(const IGeometry& oGeometry) override { throw CMethodNotImplementedException("ICylinder::IsIncludedInto"); }
 };
 
 
@@ -129,6 +134,7 @@ public:
 	virtual float	ComputeDistanceToPoint( const CVector& oPoint ) = 0;
 	virtual void	Compute2DLineEquation( float& a, float& b, float& c ) const = 0;
 	virtual void	GetPoints( CVector& p1, CVector& p2 ) const = 0;
+	bool			IsIncludedInto(const IGeometry& oGeometry) override { return false; }
 	//virtual void	SetPoints( const CVector& first, const CVector last ) = 0;
 };
 

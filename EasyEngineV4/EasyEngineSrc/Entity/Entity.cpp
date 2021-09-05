@@ -136,17 +136,18 @@ void CEntity::SetRessource( string sFileName, bool bDuplicate )
 					pMesh->GetName( sName );
 					CEntity* pEntity = dynamic_cast< CEntity* >( m_pEntityManager->CreateEntity( sName ) );
 					pEntity->SetMesh( pMesh );
+					if (pMesh == m_pRessource)
+						m_pRessource = nullptr;
 					
 					pEntity->SetName( sName );
 					LinkEntityToBone( pEntity, pParentBone );
 				}
 			}
-			IMesh* pMesh = static_cast<IMesh*>(m_pRessource);
-			IBox* pAnimationBBox = pMesh->GetAnimationBBox("stand");
+			IBox* pAnimationBBox = m_pMesh->GetAnimationBBox("stand");
 			if (pAnimationBBox)
 				m_pBoundingGeometry = pAnimationBBox;
 			else
-				m_pBoundingGeometry = pMesh->GetBBox();
+				m_pBoundingGeometry = m_pMesh->GetBBox();
 
 			CreateAndLinkCollisionChildren(sFileName);
 		}
@@ -536,7 +537,8 @@ void CEntity::GetBonesMatrix( INode* pInitRoot, INode* pCurrentRoot, vector< CMa
 
 void CEntity::SetNewBonesMatrixArray( std::vector< CMatrix >& vMatBones )
 {
-	m_pRessource->GetShader()->SendUniformMatrix4Array( "matBones", vMatBones, true );
+	if(m_pRessource)
+		m_pRessource->GetShader()->SendUniformMatrix4Array( "matBones", vMatBones, true );
 }
 
 float CEntity::GetWeight()

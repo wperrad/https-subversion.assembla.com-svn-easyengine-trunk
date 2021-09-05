@@ -33,7 +33,6 @@ public:
 
 protected:
 	static void				OnCollision(CEntity* pThis, vector<INode*> entities);
-	void					ComputePathFind2D_V1(const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints);
 	void					ComputePathFind2DAStar(const CVector2D& oOrigin, const CVector2D& oDestination, vector< CVector2D >& vPoints, bool saveGrid = false);
 	void					SaveAStarGrid(IGrid* pGrid);
 

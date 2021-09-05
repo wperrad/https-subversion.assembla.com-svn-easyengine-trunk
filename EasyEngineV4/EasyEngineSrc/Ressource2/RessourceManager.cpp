@@ -24,6 +24,7 @@
 #include "ILoader.h"
 #include "IGeometry.h"
 #include "ICollisionManager.h"
+#include "IFileSystem.h"
 
 // stl
 #include <algorithm>
@@ -739,12 +740,12 @@ IMesh* CRessourceManager::CreatePlane2(int slices, int size, float height, strin
 
 	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
 	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
-	mi.m_oMaterialInfos.m_vAmbient.push_back(0.f);
+	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
 	mi.m_oMaterialInfos.m_vAmbient.push_back(1.f);
 
 	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
 	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
-	mi.m_oMaterialInfos.m_vDiffuse.push_back(0.f);
+	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
 	mi.m_oMaterialInfos.m_vDiffuse.push_back(1.f);
 
 	mi.m_oMaterialInfos.m_vSpecular.push_back(0.f);
@@ -758,6 +759,18 @@ IMesh* CRessourceManager::CreatePlane2(int slices, int size, float height, strin
 	ILoader::CAnimatableMeshData ami;
 	ami.m_bMultiMaterialActivated = false;
 	ami.m_vMeshes.push_back(mi);
+
+	IFileSystem* pFileSystem = static_cast<IFileSystem*>(m_oInterface.GetPlugin("FileSystem"));
+	string root;
+	pFileSystem->GetLastDirectory(root);
+	WIN32_FIND_DATA wfd;
+	string tmpFolder = "/tmp";
+	string tmpPath = root + tmpFolder;
+	HANDLE hLevelFolder = pFileSystem->FindFirstFile_EE(tmpPath, wfd);
+	bool folderCreated = hLevelFolder != INVALID_HANDLE_VALUE;
+	if ((!folderCreated) || !(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+		folderCreated = CreateDirectoryA(tmpPath.c_str(), nullptr);
+	}
 
 	m_oLoaderManager.Export("tmp/ground.bme", ami);
 

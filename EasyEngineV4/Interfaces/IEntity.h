@@ -82,7 +82,8 @@ public:
 
 	enum TLinkType
 	{
-		ePreserveChildRelativeTM = 0,
+		eNormal = 0,
+		ePreserveChildRelativeTM,
 		eSetChildToParentTM
 	};
 

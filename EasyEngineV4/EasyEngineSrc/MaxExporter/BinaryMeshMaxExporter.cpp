@@ -172,8 +172,8 @@ void CBinaryMeshMaxExporter::GetSkeleton( INode* pRoot, map< string, INode* >& m
 			wstring wname(pNode->GetName());
 			string name(wname.begin(), wname.end());
 			mBone[name] = pNode;
-			GetSkeleton( pNode, mBone );
 		}
+		GetSkeleton(pNode, mBone);
 	}
 }
 
@@ -194,7 +194,10 @@ void CBinaryMeshMaxExporter::GetBoneByID( const map< string, INode* >& mBoneByNa
 	for ( map< string, int >::const_iterator itNameID = mBoneIDByName.begin(); itNameID != mBoneIDByName.end(); ++itNameID )
 	{
 		const map< string, INode* >::const_iterator itNode = mBoneByName.find( itNameID->first );
-		mBoneByID[ itNameID->second ] = itNode->second;
+		if(itNode != mBoneByName.end())
+			mBoneByID[ itNameID->second ] = itNode->second;
+		else
+			throw CEException("Erreur : CBinaryMeshMaxExporter::GetBoneByID() -> Bone \"" + itNameID->first + "\n introuvable dans la map de bones par noms (mBones)");
 	}
 }
 
@@ -569,6 +572,10 @@ void CBinaryMeshMaxExporter::GetMaterialTextureName( Mtl* pMaterial, string& sTe
 		BitmapTex* pTexture = ( BitmapTex* ) pTexmap;
 		if ( pTexture )
 		{
+			if(pTexture->GetMapName() == nullptr) {
+				exception e("Texture invalide");
+				throw e;
+			}
 			wstring wTexture(pTexture->GetMapName());
 			string sTexture(wTexture.begin(), wTexture.end());
 			sTextureName = sTexture;

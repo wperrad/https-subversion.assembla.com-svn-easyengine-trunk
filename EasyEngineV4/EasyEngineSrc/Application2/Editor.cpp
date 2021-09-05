@@ -439,8 +439,12 @@ void CEditor::SaveLevel(string levelName)
 			string srcFile = root + m_sTmpAdaptedHeightMapFileName;
 			string newHMFile = "/levels/" + levelName + "/HMA_" + levelName + ".bmp";
 			string destPath = levelFolder + "HMA_" + levelName + ".bmp";
-			CopyFile(srcFile.c_str(), destPath.c_str(), FALSE);
 			m_pScene->SetHMFile(newHMFile);
+			if(!MoveFileA(srcFile.c_str(), destPath.c_str())) {
+				if (!m_pHeightMap)
+					m_pHeightMap = m_oCollisionManager.GetHeightMap(m_pScene->GetCurrentHeightMapIndex());
+				m_pHeightMap->Save(destPath);
+			}
 		}
 		m_pScene->Export(levelFolder + levelName + ".bse");
 	}
