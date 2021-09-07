@@ -47,7 +47,8 @@ m_pCollisionMesh(NULL),
 m_bDrawBoundingBox(false),
 m_pScene(NULL),
 m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL)),
-m_pMesh(nullptr)
+m_pMesh(nullptr),
+m_bEmptyEntity(false)
 {
 	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 }
@@ -77,7 +78,8 @@ m_fMaxStepHeight(g_fMaxHeight),
 m_bDrawBoundingBox(false),
 m_pScene(NULL),
 m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL)),
-m_pMesh(nullptr)
+m_pMesh(nullptr),
+m_bEmptyEntity(false)
 {
 	if( sFileName.size() > 0 )
 	{
@@ -134,10 +136,10 @@ void CEntity::SetRessource( string sFileName, bool bDuplicate )
 					IBone* pParentBone = static_cast< IBone* >( m_pSkeletonRoot->GetChildBoneByID( pMesh->GetParentBoneID() ) );
 					string sName;
 					pMesh->GetName( sName );
-					CEntity* pEntity = dynamic_cast< CEntity* >( m_pEntityManager->CreateEntity( sName ) );
+					CEntity* pEntity = dynamic_cast< CEntity* >( m_pEntityManager->CreateEmptyEntity( sName ) );
 					pEntity->SetMesh( pMesh );
 					if (pMesh == m_pRessource)
-						m_pRessource = nullptr;
+						m_bEmptyEntity = true;
 					
 					pEntity->SetName( sName );
 					LinkEntityToBone( pEntity, pParentBone );
@@ -174,7 +176,7 @@ void CEntity::CreateAndLinkCollisionChildren(string sFileName)
 			IGeometry* pGeometry = m_pCollisionMesh->GetGeometry(i);
 			ostringstream oss;
 			oss << sPrefix << "_CollisionPrimitive" << i;
-			CEntity* pChild = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity(oss.str()));
+			CEntity* pChild = dynamic_cast<CEntity*>(m_pEntityManager->CreateEmptyEntity(oss.str()));
 			pChild->SetLocalMatrix(pGeometry->GetTM());
 			pChild->ForceAssignBoundingGeometry(pGeometry);
 			pChild->m_fBoundingSphereRadius = pGeometry->ComputeBoundingSphereRadius();
@@ -493,8 +495,42 @@ void CEntity::LinkEntityToBone( IEntity* pChild, IBone* pParentBone, IEntity::TL
 		pChild->LocalTranslate( pMesh->GetOrgMaxPosition().m_x, pMesh->GetOrgMaxPosition().m_y, pMesh->GetOrgMaxPosition().m_z);
 }
 
+void CEntity::LinkDummyParentToDummyEntity(IEntity* pEntity, string sDummyName)
+{
+	IBone* pEntityDummy = pEntity->GetSkeletonRoot()->GetChildBoneByName(sDummyName);
+	if (!pEntityDummy) {
+		throw CNodeNotFoundException(sDummyName);
+	}
+	CMatrix id;
+	if (!m_pSkeletonRoot) {
+		throw CNoDummyRootException("");
+	}
+	m_pSkeletonRoot->SetLocalMatrix(id);
+	m_pSkeletonRoot->Link(pEntityDummy);
+}
+
 void CEntity::Link( INode* pParent )
 {
+	if (m_bEmptyEntity) {
+		IBone* pDummy = dynamic_cast<IBone*>(GetChild(0));
+		pDummy->Link(pParent);
+		int id = m_pEntityManager->GetEntityID(this);
+		IEntityManager* pEntityManager = m_pEntityManager;
+		string sEntityName = m_sEntityName;
+		CEntity* pDummyChildEntity = dynamic_cast<CEntity*>(pDummy->GetChild(0));
+		if (!pDummyChildEntity) {
+			ostringstream oss;
+			string sDummyName;
+			pDummy->GetName(sDummyName);
+			oss << "Dummy child not found for dummy \"" << sDummyName << "\"";
+			throw CEException(oss.str());
+		}
+		pDummyChildEntity->m_pScene = m_pScene;
+		pDummyChildEntity->m_pSkeletonRoot = m_pSkeletonRoot;
+		pEntityManager->DestroyEntity(this);
+		pEntityManager->AddEntity(pDummyChildEntity, sEntityName, id);
+		return;
+	}
 	CNode::Link( pParent );
 	CScene* pScene = dynamic_cast< CScene* >(pParent);
 	if (pScene)
@@ -537,8 +573,7 @@ void CEntity::GetBonesMatrix( INode* pInitRoot, INode* pCurrentRoot, vector< CMa
 
 void CEntity::SetNewBonesMatrixArray( std::vector< CMatrix >& vMatBones )
 {
-	if(m_pRessource)
-		m_pRessource->GetShader()->SendUniformMatrix4Array( "matBones", vMatBones, true );
+	m_pRessource->GetShader()->SendUniformMatrix4Array( "matBones", vMatBones, true );
 }
 
 float CEntity::GetWeight()

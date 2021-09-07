@@ -162,4 +162,16 @@ class CMethodNotImplementedException : public CEException
 public:
 	CMethodNotImplementedException(string message) : CEException(message) {}
 };
+
+class CNodeNotFoundException : public CEException
+{
+public:
+	CNodeNotFoundException(string message) : CEException(message) {}
+};
+
+class CNoDummyRootException : public CEException
+{
+public:
+	CNoDummyRootException(string message) : CEException(message) {}
+};
 #endif

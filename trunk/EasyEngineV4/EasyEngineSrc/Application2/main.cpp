@@ -108,7 +108,7 @@ void InitScene( ISceneManager* pSceneManager )
 	}
 	catch( CEException& e )
 	{
-		MessageBoxA( NULL, e.what(), "", MB_ICONERROR );
+		m_pConsole->Println(e.what());
 	}
 }
 
