@@ -82,8 +82,7 @@ public:
 
 	enum TLinkType
 	{
-		eNormal = 0,
-		ePreserveChildRelativeTM,
+		ePreserveChildRelativeTM = 0,
 		eSetChildToParentTM
 	};
 
@@ -118,6 +117,7 @@ public:
 	virtual void				SetEntityName( string sName ) = 0;
 	virtual void				Colorize(float r, float g, float b, float a) = 0;
 	virtual void				SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) = 0;
+	virtual void				LinkDummyParentToDummyEntity(IEntity* pEntity, string sDummyName) = 0;
 };
 
 class IScene : virtual public IEntity
@@ -172,7 +172,7 @@ class IEntityManager : public CPlugin
 public:
 	IEntityManager(EEInterface& oInterface) : CPlugin( NULL, "" ){}
 	virtual IEntity*			CreateEntity(std::string sFileName, string sTypeName, bool bDuplicate = false ) = 0;
-	virtual IEntity*			CreateEntity( string sFileName = "noname" ) = 0;
+	virtual IEntity*			CreateEmptyEntity( string sFileName = "noname" ) = 0;
 	virtual IEntity*			CreateRepere( IRenderer& oRenderer ) = 0;
 	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem ) = 0;
 	virtual IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem) = 0;
@@ -206,6 +206,8 @@ public:
 	virtual IEntity*			CreateCylinder( float fRadius, float fHeight ) = 0;
 	virtual void				Kill(int entityId) = 0;
 	virtual void				WearArmor(int entityId, string armorName) = 0;
+	virtual void				WearArmorToDummy(int entityId, string armorName) = 0;
+	virtual void				WearShoes(int entityId, string shoesName) = 0;
 	virtual void				SerializeMobileEntities(INode* pRoot, string& sText) = 0;
 	virtual IGUIManager* 		GetGUIManager() = 0;
 	virtual void				SetGUIManager(IGUIManager* pGUIManager) = 0;

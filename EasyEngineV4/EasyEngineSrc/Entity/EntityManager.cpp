@@ -75,7 +75,7 @@ IEntity* CEntityManager::CreateEntity(std::string sFileName, string sTypeName, b
 	return pEntity;
 }
 
-IEntity* CEntityManager::CreateEntity( string sName )
+IEntity* CEntityManager::CreateEmptyEntity( string sName )
 {
 	CEntity* pEntity = new CEntity(m_oInterface);
 	CreateEntity( pEntity );
@@ -433,6 +433,23 @@ void CEntityManager::WearArmor(int entityId, string sArmorName)
 	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
 	if (pEntity)
 		pEntity->WearArmor(sArmorName);
+}
+
+void CEntityManager::WearArmorToDummy(int entityId, string sArmorName)
+{
+	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
+	if (pEntity)
+		pEntity->WearArmorToDummy(sArmorName);
+}
+
+void CEntityManager::WearShoes(int entityId, string shoesName)
+{
+	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
+	if (pEntity)
+		pEntity->WearShoes(shoesName);
+	else {
+		throw CEException("Entity not found");
+	}
 }
 
 template<class T>

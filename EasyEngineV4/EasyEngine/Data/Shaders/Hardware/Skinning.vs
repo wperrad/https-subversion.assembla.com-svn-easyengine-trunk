@@ -15,7 +15,7 @@ attribute vec4 vWeightedVertexID;
 attribute float nMatID;
 #endif // MULTIMATERIAL
 
-uniform mat4 matBones[55];
+uniform mat4 matBones[80];
 
 void main()
 {

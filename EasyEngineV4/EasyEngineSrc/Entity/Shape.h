@@ -50,6 +50,7 @@ public:
 	void			SetEntityName( string sName ){ throw 1; }
 	void			ReloadShader();
 	void			SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) {}
+	void			LinkDummyParentToDummyEntity(IEntity* pEntity, string sEntityName) override {}
 };
 
 #endif // SHAPE_H

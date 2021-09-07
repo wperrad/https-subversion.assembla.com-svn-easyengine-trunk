@@ -982,6 +982,7 @@ void CreateNPC( IScriptState* pState )
 	string sName = pName->m_sValue;
 	if( sName.find( ".bme" ) == -1 )
 		sName += ".bme";
+	sName = string("Meshes/Bodies/") + sName;
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException( false );
 
@@ -1203,9 +1204,7 @@ void LinkToName(IScriptState* pState)
 	CScriptFuncArgString* pLinkType = static_cast< CScriptFuncArgString* >(pState->GetArg(4));
 
 	IEntity::TLinkType t;
-	if(pLinkType->m_sValue == "normal")
-		t = IEntity::eNormal;
-	else if (pLinkType->m_sValue == "preserve")
+	if (pLinkType->m_sValue == "preserve")
 		t = IEntity::ePreserveChildRelativeTM;
 	else if (pLinkType->m_sValue == "settoparent")
 		t = IEntity::eSetChildToParentTM;
@@ -1269,12 +1268,13 @@ void LinkToName(IScriptState* pState)
 			else {
 				if (pNode1) {
 					if (pNode2) {
-						if (t == IEntity::eNormal)
+						static bool test = false;
+						if(!test)
+							pEntity1->LinkDummyParentToDummyEntity(pEntity2, pIDNode2->m_sValue);
+						else {
+							CMatrix id;
+							pNode1->SetLocalMatrix(id);
 							pNode1->Link(pNode2);
-						else if (t == IEntity::TLinkType::eSetChildToParentTM) {
-							pNode1->Link(pNode2);
-							pEntity1->Unlink();
-							delete pEntity1;
 						}
 					}
 					else {
@@ -1292,6 +1292,41 @@ void LinkToName(IScriptState* pState)
 				}
 			}
 		}
+	}
+}
+
+void LinkDummyParentToDummyEntity(IScriptState* pState)
+{
+	CScriptFuncArgInt* pIDEntity1 = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
+	CScriptFuncArgInt* pIDEntity2 = static_cast< CScriptFuncArgInt* >(pState->GetArg(1));
+	CScriptFuncArgString* pIDNode2 = static_cast< CScriptFuncArgString* >(pState->GetArg(2));
+	IEntity* pEntity1 = m_pEntityManager->GetEntity(pIDEntity1->m_nValue);
+	if (!pEntity1) {
+		ostringstream oss;
+		oss << "Erreur : Identifiant " << pIDEntity1->m_nValue << " invalide";
+		m_pConsole->Println(oss.str());
+		return;
+	}
+	IEntity* pEntity2 = m_pEntityManager->GetEntity(pIDEntity2->m_nValue);
+	if (!pEntity2) {
+		ostringstream oss;
+		oss << "Erreur : Identifiant " << pIDEntity2->m_nValue << " invalide";
+		m_pConsole->Println(oss.str());
+		return;
+	}
+	try {
+		pEntity1->LinkDummyParentToDummyEntity(pEntity2, pIDNode2->m_sValue);
+	}
+	catch (CNodeNotFoundException& e)
+	{
+		ostringstream oss;
+		oss << "Erreur : Dummy " << e.what() << " introuvable";
+		m_pConsole->Println(oss.str());
+	}
+	catch (CNoDummyRootException& e) {
+		ostringstream oss;
+		oss << "Erreur : Pas de dummy root trouve pour l'entite " << pIDEntity1->m_nValue;
+		m_pConsole->Println(oss.str());
 	}
 }
 
@@ -2215,7 +2250,13 @@ void YawEntity( IScriptState* pState )
 	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* pYaw = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
-	pEntity->Yaw( pYaw->m_fValue );
+	if(pEntity)
+		pEntity->Yaw( pYaw->m_fValue );
+	else {
+		ostringstream oss;
+		oss << "Erreur : Entite " << pID->m_nValue << " introuvable";
+		m_pConsole->Println(oss.str());
+	}
 }
 
 void SetEntityShader( IScriptState* pState )
@@ -2301,6 +2342,20 @@ void WearArmor(IScriptState* pState)
 	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
 	CScriptFuncArgString* pArmor = (CScriptFuncArgString*)(pState->GetArg(1));
 	m_pEntityManager->WearArmor(pId->m_nValue, pArmor->m_sValue);
+}
+
+void WearArmorToDummy(IScriptState* pState)
+{
+	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
+	CScriptFuncArgString* pArmor = (CScriptFuncArgString*)(pState->GetArg(1));
+	m_pEntityManager->WearArmorToDummy(pId->m_nValue, pArmor->m_sValue);
+}
+
+void WearShoes(IScriptState* pState)
+{
+	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
+	CScriptFuncArgString* pShoes = (CScriptFuncArgString*)(pState->GetArg(1));
+	m_pEntityManager->WearShoes(pId->m_nValue, pShoes->m_sValue);
 }
 
 void DisplayRayPicking(IScriptState* pState)
@@ -2428,6 +2483,24 @@ void SetEntityPos( IScriptState* pState )
 		m_pConsole->Println("Identifiant invalide");
 }
 
+void SetEntityDummyRootPos(IScriptState* pState)
+{
+	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >(pState->GetArg(0));
+	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >(pState->GetArg(1));
+	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >(pState->GetArg(2));
+	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >(pState->GetArg(3));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pID->m_nValue);
+	if (pEntity) {
+		IBone* pDummy = pEntity->GetSkeletonRoot();
+		if(pDummy)
+			pDummy->SetWorldPosition(px->m_fValue, py->m_fValue, pz->m_fValue);
+		else 
+			m_pConsole->Println("Cet entite ne possede pas de dummy root");
+	}
+	else
+		m_pConsole->Println("Identifiant invalide");
+}
+
 void DisplayEntityPosition( IScriptState* pState )
 {
 	ostringstream oss;
@@ -2460,14 +2533,14 @@ void LoadEntity( IScriptState* pState )
 	string sName = pName->m_sValue;
 	if( sName.find( ".bme" ) == -1 )
 		sName += ".bme";
+	sName = string("Meshes/") + sName;
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException( false );
 	try
 	{
 		IEntity* pEntity = m_pEntityManager->CreateEntity(sName, "");
-		pEntity->Link( m_pScene );
-		//pEntity->Pitch( -90.f );
 		int id = m_pEntityManager->GetEntityID(pEntity);
+		pEntity->Link( m_pScene );
 		ostringstream oss;
 		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
 		m_pConsole->Println( oss.str() );
@@ -3035,6 +3108,13 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetEntityPos", SetEntityPos, vType );
 
 	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("SetEntityDummyRootPos", SetEntityDummyRootPos, vType);
+
+	vType.clear();
 	m_pScriptManager->RegisterFunction( "DisplayCamPos", DisplayCamPos, vType );
 
 	vType.clear();
@@ -3277,6 +3357,12 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eString);
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("LinkToName", LinkToName, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eInt);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("LinkDummyParentToDummyEntity", LinkDummyParentToDummyEntity, vType);	
 
 	vType.clear();
 	vType.push_back( eFloat );
@@ -3566,6 +3652,16 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eInt);
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("WearArmor", WearArmor, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("WearArmorToDummy", WearArmorToDummy, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("WearShoes", WearShoes, vType);
 
 	vType.clear();
 	vType.push_back(eString);

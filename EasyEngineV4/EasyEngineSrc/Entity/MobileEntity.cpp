@@ -27,7 +27,8 @@ m_fEyesRotH( 0 ),
 m_fEyesRotV( 0 ),
 m_fNeckRotH( 0 ),
 m_fNeckRotV( 0 ),
-m_bFirstUpdate(true)
+m_bFirstUpdate(true),
+m_sStandAnimation("stand-normal")
 {
 	m_sTypeName = "Human";
 	if( s_mAnimationStringToType.size() == 0 )
@@ -256,6 +257,60 @@ void CMobileEntity::WearArmor(string armorName)
 	}
 }
 
+void CMobileEntity::WearArmorToDummy(string armorName)
+{
+	string path = "Meshes/Armors/" + armorName + "/";
+	const int count = 8;
+	string arrayPiece[count] = { "Cuirasse", "Jupe", "JambiereD", "JambiereG", "BrassiereD", "BrassiereG", "EpauletteD", "EpauletteG" };
+	vector<string> armorDummies, bodyDummies;
+	for(int i = 0; i < count; i++) {
+		string armorDummy = string("Dummy") + arrayPiece[i];
+		armorDummies.push_back(armorDummy);
+		string bodyDummy = string("BodyDummy") + arrayPiece[i];
+		bodyDummies.push_back(bodyDummy);
+	}
+
+	for (int i = 0; i < count; i++) {
+		IBone* pBodyDummy = dynamic_cast<IBone*>(m_pSkeletonRoot->GetChildBoneByName(bodyDummies[i]));
+		if (pBodyDummy) {
+			IEntity* piece = m_pEntityManager->CreateEntity(string("meshes/armors/") + armorName + "/" + arrayPiece[i] + ".bme", "");
+			piece->LinkDummyParentToDummyEntity(this, bodyDummies[i]);
+		}
+	}
+}
+
+void CMobileEntity::WearShoes(string shoesPath)
+{
+	string shoesPathLower = shoesPath;
+	std::transform(shoesPath.begin(), shoesPath.end(), shoesPathLower.begin(), tolower);
+	string sPrefix;
+	int prefixIndex = shoesPathLower.find("hight");
+	if (prefixIndex != -1) {
+		sPrefix = shoesPath.substr(0, shoesPath.find_last_of("/") + 1);
+		m_sStandAnimation = "stand";
+	}
+	else
+		m_sStandAnimation = "stand-normal";
+	Stand();
+	
+	// unlink old shoes if exists
+	IBone* pDummyLShoes = m_pSkeletonRoot->GetChildBoneByName("DummyLFoot");
+	IBone* pDummyRShoes = m_pSkeletonRoot->GetChildBoneByName("DummyRFoot");
+	if (pDummyLShoes)
+		pDummyLShoes->Unlink();
+	if (pDummyRShoes)
+		pDummyRShoes->Unlink();
+
+	// link new shoes
+	string shoesName = shoesPath.substr(shoesPath.find_last_of("/") + 1);
+	IEntity* Lshoes = m_pEntityManager->CreateEntity(string("meshes/clothes/shoes/") + sPrefix + "L" + shoesName + ".bme", "");
+	Lshoes->LinkDummyParentToDummyEntity(this, "BodyDummyLFoot");
+	IEntity* Rshoes = m_pEntityManager->CreateEntity(string("meshes/clothes/shoes/") + sPrefix + "R" + shoesName + ".bme", "");
+	Rshoes->LinkDummyParentToDummyEntity(this, "BodyDummyRFoot");
+
+	
+}
+
 void CMobileEntity::RunAction( string sAction, bool bLoop )
 {
 	map<string, CMobileEntity::TAction>::iterator itAction = s_mActions.find(sAction);
@@ -293,7 +348,7 @@ void CMobileEntity::Walk( bool bLoop )
 
 void CMobileEntity::Stand( bool bLoop )
 {
-	SetPredefinedAnimation( "stand", bLoop );
+	SetPredefinedAnimation( m_sStandAnimation, bLoop );
 	if( !m_bUsePositionKeys )
 		ConstantLocalTranslate( CVector( 0.f, m_mAnimationSpeedByType[ eStand ], 0.f ) );
 }

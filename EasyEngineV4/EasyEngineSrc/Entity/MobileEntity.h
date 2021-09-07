@@ -32,6 +32,7 @@ protected:
 	string										m_sAttackBoneName;
 	CVector										m_vNextLocalTranslate;
 	bool										m_bFirstUpdate;
+	string										m_sStandAnimation;
 	
 
 	static map< string, TAction >				s_mActions;
@@ -87,6 +88,8 @@ public:
 	void					RunAction( string sAction, bool bLoop );
 	void					Die();
 	void					WearArmor(string armorName);
+	void					WearArmorToDummy(string armorName);
+	void					WearShoes(string shoesName);
 	void					Yaw(float fAngle);
 	void					Pitch(float fAngle);
 	void					Roll(float fAngle);

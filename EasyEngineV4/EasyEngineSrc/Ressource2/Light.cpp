@@ -24,7 +24,7 @@ m_Specular( oDesc.Color ),
 m_Diffuse( oDesc.Color ),
 m_Type( oDesc.type ),
 m_ID( s_nCurrentLightID ),
-m_Ambient(0.2f, 0.2f, 0.2f, 1.f)
+m_Ambient(0.1f, 0.1f, 0.1f, 1.f)
 {
 	s_nCurrentLightID ++;	
 	oDesc.m_oRenderer.SetLightAttenuation( m_ID, oDesc.fAttenuationConstant, oDesc.fAttenuationLinear, oDesc.fAttenuationQuadratic );

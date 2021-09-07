@@ -1,11 +1,32 @@
+OpenConsole(0);
+
 SetBkgColor(0, 100, 255);
-LoadLevel("hopital");
+LoadLevel("map09");
+
 SetAnimationSpeed(19, "run", 10);
 SetCameraType("free");
-npc1=CreateNPC("meshes/bodies/body01");
+npc1=CreateNPC("body01");
 Stand(npc1);
-h=LoadEntity("meshes/hairs/hairs01");
-//LinkToName(h, "DummyHairs", npc1, "BodyDummyHairs", "settoparent");
+
+h=LoadEntity("hairs/hairs01");
+LinkDummyParentToDummyEntity(h, npc1, "BodyDummyHairs");
+
+//WearArmorToDummy(npc1, "2");
+
+YawEntity(npc1, 90);
+
+WearShoes(npc1, "hight/Sandal02");
+
+SetEntityPos(npc1, 0, 500, 200);
+
+npc2=CreateNPC("body02");
+YawEntity(npc2, 90);
+Stand(npc2);
+
+h2=LoadEntity("hairs/hairs01");
+LinkDummyParentToDummyEntity(h2, npc2, "BodyDummyHairs");
+WearShoes(npc2, "Sandal");
+
 return;
 
 //CullFace(0);
@@ -13,7 +34,7 @@ return;
 r=CreateRepere();
 //SetEntityPos(r, 0, -3000, 0);
 
-OpenConsole(0);
+
 
 
 SetSceneMap("HM_terrain02.bmp", "terrain02.bmp", 100000, 4000);

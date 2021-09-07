@@ -42,7 +42,7 @@ class CEntityManager : public IEntityManager
 public:
 	CEntityManager(EEInterface& oInterface);
 	IEntity*			CreateEntity(string sFileName, string sTypeName, bool bDuplicate = false );
-	IEntity*			CreateEntity( string sName = "noname" );
+	IEntity*			CreateEmptyEntity( string sName = "noname" );
 	IEntity*			CreateRepere( IRenderer& oRenderer );
 	IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem );
 	IEntity*			CreateMapEntity(string sFileName, IFileSystem* pFileSystem);
@@ -85,7 +85,10 @@ public:
 	void				SetGUIManager(IGUIManager* pGUIManager);
 	IGUIManager* 		GetGUIManager();
 	void				Kill(int entityId);
-	void				WearArmor(int entityId, string armorName);
+	void				WearArmor(int entityId, string armorName) override;
+	void				WearArmorToDummy(int entityId, string armorName) override;
+	void				WearShoes(int entityId, string shoesName) override;
+
 	template<class T>
 	void				SerializeNodeInfos(INode* pNode, ostringstream& sLine, int nLevel = 0);
 	void				SerializeMobileEntities(INode* pRoot,  string& sText);
