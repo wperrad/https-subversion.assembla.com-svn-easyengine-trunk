@@ -32,9 +32,10 @@ public:
 	void				SetShader( IShader* pShader );
 	void				CenterToworld();
 	IRessource*			GetRessource();
+	void				SetRessource(string sFileName, bool bDuplicate = false);
+	void				SetDiffuseTexture(string sFileName);
 	float				GetWeight();
 	void				SetWeight( float fWeight );
-	void				SetRessource( string sFileName, bool bDuplicate = false );
 	void				SetMesh( IMesh* pMesh );
 	void				AddAnimation( std::string sAnimationFile );
 	void				SetCurrentAnimation( std::string sAnimation );
@@ -69,7 +70,11 @@ public:
 	void				LinkAndUpdateMatrices(CEntity* pEntity);
 	virtual float		GetGroundHeight(float x, float z);
 	virtual void		UpdateRessource();
+//	void				UpdateHud();
 	void				SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin);
+	void				AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback);
+	void				DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback);
+	
 
 protected:
 	IRessource*								m_pRessource;
@@ -106,6 +111,11 @@ protected:
 	EEInterface&							m_oInterface;
 	IMesh*									m_pMesh;
 	bool									m_bEmptyEntity;
+	map< string, map< int, IBox* > >		m_oKeyBoundingBoxes;
+	vector<IEventDispatcher::TEntityCallback>	m_vEntityCallback;
+	ITexture*								m_pBaseTexture;
+	ITexture*								m_pCustomTexture;
+	
 
 
 	void				SetNewBonesMatrixArray(std::vector< CMatrix >& vMatBones);
@@ -119,6 +129,7 @@ protected:
 	bool				TestCollision(INode* pEntity);
 	bool				ManageBoxCollision(vector<INode*>& vCollideEntities, float dx, float dy, float dz, const CMatrix& oBackupMatrix);
 	void				SendBonesToShader();
+	void				DispatchEntityEvent();
 	static void			OnAnimationCallback(IAnimation::TEvent e, void*);
 };
 

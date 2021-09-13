@@ -72,6 +72,8 @@ IEventDispatcher*		m_pEventDispatcher = NULL;
 IXMLParser*				m_pXMLParser = NULL;
 IGeometryManager*		m_pGeometryManager = NULL;
 IPathFinder*			m_pPathFinder = NULL;
+int						g_nSlotPosition = 0;
+
 
 vector< IEntity* > m_vLight;
 bool	m_bFirstTimeOpenFile = true;
@@ -92,6 +94,8 @@ void InitScene( ISceneManager* pSceneManager )
 {	
 	try
 	{
+		m_pScene->DeleteTempDirectories();
+		g_nSlotPosition = m_pHud->CreateNewSlot(400, 100);
 		m_pConsole->Open(true);
 		FILE* pFile = NULL;
 		pFile = m_pFileSystem->OpenFile("start.eas", "r");
@@ -108,6 +112,9 @@ void InitScene( ISceneManager* pSceneManager )
 	}
 	catch( CEException& e )
 	{
+		m_pConsole->Println(e.what());
+	}
+	catch (exception& e) {
 		m_pConsole->Println(e.what());
 	}
 }

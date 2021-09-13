@@ -20,6 +20,9 @@
 #include <string>
 #include <map>
 
+// Engine
+#include "ILoader.h"
+
 using namespace std;
 
 TCHAR* GetString(int id);
@@ -27,6 +30,9 @@ TCHAR* GetString(int id);
 class IFileSystem;
 class IGeometryManager;
 class ILoaderManager;
+class IWeightTable;
+
+const int g_nTickPerFrame = 160;
 
 struct CKey
 {
@@ -43,27 +49,6 @@ struct CKey
 // Class de base pour tous les plugins d'export 3DSMAX
 class CMaxExporter : public SceneExport 
 {
-	wstring				m_wVersion;
-
-protected:
-	vector< wstring >	m_vNonTCBBoneNames;
-	bool				g_bInterruptExport;
-	bool				m_bOpenglCoord;
-	bool				m_bOpenglCoord2;
-	IFileSystem*		m_pFileSystem;
-	IGeometryManager*	m_pGeometryManager;
-	ILoaderManager*		m_pLoaderManager;
-
-	static bool			IsBone( Object* pObject );
-	static bool			IsBone( INode* pNode );
-	static void			MaxMatrixToEngineMatrix( const Matrix3& mMax, CMatrix& mEngine );
-	static void			EngineMatrixToMaxMatrix( const CMatrix& oEngine, Matrix3& mMax );
-
-	void				GetAnimation( Interface* pInterface, const std::map< int, INode* >& mBone, std::map< int, std::vector< CKey > >& vBones );
-	Mesh&				GetMeshFromNode(INode* pMesh);
-	void				GetVertexArrayFromMesh(Mesh& mesh, vector<float>& vertex);
-	CMatrix				m_oMaxToOpenglMatrix;
-
 public:
 	CMaxExporter();
 	~CMaxExporter();
@@ -83,6 +68,59 @@ public:
 	void				ConvertPoint3ToCVector(const Point3& p, CVector& v);
 
 	static std::vector<ClassDesc*>	m_vLibClassDesc;
+
+protected:
+
+	void				GetAnimation(Interface* pInterface, const std::map< int, INode* >& mBone, std::map< int, std::vector< CKey > >& vBones);
+	Mesh&				GetMeshFromNode(INode* pMesh);
+	void				GetVertexArrayFromMesh(Mesh& mesh, vector<float>& vertex);
+	void				GetGeometry(Interface* pInterface, vector< ILoader::CMeshInfos >& vMeshInfos, INode* pRoot);
+	void				GetMeshesIntoHierarchy(Interface* pInterface, INode* pNode, vector< ILoader::CMeshInfos >& vMeshInfos);
+	void				WriteLog(string sMessage);
+	void				GetWeightTable(IWeightTable& oWeightTable, const std::map< std::string, int >& mBoneID, string sObjectName);
+	void				GetBonesBoundingBoxes(const Mesh& oMesh, const IWeightTable& oWeightTable, const Matrix3& oModelTM, map< int, IBox* >& mBoneBox);
+	void				StoreMaxMaterialToMaterialInfos(Mtl* pMaterial, ILoader::CMaterialInfos& mi);
+	void				GetNormals(Mesh& oMesh, std::vector< float >& vFaceNormal, std::vector< float >& vVertexNormal);
+	Point3				GetVertexNormal(Mesh& oMesh, int faceNo, RVertex* rv);
+	void				GetFacesMtlArray(Mesh& oMesh, std::vector< unsigned short >& vMtlIDArray);
+	void				StoreMaxColorToVector(const Color c, vector< float >& v);
+	void				GetMaterialTextureName(Mtl* pMaterial, std::string& sTextureName, int nMapIndex)const;
+	virtual void		StoreMeshToMeshInfos(Interface* pInterface, INode* pMesh, ILoader::CMeshInfos& mi) {}
+
+	static bool			IsBone(Object* pObject);
+	static bool			IsBone(INode* pNode);
+	static void			MaxMatrixToEngineMatrix(const Matrix3& mMax, CMatrix& mEngine);
+	static void			EngineMatrixToMaxMatrix(const CMatrix& oEngine, Matrix3& mMax);
+	static INT_PTR CALLBACK OnExportAnim(HWND, UINT, WPARAM, LPARAM);
+
+	vector< wstring >	m_vNonTCBBoneNames;
+	bool				g_bInterruptExport;
+	bool				m_bOpenglCoord;
+	bool				m_bOpenglCoord2;
+	IFileSystem*		m_pFileSystem;
+	IGeometryManager*	m_pGeometryManager;
+	ILoaderManager*		m_pLoaderManager;
+	bool				m_bLog;
+	bool				m_bExportSkinning;
+	map< string, int >	m_mBoneIDByName;
+	wstring				m_wVersion;
+	CMatrix				m_oMaxToOpenglMatrix;
+	bool				m_bExportBoundingBox;
+	FILE*				m_pLogFile;
+	map< int, IBox* >	m_mBoneBox;
+	bool				m_bExportBBoxAtKey;
+	int					m_nMaterialCount;
+	bool				m_bMultipleSmGroup;
+	bool				m_bFlipNormals;
+	int					m_nCurrentSmGroup;
+	TimeValue			m_nAnimationStart;
+	TimeValue			m_nAnimationEnd;
+	bool				m_bEnableAnimationList;
+	HWND				m_hWndComboBox;
+	vector<string>		m_vPathList;
+	string				m_sSelectedAnimation;
+	int					m_nSelectedAnimationIndex;
+	static CMaxExporter* s_pExporter;
 };
 
 class CMaxExporterClassDesc : public ClassDesc 

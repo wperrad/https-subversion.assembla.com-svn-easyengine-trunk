@@ -1,32 +1,60 @@
 OpenConsole(0);
 
 SetBkgColor(0, 100, 255);
-LoadLevel("map09");
 
-SetAnimationSpeed(19, "run", 10);
+
+LoadLevel("map11");
 SetCameraType("free");
+
+/*
+r=CreateRepere();
+SetSceneMap("HM_terrain02.bmp", "terrain02.bmp", 1000000, 40000);
+light1=AddLightw("omni", 1500000);
+SetEntityPos(light1, 1000000, 500000, 0);
+*/
+
+
+
 npc1=CreateNPC("body01");
 Stand(npc1);
-
-h=LoadEntity("hairs/hairs01");
+h=CreateEntity("hairs/hairs02");
 LinkDummyParentToDummyEntity(h, npc1, "BodyDummyHairs");
-
+SetEntityTexture(npc1, "texture3-noire.bmp");
 //WearArmorToDummy(npc1, "2");
+//YawEntity(npc1, 90);
+WearShoes(npc1, "Sandal");
+SetEntityPos(npc1, 160000, -12000, -326000);
+SetEntityName(npc1, "npc1");
 
-YawEntity(npc1, 90);
 
-WearShoes(npc1, "hight/Sandal02");
-
-SetEntityPos(npc1, 0, 500, 200);
-
-npc2=CreateNPC("body02");
-YawEntity(npc2, 90);
+npc2=CreateNPC("body03");
+//YawEntity(npc2, 90);
 Stand(npc2);
-
-h2=LoadEntity("hairs/hairs01");
+h2=CreateEntity("hairs/hairs01");
 LinkDummyParentToDummyEntity(h2, npc2, "BodyDummyHairs");
+SetEntityTexture(npc2, "texture3-tres-noire.bmp");
 WearShoes(npc2, "Sandal");
+SetEntityPos(npc2, 160100, -12000, -326000);
+SetEntityName(npc2, "npc2");
 
+
+npc3=CreateNPC("body03");
+//YawEntity(npc3, 90);
+//Stand(npc3);
+SetAnimation(npc3, "stand-normal");
+PlayCurrentAnimation(npc3, 0);
+h3=CreateEntity("hairs/hairs01");
+LinkDummyParentToDummyEntity(h3, npc3, "BodyDummyHairs");
+SetEntityTexture(npc3, "texture3-ebene.bmp");
+SetEntityPos(npc3, 160200, -12000, -326000);
+WearShoes(npc3, "Sandal-body03");
+SetEntityName(npc3, "npc3");
+
+
+SetCamPos(160000, -12000, -326000);
+
+l=AddLightw("omni", 1);
+SetEntityPos(l, 160000, -13400, -327200);
 return;
 
 //CullFace(0);

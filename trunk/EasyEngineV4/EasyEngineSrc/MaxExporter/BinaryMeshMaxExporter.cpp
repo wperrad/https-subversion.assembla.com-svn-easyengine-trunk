@@ -25,16 +25,7 @@ Class_ID CBinaryMeshMaxExporterClassDesc::ClassID()
 	return BINARYMESHPLUGIN_CLASS_ID; 
 }
 
-CBinaryMeshMaxExporter::CBinaryMeshMaxExporter() :
-m_bMultipleSmGroup( false ),
-m_nCurrentSmGroup( -1 ),
-m_bFlipNormals( false ),
-m_nMaterialCount( 0 ),
-m_bLog( false ),
-m_bExportSkinning( true ),
-m_pLogFile( NULL ),
-m_bExportBoundingBox( true ),
-m_bExportBBoxAtKey( false )
+CBinaryMeshMaxExporter::CBinaryMeshMaxExporter()
 {
 	m_vExtension.push_back( L"bme" );
 	s_pCurrentInstance = this;
@@ -127,7 +118,6 @@ int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Inter
 		transform( sExtension.begin(), sExtension.end(), sExtensionLower.begin(), tolower );
 		sExtension = sExtensionLower;
 
-
 		map< string, INode* > mBones;
 		
 		map< int, INode* > mBoneByID;
@@ -139,7 +129,6 @@ int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Inter
 		INT_PTR iRet = DialogBoxParam( hInstance, MAKEINTRESOURCE( IDD_EXPORT ), hMaxDlg, ExportDlgProc, (LPARAM)this );
 		if( iRet == 1 )
 		{
-			//vector< ILoader::CMeshInfos > vMeshInfos;
 			ILoader::CAnimatableMeshData mi;
 			StoreSkeletonToSkeletonMap( mBoneByID, mi );
 			GetGeometry( pInterface, mi.m_vMeshes, pInterface->GetRootNode() );
@@ -198,127 +187,6 @@ void CBinaryMeshMaxExporter::GetBoneByID( const map< string, INode* >& mBoneByNa
 			mBoneByID[ itNameID->second ] = itNode->second;
 		else
 			throw CEException("Erreur : CBinaryMeshMaxExporter::GetBoneByID() -> Bone \"" + itNameID->first + "\n introuvable dans la map de bones par noms (mBones)");
-	}
-}
-
-void CBinaryMeshMaxExporter::GetWeightTable( IWeightTable& oWeightTable, const map< string, int >& mBoneID, string sObjectName )
-{
-	WriteLog( "\nCBinaryMeshMaxExporter::GetWeightTable() : debut" );
-	
-	IGameScene* pGameScene = GetIGameInterface();
-	bool bInitialise = pGameScene->InitialiseIGame();
-	pGameScene->SetStaticFrame(0);
-	for ( int i = 0; i < pGameScene->GetTopLevelNodeCount(); i++ )
-	{
-		IGameNode* pGameNode = pGameScene->GetTopLevelNode( i );
-		wstring wNodeName = pGameNode->GetName();
-		wstring wObjectName(sObjectName.begin(), sObjectName.end());
-		if(wNodeName != wObjectName)
-			continue;
-		IGameObject* pGameObject = pGameNode->GetIGameObject();
-		IGameSkin* pGameSkin = pGameObject->GetIGameSkin();
-		if ( pGameSkin )
-		{
-			for ( int iVertexIndex = 0; iVertexIndex < pGameSkin->GetNumOfSkinnedVerts(); iVertexIndex++ )
-			{
-				int nBoneCount = 0;
-				for ( int iBoneIndex = 0; iBoneIndex < pGameSkin->GetNumberOfBones( iVertexIndex ); iBoneIndex ++ )
-				{
-					INode* pBone = pGameSkin->GetBone( iVertexIndex, iBoneIndex );
-					float fWeight = pGameSkin->GetWeight( iVertexIndex, iBoneIndex );
-					if( fWeight > 0.f )
-					{
-						wstring wName(pBone->GetName());
-						string sName(wName.begin(), wName.end());
-						map< string, int >::const_iterator itBone = mBoneID.find(sName);
-						oWeightTable.Add( iVertexIndex, itBone->second, fWeight );
-						nBoneCount++;
-					}
-				}
-				if( nBoneCount > 4 )
-				{
-					ostringstream oss;
-					oss << "Erreur : le vertex " << iVertexIndex << " est influencé par plus de 4 bones";
-					CEException e( oss.str() );
-					throw e;
-				}
-			}
-			break;
-		}
-	}
-	WriteLog( "\nCBinaryMeshMaxExporter::GetWeightTable() : fin" );
-}
-
-void CBinaryMeshMaxExporter::WriteLog( string sMessage )
-{
-	if( m_bLog )
-		fwrite( sMessage.c_str(), sizeof( char ), sMessage.size(), m_pLogFile );
-}
-
-void CBinaryMeshMaxExporter::GetGeometry( Interface* pInterface, vector< ILoader::CMeshInfos >& vMeshInfos, INode* pRoot )
-{
-	for ( int iNode = 0; iNode < pRoot->NumberOfChildren(); iNode++ )
-	{
-		INode* pNode = pRoot->GetChildNode( iNode );
-		wstring wTest = pNode->GetName();
-		Object* pObject = pNode->EvalWorldState( 0 ).obj;
-		if( IsBone( pObject ) )
-		{
-			GetMeshesIntoHierarchy( pInterface, pNode, vMeshInfos );
-			continue;
-		}
-		if ( pObject->CanConvertToType( Class_ID( TRIOBJ_CLASS_ID, 0 ) ) == TRUE )
-		{
-			ILoader::CMeshInfos mi;
-			StoreMeshToMeshInfos( pInterface, pNode, mi );
-			if( g_bInterruptExport )
-				break;
-			vMeshInfos.push_back( mi );
-		}
-	}
-}
-
-void CBinaryMeshMaxExporter::GetMeshesIntoHierarchy( Interface* pInterface, INode* pNode, vector< ILoader::CMeshInfos >& vMeshInfos )
-{
-	Object* pObject = pNode->EvalWorldState( 0 ).obj;
-	if( IsBone( pObject ) )
-	{
-		for( int iBone = 0; iBone < pNode->NumberOfChildren(); iBone++ )
-			GetMeshesIntoHierarchy( pInterface, pNode->GetChildNode( iBone ), vMeshInfos );
-	}
-	else
-	{
-		if ( pObject->CanConvertToType( Class_ID( TRIOBJ_CLASS_ID, 0 ) ) == TRUE )
-		{
-			ILoader::CMeshInfos mi;
-			StoreMeshToMeshInfos( pInterface, pNode, mi );
-			vMeshInfos.push_back( mi );
-		}
-	}
-
-}
-
-void CBinaryMeshMaxExporter::GetBonesBoundingBoxes( const Mesh& oMesh, const IWeightTable& oWeightTable, const Matrix3& oModelTM, map< int, IBox* >& mBoneBox )
-{
-	for ( int iVertex = 0; iVertex < oMesh.getNumVerts(); iVertex ++ )
-	{
-		Point3& oVertex = oModelTM * oMesh.verts[ iVertex ];
-		map< int, float > mBoneWeights;
-		oWeightTable.Get( iVertex, mBoneWeights );
-		for( map< int, float >::const_iterator itBone = mBoneWeights.begin(); itBone != mBoneWeights.end(); itBone++ )
-		{
-			if( itBone->second > 0.5f )
-			{
-				CVector v( oVertex.x, oVertex.y, oVertex.z );
-				map< int, IBox* >::iterator itBox = mBoneBox.find( itBone->first );
-				if( itBox == mBoneBox.end() )
-				{
-					IBox* pBox = m_pGeometryManager->CreateBox();
-					mBoneBox[ itBone->first ] = pBox;
-				}
-				mBoneBox[ itBone->first ]->AddPoint( v );
-			}
-		}
 	}
 }
 
@@ -519,74 +387,6 @@ void CBinaryMeshMaxExporter::StoreMeshToMeshInfos( Interface* pInterface, INode*
 	}
 }
 
-void CBinaryMeshMaxExporter::GetFacesMtlArray( Mesh& oMesh, std::vector< unsigned short >& vMtlIDArray )
-{
-	MtlID id0 = oMesh.faces[ 0 ].getMatID();
-	for ( int iFace = 0; iFace < oMesh.getNumFaces(); iFace++ )
-	{
-		int nID = oMesh.faces[ iFace ].getMatID();
-		vMtlIDArray.push_back( nID );
-	}
-}
-
-void CBinaryMeshMaxExporter::GetNormals( Mesh& oMesh, std::vector< float >& vFaceNormal, std::vector< float >& vVertexNormal )
-{
-	vector<int> vIndex;
-	float fNormalFactor = 1.f;
-	if( m_bFlipNormals )
-	{
-		fNormalFactor = -1;
-		vIndex.push_back( 1 );
-		vIndex.push_back( 0 );
-		vIndex.push_back( 2 );
-	}
-	else
-	{
-		vIndex.push_back( 0 );
-		vIndex.push_back( 1 );
-		vIndex.push_back( 2 );
-	}
-	CMatrix mTransform( -1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1 );
-	for ( int iFaceNormal = 0; iFaceNormal < oMesh.getNumFaces(); iFaceNormal++ )
-	{
-		Point3& oNormal = oMesh.getFaceNormal( iFaceNormal );
-		vFaceNormal.push_back( fNormalFactor * oNormal.x );
-		vFaceNormal.push_back( fNormalFactor * oNormal.y );
-		vFaceNormal.push_back( fNormalFactor * oNormal.z );
-		Face& f = oMesh.faces[ iFaceNormal ];
-		for ( int vx = 0; vx < 3; vx++ )
-		{
-			Point3& oVertexNormal = GetVertexNormal( oMesh, iFaceNormal, oMesh.getRVertPtr( f.getVert( vIndex[ vx ] ) ) );
-			vVertexNormal.push_back( fNormalFactor * oVertexNormal.x );
-			vVertexNormal.push_back( fNormalFactor * oVertexNormal.y );
-			vVertexNormal.push_back( fNormalFactor * oVertexNormal.z );
-		}
-	}
-}
-
-void CBinaryMeshMaxExporter::GetMaterialTextureName( Mtl* pMaterial, string& sTextureName, int nMapIndex ) const
-{
-	Texmap* pTexmap = pMaterial->GetSubTexmap( nMapIndex );
-	if ( pTexmap )
-	{
-		BitmapTex* pTexture = ( BitmapTex* ) pTexmap;
-		if ( pTexture )
-		{
-			if(pTexture->GetMapName() == nullptr) {
-				exception e("Texture invalide");
-				throw e;
-			}
-			wstring wTexture(pTexture->GetMapName());
-			string sTexture(wTexture.begin(), wTexture.end());
-			sTextureName = sTexture;
-			int nLastSlashPos = (int)sTextureName.find_last_of( "\\" );
-			sTextureName = sTextureName.substr( nLastSlashPos + 1, sTextureName.size() - nLastSlashPos );
-		}
-	}
-	if ( sTextureName.size() == 0 )
-		sTextureName = "NONE";
-}
-
 void CBinaryMeshMaxExporter::UpdateVersionFile( string sVersion )
 {	
 	string sFileVersionPath = "version.ver";
@@ -612,86 +412,6 @@ bool CBinaryMeshMaxExporter::DumpModels( const string& sFilePath, ILoader::CAnim
 	amd.m_sFileVersion = sVersion;
 	m_pLoaderManager->Export( sFilePath, amd );
 	return bRet;
-}
-
-void CBinaryMeshMaxExporter::StoreMaxMaterialToMaterialInfos( Mtl* pMaterial, ILoader::CMaterialInfos& mi )
-{
-	m_nMaterialCount++;
-	StoreMaxColorToVector( pMaterial->GetAmbient(), mi.m_vAmbient );
-	StoreMaxColorToVector( pMaterial->GetDiffuse(), mi.m_vDiffuse );
-	StoreMaxColorToVector( pMaterial->GetSpecular(), mi.m_vSpecular );
-	mi.m_fShininess = pMaterial->GetShininess() * 128.f;
-	wstring wName(pMaterial->GetName());
-	string sName(wName.begin(), wName.end());
-	mi.m_sName = sName;
-	GetMaterialTextureName( pMaterial, mi.m_sDiffuseMapName, 1 );
-	int nMtlCount = 0, iMtl = 0;
-	Mtl* pSubMtl = NULL;
-	while( pSubMtl = pMaterial->GetSubMtl( iMtl++ ) )nMtlCount++;
-	mi.m_vSubMaterials.resize( nMtlCount );
-	for( iMtl = 0; iMtl < nMtlCount; iMtl++ )
-	{
-		MSTR sSlotName = pMaterial->GetSubMtlSlotName( iMtl );
-		int nID = (int)( sSlotName[ 1 ] - '0' );
-		pSubMtl = pMaterial->GetSubMtl( iMtl );
-		StoreMaxMaterialToMaterialInfos( pSubMtl, mi.m_vSubMaterials[ iMtl ] );
-	}
-}
-
-void CBinaryMeshMaxExporter::StoreMaxColorToVector( const Color c, vector< float >& v )
-{
-	v.push_back( c.r );
-	v.push_back( c.g );
-	v.push_back( c.b );
-	v.push_back( 1 );
-}
-
-Point3 CBinaryMeshMaxExporter::GetVertexNormal( Mesh& oMesh, int faceNo, RVertex* rv )
-{
-	Face& f = oMesh.faces[faceNo];
-	DWORD smGroup = f.smGroup;
-	if ( m_nCurrentSmGroup == -1 )
-		m_nCurrentSmGroup = smGroup;
-	else
-		if ( m_nCurrentSmGroup != smGroup )
-			m_bMultipleSmGroup = true;
-	int numNormals = 0;
-	Point3 vertexNormal;
-	
-	// Is normal specified
-	// SPCIFIED is not currently used, but may be used in future versions.
-	if ( rv->rFlags & SPECIFIED_NORMAL) 
-		vertexNormal = rv->rn.getNormal();
-
-	// If normal is not specified it's only available if the face belongs
-	// to a smoothing group
-	else if ( ( numNormals = rv->rFlags & NORCT_MASK) != 0 && smGroup ) 
-	{
-		// If there is only one vertex is found in the rn member.
-		if ( numNormals == 1 ) 
-		{
-			vertexNormal = rv->rn.getNormal();
-		}
-		else 
-		{
-			// If two or more vertices are there you need to step through them
-			// and find the vertex with the same smoothing group as the current face.
-			// You will find multiple normals in the ern member.
-			for (int i = 0; i < numNormals; i++) 
-			{
-				if (rv->ern[i].getSmGroup() & smGroup) 
-				{
-					vertexNormal = rv->ern[i].getNormal();
-				}
-			}
-		}
-	}
-	else 
-	{
-		// Get the normal from the Face if no smoothing groups are there
-		vertexNormal = oMesh.getFaceNormal(faceNo);
-	}
-	return vertexNormal;
 }
 
 void CBinaryMeshMaxExporter::StoreSkeletonToSkeletonMap( const map< int, INode* >& mNodeID, ILoader::CAnimatableMeshData& ami )

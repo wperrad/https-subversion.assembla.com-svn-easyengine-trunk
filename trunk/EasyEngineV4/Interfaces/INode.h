@@ -28,6 +28,7 @@ public:
 	virtual void                		SetLocalPosition(const CVector& vPos) = 0;
   	virtual void                		SetWorldPosition(float x, float y , float z) = 0;
 	virtual void						GetWorldPosition(CVector& vPosition) const = 0;
+	virtual void						GetLocalPosition(CVector& vPosition) const = 0;
 	virtual void						SetLocalMatrix( const CMatrix& oMat ) = 0;
 	virtual void						GetLocalMatrix( CMatrix& oMat ) const = 0;
 	virtual const CMatrix&				GetLocalMatrix() const = 0;

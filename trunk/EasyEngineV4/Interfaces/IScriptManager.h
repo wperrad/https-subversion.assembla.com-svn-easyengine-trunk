@@ -13,6 +13,7 @@ using namespace std;
 
 struct IScriptFuncArg
 {
+	virtual ~IScriptFuncArg() = 0 {}
 };
 
 struct CScriptFuncArgInt : public IScriptFuncArg

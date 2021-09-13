@@ -693,7 +693,7 @@ IMesh* CRessourceManager::CreatePlane2(int slices, int size, float height, strin
 	if (!m_pCollisionManager)
 		m_pCollisionManager = static_cast<ICollisionManager*>(m_oInterface.GetPlugin("CollisionManager"));
 	IBox* pBox = m_oGeometryManager.CreateBox();
-	pBox->Set(CVector(-size / 2.f, 0.f, -size / 2.f), CVector(size, height, size));
+	pBox->Set(CVector(-size / 2.f, -height /2.f, -size / 2.f), CVector(size, height, size));
 	int hmID = m_pCollisionManager->LoadHeightMap(heightTexture, pBox);
 	IHeightMap* pHeightMap = m_pCollisionManager->GetHeightMap(hmID);
 	ILoader::CMeshInfos mi;
@@ -734,7 +734,7 @@ IMesh* CRessourceManager::CreatePlane2(int slices, int size, float height, strin
 	
 	mi.m_bCanBeIndexed = true;
 	mi.m_pBoundingBox = m_oGeometryManager.CreateBox();
-	mi.m_pBoundingBox->Set(CVector(-(float)size / 2.f, 0.f, -(float)size / 2.f), CVector(size, 0, size));
+	mi.m_pBoundingBox = pBox;
 
 	mi.m_oMaterialInfos.m_sDiffuseMapName = diffuseTexture;
 

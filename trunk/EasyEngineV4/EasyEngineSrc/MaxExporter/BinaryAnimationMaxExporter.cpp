@@ -36,62 +36,7 @@ const TCHAR* CBinaryAnimationMaxExporter::Ext( int n )
 
 CBinaryAnimationMaxExporter::CBinaryAnimationMaxExporter()
 {
-}
-
-CBinaryAnimationMaxExporter* g_pExporter = NULL;
-
-INT_PTR CALLBACK CBinaryAnimationMaxExporter::OnExportAnim(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-	wchar_t pFirst[ 16 ], pLast[ 16 ];
-
-	wstring wFirst, wLast, wText, wText2;
-	string sFirst, sLast, sText, sText2;
-
-	HWND hFirst = GetDlgItem( hWnd, ID_EDITFIRST );
-	HWND hLast = GetDlgItem( hWnd, ID_EDITLAST );
-	ostringstream oss;
-
-	switch( msg )
-	{
-	case WM_INITDIALOG:
-		g_pExporter = (CBinaryAnimationMaxExporter*)lParam;
-		CenterWindow( hWnd, GetParent( hWnd ) );
-		oss << g_pExporter->m_nAnimationStart;
-		sText = oss.str().c_str();
-		wText.assign(sText.begin(), sText.end());
-		SetWindowText( hFirst, wText.c_str());
-		oss.str( "" );
-		oss << g_pExporter->m_nAnimationEnd;
-		sText2.assign(oss.str().c_str());
-		wText2.assign(sText2.begin(), sText2.end());
-		SetWindowText( hLast, wText2.c_str() );
-		break;
-	case WM_CLOSE:
-		EndDialog( hWnd, 0 );
-		break;
-	case WM_COMMAND:
-		switch( wParam )
-		{
-		case IDEXPORTANIM:
-			GetWindowText( hFirst, pFirst, 16 );
-			GetWindowText( hLast, pLast, 16 );
-
-			wFirst = pFirst;
-			wLast = pLast;
-			sFirst.assign(wFirst.begin(), wFirst.end());
-			sLast.assign(wLast.begin(), wLast.end());
-			g_pExporter->m_nExportAnimationStart = atoi(sFirst.c_str());
-			g_pExporter->m_nExportAnimationEnd = atoi(sLast.c_str());
-			EndDialog( hWnd, 1 );
-			break;
-		case IDCANCELANIM:
-			//g_pExporter->m_bCancelExport = true;
-			EndDialog( hWnd, 0 );
-			break;
-		}
-		break;
-	}
-	return 0;
+	s_pExporter = this;
 }
 
 int CBinaryAnimationMaxExporter::DoExport(const TCHAR* pName,ExpInterface *ei, Interface *pInterface, BOOL suppressPrompts, DWORD options )
@@ -108,8 +53,8 @@ int CBinaryAnimationMaxExporter::DoExport(const TCHAR* pName,ExpInterface *ei, I
 		GetBoneByID( mBones, mBoneIDByName, mBoneByID );
 
 		
-		m_nExportAnimationStart = m_nAnimationStart = pInterface->GetAnimRange().Start() / g_nTickPerFrame;
-		m_nExportAnimationEnd = m_nAnimationEnd = pInterface->GetAnimRange().End() / g_nTickPerFrame;
+		m_nAnimationStart = m_nAnimationStart = pInterface->GetAnimRange().Start() / g_nTickPerFrame;
+		m_nAnimationEnd = m_nAnimationEnd = pInterface->GetAnimRange().End() / g_nTickPerFrame;
 
 		if( DialogBoxParam( hInstance, MAKEINTRESOURCE( IDD_ANIMEXPORT ), pInterface->GetMAXHWnd(), OnExportAnim, (LPARAM)this ) == 1 )
 		{
@@ -180,8 +125,8 @@ void CBinaryAnimationMaxExporter::GetBoneByID( const map< string, INode* >& mBon
 void CBinaryAnimationMaxExporter::DumpAnimation( string sFilePath, const map< int, vector< CKey > >& mBones )
 {
 #pragma message ("Exporter de la même maniere que les mesh et gérer les versions de fichiers")
-	int iStartTime = m_nExportAnimationStart * g_nTickPerFrame;
-	int iEndTime = m_nExportAnimationEnd * g_nTickPerFrame;
+	int iStartTime = m_nAnimationStart * g_nTickPerFrame;
+	int iEndTime = m_nAnimationEnd * g_nTickPerFrame;
 
 	CBinaryFileStorage fs;
 	

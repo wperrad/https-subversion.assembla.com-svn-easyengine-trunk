@@ -74,6 +74,7 @@ public:
 	void								SetLength(int length) override;
 	void								SetHeight(float height) override;
 	void								SetHMFile(string sHMFile) override;
+	void								DeleteTempDirectories() override;
 
 
 private:
@@ -82,6 +83,7 @@ private:
 	ICollisionManager&					m_oCollisionManager;
 	IRessourceManager&					m_oRessourceManager;
 	IPathFinder&						m_oPathFinder;
+	IFileSystem&						m_oFileSystem;
 	int									m_nHeightMapID;
 	string								m_sCollisionFileName;
 	string								m_sHMFileName;

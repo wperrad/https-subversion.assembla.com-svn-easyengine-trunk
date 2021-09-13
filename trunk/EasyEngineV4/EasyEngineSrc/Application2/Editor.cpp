@@ -45,7 +45,8 @@ m_bDisplayPickingRay(false)
 	ISceneManager* pSceneManager = static_cast<ISceneManager*>(s_pEngineInterface->GetPlugin("SceneManager"));
 	m_pScene = pSceneManager->GetScene("Game");
 	m_pScene->SetLoadRessourceCallback(OnSceneLoadRessource, this);
-	m_sTmpAdaptedHeightMapFileName = "/tmp/HMA_tmp.bmp";
+	m_sTmpFolder = "levels/tmp";
+	m_sTmpAdaptedHeightMapFileName = "/" + m_sTmpFolder + "/HMA_tmp.bmp";
 }
 
 void CEditor::SetEditionMode(bool bEditionMode)
@@ -366,7 +367,7 @@ void CEditor::UpdateGround()
 		string root;
 		m_oFileSystem.GetLastDirectory(root);
 		WIN32_FIND_DATA wfd;
-		string tmpFolder = "/tmp";
+		string tmpFolder = "/" + m_sTmpFolder;
 		string tmpPath = root + tmpFolder;
 		HANDLE hLevelFolder = m_oFileSystem.FindFirstFile_EE(tmpPath, wfd);
 		bool folderCreated = hLevelFolder != INVALID_HANDLE_VALUE;
@@ -436,15 +437,18 @@ void CEditor::SaveLevel(string levelName)
 		else {
 			string root;
 			m_oFileSystem.GetLastDirectory(root);
-			string srcFile = root + m_sTmpAdaptedHeightMapFileName;
+			string srcPath = root + m_sTmpAdaptedHeightMapFileName;
 			string newHMFile = "/levels/" + levelName + "/HMA_" + levelName + ".bmp";
 			string destPath = levelFolder + "HMA_" + levelName + ".bmp";
 			m_pScene->SetHMFile(newHMFile);
-			if(!MoveFileA(srcFile.c_str(), destPath.c_str())) {
+			if(!MoveFileA(srcPath.c_str(), destPath.c_str())) {
 				if (!m_pHeightMap)
 					m_pHeightMap = m_oCollisionManager.GetHeightMap(m_pScene->GetCurrentHeightMapIndex());
 				m_pHeightMap->Save(destPath);
 			}
+			srcPath = root + "/" + m_sTmpFolder + "/ground.bme";;
+			destPath = levelFolder + "ground.bme";
+			MoveFileA(srcPath.c_str(), destPath.c_str());
 		}
 		m_pScene->Export(levelFolder + levelName + ".bse");
 	}

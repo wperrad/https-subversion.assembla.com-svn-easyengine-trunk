@@ -90,10 +90,11 @@ public:
 	virtual void				DrawBoundingBox( bool bDraw ) = 0;
 	virtual void				SetShader( IShader* pShader ) = 0;
 	virtual IGeometry*			GetBoundingGeometry() = 0;
+	virtual void				SetRessource(string sFileName, bool bDuplicate = false) = 0;
 	virtual IRessource*			GetRessource() = 0;
+	virtual void				SetDiffuseTexture(string sFileName) = 0;
 	virtual void				SetWeight( float fWeight ) = 0;
 	virtual float				GetWeight() = 0;
-	virtual void				SetRessource( string sFileName, bool bDuplicate = false ) = 0;
 	virtual void				AddAnimation( std::string sAnimationFile ) = 0;
 	virtual void				SetCurrentAnimation( std::string sAnimation ) = 0;
 	virtual IAnimation*			GetCurrentAnimation() = 0;
@@ -118,6 +119,8 @@ public:
 	virtual void				Colorize(float r, float g, float b, float a) = 0;
 	virtual void				SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) = 0;
 	virtual void				LinkDummyParentToDummyEntity(IEntity* pEntity, string sDummyName) = 0;
+	virtual void				AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback) = 0;
+	virtual void				DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback) = 0;
 };
 
 class IScene : virtual public IEntity
@@ -142,6 +145,7 @@ public:
 	virtual void				SetLength(int length) = 0;
 	virtual void				SetHeight(float height) = 0;
 	virtual void				SetHMFile(string sHMFile) = 0;
+	virtual void				DeleteTempDirectories() = 0;
 };
 
 class IFighterEntityInterface

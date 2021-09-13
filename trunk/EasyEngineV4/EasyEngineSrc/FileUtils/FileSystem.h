@@ -28,6 +28,7 @@ public:
 	HANDLE		FindFirstFile_EE( const std::string& sMask, WIN32_FIND_DATAA& data ) const;
 	void		GetLastDirectory( std::string& sRootDirectory ) const;
 	string		GetName() override;
+	bool		DeleteDirectory(string dir) override;
 };
 
 extern "C" _declspec(dllexport) IFileSystem* CreateFileSystem(EEInterface& oInterface);

@@ -32,10 +32,14 @@ bool CBinaryFileStorage::OpenFile( string sFileName, TOpenMode mode )
 	if( m_pFile )
 		fclose( m_pFile );
 	string sMode;
-	if( mode == eRead )
+	if (mode == eRead)
 		sMode = "r";
-	else if( mode == eWrite )
+	else if (mode == eWrite)
 		sMode = "w";
+	else if (mode == eAppend)
+		sMode = "a";
+	else if (mode == eReadWrite)
+		sMode = "r+";
 	sMode += "b";
 	m_pFile = fopen( sFileName.c_str(), sMode.c_str() );
 	return m_pFile != NULL;

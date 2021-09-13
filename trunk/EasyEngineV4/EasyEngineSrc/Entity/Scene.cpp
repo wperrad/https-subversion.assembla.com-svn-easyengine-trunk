@@ -12,6 +12,7 @@
 #include "Utils2/StringUtils.h"
 #include "Utils2/TimeManager.h"
 #include "IPathFinder.h"
+#include "IFileSystem.h"
 #include "EntityManager.h"
 #include "MobileEntity.h"
 #include "MapEntity.h"
@@ -44,6 +45,7 @@ CScene::CScene(EEInterface& oInterface, string ressourceFileName, string diffuse
 	m_oCollisionManager(static_cast<ICollisionManager&>(*oInterface.GetPlugin("CollisionManager"))),
 	m_oRessourceManager(static_cast<IRessourceManager&>(*oInterface.GetPlugin("RessourceManager"))),
 	m_oPathFinder(static_cast<IPathFinder&>(*oInterface.GetPlugin("PathFinder"))),
+	m_oFileSystem(static_cast<IFileSystem&>(*oInterface.GetPlugin("FileSystem"))),
 	m_nHeightMapID(-1),
 	m_bCollisionMapCreated(true),
 	m_bHeightMapCreated(true),
@@ -125,18 +127,28 @@ void CScene::SetRessource(string sFileName, bool bDuplicate)
 		int sliceCount = m_nMapLength / 500;
 		string levelFileName = m_sHMFileName.substr(m_sHMFileName.find_last_of("/HMA_") + 1);
 		string levelName = levelFileName.substr(0, levelFileName.find('.'));
-		string levelPath = string("/levels/") + levelName + "/" + levelName + ".bme";
+		string levelPath = string("/levels/") + levelName + "/ground.bme";
 		try {
 			IAnimatableMesh* pAnimatableMesh = dynamic_cast<IAnimatableMesh*>(m_oRessourceManager.GetRessource(levelPath));
 			m_pRessource = pAnimatableMesh->GetMesh(0);
 		}
 		catch (CFileException& e) {
-			m_pRessource = m_oRessourceManager.CreatePlane2(sliceCount, m_nMapLength, m_fMapHeight, m_sHMFileName, m_sDiffuseFileName);
-			string levelFullPath = string("../Data") + levelPath;
-			if (!CopyFileA("../Data/tmp/Ground.bme", levelFullPath.c_str(), false)) {
-				CFileException e("Impossible de copier le fichier");
-				e.m_sFileName = "../Data/tmp/Ground.bme";
-				throw e;
+			string directoryPath = "/levels/tmp";
+			levelPath = directoryPath + "/ground.bme";
+			try {
+				IAnimatableMesh* pAnimatableMesh = dynamic_cast<IAnimatableMesh*>(m_oRessourceManager.GetRessource(levelPath));
+				m_pRessource = pAnimatableMesh->GetMesh(0);
+			}
+			catch (CFileException& e) {
+				string directoryFullPath = string("../Data") + directoryPath;
+				string levelFullPath = string("../Data") + levelPath;
+				CreateDirectoryA(directoryFullPath.c_str(), nullptr);
+				m_pRessource = m_oRessourceManager.CreatePlane2(sliceCount, m_nMapLength, m_fMapHeight, m_sHMFileName, m_sDiffuseFileName);
+				if (!CopyFileA("../Data/tmp/Ground.bme", levelFullPath.c_str(), false)) {
+					CFileException e("Impossible de copier le fichier");
+					e.m_sFileName = "../Data/tmp/Ground.bme";
+					throw e;
+				}
 			}
 		}
 	}
@@ -156,12 +168,6 @@ void CScene::SetRessource(string sFileName, bool bDuplicate)
 		IBox* pBox = pMesh->GetBBox();
 		m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pBox);
 		m_oCollisionManager.SetGroundBoxHeight(m_nHeightMapID, m_fMapHeight);
-		if (m_bUseDisplacementMap) {
-			IBox* groundBox = m_oCollisionManager.GetGroundBox(m_nHeightMapID);
-			CVector minPoint = groundBox->GetMinPoint();
-			minPoint.m_y -= m_fMapHeight / 2.f;
-			groundBox->SetMinPoint(minPoint);
-		}
 	}
 	catch( CFileNotFoundException& )
 	{
@@ -345,6 +351,13 @@ void CScene::SetHeight(float height)
 void CScene::SetHMFile(string sHMFile)
 {
 	m_sHMFileName = sHMFile;
+}
+
+void CScene::DeleteTempDirectories()
+{
+	string root;
+	m_oFileSystem.GetLastDirectory(root);
+	m_oFileSystem.DeleteDirectory(root + "/Levels/Tmp");
 }
 
 void  CScene::RenderScene()

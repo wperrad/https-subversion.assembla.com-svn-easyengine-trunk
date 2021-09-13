@@ -48,9 +48,11 @@ extern IGeometryManager*	m_pGeometryManager;
 extern bool					m_bRenderScene;
 extern IEventDispatcher*	m_pEventDispatcher;
 extern CEditor*				m_pEditor;
+extern int					g_nSlotPosition;
 
 IEntity* m_pRepere = NULL;
 vector< string > g_vStringsResumeMode;
+map<IEntity*, int> g_mEntityPositionLine;
 
 enum TObjectType
 {
@@ -68,7 +70,7 @@ struct CNodeInfos
 	int		m_nID;
 };
 
-IEntity* LoadEntity( string sName )
+IEntity* CreateEntity( string sName )
 {
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException( false );
@@ -1977,6 +1979,14 @@ void SetSceneMap( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
+void SetEntityTexture(IScriptState* pState)
+{
+	CScriptFuncArgInt* pId = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(0));
+	CScriptFuncArgString* pTextureName = dynamic_cast<CScriptFuncArgString*>(pState->GetArg(1));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pId->m_nValue);
+	pEntity->SetDiffuseTexture(pTextureName->m_sValue);
+}
+
 void SetEntityWeight( IScriptState* pState )
 {
 	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
@@ -2323,9 +2333,10 @@ void GetNodeInfos( INode* pNode, int nLevel = 0 )
 			pEntity->GetName(sEntityName);
 		sLine << "Entity name = " << sEntityName << ", ID = " << m_pEntityManager->GetEntityID(pEntity);
 		g_vStringsResumeMode.push_back(sLine.str());
+		/*
 		INode* pSkeleton = pEntity->GetSkeletonRoot();
 		if( pSkeleton )
-			GetNodeInfos( pSkeleton );
+			GetNodeInfos( pSkeleton );*/
 	}
 	for( unsigned int i = 0; i < pNode->GetChildCount(); i++ )
 		GetNodeInfos( pNode->GetChild( i ), nLevel + 1 );
@@ -2416,8 +2427,15 @@ void DisplayBBox( IScriptState* pState )
 	CScriptFuncArgInt* pID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
 	CScriptFuncArgInt* pDraw = static_cast< CScriptFuncArgInt* >( pState->GetArg( 1 ) );
 	IEntity* pEntity = m_pEntityManager->GetEntity( pID->m_nValue );
-	bool bDraw = pDraw->m_nValue == 1 ? true : false;
-	pEntity->DrawBoundingBox( bDraw );
+	if (!pEntity) {
+		ostringstream oss;
+		oss << "Erreur : DisplayBBox(" << pID->m_nValue << ") -> entite " << pID->m_nValue << " introuvable.";
+		m_pConsole->Println(oss.str());
+	}
+	else {
+		bool bDraw = pDraw->m_nValue == 1 ? true : false;
+		pEntity->DrawBoundingBox(bDraw);
+	}
 }
 
 void DisplayBBoxInfos(IScriptState* pState)
@@ -2460,6 +2478,37 @@ void DisplayCamPos( IScriptState* pState )
 	ostringstream oss;
 	oss << vPos.m_x << " , " << vPos.m_y << " , " << vPos.m_z;
 	m_pConsole->Println( oss.str() );
+}
+
+void EntityCallback(CPlugin*, IEventDispatcher::TEntityEvent e, IEntity* pEntity)
+{
+	if (e == IEventDispatcher::TEntityEvent::T_UPDATE) {
+		CVector pos;
+		pEntity->GetLocalPosition(pos);
+		ostringstream oss;
+		oss << "Entity " << pEntity->GetID() << ", Position = (" << pos.m_x << ", " << pos.m_y << ", " << pos.m_z << ")";
+		m_pHud->PrintInSlot(g_nSlotPosition, g_mEntityPositionLine[pEntity], oss.str());
+		FILE* pFile = fopen("log.txt", "a");
+		oss << "\n";
+		fwrite(oss.str().c_str(), sizeof(char), oss.str().size(), pFile);
+		fclose(pFile);
+	}
+}
+
+void WatchEntityPosition(IScriptState* pState)
+{
+	CScriptFuncArgInt* pId = dynamic_cast<CScriptFuncArgInt*>((pState->GetArg(0)));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pId->m_nValue);
+	int i = 0;
+	pEntity->AbonneToEntityEvent(EntityCallback);
+}
+
+void StopWatchEntityPosition(IScriptState* pState)
+{
+	CScriptFuncArgInt* pId = dynamic_cast<CScriptFuncArgInt*>((pState->GetArg(0)));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pId->m_nValue);
+	int i = 0;
+	pEntity->DeabonneToEntityEvent(EntityCallback);
 }
 
 void SetCamPos( IScriptState* pState )
@@ -2527,7 +2576,7 @@ void GenerateAssemblerListing(IScriptState* pState)
 	m_pScriptManager->GenerateAssemblerListing(pEnable->m_nValue);
 }
 
-void LoadEntity( IScriptState* pState )
+void CreateEntity( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
 	string sName = pName->m_sValue;
@@ -2936,6 +2985,11 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eInt);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("SetEntityTexture", SetEntityTexture, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("GenerateAssemblerListing", GenerateAssemblerListing, vType);
 
 	vType.clear();
@@ -3088,7 +3142,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eString );
-	m_pScriptManager->RegisterFunction( "LoadEntity", LoadEntity, vType );
+	m_pScriptManager->RegisterFunction( "CreateEntity", CreateEntity, vType );
 
 	vType.clear();
 	m_pScriptManager->RegisterFunction( "cls", cls, vType );
@@ -3247,6 +3301,13 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back( eFloat );
 	m_pScriptManager->RegisterFunction( "SetCamPos", SetCamPos, vType );
 
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("WatchEntityPosition", WatchEntityPosition, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("StopWatchEntityPosition", StopWatchEntityPosition, vType);
 
 	vType.clear();
 	vType.push_back( eString );

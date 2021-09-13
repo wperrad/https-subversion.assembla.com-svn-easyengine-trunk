@@ -11,8 +11,6 @@ class CBinaryAnimationMaxExporterClassDesc : public CMaxExporterClassDesc
 	Class_ID	ClassID();
 };
 
-const int g_nTickPerFrame = 160;
-
 class CBinaryAnimationMaxExporter : public CMaxExporter
 {
 	void			GetBonesIDByName( INode* pRoot, std::map< std::string, int >& mBoneIDByName ) const;
@@ -22,13 +20,7 @@ class CBinaryAnimationMaxExporter : public CMaxExporter
 	static void		DumpAngleAxis( IFileStorage& fs, const AngAxis& a );
 	static void		GetSkeleton( INode* pRoot, std::map< std::string, INode* >& mBone );
 
-	static INT_PTR CALLBACK OnExportAnim(HWND, UINT, WPARAM, LPARAM );
-
 public:
-	int			m_nExportAnimationStart;
-	int			m_nExportAnimationEnd;
-	TimeValue	m_nAnimationStart;
-	TimeValue	m_nAnimationEnd;
 
 	CBinaryAnimationMaxExporter();
 	int			ExtCount();

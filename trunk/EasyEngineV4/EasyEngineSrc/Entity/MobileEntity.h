@@ -65,7 +65,7 @@ protected:
 	ISphere*				GetBoneSphere( string sBoneName );
 	void					AddSpeed(float x, float y, float z);
 	const string&			GetAttackBoneName();
-	void					DisplayPlayerPosition();
+	IGeometry*				GetBoundingGeometry() override;
 
 	static void				OnWalkAnimationCallback( IAnimation::TEvent e, void* pEntity );
 	static void 			Walk( CMobileEntity*, bool bLoop );

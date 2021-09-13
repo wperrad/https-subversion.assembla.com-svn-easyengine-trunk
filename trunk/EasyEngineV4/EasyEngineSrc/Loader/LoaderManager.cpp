@@ -18,6 +18,7 @@
 #include "BKELoader.h"
 #include "BSELoader.h"
 #include "ColLoader.h"
+#include "BBoxLoader.h"
 #include "IFileSystem.h"
 #include "IGeometry.h"
 
@@ -35,6 +36,7 @@ m_oFileSystem(static_cast<IFileSystem&>(*oInterface.GetPlugin("FileSystem")))
 	m_mLoaderByExtension[ "bke" ] = new CBKELoader(m_oFileSystem);
 	m_mLoaderByExtension[ "bse" ] = new CBSELoader(m_oFileSystem);
 	m_mLoaderByExtension[ "col" ] = new CColLoader(static_cast<IGeometryManager&>(*oInterface.GetPlugin("GeometryManager")));
+	m_mLoaderByExtension[ "bbox"] = new CBBoxLoader(m_oFileSystem, static_cast<IGeometryManager&>(*oInterface.GetPlugin("GeometryManager")));
 }
 
 CLoaderManager::~CLoaderManager()
