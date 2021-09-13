@@ -39,7 +39,9 @@ public:
 	enum TOpenMode
 	{
 		eRead = 0,
-		eWrite
+		eWrite,
+		eReadWrite,
+		eAppend
 	};
 
 	IFileStorage();

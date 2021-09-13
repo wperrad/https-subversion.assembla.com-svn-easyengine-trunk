@@ -113,26 +113,15 @@ void CMobileEntity::ManageGravity()
 	}
 }
 
-void CMobileEntity::DisplayPlayerPosition()
-{
-	string sEntityName;
-	GetEntityName(sEntityName);
-	if (sEntityName.find("perso") != -1) {
-		CVector pos;
-		GetWorldPosition(pos);
-		ostringstream oss;
-		oss << "Perso position = (" << pos.m_x << ", " << pos.m_y << ", " << pos.m_z << ")";
-		m_pEntityManager->GetGUIManager()->Print(oss.str(), 1000, 10);
-	}
-}
-
 void CMobileEntity::Update()
 {
 	ManageGravity();
 	UpdateCollision();
 
-	if (m_pCurrentAnimation)
+	if (m_pCurrentAnimation) {
 		m_pCurrentAnimation->Update();
+		m_pBoundingGeometry = GetBoundingGeometry();
+	}
 
 	UpdateWorldMatrix();
 	UpdateChildren();
@@ -146,7 +135,27 @@ void CMobileEntity::Update()
 		UpdateBoundingBox();
 
 	m_vNextLocalTranslate.Fill(0, 0, 0, 1);
-	DisplayPlayerPosition();
+	DispatchEntityEvent();
+}
+
+IGeometry* CMobileEntity::GetBoundingGeometry()
+{
+	string sAnimationName;
+	m_pCurrentAnimation->GetName(sAnimationName);
+	sAnimationName = sAnimationName.substr(sAnimationName.find_last_of("/") + 1);
+	int time = m_pCurrentAnimation->GetAnimationTime();
+	int key = (time / 160) * 160;
+	map<int, IBox*>::iterator itBox = m_oKeyBoundingBoxes[sAnimationName].find(key);
+	while (itBox == m_oKeyBoundingBoxes[sAnimationName].end() && key < m_pCurrentAnimation->GetEndAnimationTime()) {
+		key += 160;
+		itBox = m_oKeyBoundingBoxes[sAnimationName].find(key);
+	}
+	if (itBox == m_oKeyBoundingBoxes[sAnimationName].end()) {
+		ostringstream oss;
+		oss << "CMobileEntity::Update() : mKeyBoundingBoxes[" << sAnimationName << "][" << key << "] introuvable poue le model " << m_sName;
+		throw CEException(oss.str());
+	}
+	return (IBox*)itBox->second;
 }
 
 void CMobileEntity::UpdateCollision()
@@ -571,8 +580,5 @@ CMatrix& CMobileEntity::GetWorldTM()
 
 IBox* CMobileEntity::GetBoundingBox()
 {
-	IMesh* pMesh = GetMesh();
-	string sAnimationName;
-	m_pCurrentAnimation->GetName( sAnimationName );
-	return pMesh->GetAnimationBBox( sAnimationName );
+	return (IBox*)m_pBoundingGeometry;
 }

@@ -51,6 +51,9 @@ public:
 	void			ReloadShader();
 	void			SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) {}
 	void			LinkDummyParentToDummyEntity(IEntity* pEntity, string sEntityName) override {}
+	void			AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback) override {}
+	void			DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback) override {}
+	void			SetDiffuseTexture(string sFileName) override {}
 };
 
 #endif // SHAPE_H

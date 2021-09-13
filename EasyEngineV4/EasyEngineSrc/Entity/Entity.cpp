@@ -48,7 +48,8 @@ m_bDrawBoundingBox(false),
 m_pScene(NULL),
 m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL)),
 m_pMesh(nullptr),
-m_bEmptyEntity(false)
+m_bEmptyEntity(false),
+m_pBaseTexture(nullptr)
 {
 	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 }
@@ -79,7 +80,8 @@ m_bDrawBoundingBox(false),
 m_pScene(NULL),
 m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL)),
 m_pMesh(nullptr),
-m_bEmptyEntity(false)
+m_bEmptyEntity(false),
+m_pCustomTexture(nullptr)
 {
 	if( sFileName.size() > 0 )
 	{
@@ -121,6 +123,7 @@ void CEntity::SetRessource( string sFileName, bool bDuplicate )
 		{
 			m_pRessource = pAMesh->GetMesh( 0 );
 			m_pMesh = dynamic_cast< IMesh* >(m_pRessource);
+			m_pBaseTexture = m_pMesh->GetTexture(0);
 			m_pRessource->GetName( m_sName );
 			m_pOrgSkeletonRoot = dynamic_cast<CBone*>(pAMesh->GetSkeleton());
 			if (m_pOrgSkeletonRoot) {
@@ -145,12 +148,24 @@ void CEntity::SetRessource( string sFileName, bool bDuplicate )
 					LinkEntityToBone( pEntity, pParentBone );
 				}
 			}
-			IBox* pAnimationBBox = m_pMesh->GetAnimationBBox("stand");
-			if (pAnimationBBox)
-				m_pBoundingGeometry = pAnimationBBox;
-			else
+			ILoaderManager* pLoaderManager = static_cast<ILoaderManager*>(m_oInterface.GetPlugin("LoaderManager"));
+			string bboxFileName = sFileName.substr(0, sFileName.find(".")) + ".bbox";
+			ILoader::CAnimationBBoxInfos bboxInfos;
+			try {
+				pLoaderManager->Load(bboxFileName, bboxInfos);
+				m_oKeyBoundingBoxes = bboxInfos.mKeyBoundingBoxes;
+				map<string, map<int, IBox*> >::iterator itBoxes = m_oKeyBoundingBoxes.find("stand-normal");
+				if (itBoxes == m_oKeyBoundingBoxes.end()) {
+					ostringstream oss;
+					oss << "Erreur : l'entite '" << sFileName << "' ne possede pas de bounding box pour 'stand-normal'";
+					exception e(oss.str().c_str());
+					throw e;
+				}
+				m_pBoundingGeometry = itBoxes->second.begin()->second;
+			}
+			catch (CFileNotFoundException& e) {
 				m_pBoundingGeometry = m_pMesh->GetBBox();
-
+			}
 			CreateAndLinkCollisionChildren(sFileName);
 		}
 	}
@@ -163,6 +178,11 @@ void CEntity::SetRessource( string sFileName, bool bDuplicate )
 	LoadRessourceCallback callback = m_oPairLoadRessourceCallback.first;
 	if(callback)
 		callback(m_oPairLoadRessourceCallback.second);
+}
+
+void CEntity::SetDiffuseTexture(string sFileName)
+{
+	m_pCustomTexture = m_oRessourceManager.CreateTexture2D(sFileName, true);
 }
 
 void CEntity::CreateAndLinkCollisionChildren(string sFileName)
@@ -318,8 +338,13 @@ void CEntity::UpdateRessource()
 			m_pMesh->SetRenderingType(m_eRenderType);
 			m_pMesh->DrawAnimationBoundingBox(m_bDrawAnimationBoundingBox);
 		}
-		if (m_pRessource)
+		if (m_pRessource) {
+			if (m_pMesh && m_pCustomTexture)
+				m_pMesh->SetTexture(m_pCustomTexture);
 			m_pRessource->Update();
+			if (m_pMesh && m_pCustomTexture)
+				m_pMesh->SetTexture(m_pBaseTexture);
+		}
 		if (m_pMesh)
 			m_pMesh->SetRenderingType(IRenderer::eFill);
 	}
@@ -341,6 +366,15 @@ void CEntity::Update()
 
 	if (m_bDrawBoundingBox && m_pBoundingGeometry)
 		UpdateBoundingBox();
+
+	DispatchEntityEvent();
+}
+
+void CEntity::DispatchEntityEvent()
+{
+	for (int i = 0; i < m_vEntityCallback.size(); i++) {
+		m_vEntityCallback[i](nullptr, IEventDispatcher::TEntityEvent::T_UPDATE, this);
+	}
 }
 
 void CEntity::UpdateBoundingBox()
@@ -809,4 +843,17 @@ void CEntity::SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* 
 {
 	m_oPairLoadRessourceCallback.first = callback;
 	m_oPairLoadRessourceCallback.second = plugin;
+}
+
+void CEntity::AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback)
+{
+	m_vEntityCallback.push_back(callback);
+}
+
+void CEntity::DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback)
+{
+	vector<IEventDispatcher::TEntityCallback>::iterator it = std::find(m_vEntityCallback.begin(), m_vEntityCallback.end(), callback);
+	if (it != m_vEntityCallback.end()) {
+		m_vEntityCallback.erase(it);
+	}
 }

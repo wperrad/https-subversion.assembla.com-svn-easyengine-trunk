@@ -132,11 +132,13 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,200,23,50,14
     CONTROL         "Flip normals",IDC_CHECKFLIPNORMALS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,15,53,10
     CONTROL         "OpenGL coordinates",IDC_CHECKOPENGLCOORD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,30,81,10
-	CONTROL         "OpenGL coordinates 2",IDC_CHECKOPENGLCOORD2, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 16, 45, 87, 10
-	CONTROL         "Skinning", IDC_CHECKSKINNING, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 16, 60, 82, 10
-    CONTROL         "Activer le log",IDC_CHECK_LOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,75,103,10 
-    CONTROL         "Exporter les boites de collision",IDC_CHECKBOUNDINGBOX, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,90,116,10
-    CONTROL         "Exporter la boite de collision a chaque clé",IDC_CHECKEXPORTBBOXATKEY, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,105,169,10    
+    CONTROL         "OpenGL coordinates 2",IDC_CHECKOPENGLCOORD2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,45,87,10
+    CONTROL         "Skinning",IDC_CHECKSKINNING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,60,82,10
+    CONTROL         "Activer le log",IDC_CHECK_LOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,75,103,10
+    CONTROL         "Exporter les boites de collision",IDC_CHECKBOUNDINGBOX,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,90,116,10
+    CONTROL         "Exporter la boite de collision a chaque clé",IDC_CHECKEXPORTBBOXATKEY,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,105,169,10
 END
 
 IDD_ANIMEXPORT DIALOGEX 0, 0, 288, 114
@@ -151,6 +153,7 @@ BEGIN
     EDITTEXT        ID_EDITFIRST,67,44,30,12,ES_AUTOHSCROLL
     EDITTEXT        ID_EDITLAST,120,45,31,12,ES_AUTOHSCROLL
     LTEXT           "To",IDC_STATIC,103,47,14,11
+    EDITTEXT        IDC_EDIT_ANIMNAME,126,76,81,14,ES_AUTOHSCROLL
 END
 
 
@@ -160,6 +163,11 @@ END
 //
 
 IDD_EXPORT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ANIMEXPORT AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
@@ -175,7 +183,7 @@ END
 // Generated from the TEXTINCLUDE 3 resource.
 //
 
-
+//#include "maxversion.r"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED

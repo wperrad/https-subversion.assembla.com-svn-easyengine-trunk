@@ -106,6 +106,11 @@ public:
 		bool						m_bMultiMaterialActivated;
 	};
 
+	struct CAnimationBBoxInfos : public IRessourceInfos
+	{
+		map< string, map< int, IBox* > > mKeyBoundingBoxes;
+	};
+
 	struct CTextureInfos : public IRessourceInfos
 	{
 		vector< unsigned char >			m_vTexels;

@@ -20,14 +20,18 @@
 #define IDC_CHECKSKINNING               1031
 #define IDC_CHECKBOUNDINGBOX            1032
 #define IDC_CHECKEXPORTBBOXATKEY        1033
+#define IDC_COMBOBOXEX1                 1037
+#define IDC_COMBOBOX_ANIMLIST           1037
+#define IDC_EDIT1                       1038
+#define IDC_EDIT_ANIMNAME               1038
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        108
+#define _APS_NEXT_RESOURCE_VALUE        109
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1034
+#define _APS_NEXT_CONTROL_VALUE         1039
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

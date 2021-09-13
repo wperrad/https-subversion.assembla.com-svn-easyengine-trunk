@@ -1,5 +1,9 @@
 #define FILESYSTEM_CPP
 
+#include <Windows.h>
+#include <Shlwapi.h>
+
+
 #include "FileSystem.h"
 
 using namespace std;
@@ -89,6 +93,27 @@ string CFileSystem::GetName()
 {
 	return "FileSystem";
 }
+
+
+bool CFileSystem::DeleteDirectory(string dir)
+{
+	char path[MAX_PATH];
+	ZeroMemory(path, MAX_PATH);
+	strcpy(path, dir.c_str());
+	path[dir.size() + 1] = 0;
+	SHFILEOPSTRUCT shfo = {
+		NULL,
+		FO_DELETE,
+		path,
+		NULL,
+		FOF_SILENT | FOF_NOERRORUI | FOF_NOCONFIRMATION,
+		FALSE,
+		NULL,
+		NULL };
+
+	SHFileOperation(&shfo);
+}
+
 
 extern "C" _declspec(dllexport) IFileSystem* CreateFileSystem(EEInterface& oInterface)
 {

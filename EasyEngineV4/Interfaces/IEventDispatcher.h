@@ -3,6 +3,8 @@
 
 #include "EEPlugin.h"
 
+class IEntity;
+
 class IEventDispatcher : public CPlugin
 {
 protected:
@@ -33,19 +35,27 @@ public:
 		T_WINDOWDESTROY
 	};
 
+	enum TEntityEvent
+	{
+		T_UPDATE = 0
+	};
+
 	typedef void( *TKeyCallback )( CPlugin*, TKeyEvent, int );
 	typedef void( *TMouseCallback )( CPlugin*, TMouseEvent, int, int );
 	typedef void( *TWindowCallback )( CPlugin*, TWindowEvent, int, int );
+	typedef void( *TEntityCallback)( CPlugin*, TEntityEvent, IEntity*);
 
-	virtual void 			AbonneToKeyEvent( CPlugin* pPlugin, TKeyCallback pfnCallback ) = 0;
-	virtual void 			AbonneToMouseEvent( CPlugin* pPlugin, TMouseCallback pfnCallback ) = 0;
-	virtual void 			AbonneToWindowEvent( CPlugin* pPlugin, TWindowCallback pfnCallback ) = 0;
+	virtual void 			AbonneToKeyEvent(CPlugin* pPlugin, TKeyCallback pfnCallback) = 0;
+	virtual void 			AbonneToMouseEvent(CPlugin* pPlugin, TMouseCallback pfnCallback) = 0;
+	virtual void 			AbonneToWindowEvent(CPlugin* pPlugin, TWindowCallback pfnCallback) = 0;
+	virtual void 			AbonneToEntityEvent(CPlugin*, TEntityCallback pfnCallback) = 0;
 	virtual void			DesabonneToMouseEvent(TMouseCallback pfnCallback) = 0;
 	virtual void			DesabonneToWindowEvent(TWindowCallback pfnCallback) = 0;
 
 	virtual void 			DispatchKeyEvent( TKeyEvent, int nKeyCode ) = 0;
 	virtual void 			DispatchMouseEvent( TMouseEvent, int x, int y ) = 0;
 	virtual void			DispatchWindowEvent( TWindowEvent, int nWidth, int nHeight ) = 0;
+	virtual void			DispatchEntityEvent(TEntityEvent e, IEntity* pEntity) = 0;
 
 	virtual void			StopDispatcher() = 0;
 	virtual void			StartDispatcher() = 0;

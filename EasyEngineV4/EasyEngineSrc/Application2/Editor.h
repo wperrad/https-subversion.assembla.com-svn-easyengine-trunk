@@ -88,6 +88,7 @@ private:
 	int								m_nHudLineHeight;
 	string							m_sTmpAdaptedHeightMapFileName;
 	bool							m_bDisplayPickingRay;
+	string							m_sTmpFolder;
 
 	static IEventDispatcher::TKeyEvent	m_eLastKeyEvent;
 

@@ -22,6 +22,11 @@ void CEventDispatcher::AbonneToWindowEvent( CPlugin* pPlugin, TWindowCallback pf
 	m_vWindowAbonnedPlugins.push_back( pair< CPlugin*, TWindowCallback >::pair( pPlugin, pfnCallback ) );
 }
 
+void CEventDispatcher::AbonneToEntityEvent(CPlugin* pPlugin, TEntityCallback pfnCallback)
+{
+	m_vEntityAbonnedPlugins.push_back(pair< CPlugin*, TEntityCallback>::pair(pPlugin, pfnCallback));
+}
+
 void CEventDispatcher::DesabonneToMouseEvent(TMouseCallback pfnCallback)
 {
 	for (vector< pair< CPlugin*, TMouseCallback > >::iterator it = m_vMouseAbonnedPlugins.begin(); it != m_vMouseAbonnedPlugins.end(); it++) {
@@ -71,6 +76,19 @@ void CEventDispatcher::DispatchWindowEvent( TWindowEvent e, int nWidth, int nHei
 		}
 	}
 }
+
+void CEventDispatcher::DispatchEntityEvent(TEntityEvent e, IEntity* pEntity)
+{
+	if (m_bDispatcherWorking) {
+		for (unsigned int i = 0; i < m_vEntityAbonnedPlugins.size(); i++)
+		{
+			CPlugin* pPlugin = m_vEntityAbonnedPlugins[i].first;
+			IEventDispatcher::TEntityCallback callback = m_vEntityAbonnedPlugins[i].second;
+			callback(pPlugin, e, pEntity);
+		}
+	}
+}
+
 
 void CEventDispatcher::StartDispatcher()
 {

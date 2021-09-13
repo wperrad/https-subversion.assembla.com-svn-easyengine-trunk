@@ -155,6 +155,7 @@
     <ClInclude Include="AHMOLoader.h" />
     <ClInclude Include="ASELoader.h" />
     <ClInclude Include="ASMELoader.h" />
+    <ClInclude Include="BBoxLoader.h" />
     <ClInclude Include="BKELoader.h" />
     <ClInclude Include="BMELoader.h" />
     <ClInclude Include="BSELoader.h" />
@@ -170,6 +171,7 @@
     <ClCompile Include="AHMOLoader.cpp" />
     <ClCompile Include="AseLoader.cpp" />
     <ClCompile Include="ASMELoader.cpp" />
+    <ClCompile Include="BBoxLoader.cpp" />
     <ClCompile Include="BKELoader.cpp" />
     <ClCompile Include="BMELoader.cpp" />
     <ClCompile Include="BSELoader.cpp" />
