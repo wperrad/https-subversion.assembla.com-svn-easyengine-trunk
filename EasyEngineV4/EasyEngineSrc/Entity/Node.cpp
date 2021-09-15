@@ -244,6 +244,11 @@ void CNode::GetName( string& sName ) const
 	sName = m_sName;
 }
 
+const string& CNode::GetName() const
+{
+	return m_sName;
+}
+
 void CNode::SetLocalMatrix( const CMatrix& oMat )
 {
 	m_oLocalMatrix = oMat;

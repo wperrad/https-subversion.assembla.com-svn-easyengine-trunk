@@ -822,9 +822,11 @@ void GenerateRandomNPC(IScriptState* pState)
 
 
 	srand((unsigned)time(NULL));
+	ostringstream ossNPCId;	
 
 	for (int i = 0; i < pNPCCount->m_nValue; i++) {
-		IEntity* pEntity = m_pEntityManager->CreateNPC(pNPCFileName->m_sValue, m_pFileSystem);
+		ossNPCId << "NPC_" << i;
+		IEntity* pEntity = m_pEntityManager->CreateNPC(pNPCFileName->m_sValue, m_pFileSystem, ossNPCId.str());
 		pEntity->Link(m_pScene);
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -981,16 +983,17 @@ void CreateLineEntity(IScriptState* pState)
 void CreateNPC( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	string sName = pName->m_sValue;
-	if( sName.find( ".bme" ) == -1 )
-		sName += ".bme";
-	sName = string("Meshes/Bodies/") + sName;
+	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
+	string sFileName = pName->m_sValue;
+	if(sFileName.find( ".bme" ) == -1 )
+		sFileName += ".bme";
+	sFileName = string("Meshes/Bodies/") + sFileName;
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException( false );
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateNPC( sName, m_pFileSystem );
+		IEntity* pEntity = m_pEntityManager->CreateNPC(sFileName, m_pFileSystem, pID->m_sValue);
 		pEntity->Link( m_pScene );
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -1018,13 +1021,19 @@ void CreateNPC( IScriptState* pState )
 	}
 	catch( CEException )
 	{
-		string sMessage = string( "\"" ) + sName + "\" introuvable";
+		string sMessage = string( "\"" ) + sFileName + "\" introuvable";
 		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
-void CreateMapEntity(IScriptState* pState)
+void SaveNPC(IScriptState* pState)
+{
+	CScriptFuncArgString* pId = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	m_pEntityManager->SaveNPC(pId->m_sValue);
+}
+
+void CreateMinimapEntity(IScriptState* pState)
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
 	string sName = pName->m_sValue;
@@ -1035,7 +1044,7 @@ void CreateMapEntity(IScriptState* pState)
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateMapEntity(sName, m_pFileSystem);
+		IEntity* pEntity = m_pEntityManager->CreateMinimapEntity(sName, m_pFileSystem);
 		pEntity->Link(m_pScene);
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -1699,7 +1708,7 @@ void DisplaySceneChilds( IScriptState* pState )
 string g_sBegin;
 void DisplayFonctionList(void* params)
 {
-	int lineCount = m_pConsole->GetClientHeight() / m_pConsole->GetLineHeight();
+	int lineCount = (m_pConsole->GetClientHeight() / m_pConsole->GetLineHeight()) - 4;
 	vector<string>::iterator it = g_vStringsResumeMode.begin();
 	int index = 0;
 	while(it != g_vStringsResumeMode.end())
@@ -2203,7 +2212,7 @@ void AddLight( IScriptState* pState )
 	m_pConsole->Println( oss.str() );
 }
 
-void AddLightw( IScriptState* pState )
+void CreateLightw( IScriptState* pState )
 {
 	CScriptFuncArgString* pType = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* pIntensity = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
@@ -2324,6 +2333,7 @@ void GetNodeInfos( INode* pNode, int nLevel = 0 )
 {
 	IEntity* pEntity = dynamic_cast< IEntity* >( pNode );
 	if( pEntity ) {
+
 		ostringstream sLine;		
 		for( int j = 0; j < nLevel; j++ )
 			sLine << "\t";
@@ -2331,12 +2341,10 @@ void GetNodeInfos( INode* pNode, int nLevel = 0 )
 		pEntity->GetEntityName(sEntityName);
 		if (sEntityName.empty())
 			pEntity->GetName(sEntityName);
-		sLine << "Entity name = " << sEntityName << ", ID = " << m_pEntityManager->GetEntityID(pEntity);
-		g_vStringsResumeMode.push_back(sLine.str());
-		/*
-		INode* pSkeleton = pEntity->GetSkeletonRoot();
-		if( pSkeleton )
-			GetNodeInfos( pSkeleton );*/
+		if (sEntityName.find("CollisionPrimitive") == -1) {
+			sLine << "Entity name = " << sEntityName << ", ID = " << m_pEntityManager->GetEntityID(pEntity);
+			g_vStringsResumeMode.push_back(sLine.str());
+		}
 	}
 	for( unsigned int i = 0; i < pNode->GetChildCount(); i++ )
 		GetNodeInfos( pNode->GetChild( i ), nLevel + 1 );
@@ -2677,12 +2685,11 @@ void LoadLevel( IScriptState* pState )
 void Merge( IScriptState* pState )
 {
 	CScriptFuncArgString* pString = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	CScriptFuncArgString* pType = static_cast< CScriptFuncArgString* >( pState->GetArg( 1 ) );
 	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 3 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 4 ) );
 	
-	m_pScene->Merge(pString->m_sValue, pType->m_sValue, px->m_fValue, py->m_fValue, pz->m_fValue);
+	m_pScene->Merge(pString->m_sValue, px->m_fValue, py->m_fValue, pz->m_fValue);
 }
 
 void TestMessageBox( IScriptState* pState )
@@ -3108,7 +3115,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "DisplayBoneBoundingSphere", DisplayBoneBoundingSphere, vType );
 
 	vType.push_back( eString );
-	vType.push_back( eString );
 	vType.push_back( eFloat);
 	vType.push_back( eFloat );
 	vType.push_back( eFloat );
@@ -3312,7 +3318,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back( eString );
 	vType.push_back( eFloat );
-	m_pScriptManager->RegisterFunction( "AddLightw", AddLightw, vType );
+	m_pScriptManager->RegisterFunction( "CreateLightw", CreateLightw, vType );
 
 	vType.clear();
 	vType.push_back( eString );
@@ -3461,12 +3467,17 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction("CreatePlayer", CreatePlayer, vType);
 
 	vType.clear();
-	vType.push_back( eString );
+	vType.push_back(eString);
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction( "CreateNPC", CreateNPC, vType );
 
 	vType.clear();
 	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("CreateMapEntity", CreateMapEntity, vType);
+	m_pScriptManager->RegisterFunction("SaveNPC", SaveNPC, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("CreateMinimapEntity", CreateMinimapEntity, vType);
 	
 	vType.clear();
 	vType.push_back(eString);

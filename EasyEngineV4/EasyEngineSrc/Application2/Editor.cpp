@@ -41,10 +41,10 @@ m_bDisplayPickingRay(false)
 	IEventDispatcher* pEventDispatcher = static_cast<IEventDispatcher*>(s_pEngineInterface->GetPlugin("EventDispatcher"));
 	pEventDispatcher->AbonneToMouseEvent(this, OnMouseEventCallback);
 	pEventDispatcher->AbonneToKeyEvent(this, OnKeyEventCallback);
+	pEventDispatcher->AbonneToEntityEvent(this, OnSceneLoadRessource);
 	string sSceneFileName;
 	ISceneManager* pSceneManager = static_cast<ISceneManager*>(s_pEngineInterface->GetPlugin("SceneManager"));
 	m_pScene = pSceneManager->GetScene("Game");
-	m_pScene->SetLoadRessourceCallback(OnSceneLoadRessource, this);
 	m_sTmpFolder = "levels/tmp";
 	m_sTmpAdaptedHeightMapFileName = "/" + m_sTmpFolder + "/HMA_tmp.bmp";
 }
@@ -385,6 +385,18 @@ void CEditor::UpdateGround()
 			m_pHeightMap->GetFileName(originalRessourceName);
 			m_pScene->SetOriginalSceneFileName(originalRessourceName);
 		}
+
+		string sGroundFileName;
+		m_pScene->GetRessource()->GetFileName(sGroundFileName);
+		string srcPath = root + sGroundFileName;
+
+		string sRessourceFileName;
+		m_pScene->GetRessource()->GetFileName(sRessourceFileName);
+		string levelPath = sRessourceFileName.substr(0, sRessourceFileName.find_last_of("/") + 1);
+		string destPath = root + "/" + m_sTmpFolder + "/ground.bme";
+		if(srcPath != destPath)
+			CopyFileA(srcPath.c_str(), destPath.c_str(), TRUE);
+
 		m_pHeightMap->Save(m_sTmpAdaptedHeightMapFileName);
 		m_pScene->SetRessource(m_sTmpAdaptedHeightMapFileName);
 	}
@@ -448,7 +460,12 @@ void CEditor::SaveLevel(string levelName)
 			}
 			srcPath = root + "/" + m_sTmpFolder + "/ground.bme";;
 			destPath = levelFolder + "ground.bme";
-			MoveFileA(srcPath.c_str(), destPath.c_str());
+			if (!MoveFileA(srcPath.c_str(), destPath.c_str())) {
+				string sGroundFileName;
+				m_pScene->GetRessource()->GetFileName(sGroundFileName);
+				srcPath = root + sGroundFileName;
+				CopyFileA(srcPath.c_str(), destPath.c_str(), FALSE);
+			}
 		}
 		m_pScene->Export(levelFolder + levelName + ".bse");
 	}
@@ -473,11 +490,13 @@ void CEditor::SpawnEntity(string sEntityFileName)
 	m_pCurrentAddedEntity->Update();
 }
 
-void CEditor::OnSceneLoadRessource(CPlugin* plugin)
+void CEditor::OnSceneLoadRessource(CPlugin* plugin, IEventDispatcher::TEntityEvent e, IEntity* pEntity)
 {
-	CEditor* pEditor = static_cast<CEditor*>(plugin);
-	string sSceneFileName;
-	pEditor->m_pScene->GetRessource()->GetFileName(sSceneFileName);
-	pEditor->m_oLoaderManager.Load(sSceneFileName, pEditor->m_oAnimatableMeshData);
+	if (e == IEventDispatcher::TEntityEvent::T_LOAD_RESSOURCE) {
+		CEditor* pEditor = static_cast<CEditor*>(plugin);
+		string sSceneFileName;
+		pEditor->m_pScene->GetRessource()->GetFileName(sSceneFileName);
+		pEditor->m_oLoaderManager.Load(sSceneFileName, pEditor->m_oAnimatableMeshData);
+	}
 }
 

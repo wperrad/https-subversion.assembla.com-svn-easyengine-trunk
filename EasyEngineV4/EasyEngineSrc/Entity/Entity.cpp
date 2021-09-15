@@ -46,10 +46,10 @@ m_fMaxStepHeight(g_fMaxHeight),
 m_pCollisionMesh(NULL),
 m_bDrawBoundingBox(false),
 m_pScene(NULL),
-m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL)),
 m_pMesh(nullptr),
 m_bEmptyEntity(false),
-m_pBaseTexture(nullptr)
+m_pBaseTexture(nullptr),
+m_pCustomTexture(nullptr)
 {
 	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 }
@@ -78,9 +78,9 @@ m_pBoundingGeometry(NULL),
 m_fMaxStepHeight(g_fMaxHeight),
 m_bDrawBoundingBox(false),
 m_pScene(NULL),
-m_oPairLoadRessourceCallback(pair<LoadRessourceCallback, CPlugin*>(NULL, NULL)),
 m_pMesh(nullptr),
 m_bEmptyEntity(false),
+m_pBaseTexture(nullptr),
 m_pCustomTexture(nullptr)
 {
 	if( sFileName.size() > 0 )
@@ -175,9 +175,9 @@ void CEntity::SetRessource( string sFileName, bool bDuplicate )
 		throw e;
 	}
 
-	LoadRessourceCallback callback = m_oPairLoadRessourceCallback.first;
-	if(callback)
-		callback(m_oPairLoadRessourceCallback.second);
+	for (int i = 0; i < m_vEntityCallback.size(); i++) {
+		m_vEntityCallback[i](nullptr, IEventDispatcher::TEntityEvent::T_LOAD_RESSOURCE, this);
+	}
 }
 
 void CEntity::SetDiffuseTexture(string sFileName)
@@ -196,7 +196,7 @@ void CEntity::CreateAndLinkCollisionChildren(string sFileName)
 			IGeometry* pGeometry = m_pCollisionMesh->GetGeometry(i);
 			ostringstream oss;
 			oss << sPrefix << "_CollisionPrimitive" << i;
-			CEntity* pChild = dynamic_cast<CEntity*>(m_pEntityManager->CreateEmptyEntity(oss.str()));
+			CCollisionEntity* pChild = m_pEntityManager->CreateCollisionEntity(oss.str());
 			pChild->SetLocalMatrix(pGeometry->GetTM());
 			pChild->ForceAssignBoundingGeometry(pGeometry);
 			pChild->m_fBoundingSphereRadius = pGeometry->ComputeBoundingSphereRadius();
@@ -644,19 +644,19 @@ void CEntity::SetMesh( IMesh* pMesh )
 
 void CEntity::DrawBoundingBox( bool bDraw )
 {
-	m_bDrawBoundingBox = bDraw;
+m_bDrawBoundingBox = bDraw;
 }
 
-void CEntity::SetShader( IShader* pShader )
+void CEntity::SetShader(IShader* pShader)
 {
-	m_pRessource->SetShader( pShader );
+	m_pRessource->SetShader(pShader);
 }
 
 void CEntity::CenterToworld()
 {
 #if 0
 	IBox* pBbox = m_oGeometryManager.CreateBox();
-	static_cast< IMesh* >( m_pRessource )->GetBbox( *pBbox );
+	static_cast<IMesh*>(m_pRessource)->GetBbox(*pBbox);
 #endif // 0
 	throw 1;
 }
@@ -672,41 +672,93 @@ IAnimation* CEntity::GetCurrentAnimation()
 	return m_pCurrentAnimation;
 }
 
-void CEntity::AddAnimation( string sAnimationFile )
+void CEntity::AddAnimation(string sAnimationFile)
 {
-	if( m_pSkeletonRoot )
+	if (m_pSkeletonRoot)
 	{
-		IAnimation* pAnimation =  static_cast< IAnimation* >( m_oRessourceManager.GetRessource( "/Animations/" + sAnimationFile, true ) );
-		m_mAnimation[ sAnimationFile ] =  pAnimation;
-		IMesh* pMesh = static_cast< IMesh* >( m_pRessource );
-		pAnimation->SetSkeleton( m_pSkeletonRoot );
+		IAnimation* pAnimation = static_cast<IAnimation*>(m_oRessourceManager.GetRessource("/Animations/" + sAnimationFile, true));
+		m_mAnimation[sAnimationFile] = pAnimation;
+		IMesh* pMesh = static_cast<IMesh*>(m_pRessource);
+		pAnimation->SetSkeleton(m_pSkeletonRoot);
 	}
 	else
 	{
 		ostringstream oss;
 		oss << "CEntity::AddAnimation() : Erreur : l'entité numéro " << m_nID << " n'est pas animable.";
-		CEException e( oss.str() );
+		CEException e(oss.str());
 		throw e;
 	}
 }
 
-void CEntity::SetCurrentAnimation( std::string sAnimation )
+void CEntity::SetCurrentAnimation(std::string sAnimation)
 {
 	m_sCurrentAnimation = sAnimation;
-	m_pCurrentAnimation = m_mAnimation[ sAnimation ];
-	if( m_bUsePositionKeys )
-		m_pCurrentAnimation->AddCallback( OnAnimationCallback, this );
+	m_pCurrentAnimation = m_mAnimation[sAnimation];
+	if (m_bUsePositionKeys)
+		m_pCurrentAnimation->AddCallback(OnAnimationCallback, this);
 }
 
-bool CEntity::HasAnimation( string sAnimationName )
+bool CEntity::HasAnimation(string sAnimationName)
 {
-	map< string, IAnimation* >::iterator itAnim = m_mAnimation.find( sAnimationName );
+	map< string, IAnimation* >::iterator itAnim = m_mAnimation.find(sAnimationName);
 	return itAnim != m_mAnimation.end();
 }
 
 IBone* CEntity::GetSkeletonRoot()
 {
 	return m_pSkeletonRoot;
+}
+
+
+void CEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
+{
+	if (!pInfos)
+		pInfos = new ILoader::CEntityInfos;
+	ILoader::CEntityInfos* pEntityInfos = dynamic_cast<ILoader::CEntityInfos*>(pInfos);
+	if (pEntityInfos) {
+		GetEntityName(pEntityInfos->m_sObjectName);
+		pEntityInfos->m_fWeight = GetWeight();
+		for (unsigned int iChild = 0; iChild < GetChildCount(); iChild++) {
+			CEntity* pChild = dynamic_cast<CEntity*>(GetChild(iChild));
+			if (pChild) {
+				ILoader::CObjectInfos* pChildInfos = nullptr;
+				pChild->GetEntityInfos(pChildInfos);
+				if (pChildInfos)
+					pEntityInfos->m_vSubEntityInfos.push_back(pChildInfos);
+			}
+		}
+	}
+	CMatrix oMat;
+	GetLocalMatrix(oMat);
+	pInfos->m_oXForm = oMat;
+	GetParent()->GetName(pInfos->m_sParentName);
+	IBone* pParentBone = dynamic_cast<IBone*>(GetParent());
+	if (pParentBone) {
+		pInfos->m_nParentBoneID = pParentBone->GetID();
+		if (pParentBone->GetID() == 0) {
+			IBone* pGrandParentBone = dynamic_cast<IBone*>(pParentBone->GetParent());
+			if (pGrandParentBone) {
+				string sParentName, sGrandParentName;
+				pParentBone->GetName(sParentName);
+				pGrandParentBone->GetName(sGrandParentName);
+				string sDummyPrefix = "Dummy";
+				string sBodyDummyPrefix = "BodyDummy";
+				if ((sParentName.substr(0, sDummyPrefix.size()) == sDummyPrefix) &&
+					(sGrandParentName.substr(0, sBodyDummyPrefix.size()) == sBodyDummyPrefix)) {
+					pEntityInfos->m_nGrandParentDummyRootID = pGrandParentBone->GetID();
+				}
+			}
+		}
+	}
+	if (pInfos->m_sObjectName.empty()) {
+		string sName;
+		GetName(sName);
+		pInfos->m_sObjectName = sName;
+	}
+	if(m_pRessource) {
+		m_pRessource->GetFileName(pInfos->m_sRessourceFileName);
+		m_pRessource->GetName(pInfos->m_sRessourceName);
+	}
 }
 
 void CEntity::DetachCurrentAnimation()
@@ -839,12 +891,6 @@ IGeometry* CEntity::GetBoundingGeometry()
 	return pGeometry;
 }
 
-void CEntity::SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin)
-{
-	m_oPairLoadRessourceCallback.first = callback;
-	m_oPairLoadRessourceCallback.second = plugin;
-}
-
 void CEntity::AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback)
 {
 	m_vEntityCallback.push_back(callback);
@@ -855,5 +901,22 @@ void CEntity::DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback)
 	vector<IEventDispatcher::TEntityCallback>::iterator it = std::find(m_vEntityCallback.begin(), m_vEntityCallback.end(), callback);
 	if (it != m_vEntityCallback.end()) {
 		m_vEntityCallback.erase(it);
+	}
+}
+
+void CEntity::GetSkeletonEntities(CBone* pRoot, vector< CEntity* >& vEntity, string sFileFilter)
+{
+	for (unsigned int iChild = 0; iChild < pRoot->GetChildCount(); iChild++)
+	{
+		CEntity* pEntity = dynamic_cast< CEntity* >(pRoot->GetChild(iChild));
+		if (pEntity)
+		{
+			string sFileName;
+			pEntity->GetRessource()->GetFileName(sFileName);
+			if (sFileFilter != sFileName)
+				vEntity.push_back(pEntity);
+		}
+		else
+			GetSkeletonEntities(dynamic_cast<CBone*>(pRoot->GetChild(iChild)), vEntity, sFileFilter);
 	}
 }

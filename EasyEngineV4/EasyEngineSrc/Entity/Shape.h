@@ -49,7 +49,6 @@ public:
 	void			Goto( const CVector& oPosition, float fSpeed ){ throw 1; }
 	void			SetEntityName( string sName ){ throw 1; }
 	void			ReloadShader();
-	void			SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) {}
 	void			LinkDummyParentToDummyEntity(IEntity* pEntity, string sEntityName) override {}
 	void			AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback) override {}
 	void			DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback) override {}

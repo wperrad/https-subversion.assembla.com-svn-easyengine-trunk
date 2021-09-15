@@ -69,7 +69,7 @@ void CRenderUtils::IndexGeometry( vector< unsigned int >& vIndexArray, vector< f
 				CVector& vTempUV = mUVVertexArray[ nIndex ];
 				if( vTempUV != oUVVertex )
 				{
-					int nNewVertexIndex = vVertexArray.size() / 3;
+					int nNewVertexIndex = (int)vVertexArray.size() / 3;
 					for( int j = 0; j < 3; j++ )
 					{
 						vVertexArray.push_back( vVertexArray[ 3 * nIndex + j ] );
@@ -149,7 +149,7 @@ void CRenderUtils::CreateIndexedNormalArray( vector< float >& vVertexArray, vect
 				vector< CVector >::iterator itDup = find( mDuplicatedNormal[ nIndex ].begin(), mDuplicatedNormal[ nIndex ].end(), oCurrentVector );
 				if( itDup == mDuplicatedNormal[ nIndex ].end() )
 				{
-					int nNewIndex = vVertexArray.size() / 3;
+					int nNewIndex = (int)vVertexArray.size() / 3;
 					//vVertexArray.push_back( vVertexArray[ 3 * nIndex ] );
 					//vVertexArray.push_back( vVertexArray[ 3 * nIndex + 1 ] );
 					//vVertexArray.push_back( vVertexArray[ 3 * nIndex + 2 ] );

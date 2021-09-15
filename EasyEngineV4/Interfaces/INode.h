@@ -35,6 +35,7 @@ public:
 	virtual void						GetWorldQuaternion(CQuaternion& oQuaternion) = 0;
 	virtual void						SetName(string sName) = 0;
 	virtual void						GetName( std::string& sName ) const = 0;
+	virtual const string&				GetName() const = 0;
 	virtual void						SetID( int nID ) = 0;
 	virtual int							GetID() const = 0;
 	virtual void						GetWorldMatrix( CMatrix& oMatrix ) = 0;

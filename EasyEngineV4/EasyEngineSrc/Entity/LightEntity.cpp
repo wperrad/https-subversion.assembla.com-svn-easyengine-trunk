@@ -38,3 +38,27 @@ void CLightEntity::Unlink()
 	m_oRessourceManager.DisableLight( m_pRessource );
 	CEntity::Unlink();
 }
+
+void CLightEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
+{
+	if(!pInfos)
+		pInfos = new ILoader::CLightEntityInfos;
+	CEntity::GetEntityInfos(pInfos);
+	ILoader::CLightEntityInfos& lightInfos = static_cast< ILoader::CLightEntityInfos& >(*pInfos);
+	lightInfos.m_fIntensity = GetIntensity();
+	lightInfos.m_oColor = GetColor();
+	ILoader::CLightInfos::TLight type;
+	switch (GetType())
+	{
+	case IRessource::DIRECTIONAL:
+		type = ILoader::CLightInfos::eDirectionnelle;
+		break;
+	case IRessource::OMNI:
+		type = ILoader::CLightInfos::eOmni;
+		break;
+	case IRessource::SPOT:
+		type = ILoader::CLightInfos::eTarget;
+		break;
+	}
+	lightInfos.m_eType = type;
+}

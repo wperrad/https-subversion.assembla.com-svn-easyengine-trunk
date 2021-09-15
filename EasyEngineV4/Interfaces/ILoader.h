@@ -156,32 +156,33 @@ public:
 		float		m_fIntensity;
 	};
 
-	struct CSceneObjInfos : public IPersistantObject
+	struct CObjectInfos : public IPersistantObject
 	{
-		CSceneObjInfos() : m_nParentBoneID(-1){}
+		CObjectInfos() : m_nParentBoneID(-1){}
 		CMatrix		m_oXForm;
 		string		m_sRessourceFileName;
 		string		m_sRessourceName;
 		string		m_sObjectName;
 		string		m_sParentName;
 		int			m_nParentBoneID;
-		virtual		~CSceneObjInfos() = 0 {}
+		virtual		~CObjectInfos() = 0 {}
 
 		virtual const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
 		{
-			store << m_sRessourceName << m_sRessourceFileName << m_oXForm << m_sParentName << m_nParentBoneID;
+			store << m_sObjectName << m_sRessourceName << m_sRessourceFileName << m_oXForm << m_sParentName << m_nParentBoneID;
 			return *this;
 		}
 
 		IPersistantObject& operator << (CBinaryFileStorage& store) override 
 		{
-			store >> m_sRessourceName >> m_sRessourceFileName >> m_oXForm >> m_sParentName >> m_nParentBoneID;
+			store >> m_sObjectName >> m_sRessourceName >> m_sRessourceFileName >> m_oXForm >> m_sParentName >> m_nParentBoneID;
 			return *this; 
 		}
 
 		const IPersistantObject& operator >> (CAsciiFileStorage& store) const override 
 		{
-			store << "\nRessource name : " << m_sRessourceName 
+			store << "\nObject name : " << m_sObjectName
+				<< "\nRessource name : " << m_sRessourceName 
 				<< "\nRessource file name : " << m_sRessourceFileName 
 				<< "\nXForm : \n" << m_oXForm 
 				<< "\nParent name : " << m_sParentName 
@@ -195,7 +196,7 @@ public:
 
 	struct CSceneInfos : public IRessourceInfos
 	{
-		vector< CSceneObjInfos* >	m_vObject;
+		vector< CObjectInfos* >	m_vObject;
 		string						m_sSceneFileName;
 		string						m_sOriginalSceneFileName;
 		CVector						m_oBackgroundColor;
@@ -208,7 +209,7 @@ public:
 		{
 			int nObjectCount = (int)m_vObject.size();
 			store << m_sSceneFileName << m_sOriginalSceneFileName << m_sName << m_oBackgroundColor << m_bUseDisplacementMap << m_sDiffuseFileName << nObjectCount << m_nMapLength << m_fMapHeight;
-			for (unsigned int i = 0; i < nObjectCount; i++)
+			for (int i = 0; i < nObjectCount; i++)
 				store << *m_vObject.at(i);
 			//store << m_vObject;
 			return *this;
@@ -218,12 +219,14 @@ public:
 		{
 			int nObjectCount = 0;
 			store >> m_sSceneFileName >> m_sOriginalSceneFileName >> m_sName >> m_oBackgroundColor >> m_bUseDisplacementMap >> m_sDiffuseFileName >> nObjectCount >> m_nMapLength >> m_fMapHeight;
-			for (unsigned int i = 0; i < nObjectCount; i++) {
+			for (int i = 0; i < nObjectCount; i++) {
 				int type = 0;
 				store >> type;
-				CSceneObjInfos* pInfos = nullptr;
+				CObjectInfos* pInfos = nullptr;
 				if (type == ILoader::eEntity)
 					pInfos = new CEntityInfos;
+				if (type == ILoader::eAnimatedEntity)
+					pInfos = new CAnimatedEntityInfos;
 				else if(type == ILoader::eLight)
 					pInfos = new CLightEntityInfos;
 				store >> *pInfos;
@@ -245,27 +248,27 @@ public:
 				<< "\nObject count : " << nObjectCount 
 				<< "\nMap length : " << m_nMapLength 
 				<< "\nMap height : " << m_fMapHeight;
-			for (unsigned int i = 0; i < nObjectCount; i++)
+			for (int i = 0; i < nObjectCount; i++)
 				store << *m_vObject.at(i);
 			return *this;
 		}
 	};
 
-	struct CEntityInfos : public CSceneObjInfos
+	struct CEntityInfos : public CObjectInfos
 	{
-		string								m_sAnimationFileName;
-		map< string, float>					m_mAnimationSpeed;
 		float								m_fWeight;
 		string								m_sTypeName;
-		vector< CEntityInfos* >				m_vSubEntityInfos;
+		int									m_nGrandParentDummyRootID;
+		vector< CObjectInfos* >				m_vSubEntityInfos;
+
+		CEntityInfos() : m_fWeight(0.f), m_sTypeName("Entity"), m_nGrandParentDummyRootID(-1) {}
 
 		const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
 		{
 			store << (int)eEntity;
-			ILoader::CSceneObjInfos::operator >> (store);
-			store << m_sTypeName << m_sAnimationFileName;
-			store << m_mAnimationSpeed;
-			store << m_fWeight << (int)m_vSubEntityInfos.size();
+			ILoader::CObjectInfos::operator >> (store);
+			store << m_sTypeName;
+			store << m_fWeight << m_nGrandParentDummyRootID << (int)m_vSubEntityInfos.size();
 			for (int iChild = 0; iChild < m_vSubEntityInfos.size(); iChild++)
 				store << *m_vSubEntityInfos[iChild];
 			return *this;
@@ -274,10 +277,9 @@ public:
 		const IPersistantObject& operator >> (CAsciiFileStorage& store) const override
 		{
 			store << "\nEntity type : " << (int)eEntity;
-			ILoader::CSceneObjInfos::operator >> (store);
-			store << "\nType name : " << m_sTypeName << "\nAnimation file name : " << m_sAnimationFileName;
-			//store << m_mAnimationSpeed;
-			store << "\nWeight : " << m_fWeight << "\nSub entity count : " << (int)m_vSubEntityInfos.size();
+			ILoader::CObjectInfos::operator >> (store);
+			store << "\nType name : " << m_sTypeName;
+			store << "\nWeight : " << m_fWeight << "\nGrand Parent Root : " << m_nGrandParentDummyRootID << "\nSub entity count : " << (int)m_vSubEntityInfos.size();
 			for (int iChild = 0; iChild < m_vSubEntityInfos.size(); iChild++)
 				store << *m_vSubEntityInfos[iChild];
 			return *this;
@@ -285,15 +287,26 @@ public:
 
 		IPersistantObject& operator << (CBinaryFileStorage& store)
 		{
-			ILoader::CSceneObjInfos::operator << (store);
-			store >> m_sTypeName >> m_sAnimationFileName;
-			store >> m_mAnimationSpeed;
+			ILoader::CObjectInfos::operator << (store);
+			store >> m_sTypeName;
 			int subEntityCount = 0;
-			store >> m_fWeight >> subEntityCount;
+			store >> m_fWeight >> m_nGrandParentDummyRootID >> subEntityCount;
 			for (int iChild = 0; iChild < subEntityCount; iChild++) {
-				CEntityInfos* pSubEntityInfos = new CEntityInfos;
+
 				int type = 0;
+				CObjectInfos* pSubEntityInfos = nullptr;
 				store >> type;
+				switch (type) {
+				case ILoader::TObjScene::eEntity:
+					pSubEntityInfos = new CEntityInfos;
+					break;
+				case ILoader::TObjScene::eLight:
+					pSubEntityInfos = new CLightEntityInfos;
+					break;
+				case ILoader::TObjScene::eAnimatedEntity:
+					pSubEntityInfos = new CAnimatedEntityInfos;
+					break;
+				}
 				store >> *pSubEntityInfos;
 				m_vSubEntityInfos.push_back(pSubEntityInfos);
 			}
@@ -301,7 +314,41 @@ public:
 		}
 	};
 
-	struct CLightEntityInfos : public CSceneObjInfos
+	struct CAnimatedEntityInfos : public CEntityInfos
+	{
+		string								m_sAnimationFileName;
+		map< string, float>					m_mAnimationSpeed;
+
+		const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
+		{
+			store << (int)eAnimatedEntity;
+			ILoader::CEntityInfos::operator >> (store);
+			store << m_sAnimationFileName;
+			store << m_mAnimationSpeed;
+			return *this;
+		}
+
+		const IPersistantObject& operator >> (CAsciiFileStorage& store) const override
+		{
+			store << "\nEntity type : " << (int)eAnimatedEntity;
+			ILoader::CEntityInfos::operator >> (store);
+			store << "\nAnimation file name : " << m_sAnimationFileName;
+			//store << m_mAnimationSpeed;
+			return *this;
+		}
+
+		IPersistantObject& operator << (CBinaryFileStorage& store)
+		{
+			int nType;
+			store >> nType;
+			ILoader::CEntityInfos::operator << (store);
+			store >> m_sAnimationFileName;
+			store >> m_mAnimationSpeed;
+			return *this;
+		}
+	};
+
+	struct CLightEntityInfos : public CObjectInfos
 	{
 		CLightInfos::TLight		m_eType;
 		CVector					m_oColor;
@@ -310,21 +357,21 @@ public:
 		const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
 		{
 			store << (int)eLight;
-			ILoader::CSceneObjInfos::operator >> (store);
+			ILoader::CObjectInfos::operator >> (store);
 			store << (int)m_eType << m_fIntensity << m_oColor;
 			return *this;
 		}
 
 		const IPersistantObject& operator >> (CAsciiFileStorage& store) const override
 		{
-			ILoader::CSceneObjInfos::operator >> (store);
+			ILoader::CObjectInfos::operator >> (store);
 			store << "\nType : " << (int)m_eType << "\n Intensity : " << m_fIntensity << "\nColor : " << m_oColor;
 			return *this;
 		}
 
 		IPersistantObject& operator << (CBinaryFileStorage& store) override
 		{
-			ILoader::CSceneObjInfos::operator << (store);
+			ILoader::CObjectInfos::operator << (store);
 			int type = 0;
 			store >> type >> m_fIntensity >> m_oColor;
 			m_eType = (CLightInfos::TLight)type;
@@ -335,7 +382,8 @@ public:
 	enum TObjScene
 	{
 		eEntity = 0,
-		eLight
+		eLight,
+		eAnimatedEntity,
 	};
 
 	protected:

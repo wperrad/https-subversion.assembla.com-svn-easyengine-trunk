@@ -174,4 +174,11 @@ class CNoDummyRootException : public CEException
 public:
 	CNoDummyRootException(string message) : CEException(message) {}
 };
+
+class CCharacterAlreadyExistsException : public CEException
+{
+public:
+	CCharacterAlreadyExistsException(string message) : CEException(message) {}
+};
+
 #endif

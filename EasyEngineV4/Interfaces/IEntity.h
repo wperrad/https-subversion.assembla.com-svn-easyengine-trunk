@@ -117,7 +117,6 @@ public:
 	virtual void				GetEntityName(string& sName) = 0;
 	virtual void				SetEntityName( string sName ) = 0;
 	virtual void				Colorize(float r, float g, float b, float a) = 0;
-	virtual void				SetLoadRessourceCallback(LoadRessourceCallback callback, CPlugin* plugin) = 0;
 	virtual void				LinkDummyParentToDummyEntity(IEntity* pEntity, string sDummyName) = 0;
 	virtual void				AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback) = 0;
 	virtual void				DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback) = 0;
@@ -138,7 +137,7 @@ public:
 	virtual void				SetOriginalSceneFileName(string sFileName) = 0;
 	virtual void				Clear() = 0;
 	virtual void				Load(string sFileName) = 0;
-	virtual IEntity*			Merge(string sRessourceName, string sEntityType, float x, float y, float z) = 0;
+	virtual IEntity*			Merge(string sRessourceName, float x, float y, float z) = 0;
 	virtual void				CreateCollisionMap() = 0;
 	virtual void				SetDiffuseFileName(string diffuseFileName) = 0;
 	virtual int					GetCurrentHeightMapIndex() = 0;
@@ -175,13 +174,13 @@ class IEntityManager : public CPlugin
 {
 public:
 	IEntityManager(EEInterface& oInterface) : CPlugin( NULL, "" ){}
-	virtual IEntity*			CreateEntity(std::string sFileName, string sTypeName, bool bDuplicate = false ) = 0;
+	virtual IEntity*			CreateEntity(std::string sFileName, bool bDuplicate = false ) = 0;
 	virtual IEntity*			CreateEmptyEntity( string sFileName = "noname" ) = 0;
 	virtual IEntity*			CreateRepere( IRenderer& oRenderer ) = 0;
 	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem ) = 0;
 	virtual IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem) = 0;
-	virtual IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem ) = 0;
-	virtual IEntity*			CreateMapEntity(string sFileName, IFileSystem* pFileSystem) = 0;
+	virtual IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem, string sID ) = 0;
+	virtual IEntity*			CreateMinimapEntity(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual IEntity*			CreateTestEntity(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual IEntity*			GetEntity( int nEntityID ) = 0;
 	virtual IEntity*			GetEntity( string sEntityName ) = 0;
@@ -219,6 +218,8 @@ public:
 	virtual IPlayer*			GetPlayer() = 0;
 	virtual IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) = 0;
 	virtual IBone*				CreateBone() const = 0;
+	virtual void				AddNewCharacter(string sCharacterName) = 0;
+	virtual void				SaveNPC(string sNPCID) = 0;
 };
 
 class ISceneManager : public CPlugin

@@ -36,6 +36,7 @@ m_pPlayer(NULL)
 {
 	m_itCurrentParsedEntity = m_mCollideEntities.end();
 	m_itCurrentIAEntity = m_mIAEntities.end();
+	CMobileEntity::InitStatics();
 }
 
 void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
@@ -55,15 +56,15 @@ void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
 		m_mFighterEntities[ pFighterEntity ] = 1;
 }
 
-IEntity* CEntityManager::CreateEntity(std::string sFileName, string sTypeName, bool bDuplicate )
+IEntity* CEntityManager::CreateEntityFromType(std::string sFileName, string sTypeName, string sID, bool bDuplicate )
 {
 	CEntity* pEntity = NULL;
-	if( sTypeName.size() == 0 )
+	if( sTypeName == "Entity" )
 		pEntity = new CEntity(m_oInterface, sFileName, bDuplicate );
 	else if( sTypeName == "Human" )
 		pEntity = new CMobileEntity(m_oInterface, sFileName);
 	else if (sTypeName == "NPC")
-		pEntity = new CNPCEntity(m_oInterface, sFileName);
+		pEntity = new CNPCEntity(m_oInterface, sFileName, sID);
 	else if( sTypeName == "Player")
 		pEntity = new CPlayer(m_oInterface, sFileName);
 	else if(sTypeName == "MapEntity")
@@ -75,12 +76,30 @@ IEntity* CEntityManager::CreateEntity(std::string sFileName, string sTypeName, b
 	return pEntity;
 }
 
+IEntity* CEntityManager::CreateEntity(std::string sFileName, bool bDuplicate)
+{
+	CEntity* pEntity = NULL;
+	pEntity = new CEntity(m_oInterface, sFileName, bDuplicate);
+	string sName;
+	pEntity->GetName(sName);
+	CreateEntity(pEntity, sName);
+	return pEntity;
+}
+
 IEntity* CEntityManager::CreateEmptyEntity( string sName )
 {
 	CEntity* pEntity = new CEntity(m_oInterface);
 	CreateEntity( pEntity );
 	m_mNameEntities[ sName ] = pEntity;
 	m_mEntitiesName[ pEntity ] = sName;
+	return pEntity;
+}
+
+CCollisionEntity* CEntityManager::CreateCollisionEntity(string sName)
+{
+	CCollisionEntity* pEntity = new CCollisionEntity(m_oInterface);
+	m_mNameEntities[sName] = pEntity;
+	m_mEntitiesName[pEntity] = sName;
 	return pEntity;
 }
 
@@ -181,6 +200,13 @@ IEntity* CEntityManager::CreatePlaneEntity(int slices, int size, string heightTe
 	return planeEntity;
 }
 
+void CEntityManager::AddNewCharacter(string sCharacterName)
+{
+	map<string, CNPCEntity*>::iterator itCharacter = m_mCharacters.find(sCharacterName);
+	if (itCharacter != m_mCharacters.end())
+		throw CCharacterAlreadyExistsException(sCharacterName);
+}
+
 void CEntityManager::SetPlayer(IPlayer* player)
 {
 	m_pPlayer = dynamic_cast<CPlayer*>(player);
@@ -194,19 +220,19 @@ IPlayer* CEntityManager::GetPlayer()
 	return m_pPlayer;
 }
 
-IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem )
+IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem, string sID )
 {
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
-	IEntity* pEntity = new CNPCEntity(m_oInterface, sName);
+	IEntity* pEntity = new CNPCEntity(m_oInterface, sName, sID);
 	CreateEntity( pEntity );
 	return pEntity;
 }
 
 
 
-IEntity* CEntityManager::CreateMapEntity(string sFileName, IFileSystem* pFileSystem)
+IEntity* CEntityManager::CreateMinimapEntity(string sFileName, IFileSystem* pFileSystem)
 {
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
@@ -450,6 +476,50 @@ void CEntityManager::WearShoes(int entityId, string shoesName)
 	else {
 		throw CEException("Entity not found");
 	}
+}
+
+void CEntityManager::SaveNPC(string sNPCID)
+{
+#if 0
+	map<string, CNPCEntity*>::iterator itNPC = m_mCharacters.find(sNPCID);
+	if (itNPC != m_mCharacters.end())
+	{
+		CMobileEntity* pEntity = itNPC->second;
+		ILoader::CAnimatedEntityInfos* pAnimatedEntityInfos = new ILoader::CAnimatedEntityInfos;
+		IAnimation* pAnimation = pEntity->GetCurrentAnimation();
+		if (pAnimation) {
+			string animFile;
+			pAnimation->GetFileName(animFile);
+			animFile = animFile.substr(animFile.find_last_of("/") + 1);
+			pAnimatedEntityInfos->m_sAnimationFileName = animFile;
+			CMobileEntity* pMobileEntity = dynamic_cast<CMobileEntity*>(pEntity);
+			for (map<string, IEntity::TAnimation>::iterator it = CMobileEntity::s_mStringToAnimation.begin(); it != CMobileEntity::s_mStringToAnimation.end(); it++) {
+				float as = pMobileEntity->GetAnimationSpeed(it->second);
+				pAnimatedEntityInfos->m_mAnimationSpeed[it->first] = as;
+			}
+		}
+		IBone* pSkeleton = pEntity->GetSkeletonRoot();
+		if (pSkeleton)
+		{
+			vector< CEntity* > vSubEntity;
+			string sRessourceFileName;
+			pEntity->GetRessource()->GetFileName(sRessourceFileName);
+			CEntity::GetSkeletonEntities(dynamic_cast<CBone*>(pSkeleton), vSubEntity, sRessourceFileName);
+			for (unsigned int iSubEntity = 0; iSubEntity < vSubEntity.size(); iSubEntity++)
+			{
+				ILoader::CEntityInfos* pSubEntityInfo = dynamic_cast<ILoader::CEntityInfos*>(GetEntityInfos(vSubEntity[iSubEntity]));
+				ILoader::CEntityInfos* pSubEntityInfo = dynamic_cast<ILoader::CEntityInfos*>(GetEntityInfos(vSubEntity[iSubEntity]));
+				if (pSubEntityInfo)
+					pAnimatedEntityInfos->m_vSubEntityInfos.push_back(pSubEntityInfo);
+			}
+		}
+	}
+	else {
+		ostringstream oss;
+		oss << "Erreur : NPC '" << sNPCID << "' not found";
+		throw CEException(oss.str());
+	}
+#endif // 0
 }
 
 template<class T>

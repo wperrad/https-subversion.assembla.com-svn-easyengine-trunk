@@ -5,6 +5,7 @@ CLinkedCamera::CLinkedCamera(EEInterface& oInterface, float fFov):
 CCamera(oInterface, fFov)
 {
 	m_sEntityName = "Linked camera";
+	m_sTypeName = "LinkedCamera";
 }
 
 CLinkedCamera::~CLinkedCamera()
@@ -59,4 +60,9 @@ void CLinkedCamera::Update()
 		if (nextHeight - lastHeight > maxAscendSpeed)
 			m_oWorldMatrix.m_13 = lastHeight + maxAscendSpeed;
 	}
+}
+
+void CLinkedCamera::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
+{
+	
 }

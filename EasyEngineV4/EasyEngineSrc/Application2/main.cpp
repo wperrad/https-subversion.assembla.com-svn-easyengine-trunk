@@ -95,7 +95,7 @@ void InitScene( ISceneManager* pSceneManager )
 	try
 	{
 		m_pScene->DeleteTempDirectories();
-		g_nSlotPosition = m_pHud->CreateNewSlot(400, 100);
+		g_nSlotPosition = m_pHud->CreateNewSlot(800, 100);
 		m_pConsole->Open(true);
 		FILE* pFile = NULL;
 		pFile = m_pFileSystem->OpenFile("start.eas", "r");
@@ -253,23 +253,28 @@ void OnUpdateWindow()
 		UpdateCamera();
 	UpdatePerso();
 	m_pRenderer->BeginRender();
-	if( m_bRenderScene )
-		m_pSceneManager->GetScene( "Game" )->Update();
-	m_pGUIManager->OnRender();
-	m_pConsole->Update();
-	if( bCapture )
-	{
-		vector< unsigned char > vPixels;
-		int w, h;
-		m_pRenderer->GetResolution( w, h );
-		m_pRenderer->ReadPixels( 0, 0, w, h, vPixels, IRenderer::T_BGR );
-		ILoader::CTextureInfos ti;
-		ti.m_ePixelFormat = ILoader::eBGR;
-		ti.m_nWidth = 1280;
-		ti.m_nHeight = 1024;
-		ti.m_vTexels.swap( vPixels );
-		m_pLoaderManager->Export( "test_HM.bmp", ti );
-		bCapture = false;
+	try {
+		if (m_bRenderScene)
+			m_pSceneManager->GetScene("Game")->Update();
+		m_pGUIManager->OnRender();
+		m_pConsole->Update();
+		if (bCapture)
+		{
+			vector< unsigned char > vPixels;
+			int w, h;
+			m_pRenderer->GetResolution(w, h);
+			m_pRenderer->ReadPixels(0, 0, w, h, vPixels, IRenderer::T_BGR);
+			ILoader::CTextureInfos ti;
+			ti.m_ePixelFormat = ILoader::eBGR;
+			ti.m_nWidth = 1280;
+			ti.m_nHeight = 1024;
+			ti.m_vTexels.swap(vPixels);
+			m_pLoaderManager->Export("test_HM.bmp", ti);
+			bCapture = false;
+		}
+	}
+	catch (CEException& e) {
+		m_pConsole->Println(e.what());
 	}
   	m_pRenderer->EndRender();
 }
