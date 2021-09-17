@@ -42,6 +42,7 @@ public:
 	IAnimation*						GetCurrentAnimation();
 	IBone*							GetSkeletonRoot();
 	virtual void					GetEntityInfos(ILoader::CObjectInfos*& pInfos);
+	virtual void					BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent);
 	bool							HasAnimation( string sAnimationName );
 	void							DetachCurrentAnimation();
 	void							Hide( bool bHide );

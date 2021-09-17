@@ -196,7 +196,7 @@ public:
 
 	struct CSceneInfos : public IRessourceInfos
 	{
-		vector< CObjectInfos* >	m_vObject;
+		vector< CObjectInfos* >		m_vObject;
 		string						m_sSceneFileName;
 		string						m_sOriginalSceneFileName;
 		CVector						m_oBackgroundColor;

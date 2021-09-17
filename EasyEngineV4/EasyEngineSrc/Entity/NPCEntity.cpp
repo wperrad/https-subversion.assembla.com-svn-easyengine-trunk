@@ -9,15 +9,12 @@
 #include "EntityManager.h"
 
 CNPCEntity::CNPCEntity(EEInterface& oInterface, string sFileName, string sID):
-CMobileEntity(oInterface, sFileName),
+CMobileEntity(oInterface, sFileName, sID),
 m_oPathFinder(static_cast<IPathFinder&>(*oInterface.GetPlugin("PathFinder")))
 {
 	m_sTypeName = "NPC";
 	if( !m_pfnCollisionCallback )
 		m_pfnCollisionCallback = OnCollision;
-	m_sEntityName = sID;
-	IEntityManager* pEntityManager = static_cast<IEntityManager*>(oInterface.GetPlugin("EntityManager"));
-	pEntityManager->AddNewCharacter(m_sEntityName);
 }
 
 int CNPCEntity::GetLife()

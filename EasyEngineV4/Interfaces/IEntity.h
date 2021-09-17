@@ -177,7 +177,7 @@ public:
 	virtual IEntity*			CreateEntity(std::string sFileName, bool bDuplicate = false ) = 0;
 	virtual IEntity*			CreateEmptyEntity( string sFileName = "noname" ) = 0;
 	virtual IEntity*			CreateRepere( IRenderer& oRenderer ) = 0;
-	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem ) = 0;
+	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem, string sID ) = 0;
 	virtual IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem, string sID ) = 0;
 	virtual IEntity*			CreateMinimapEntity(string sFileName, IFileSystem* pFileSystem) = 0;
@@ -208,7 +208,6 @@ public:
 	virtual IEntity*			CreateLineEntity( const CVector& first, const CVector& last ) = 0;
 	virtual IEntity*			CreateCylinder( float fRadius, float fHeight ) = 0;
 	virtual void				Kill(int entityId) = 0;
-	virtual void				WearArmor(int entityId, string armorName) = 0;
 	virtual void				WearArmorToDummy(int entityId, string armorName) = 0;
 	virtual void				WearShoes(int entityId, string shoesName) = 0;
 	virtual void				SerializeMobileEntities(INode* pRoot, string& sText) = 0;
@@ -218,8 +217,8 @@ public:
 	virtual IPlayer*			GetPlayer() = 0;
 	virtual IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) = 0;
 	virtual IBone*				CreateBone() const = 0;
-	virtual void				AddNewCharacter(string sCharacterName) = 0;
-	virtual void				SaveNPC(string sNPCID) = 0;
+	virtual void				AddNewCharacter(IEntity* pEntity) = 0;
+	virtual void				SaveCharacter(string sNPCID) = 0;
 };
 
 class ISceneManager : public CPlugin

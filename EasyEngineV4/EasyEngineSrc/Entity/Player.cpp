@@ -5,7 +5,7 @@
 
 
 CPlayer::CPlayer(EEInterface& oInterface, string sFileName) :
-	CMobileEntity(oInterface, sFileName),
+	CMobileEntity(oInterface, sFileName, "Player"),
 	m_oGUIManager(static_cast<IGUIManager&>(*oInterface.GetPlugin("GUIManager"))),
 	m_pPlayerWindow(NULL)
 {

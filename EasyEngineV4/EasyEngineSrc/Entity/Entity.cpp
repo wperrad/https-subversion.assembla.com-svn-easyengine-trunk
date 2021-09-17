@@ -761,6 +761,50 @@ void CEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
 	}
 }
 
+void CEntity::BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent)
+{	
+	SetLocalMatrix(infos.m_oXForm);
+	const ILoader::CEntityInfos* pEntityInfos = dynamic_cast<const ILoader::CEntityInfos*>(&infos);
+	if (pEntityInfos && pEntityInfos->m_nParentBoneID != -1) {
+		if (pParent->GetSkeletonRoot()) {
+			if (pEntityInfos->m_nParentBoneID == 0 && GetSkeletonRoot() && (pEntityInfos->m_nGrandParentDummyRootID != -1)) {
+				string sDummyName;
+				GetSkeletonRoot()->GetName(sDummyName);
+				string sDummyRoot = "Dummy";
+				string sBodyDummyRoot = "BodyDummy";
+				if (sDummyName.substr(0, sDummyRoot.size()) == "Dummy") {
+					IBone* pBodyDummy = dynamic_cast< IBone* >(pParent->GetSkeletonRoot()->GetChildBoneByID(pEntityInfos->m_nGrandParentDummyRootID));
+					LinkDummyParentToDummyEntity(pParent, pBodyDummy->GetName());
+				}
+			}
+			else {
+				IBone* pBone = dynamic_cast<IBone*>(pParent->GetSkeletonRoot()->GetChildBoneByID(pEntityInfos->m_nParentBoneID));
+				if (pBone)
+					pParent->LinkEntityToBone(this, pBone);
+				else
+				{
+					ostringstream oss;
+					oss << "Erreur dans CScene::LoadSceneObject(), fichier \"" << __FILE__ << "\" ligne " << __LINE__;
+					CEException e(oss.str());
+					throw e;
+				}
+			}
+		}
+	}
+	else
+		Link(pParent);
+	if (pEntityInfos) {
+		SetWeight(pEntityInfos->m_fWeight);
+		for (unsigned int iChild = 0; iChild < pEntityInfos->m_vSubEntityInfos.size(); iChild++) {
+			ILoader::CEntityInfos* pChildInfos = dynamic_cast<ILoader::CEntityInfos*>(pEntityInfos->m_vSubEntityInfos[iChild]);
+			if (pChildInfos) {
+				CEntity* pChild = m_pEntityManager->CreateEntityFromType(pChildInfos->m_sRessourceFileName, pChildInfos->m_sTypeName, pChildInfos->m_sObjectName);
+				pChild->BuildFromInfos(*pChildInfos, this);
+			}
+		}
+	}
+}
+
 void CEntity::DetachCurrentAnimation()
 {
 	m_pCurrentAnimation = NULL;

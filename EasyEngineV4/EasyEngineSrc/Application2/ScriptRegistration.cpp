@@ -843,7 +843,7 @@ void GenerateRandomNPC(IScriptState* pState)
 		r = rand();
 		float z = factor * pBox->GetDimension().m_z * (r - 0.5f * RAND_MAX) / RAND_MAX;
 		pEntity->SetWorldPosition(x, y, z);
-		m_pEntityManager->WearArmor(id, "2");
+		m_pEntityManager->WearArmorToDummy(id, "2");
 		pEntity->RunAction("stand", true);
 		float angle = 360 * r / RAND_MAX;
 		pEntity->Yaw(angle);
@@ -872,6 +872,7 @@ void SetScale( IScriptState* pState )
 void CreateMobileEntity( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
+	CScriptFuncArgString* pStringID = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
 	string sName = pName->m_sValue;
 	if( sName.find( ".bme" ) == -1 )
 		sName += ".bme";
@@ -880,7 +881,7 @@ void CreateMobileEntity( IScriptState* pState )
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateMobileEntity( sName, m_pFileSystem );
+		IEntity* pEntity = m_pEntityManager->CreateMobileEntity( sName, m_pFileSystem, pStringID->m_sValue);
 		pEntity->Link( m_pScene );
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -1027,10 +1028,10 @@ void CreateNPC( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
-void SaveNPC(IScriptState* pState)
+void SaveCharacter(IScriptState* pState)
 {
-	CScriptFuncArgString* pId = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
-	m_pEntityManager->SaveNPC(pId->m_sValue);
+	CScriptFuncArgString* pId = dynamic_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	m_pEntityManager->SaveCharacter(pId->m_sValue);
 }
 
 void CreateMinimapEntity(IScriptState* pState)
@@ -1993,7 +1994,14 @@ void SetEntityTexture(IScriptState* pState)
 	CScriptFuncArgInt* pId = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(0));
 	CScriptFuncArgString* pTextureName = dynamic_cast<CScriptFuncArgString*>(pState->GetArg(1));
 	IEntity* pEntity = m_pEntityManager->GetEntity(pId->m_nValue);
-	pEntity->SetDiffuseTexture(pTextureName->m_sValue);
+	if (!pEntity) {
+		ostringstream oss;
+		oss << "Erreur, Entity " << pId->m_nValue << " introuvable";
+		m_pConsole->Println(oss.str());
+	}
+	else {
+		pEntity->SetDiffuseTexture(pTextureName->m_sValue);
+	}
 }
 
 void SetEntityWeight( IScriptState* pState )
@@ -2356,12 +2364,6 @@ void Kill(IScriptState* pState)
 	m_pEntityManager->Kill(pId->m_nValue);
 }
 
-void WearArmor(IScriptState* pState)
-{
-	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
-	CScriptFuncArgString* pArmor = (CScriptFuncArgString*)(pState->GetArg(1));
-	m_pEntityManager->WearArmor(pId->m_nValue, pArmor->m_sValue);
-}
 
 void WearArmorToDummy(IScriptState* pState)
 {
@@ -3460,6 +3462,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eString );
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction( "CreateMobileEntity", CreateMobileEntity, vType );
 
 	vType.clear();
@@ -3473,7 +3476,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("SaveNPC", SaveNPC, vType);
+	m_pScriptManager->RegisterFunction("SaveCharacter", SaveCharacter, vType);
 
 	vType.clear();
 	vType.push_back(eString);
@@ -3720,10 +3723,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eFloat);
 	m_pScriptManager->RegisterFunction("SetCurrentAnimationSpeed", SetCurrentAnimationSpeed, vType);
 
-	vType.clear();
-	vType.push_back(eInt);
-	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("WearArmor", WearArmor, vType);
 
 	vType.clear();
 	vType.push_back(eInt);

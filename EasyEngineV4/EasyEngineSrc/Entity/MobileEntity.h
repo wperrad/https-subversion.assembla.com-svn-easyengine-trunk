@@ -8,15 +8,15 @@ class CMobileEntity : public CEntity, public virtual IFighterEntity
 {
 
 public:
-	CMobileEntity(EEInterface& oInterface, string sFileName);
+	CMobileEntity(EEInterface& oInterface, string sFileName, string sID);
 
 	float						GetAnimationSpeed(IEntity::TAnimation eAnimationType);
 	void						GetEntityInfos(ILoader::CObjectInfos*& pInfos) override;
+	void						BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent) override;
 	void						SetAnimationSpeed(TAnimation eAnimationType, float fSpeed);
 	TAnimation					GetCurrentAnimationType() const;
 	void						RunAction(string sAction, bool bLoop);
 	void						Die();
-	void						WearArmor(string armorName);
 	void						WearArmorToDummy(string armorName);
 	void						WearShoes(string shoesName);
 	void						Yaw(float fAngle);

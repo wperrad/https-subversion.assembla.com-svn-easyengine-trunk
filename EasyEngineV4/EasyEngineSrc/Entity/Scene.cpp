@@ -487,8 +487,7 @@ void CScene::GetInfos( ILoader::CSceneInfos& si )
 	si.m_sOriginalSceneFileName = m_sOriginalSceneFileName;
 	GetName( si.m_sName );
 	m_oRenderer.GetBackgroundColor(si.m_oBackgroundColor);
-	for( unsigned int i= 0; i < m_vChild.size(); i++ )
-	{
+	for( unsigned int i= 0; i < m_vChild.size(); i++ ) {
 		CEntity* pEntity = dynamic_cast< CEntity* >( m_vChild[ i ] );
 		if (pEntity) {
 			ILoader::CObjectInfos* pInfos = GetEntityInfos(pEntity);
@@ -498,92 +497,22 @@ void CScene::GetInfos( ILoader::CSceneInfos& si )
 	}
 }
 
-void CScene::LoadSceneObject( const ILoader::CObjectInfos* pSceneObjInfos, IEntity* pParent )
+void CScene::LoadSceneObject( const ILoader::CObjectInfos* pSceneObjInfos, CEntity* pParent )
 {
 	string sRessourceFileName = pSceneObjInfos->m_sRessourceFileName;
-	CMatrix oXForm = pSceneObjInfos->m_oXForm;
-	if( sRessourceFileName == "EE_Repere_19051978" )
-	{
+	if( sRessourceFileName == "EE_Repere_19051978" ) {
 		IEntity* pRepere = m_pEntityManager->CreateRepere( m_oRenderer );
 		pRepere->Link( this );
 	}
-	else
-	{
+	else {
 		const ILoader::CLightEntityInfos* pLightEntityInfos = dynamic_cast< const ILoader::CLightEntityInfos* >( pSceneObjInfos );
-		if( pLightEntityInfos )
-		{
-			if( sRessourceFileName.size() == 0 )
-			{
-				IRessource::TLight type;
-				switch( pLightEntityInfos->m_eType )
-				{
-				case ILoader::CLightInfos::eDirectionnelle:
-					type = IRessource::DIRECTIONAL;
-					break;
-				case ILoader::CLightInfos::eOmni:
-					type = IRessource::OMNI;
-					break;
-				case ILoader::CLightInfos::eTarget:
-					type = IRessource::SPOT;
-					break;
-				default:
-					throw 1;
-				}
-				IEntity* pEntity = m_pEntityManager->CreateLightEntity( pLightEntityInfos->m_oColor, type, pLightEntityInfos->m_fIntensity );
-				pEntity->SetLocalMatrix( oXForm );
-				pEntity->Link( this );
-			}
-			else
-				throw 1;
-		}
-		else
-		{
+		if( pLightEntityInfos )	{
+			CEntity* pEntity = m_pEntityManager->CreateLightEntity();
+			pEntity->BuildFromInfos(*pLightEntityInfos, pParent);
+		} else {
 			const ILoader::CEntityInfos* pEntityInfos = dynamic_cast< const ILoader::CEntityInfos* >( pSceneObjInfos );
-			IEntity* pEntity = m_pEntityManager->CreateEntityFromType( sRessourceFileName, pEntityInfos->m_sTypeName, pEntityInfos->m_sObjectName);
-			pEntity->SetLocalMatrix( oXForm );
-
-			if( pEntityInfos->m_nParentBoneID != -1 )
-			{
-				if( pParent->GetSkeletonRoot() )
-				{
-					if (pEntityInfos->m_nParentBoneID == 0 && pEntity->GetSkeletonRoot() && (pEntityInfos->m_nGrandParentDummyRootID != -1) ) {
-						string sDummyName;
-						pEntity->GetSkeletonRoot()->GetName(sDummyName);
-						string sDummyRoot = "Dummy";
-						string sBodyDummyRoot = "BodyDummy";
-						if (sDummyName.substr(0, sDummyRoot.size()) == "Dummy") {
-							IBone* pBodyDummy = dynamic_cast< IBone* >(pParent->GetSkeletonRoot()->GetChildBoneByID(pEntityInfos->m_nGrandParentDummyRootID));
-							pEntity->LinkDummyParentToDummyEntity(pParent, pBodyDummy->GetName());
-						}
-					}
-					else {
-						IBone* pBone = dynamic_cast<IBone*>(pParent->GetSkeletonRoot()->GetChildBoneByID(pEntityInfos->m_nParentBoneID));
-						if (pBone)
-							pParent->LinkEntityToBone(pEntity, pBone);
-						else
-						{
-							ostringstream oss;
-							oss << "Erreur dans CScene::LoadSceneObject(), fichier \"" << __FILE__ << "\" ligne " << __LINE__;
-							CEException e(oss.str());
-							throw e;
-						}
-					}
-				}
-			}
-			else
-				pEntity->Link( pParent );
-			const ILoader::CAnimatedEntityInfos* pAnimatedEntityInfos = dynamic_cast< const ILoader::CAnimatedEntityInfos* >(pSceneObjInfos);
-			if(pAnimatedEntityInfos && pEntity->GetSkeletonRoot() )	{
-				pEntity->AddAnimation(pAnimatedEntityInfos->m_sAnimationFileName );
-				pEntity->SetCurrentAnimation(pAnimatedEntityInfos->m_sAnimationFileName );
-				for (map<string, float>::const_iterator it = pAnimatedEntityInfos->m_mAnimationSpeed.begin(); it != pAnimatedEntityInfos->m_mAnimationSpeed.end(); it++) {
-					pEntity->SetAnimationSpeed(CMobileEntity::s_mStringToAnimation[it->first], it->second);
-				}
-				pEntity->GetCurrentAnimation()->Play( true );
-			}
-			pEntity->SetWeight( pEntityInfos->m_fWeight );
-			for( unsigned int iChild = 0; iChild < pEntityInfos->m_vSubEntityInfos.size(); iChild++ )
-				LoadSceneObject( pEntityInfos->m_vSubEntityInfos[ iChild ], pEntity );
+			CEntity* pEntity = m_pEntityManager->CreateEntityFromType( sRessourceFileName, pEntityInfos->m_sTypeName, pEntityInfos->m_sObjectName);
+			pEntity->BuildFromInfos(*pSceneObjInfos, pParent);
 		}
 	}
 }
@@ -599,8 +528,7 @@ void CScene::Load( const ILoader::CSceneInfos& si )
 	}
 	SetRessource(si.m_sSceneFileName);
 	m_sOriginalSceneFileName = si.m_sOriginalSceneFileName;
-	for( unsigned int i = 0; i < si.m_vObject.size(); i++ )
-	{
+	for( unsigned int i = 0; i < si.m_vObject.size(); i++ )	{
 		const ILoader::CObjectInfos* pSceneObjInfos = si.m_vObject.at( i );
 		LoadSceneObject( pSceneObjInfos, this );
 	}

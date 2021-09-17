@@ -34,6 +34,9 @@ m_oCameraManager(static_cast<ICameraManager&>(*m_oInterface.GetPlugin("CameraMan
 m_nLastEntityID( -1 ),
 m_pPlayer(NULL)
 {
+	string root;
+	m_oFileSystem.GetLastDirectory(root);
+	m_sCharactersDatabaseFileName = root + "/characters.db";
 	m_itCurrentParsedEntity = m_mCollideEntities.end();
 	m_itCurrentIAEntity = m_mIAEntities.end();
 	CMobileEntity::InitStatics();
@@ -56,13 +59,13 @@ void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
 		m_mFighterEntities[ pFighterEntity ] = 1;
 }
 
-IEntity* CEntityManager::CreateEntityFromType(std::string sFileName, string sTypeName, string sID, bool bDuplicate )
+CEntity* CEntityManager::CreateEntityFromType(std::string sFileName, string sTypeName, string sID, bool bDuplicate )
 {
 	CEntity* pEntity = NULL;
 	if( sTypeName == "Entity" )
 		pEntity = new CEntity(m_oInterface, sFileName, bDuplicate );
 	else if( sTypeName == "Human" )
-		pEntity = new CMobileEntity(m_oInterface, sFileName);
+		pEntity = new CMobileEntity(m_oInterface, sFileName, sID);
 	else if (sTypeName == "NPC")
 		pEntity = new CNPCEntity(m_oInterface, sFileName, sID);
 	else if( sTypeName == "Player")
@@ -179,9 +182,9 @@ IBox& CEntityManager::GetBox( IEntity* pEntity )
 	return pBoxEntity->GetBox();
 }
 
-IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFileSystem )
+IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFileSystem, string sID )
 {
-	IEntity* pEntity = new CMobileEntity(m_oInterface, sFileName);
+	IEntity* pEntity = new CMobileEntity(m_oInterface, sFileName, sID);
 	CreateEntity( pEntity );
 	return pEntity;
 }
@@ -200,11 +203,15 @@ IEntity* CEntityManager::CreatePlaneEntity(int slices, int size, string heightTe
 	return planeEntity;
 }
 
-void CEntityManager::AddNewCharacter(string sCharacterName)
+void CEntityManager::AddNewCharacter(IEntity* pEntity)
 {
-	map<string, CNPCEntity*>::iterator itCharacter = m_mCharacters.find(sCharacterName);
+	string sCharacterName;
+	pEntity->GetEntityName(sCharacterName);
+	map<string, CMobileEntity*>::iterator itCharacter = m_mCharacters.find(sCharacterName);
 	if (itCharacter != m_mCharacters.end())
 		throw CCharacterAlreadyExistsException(sCharacterName);
+	CMobileEntity* pCharacter = dynamic_cast<CMobileEntity*>(pEntity);
+	m_mCharacters[sCharacterName] = pCharacter;
 }
 
 void CEntityManager::SetPlayer(IPlayer* player)
@@ -263,6 +270,13 @@ int	CEntityManager::GetEntityID( IEntity* pEntity )
 int CEntityManager::GetEntityCount()
 {
 	return (int)m_mEntitiesID.size();
+}
+
+CEntity* CEntityManager::CreateLightEntity()
+{
+	CLightEntity* pLightEntity = new CLightEntity(m_oInterface, nullptr);
+	CreateEntity(pLightEntity);
+	return pLightEntity;
 }
 
 IEntity* CEntityManager::CreateLightEntity( CVector Color, IRessource::TLight type, float fIntensity )
@@ -454,18 +468,18 @@ void CEntityManager::Kill(int entityId)
 		pEntity->Die();
 }
 
-void CEntityManager::WearArmor(int entityId, string sArmorName)
-{
-	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
-	if (pEntity)
-		pEntity->WearArmor(sArmorName);
-}
 
 void CEntityManager::WearArmorToDummy(int entityId, string sArmorName)
 {
 	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
 	if (pEntity)
 		pEntity->WearArmorToDummy(sArmorName);
+	else {
+		ostringstream oss;
+		oss << "Erreur dans CEntityManager::WearArmorToDummy() : entite " << entityId << " introuvable";
+		CEException e(oss.str());
+		throw e;
+	}
 }
 
 void CEntityManager::WearShoes(int entityId, string shoesName)
@@ -478,48 +492,57 @@ void CEntityManager::WearShoes(int entityId, string shoesName)
 	}
 }
 
-void CEntityManager::SaveNPC(string sNPCID)
+void CEntityManager::SaveCharacter(string sNPCID)
 {
-#if 0
-	map<string, CNPCEntity*>::iterator itNPC = m_mCharacters.find(sNPCID);
-	if (itNPC != m_mCharacters.end())
-	{
-		CMobileEntity* pEntity = itNPC->second;
-		ILoader::CAnimatedEntityInfos* pAnimatedEntityInfos = new ILoader::CAnimatedEntityInfos;
-		IAnimation* pAnimation = pEntity->GetCurrentAnimation();
-		if (pAnimation) {
-			string animFile;
-			pAnimation->GetFileName(animFile);
-			animFile = animFile.substr(animFile.find_last_of("/") + 1);
-			pAnimatedEntityInfos->m_sAnimationFileName = animFile;
-			CMobileEntity* pMobileEntity = dynamic_cast<CMobileEntity*>(pEntity);
-			for (map<string, IEntity::TAnimation>::iterator it = CMobileEntity::s_mStringToAnimation.begin(); it != CMobileEntity::s_mStringToAnimation.end(); it++) {
-				float as = pMobileEntity->GetAnimationSpeed(it->second);
-				pAnimatedEntityInfos->m_mAnimationSpeed[it->first] = as;
-			}
-		}
-		IBone* pSkeleton = pEntity->GetSkeletonRoot();
-		if (pSkeleton)
-		{
-			vector< CEntity* > vSubEntity;
-			string sRessourceFileName;
-			pEntity->GetRessource()->GetFileName(sRessourceFileName);
-			CEntity::GetSkeletonEntities(dynamic_cast<CBone*>(pSkeleton), vSubEntity, sRessourceFileName);
-			for (unsigned int iSubEntity = 0; iSubEntity < vSubEntity.size(); iSubEntity++)
-			{
-				ILoader::CEntityInfos* pSubEntityInfo = dynamic_cast<ILoader::CEntityInfos*>(GetEntityInfos(vSubEntity[iSubEntity]));
-				ILoader::CEntityInfos* pSubEntityInfo = dynamic_cast<ILoader::CEntityInfos*>(GetEntityInfos(vSubEntity[iSubEntity]));
-				if (pSubEntityInfo)
-					pAnimatedEntityInfos->m_vSubEntityInfos.push_back(pSubEntityInfo);
-			}
-		}
+	map<string, CMobileEntity*>::iterator itNPC = m_mCharacters.find(sNPCID);
+	if (itNPC != m_mCharacters.end()) {
+		ILoader::CObjectInfos* pInfos = nullptr;
+		itNPC->second->GetEntityInfos(pInfos);
+		map<string, ILoader::CAnimatedEntityInfos> characterInfos;
+		LoadCharacterInfos(characterInfos);
+		ILoader::CAnimatedEntityInfos* pAnimatedEntity = static_cast<ILoader::CAnimatedEntityInfos*>(pInfos);
+		characterInfos[sNPCID] = *pAnimatedEntity;
+		SaveCharacterInfos(characterInfos);
+		delete pAnimatedEntity;
+	}
+}
+
+void CEntityManager::LoadCharacterInfos(map<string, ILoader::CAnimatedEntityInfos>& characterInfos)
+{
+	CBinaryFileStorage fs;
+	if (!fs.OpenFile(m_sCharactersDatabaseFileName, IFileStorage::eRead)) {
+		fs.OpenFile(m_sCharactersDatabaseFileName, IFileStorage::eWrite);
+		fs << 0;
+		fs.CloseFile();
+		fs.OpenFile(m_sCharactersDatabaseFileName, IFileStorage::eRead);
+	}
+	int characterCount;
+	fs >> characterCount;
+	for (int i = 0; i < characterCount; i++) {
+		ILoader::CAnimatedEntityInfos infos;
+		int type;
+		fs >> type;
+		fs >> infos;
+		characterInfos[infos.m_sObjectName] = infos;
+	}
+	fs.CloseFile();
+}
+
+void CEntityManager::SaveCharacterInfos(const map<string, ILoader::CAnimatedEntityInfos>& characterInfos)
+{
+	CBinaryFileStorage fs;
+	if (fs.OpenFile(m_sCharactersDatabaseFileName, IFileStorage::eWrite)) {
+		fs << (int)characterInfos.size();
+		for (map<string, ILoader::CAnimatedEntityInfos>::const_iterator it = characterInfos.begin(); it != characterInfos.end(); it++)
+			fs << it->second;
+		fs.CloseFile();
 	}
 	else {
 		ostringstream oss;
-		oss << "Erreur : NPC '" << sNPCID << "' not found";
-		throw CEException(oss.str());
+		oss << "Erreur : CEntityManager::LoadCharacterInfos() -> \"" << m_sCharactersDatabaseFileName << "\" introuvable";
+		CEException e(oss.str());
+		throw e;
 	}
-#endif // 0
 }
 
 template<class T>

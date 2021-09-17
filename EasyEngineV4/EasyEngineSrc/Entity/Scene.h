@@ -111,7 +111,7 @@ private:
 
 	void								GetInfos(ILoader::CSceneInfos& si);
 	void								Load(const ILoader::CSceneInfos& si);
-	void								LoadSceneObject(const ILoader::CObjectInfos* pSceneObjInfos, IEntity* pParent);
+	void								LoadSceneObject(const ILoader::CObjectInfos* pSceneObjInfos, CEntity* pParent);
 	ILoader::CObjectInfos*				GetEntityInfos(CEntity* pEntity);
 	void								CreateCollisionGrid();
 	void								CreateHeightMap();

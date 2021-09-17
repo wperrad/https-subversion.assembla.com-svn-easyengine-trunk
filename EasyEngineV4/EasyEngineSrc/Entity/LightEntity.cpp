@@ -62,3 +62,27 @@ void CLightEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
 	}
 	lightInfos.m_eType = type;
 }
+
+void CLightEntity::BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent)
+{
+	CEntity::BuildFromInfos(infos, pParent);
+	const ILoader::CLightEntityInfos* pLightEntityInfos = static_cast< const ILoader::CLightEntityInfos* >(&infos);
+	IRessource::TLight type;
+	switch (pLightEntityInfos->m_eType)
+	{
+	case ILoader::CLightInfos::eDirectionnelle:
+		type = IRessource::DIRECTIONAL;
+		break;
+	case ILoader::CLightInfos::eOmni:
+		type = IRessource::OMNI;
+		break;
+	case ILoader::CLightInfos::eTarget:
+		type = IRessource::SPOT;
+		break;
+	default:
+		throw 1;
+	}
+	IRessource* pLight = m_oRessourceManager.CreateLight(pLightEntityInfos->m_oColor, type, pLightEntityInfos->m_fIntensity);
+	m_pRessource = pLight;
+	SetLocalMatrix(infos.m_oXForm);
+}

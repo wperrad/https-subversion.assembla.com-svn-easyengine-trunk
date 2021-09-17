@@ -18,7 +18,7 @@ vector< CMobileEntity* >							CMobileEntity::s_vHumans;
 map<string, IEntity::TAnimation> CMobileEntity::s_mStringToAnimation;
 
 
-CMobileEntity::CMobileEntity(EEInterface& oInterface, string sFileName):
+CMobileEntity::CMobileEntity(EEInterface& oInterface, string sFileName, string sID):
 CEntity(oInterface, sFileName),
 m_oInterface(oInterface),
 m_bInitSkeletonOffset( false ),
@@ -33,6 +33,7 @@ m_fNeckRotV( 0 ),
 m_bFirstUpdate(true),
 m_sStandAnimation("stand-normal")
 {
+	m_sEntityName = sID;
 	m_sTypeName = "Human";
 	
 	for( int i = 0; i < eAnimationCount; i++ )
@@ -65,6 +66,8 @@ m_sStandAnimation("stand-normal")
 
 	m_pfnCollisionCallback = OnCollision;
 	m_sAttackBoneName = "OrteilsG";
+	IEntityManager* pEntityManager = static_cast<IEntityManager*>(oInterface.GetPlugin("EntityManager"));
+	pEntityManager->AddNewCharacter(this);
 }
 
 void CMobileEntity::InitStatics()
@@ -275,20 +278,6 @@ const string& CMobileEntity::GetAttackBoneName()
 	return m_sAttackBoneName;
 }
 
-void CMobileEntity::WearArmor(string armorName)
-{
-	string path = "Armors\\" + armorName + "\\";
-	const int count = 8;
-	string arrayPiece[count] = {"cuirasse", "jupe", "JambiereD", "JambiereG", "BrassiereD", "BrassiereG", "EpauletteD", "EpauletteG" };
-	string arrayBone[count] = { "Cervicales", "Bassin", "TibiasD", "TibiasG", "AvantBrasD", "AvantBrasG", "EpauleD", "EpauleG" };
-
-	for (int i = 0; i < count; i++) {
-		CEntity* pArmorPiece = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity(path + arrayPiece[i] + ".bme", ""));
-		IBone* pBone = dynamic_cast<IBone*>(m_pSkeletonRoot->GetChildBoneByName(arrayBone[i]));
-		if (pBone)
-			LinkEntityToBone(pArmorPiece, pBone, ePreserveChildRelativeTM);
-	}
-}
 
 void CMobileEntity::WearArmorToDummy(string armorName)
 {
@@ -555,6 +544,19 @@ void CMobileEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
 	GetTypeName(sTypeName);
 	animatedEntityInfos.m_sTypeName = sTypeName;
 	animatedEntityInfos.m_fWeight = GetWeight();
+}
+
+void CMobileEntity::BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent)
+{
+	CEntity::BuildFromInfos(infos, pParent);
+	const ILoader::CAnimatedEntityInfos* pAnimatedEntityInfos = dynamic_cast< const ILoader::CAnimatedEntityInfos* >(&infos);
+	if (GetSkeletonRoot()) {
+		AddAnimation(pAnimatedEntityInfos->m_sAnimationFileName);
+		SetCurrentAnimation(pAnimatedEntityInfos->m_sAnimationFileName);
+		for (map<string, float>::const_iterator it = pAnimatedEntityInfos->m_mAnimationSpeed.begin(); it != pAnimatedEntityInfos->m_mAnimationSpeed.end(); it++)
+			SetAnimationSpeed(CMobileEntity::s_mStringToAnimation[it->first], it->second);
+		GetCurrentAnimation()->Play(true);
+	}
 }
 
 IEntity::TAnimation CMobileEntity::GetCurrentAnimationType() const

@@ -4,7 +4,7 @@ SetCameraType("free");
 r=CreateRepere();
 
 
-LoadLevel("map02");
+LoadLevel("map03");
 return;
 
 /*
@@ -96,25 +96,25 @@ SetCurrentPerso(perso);
 Stand(perso);
 SetAnimationSpeed(perso, "run", 2);
 SetAnimationSpeed(perso, "walk", 1.5);
-WearArmor(perso, "2");
+WearArmorToDummy(perso, "2");
 SetEntityPos(perso, 0, 3000, 0);
 
 npc1 = CreateNPC("femme2", "femme2");
 SetEntityName(npc1, "npc1");
 Stand(npc1);
-WearArmor(npc1, "2");
+WearArmorToDummy(npc1, "2");
 SetEntityPos(npc1, 150, 3000, 0);
 
 npc2 = CreateNPC("femme3", "Femme3");
 SetEntityName(npc2, "npc2");
 Stand(npc2);
-WearArmor(npc2, "2");
+WearArmorToDummy(npc2, "2");
 SetEntityPos(npc2, 300, 3000, 0);
 
 npc3 = CreateNPC("femme4", "femme4");
 SetEntityName(npc3, "npc3");
 Stand(npc3);
-WearArmor(npc3, "2");
+WearArmorToDummy(npc3, "2");
 SetEntityPos(npc3, 400, 3000, 0);
 
 
