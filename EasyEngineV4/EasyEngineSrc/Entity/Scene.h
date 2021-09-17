@@ -50,8 +50,8 @@ public:
 	CScene(EEInterface& oInterface, string ressourceFileName, string diffuseFileName);
 	~CScene();
 	
-	IEntity*							Merge( string sRessourceName, string sEntityType, float x, float y, float z );
-	IEntity*							Merge( string sRessourceName, string sEntityType, CMatrix& oXForm );
+	IEntity*							Merge( string sRessourceName, float x, float y, float z ) override;
+	IEntity*							Merge( string sRessourceName, CMatrix& oXForm );
 	void								Update();	
 	void								Load( string sFileName );
 	void								Export( string sFileName );
@@ -99,11 +99,9 @@ private:
 	CEntity*							m_pPlayerMapSphere;
 	bool								m_bDisplayMinimap;
 	float								m_fGroundMargin;
-	map<string, IEntity::TAnimation>	m_StringToAnimation;
 	string								m_sOriginalSceneFileName;
 	ITexture*							m_pHeightMaptexture;
 	IShader*							m_pGroundShader;
-	//float								m_fGroundBboxHeight;
 	bool								m_bUseDisplacementMap;
 	float								m_fDisplacementRatioHeightSize;
 	float								m_fTiling;
@@ -113,9 +111,8 @@ private:
 
 	void								GetInfos(ILoader::CSceneInfos& si);
 	void								Load(const ILoader::CSceneInfos& si);
-	void								LoadSceneObject(const ILoader::CSceneObjInfos* pSceneObjInfos, IEntity* pParent);
-	void								GetSkeletonEntities(CBone* pRoot, vector< IEntity* >& vEntity, string sFileFilter);
-	ILoader::CSceneObjInfos*			GetEntityInfos(IEntity* pEntity);
+	void								LoadSceneObject(const ILoader::CObjectInfos* pSceneObjInfos, CEntity* pParent);
+	ILoader::CObjectInfos*				GetEntityInfos(CEntity* pEntity);
 	void								CreateCollisionGrid();
 	void								CreateHeightMap();
 	void								CollectMapEntities(vector<IEntity*>& entities);

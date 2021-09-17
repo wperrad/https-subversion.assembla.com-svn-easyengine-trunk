@@ -8,8 +8,8 @@
 #include "Scene.h"
 #include "EntityManager.h"
 
-CNPCEntity::CNPCEntity(EEInterface& oInterface, string sFileName):
-CMobileEntity(oInterface, sFileName),
+CNPCEntity::CNPCEntity(EEInterface& oInterface, string sFileName, string sID):
+CMobileEntity(oInterface, sFileName, sID),
 m_oPathFinder(static_cast<IPathFinder&>(*oInterface.GetPlugin("PathFinder")))
 {
 	m_sTypeName = "NPC";

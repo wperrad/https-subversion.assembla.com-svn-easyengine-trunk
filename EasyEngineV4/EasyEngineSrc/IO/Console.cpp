@@ -139,7 +139,7 @@ void CConsole::Update()
 
 int CConsole::GetLineHeight()
 {
-	return m_oGUIManager.GetCurrentFontHeight();;
+	return m_oGUIManager.GetCurrentFontHeight();
 }
 
 int CConsole::GetClientHeight()

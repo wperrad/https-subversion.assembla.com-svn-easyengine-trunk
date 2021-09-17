@@ -37,7 +37,8 @@ public:
 
 	enum TEntityEvent
 	{
-		T_UPDATE = 0
+		T_UPDATE = 0,
+		T_LOAD_RESSOURCE
 	};
 
 	typedef void( *TKeyCallback )( CPlugin*, TKeyEvent, int );
@@ -48,7 +49,7 @@ public:
 	virtual void 			AbonneToKeyEvent(CPlugin* pPlugin, TKeyCallback pfnCallback) = 0;
 	virtual void 			AbonneToMouseEvent(CPlugin* pPlugin, TMouseCallback pfnCallback) = 0;
 	virtual void 			AbonneToWindowEvent(CPlugin* pPlugin, TWindowCallback pfnCallback) = 0;
-	virtual void 			AbonneToEntityEvent(CPlugin*, TEntityCallback pfnCallback) = 0;
+	virtual void 			AbonneToEntityEvent(CPlugin* plugin, TEntityCallback pfnCallback) = 0;
 	virtual void			DesabonneToMouseEvent(TMouseCallback pfnCallback) = 0;
 	virtual void			DesabonneToWindowEvent(TWindowCallback pfnCallback) = 0;
 

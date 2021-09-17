@@ -15,7 +15,10 @@ map< IEntity::TAnimation, float > 			CMobileEntity::s_mOrgAnimationSpeedByType;
 map< string, CMobileEntity::TAction >				CMobileEntity::s_mActions;
 vector< CMobileEntity* >							CMobileEntity::s_vHumans;
 
-CMobileEntity::CMobileEntity(EEInterface& oInterface, string sFileName):
+map<string, IEntity::TAnimation> CMobileEntity::s_mStringToAnimation;
+
+
+CMobileEntity::CMobileEntity(EEInterface& oInterface, string sFileName, string sID):
 CEntity(oInterface, sFileName),
 m_oInterface(oInterface),
 m_bInitSkeletonOffset( false ),
@@ -30,33 +33,9 @@ m_fNeckRotV( 0 ),
 m_bFirstUpdate(true),
 m_sStandAnimation("stand-normal")
 {
+	m_sEntityName = sID;
 	m_sTypeName = "Human";
-	if( s_mAnimationStringToType.size() == 0 )
-	{
-		s_mAnimationStringToType[ "walk" ] = eWalk;
-		s_mAnimationStringToType[ "run" ] = eRun;
-		s_mAnimationStringToType[ "stand" ] = eStand;
-		s_mAnimationStringToType[ "HitLeftFoot" ] = eHitLeftFoot;
-		s_mAnimationStringToType["jump"] = eJump;
-		s_mAnimationStringToType["dying"] = eDying;
-		s_mAnimationStringToType["guard"] = eGuard;
-		s_mOrgAnimationSpeedByType[ eWalk ] = -1.6f;
-		s_mOrgAnimationSpeedByType[ eStand ] = 0.f;
-		s_mOrgAnimationSpeedByType[eRun] = -7.f;
-		s_mOrgAnimationSpeedByType[ eHitLeftFoot ] = 0.f;
-		s_mOrgAnimationSpeedByType[ eHitReceived ] = 0.f;
-		s_mOrgAnimationSpeedByType[eDying] = 0.f;
-		s_mOrgAnimationSpeedByType[eGuard] = 0.f;
-
-		s_mActions[ "walk" ] = Walk;
-		s_mActions[ "run" ] = Run;
-		s_mActions[ "stand" ] = Stand;
-		//s_mActions[ "HitLeftFoot" ] = HitLeftFoot;
-		s_mActions[ "PlayReceiveHit" ] = PlayReceiveHit;
-		s_mActions[ "jump"] = Jump;
-		s_mActions["dying"] = Dying;
-		s_mActions["guard"] = Guard;
-	}
+	
 	for( int i = 0; i < eAnimationCount; i++ )
 		m_mAnimationSpeedByType[ (TAnimation)i ] = s_mOrgAnimationSpeedByType[ (TAnimation)i ];
 
@@ -87,6 +66,37 @@ m_sStandAnimation("stand-normal")
 
 	m_pfnCollisionCallback = OnCollision;
 	m_sAttackBoneName = "OrteilsG";
+	IEntityManager* pEntityManager = static_cast<IEntityManager*>(oInterface.GetPlugin("EntityManager"));
+	pEntityManager->AddNewCharacter(this);
+}
+
+void CMobileEntity::InitStatics()
+{
+	s_mAnimationStringToType["walk"] = eWalk;
+	s_mAnimationStringToType["run"] = eRun;
+	s_mAnimationStringToType["stand"] = eStand;
+	s_mAnimationStringToType["HitLeftFoot"] = eHitLeftFoot;
+	s_mAnimationStringToType["jump"] = eJump;
+	s_mAnimationStringToType["dying"] = eDying;
+	s_mAnimationStringToType["guard"] = eGuard;
+	s_mOrgAnimationSpeedByType[eWalk] = -1.6f;
+	s_mOrgAnimationSpeedByType[eStand] = 0.f;
+	s_mOrgAnimationSpeedByType[eRun] = -7.f;
+	s_mOrgAnimationSpeedByType[eHitLeftFoot] = 0.f;
+	s_mOrgAnimationSpeedByType[eHitReceived] = 0.f;
+	s_mOrgAnimationSpeedByType[eDying] = 0.f;
+	s_mOrgAnimationSpeedByType[eGuard] = 0.f;
+
+	s_mActions["walk"] = Walk;
+	s_mActions["run"] = Run;
+	s_mActions["stand"] = Stand;
+	//s_mActions[ "HitLeftFoot" ] = HitLeftFoot;
+	s_mActions["PlayReceiveHit"] = PlayReceiveHit;
+	s_mActions["jump"] = Jump;
+	s_mActions["dying"] = Dying;
+	s_mActions["guard"] = Guard;
+
+	s_mStringToAnimation["run"] = IEntity::eRun;
 }
 
 
@@ -140,22 +150,39 @@ void CMobileEntity::Update()
 
 IGeometry* CMobileEntity::GetBoundingGeometry()
 {
-	string sAnimationName;
-	m_pCurrentAnimation->GetName(sAnimationName);
-	sAnimationName = sAnimationName.substr(sAnimationName.find_last_of("/") + 1);
-	int time = m_pCurrentAnimation->GetAnimationTime();
-	int key = (time / 160) * 160;
-	map<int, IBox*>::iterator itBox = m_oKeyBoundingBoxes[sAnimationName].find(key);
-	while (itBox == m_oKeyBoundingBoxes[sAnimationName].end() && key < m_pCurrentAnimation->GetEndAnimationTime()) {
-		key += 160;
-		itBox = m_oKeyBoundingBoxes[sAnimationName].find(key);
+	if (m_pCurrentAnimation) {
+		string sAnimationName;
+		m_pCurrentAnimation->GetName(sAnimationName);
+		sAnimationName = sAnimationName.substr(sAnimationName.find_last_of("/") + 1);
+		int time = m_pCurrentAnimation->GetAnimationTime();
+		//int key = (time / 160) * 160;
+		int key = 160;
+		map<int, IBox*>::iterator itBox = m_oKeyBoundingBoxes[sAnimationName].find(key);
+		if (itBox == m_oKeyBoundingBoxes[sAnimationName].end()) {
+			map<int, IBox*>::iterator itLast = m_oKeyBoundingBoxes[sAnimationName].begin(), itNext = itBox;
+			for (itBox = m_oKeyBoundingBoxes[sAnimationName].begin(); itBox != m_oKeyBoundingBoxes[sAnimationName].end(); itBox++) {
+				if (itNext == m_oKeyBoundingBoxes[sAnimationName].end())
+					itNext = itBox;
+				else {
+					std::advance(itNext, 1);
+					if (itNext == m_oKeyBoundingBoxes[sAnimationName].end())
+						itNext = itBox;
+				}
+				if (itBox->first >= itLast->first && itBox->first <= itNext->first) {
+					itBox = itNext;
+					break;
+				}
+				itLast = itBox;
+			}
+		}
+		if(sAnimationName == "run")
+			itBox = m_oKeyBoundingBoxes[sAnimationName].find(160);
+		return (IBox*)itBox->second;
 	}
-	if (itBox == m_oKeyBoundingBoxes[sAnimationName].end()) {
-		ostringstream oss;
-		oss << "CMobileEntity::Update() : mKeyBoundingBoxes[" << sAnimationName << "][" << key << "] introuvable poue le model " << m_sName;
-		throw CEException(oss.str());
+	else {
+		return m_pMesh->GetBBox();
 	}
-	return (IBox*)itBox->second;
+	return nullptr;
 }
 
 void CMobileEntity::UpdateCollision()
@@ -251,20 +278,6 @@ const string& CMobileEntity::GetAttackBoneName()
 	return m_sAttackBoneName;
 }
 
-void CMobileEntity::WearArmor(string armorName)
-{
-	string path = "Armors\\" + armorName + "\\";
-	const int count = 8;
-	string arrayPiece[count] = {"cuirasse", "jupe", "JambiereD", "JambiereG", "BrassiereD", "BrassiereG", "EpauletteD", "EpauletteG" };
-	string arrayBone[count] = { "Cervicales", "Bassin", "TibiasD", "TibiasG", "AvantBrasD", "AvantBrasG", "EpauleD", "EpauleG" };
-
-	for (int i = 0; i < count; i++) {
-		CEntity* pArmorPiece = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity(path + arrayPiece[i] + ".bme", ""));
-		IBone* pBone = dynamic_cast<IBone*>(m_pSkeletonRoot->GetChildBoneByName(arrayBone[i]));
-		if (pBone)
-			LinkEntityToBone(pArmorPiece, pBone, ePreserveChildRelativeTM);
-	}
-}
 
 void CMobileEntity::WearArmorToDummy(string armorName)
 {
@@ -493,6 +506,57 @@ void CMobileEntity::SetAnimationSpeed( IEntity::TAnimation eAnimationType, float
 float CMobileEntity::GetAnimationSpeed(IEntity::TAnimation eAnimationType)
 {
 	return m_mAnimations[eAnimationType]->GetSpeed();
+}
+
+void CMobileEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
+{
+	if(!pInfos)
+		pInfos = new ILoader::CAnimatedEntityInfos;
+	CEntity::GetEntityInfos(pInfos);
+	ILoader::CAnimatedEntityInfos& animatedEntityInfos = static_cast<ILoader::CAnimatedEntityInfos&>(*pInfos);
+	IAnimation* pAnimation = GetCurrentAnimation();
+	if (pAnimation) {
+		string animFile;
+		pAnimation->GetFileName(animFile);
+		animFile = animFile.substr(animFile.find_last_of("/") + 1);
+		animatedEntityInfos.m_sAnimationFileName = animFile;
+		for (map<string, IEntity::TAnimation>::iterator it = CMobileEntity::s_mStringToAnimation.begin(); it != CMobileEntity::s_mStringToAnimation.end(); it++) {
+			float as = GetAnimationSpeed(it->second);
+			animatedEntityInfos.m_mAnimationSpeed[it->first] = as;
+		}
+	}
+	IBone* pSkeleton = GetSkeletonRoot();
+	if (pSkeleton)
+	{
+		vector< CEntity* > vSubEntity;
+		string sRessourceFileName;
+		GetRessource()->GetFileName(sRessourceFileName);
+		GetSkeletonEntities(dynamic_cast<CBone*>(pSkeleton), vSubEntity, sRessourceFileName);
+		for (unsigned int iSubEntity = 0; iSubEntity < vSubEntity.size(); iSubEntity++)
+		{
+			ILoader::CObjectInfos* pSubEntityInfo = new ILoader::CEntityInfos;
+			vSubEntity[iSubEntity]->GetEntityInfos(pSubEntityInfo);
+			animatedEntityInfos.m_vSubEntityInfos.push_back(pSubEntityInfo);
+		}
+	}
+	GetEntityName(animatedEntityInfos.m_sObjectName);
+	string sTypeName;
+	GetTypeName(sTypeName);
+	animatedEntityInfos.m_sTypeName = sTypeName;
+	animatedEntityInfos.m_fWeight = GetWeight();
+}
+
+void CMobileEntity::BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent)
+{
+	CEntity::BuildFromInfos(infos, pParent);
+	const ILoader::CAnimatedEntityInfos* pAnimatedEntityInfos = dynamic_cast< const ILoader::CAnimatedEntityInfos* >(&infos);
+	if (GetSkeletonRoot()) {
+		AddAnimation(pAnimatedEntityInfos->m_sAnimationFileName);
+		SetCurrentAnimation(pAnimatedEntityInfos->m_sAnimationFileName);
+		for (map<string, float>::const_iterator it = pAnimatedEntityInfos->m_mAnimationSpeed.begin(); it != pAnimatedEntityInfos->m_mAnimationSpeed.end(); it++)
+			SetAnimationSpeed(CMobileEntity::s_mStringToAnimation[it->first], it->second);
+		GetCurrentAnimation()->Play(true);
+	}
 }
 
 IEntity::TAnimation CMobileEntity::GetCurrentAnimationType() const

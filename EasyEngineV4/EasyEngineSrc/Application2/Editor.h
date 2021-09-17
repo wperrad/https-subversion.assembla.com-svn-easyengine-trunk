@@ -40,7 +40,8 @@ public:
 private:
 	static void						OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent, int x, int y);
 	static void						OnKeyEventCallback(CPlugin*, IEventDispatcher::TKeyEvent e, int n);
-	static void						OnSceneLoadRessource(CPlugin* plugin);
+	static void						OnSceneLoadRessource(CPlugin*, IEventDispatcher::TEntityEvent, IEntity*);
+	
 
 	void							GetRayPlanIntersection(int x, int y, float h, CVector& intersect);
 	void							SelectEntity(int x, int y);

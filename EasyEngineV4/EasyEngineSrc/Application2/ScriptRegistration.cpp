@@ -822,9 +822,11 @@ void GenerateRandomNPC(IScriptState* pState)
 
 
 	srand((unsigned)time(NULL));
+	ostringstream ossNPCId;	
 
 	for (int i = 0; i < pNPCCount->m_nValue; i++) {
-		IEntity* pEntity = m_pEntityManager->CreateNPC(pNPCFileName->m_sValue, m_pFileSystem);
+		ossNPCId << "NPC_" << i;
+		IEntity* pEntity = m_pEntityManager->CreateNPC(pNPCFileName->m_sValue, m_pFileSystem, ossNPCId.str());
 		pEntity->Link(m_pScene);
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -841,7 +843,7 @@ void GenerateRandomNPC(IScriptState* pState)
 		r = rand();
 		float z = factor * pBox->GetDimension().m_z * (r - 0.5f * RAND_MAX) / RAND_MAX;
 		pEntity->SetWorldPosition(x, y, z);
-		m_pEntityManager->WearArmor(id, "2");
+		m_pEntityManager->WearArmorToDummy(id, "2");
 		pEntity->RunAction("stand", true);
 		float angle = 360 * r / RAND_MAX;
 		pEntity->Yaw(angle);
@@ -870,6 +872,7 @@ void SetScale( IScriptState* pState )
 void CreateMobileEntity( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
+	CScriptFuncArgString* pStringID = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
 	string sName = pName->m_sValue;
 	if( sName.find( ".bme" ) == -1 )
 		sName += ".bme";
@@ -878,7 +881,7 @@ void CreateMobileEntity( IScriptState* pState )
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateMobileEntity( sName, m_pFileSystem );
+		IEntity* pEntity = m_pEntityManager->CreateMobileEntity( sName, m_pFileSystem, pStringID->m_sValue);
 		pEntity->Link( m_pScene );
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -981,16 +984,17 @@ void CreateLineEntity(IScriptState* pState)
 void CreateNPC( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	string sName = pName->m_sValue;
-	if( sName.find( ".bme" ) == -1 )
-		sName += ".bme";
-	sName = string("Meshes/Bodies/") + sName;
+	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
+	string sFileName = pName->m_sValue;
+	if(sFileName.find( ".bme" ) == -1 )
+		sFileName += ".bme";
+	sFileName = string("Meshes/Bodies/") + sFileName;
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException( false );
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateNPC( sName, m_pFileSystem );
+		IEntity* pEntity = m_pEntityManager->CreateNPC(sFileName, m_pFileSystem, pID->m_sValue);
 		pEntity->Link( m_pScene );
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -1018,13 +1022,19 @@ void CreateNPC( IScriptState* pState )
 	}
 	catch( CEException )
 	{
-		string sMessage = string( "\"" ) + sName + "\" introuvable";
+		string sMessage = string( "\"" ) + sFileName + "\" introuvable";
 		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
-void CreateMapEntity(IScriptState* pState)
+void SaveCharacter(IScriptState* pState)
+{
+	CScriptFuncArgString* pId = dynamic_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	m_pEntityManager->SaveCharacter(pId->m_sValue);
+}
+
+void CreateMinimapEntity(IScriptState* pState)
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
 	string sName = pName->m_sValue;
@@ -1035,7 +1045,7 @@ void CreateMapEntity(IScriptState* pState)
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateMapEntity(sName, m_pFileSystem);
+		IEntity* pEntity = m_pEntityManager->CreateMinimapEntity(sName, m_pFileSystem);
 		pEntity->Link(m_pScene);
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -1699,7 +1709,7 @@ void DisplaySceneChilds( IScriptState* pState )
 string g_sBegin;
 void DisplayFonctionList(void* params)
 {
-	int lineCount = m_pConsole->GetClientHeight() / m_pConsole->GetLineHeight();
+	int lineCount = (m_pConsole->GetClientHeight() / m_pConsole->GetLineHeight()) - 4;
 	vector<string>::iterator it = g_vStringsResumeMode.begin();
 	int index = 0;
 	while(it != g_vStringsResumeMode.end())
@@ -1984,7 +1994,14 @@ void SetEntityTexture(IScriptState* pState)
 	CScriptFuncArgInt* pId = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(0));
 	CScriptFuncArgString* pTextureName = dynamic_cast<CScriptFuncArgString*>(pState->GetArg(1));
 	IEntity* pEntity = m_pEntityManager->GetEntity(pId->m_nValue);
-	pEntity->SetDiffuseTexture(pTextureName->m_sValue);
+	if (!pEntity) {
+		ostringstream oss;
+		oss << "Erreur, Entity " << pId->m_nValue << " introuvable";
+		m_pConsole->Println(oss.str());
+	}
+	else {
+		pEntity->SetDiffuseTexture(pTextureName->m_sValue);
+	}
 }
 
 void SetEntityWeight( IScriptState* pState )
@@ -2203,7 +2220,7 @@ void AddLight( IScriptState* pState )
 	m_pConsole->Println( oss.str() );
 }
 
-void AddLightw( IScriptState* pState )
+void CreateLightw( IScriptState* pState )
 {
 	CScriptFuncArgString* pType = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* pIntensity = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
@@ -2324,6 +2341,7 @@ void GetNodeInfos( INode* pNode, int nLevel = 0 )
 {
 	IEntity* pEntity = dynamic_cast< IEntity* >( pNode );
 	if( pEntity ) {
+
 		ostringstream sLine;		
 		for( int j = 0; j < nLevel; j++ )
 			sLine << "\t";
@@ -2331,12 +2349,10 @@ void GetNodeInfos( INode* pNode, int nLevel = 0 )
 		pEntity->GetEntityName(sEntityName);
 		if (sEntityName.empty())
 			pEntity->GetName(sEntityName);
-		sLine << "Entity name = " << sEntityName << ", ID = " << m_pEntityManager->GetEntityID(pEntity);
-		g_vStringsResumeMode.push_back(sLine.str());
-		/*
-		INode* pSkeleton = pEntity->GetSkeletonRoot();
-		if( pSkeleton )
-			GetNodeInfos( pSkeleton );*/
+		if (sEntityName.find("CollisionPrimitive") == -1) {
+			sLine << "Entity name = " << sEntityName << ", ID = " << m_pEntityManager->GetEntityID(pEntity);
+			g_vStringsResumeMode.push_back(sLine.str());
+		}
 	}
 	for( unsigned int i = 0; i < pNode->GetChildCount(); i++ )
 		GetNodeInfos( pNode->GetChild( i ), nLevel + 1 );
@@ -2348,12 +2364,6 @@ void Kill(IScriptState* pState)
 	m_pEntityManager->Kill(pId->m_nValue);
 }
 
-void WearArmor(IScriptState* pState)
-{
-	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
-	CScriptFuncArgString* pArmor = (CScriptFuncArgString*)(pState->GetArg(1));
-	m_pEntityManager->WearArmor(pId->m_nValue, pArmor->m_sValue);
-}
 
 void WearArmorToDummy(IScriptState* pState)
 {
@@ -2677,12 +2687,11 @@ void LoadLevel( IScriptState* pState )
 void Merge( IScriptState* pState )
 {
 	CScriptFuncArgString* pString = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	CScriptFuncArgString* pType = static_cast< CScriptFuncArgString* >( pState->GetArg( 1 ) );
 	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 3 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 4 ) );
 	
-	m_pScene->Merge(pString->m_sValue, pType->m_sValue, px->m_fValue, py->m_fValue, pz->m_fValue);
+	m_pScene->Merge(pString->m_sValue, px->m_fValue, py->m_fValue, pz->m_fValue);
 }
 
 void TestMessageBox( IScriptState* pState )
@@ -3108,7 +3117,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "DisplayBoneBoundingSphere", DisplayBoneBoundingSphere, vType );
 
 	vType.push_back( eString );
-	vType.push_back( eString );
 	vType.push_back( eFloat);
 	vType.push_back( eFloat );
 	vType.push_back( eFloat );
@@ -3312,7 +3320,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back( eString );
 	vType.push_back( eFloat );
-	m_pScriptManager->RegisterFunction( "AddLightw", AddLightw, vType );
+	m_pScriptManager->RegisterFunction( "CreateLightw", CreateLightw, vType );
 
 	vType.clear();
 	vType.push_back( eString );
@@ -3454,6 +3462,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eString );
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction( "CreateMobileEntity", CreateMobileEntity, vType );
 
 	vType.clear();
@@ -3461,12 +3470,17 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction("CreatePlayer", CreatePlayer, vType);
 
 	vType.clear();
-	vType.push_back( eString );
+	vType.push_back(eString);
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction( "CreateNPC", CreateNPC, vType );
 
 	vType.clear();
 	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("CreateMapEntity", CreateMapEntity, vType);
+	m_pScriptManager->RegisterFunction("SaveCharacter", SaveCharacter, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("CreateMinimapEntity", CreateMinimapEntity, vType);
 	
 	vType.clear();
 	vType.push_back(eString);
@@ -3709,10 +3723,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.push_back(eFloat);
 	m_pScriptManager->RegisterFunction("SetCurrentAnimationSpeed", SetCurrentAnimationSpeed, vType);
 
-	vType.clear();
-	vType.push_back(eInt);
-	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("WearArmor", WearArmor, vType);
 
 	vType.clear();
 	vType.push_back(eInt);

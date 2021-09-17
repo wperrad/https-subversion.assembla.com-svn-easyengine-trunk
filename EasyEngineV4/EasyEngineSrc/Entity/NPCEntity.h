@@ -7,7 +7,7 @@ class CNPCEntity : public CMobileEntity, public IAEntity
 {
 public:
 
-	CNPCEntity(EEInterface& oInterface, string sFileName);
+	CNPCEntity(EEInterface& oInterface, string sFileName, string sID);
 	int						GetLife();
 	void					SetLife( int nLife );
 	void					IncreaseLife( int nLife );

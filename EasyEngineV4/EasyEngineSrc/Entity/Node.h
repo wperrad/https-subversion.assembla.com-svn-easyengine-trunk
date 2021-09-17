@@ -68,6 +68,7 @@ public:
 	virtual const CMatrix&		GetLocalMatrix() const;
 	virtual void				SetName(string sName);
 	virtual void				GetName( std::string& sName ) const;
+	virtual const string&		GetName() const;
 	virtual INode*				DuplicateHierarchy();
 	void						SetID( int nID );
 	int							GetID() const;

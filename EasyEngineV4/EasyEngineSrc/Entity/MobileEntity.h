@@ -7,6 +7,29 @@
 class CMobileEntity : public CEntity, public virtual IFighterEntity
 {
 
+public:
+	CMobileEntity(EEInterface& oInterface, string sFileName, string sID);
+
+	float						GetAnimationSpeed(IEntity::TAnimation eAnimationType);
+	void						GetEntityInfos(ILoader::CObjectInfos*& pInfos) override;
+	void						BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent) override;
+	void						SetAnimationSpeed(TAnimation eAnimationType, float fSpeed);
+	TAnimation					GetCurrentAnimationType() const;
+	void						RunAction(string sAction, bool bLoop);
+	void						Die();
+	void						WearArmorToDummy(string armorName);
+	void						WearShoes(string shoesName);
+	void						Yaw(float fAngle);
+	void						Pitch(float fAngle);
+	void						Roll(float fAngle);
+	void						ManageGravity();
+	void						Update();
+	void						UpdateCollision();
+	IAnimation*					GetCurrentAnimation();
+	static void					InitStatics();
+
+	static map<string, IEntity::TAnimation>	s_mStringToAnimation;
+
 protected:
 	typedef void (*TAction)( CMobileEntity*, bool );
 
@@ -55,7 +78,6 @@ protected:
 	IBone*					GetPreloadedBone( string sName );
 	void					GetPosition( CVector& oPosition ) const;
 	IMesh*					GetMesh();
-	IAnimation*				GetCurrentAnimation();
 	IFighterEntity*			GetFirstEnemy();
 	IFighterEntity*			GetNextEnemy();
 	CMatrix&				GetWorldTM();
@@ -77,25 +99,6 @@ protected:
 	static void 			PlayReceiveHit( CMobileEntity* pHuman, bool bLoop );
 	static void 			OnCollision(CEntity* pThis, vector<INode*> entities);
 	static void				OnDyingCallback(IAnimation::TEvent e, void* data);
-
-
-public:
-	CMobileEntity(EEInterface& oInterface, string sFileName);
-
-	float					GetAnimationSpeed(IEntity::TAnimation eAnimationType);
-	void					SetAnimationSpeed( TAnimation eAnimationType, float fSpeed );
-	TAnimation				GetCurrentAnimationType() const;
-	void					RunAction( string sAction, bool bLoop );
-	void					Die();
-	void					WearArmor(string armorName);
-	void					WearArmorToDummy(string armorName);
-	void					WearShoes(string shoesName);
-	void					Yaw(float fAngle);
-	void					Pitch(float fAngle);
-	void					Roll(float fAngle);
-	void					ManageGravity();
-	void					Update();
-	void					UpdateCollision();
 };
 
 #endif // MOBILEENTITY_H
