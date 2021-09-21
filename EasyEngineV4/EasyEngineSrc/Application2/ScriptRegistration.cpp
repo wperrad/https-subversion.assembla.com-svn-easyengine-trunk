@@ -19,7 +19,7 @@
 #include "IShader.h"
 #include "IGeometry.h"
 #include "IHud.h"
-#include "Editor.h"
+#include "IEditor.h"
 #include "../Utils2/RenderUtils.h"
 #include "../Utils2/DebugTool.h"
 
@@ -47,12 +47,15 @@ extern CDebugTool*			m_pDebugTool;
 extern IGeometryManager*	m_pGeometryManager;
 extern bool					m_bRenderScene;
 extern IEventDispatcher*	m_pEventDispatcher;
-extern CEditor*				m_pEditor;
+extern IEditorManager*		m_pEditorManager;
 extern int					g_nSlotPosition;
 
 IEntity* m_pRepere = NULL;
 vector< string > g_vStringsResumeMode;
 map<IEntity*, int> g_mEntityPositionLine;
+IMapEditor* m_pMapEditor = nullptr;
+ICharacterEditor* m_pCharacterEditor = nullptr;
+IWorldEditor* m_pWorldEditor = nullptr;
 
 enum TObjectType
 {
@@ -69,6 +72,22 @@ struct CNodeInfos
 	string	m_sName;
 	int		m_nID;
 };
+
+void InitScriptRegistration()
+{
+	m_pMapEditor = dynamic_cast<IMapEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eMap));
+	if (!m_pMapEditor) {
+		m_pConsole->Println("Erreur, Map Editor n'existe pas");
+	}
+	m_pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacer));
+	if (!m_pCharacterEditor) {
+		m_pConsole->Println("Erreur, Character Editor n'existe pas");
+	}
+	m_pWorldEditor = dynamic_cast<IWorldEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eWorld));
+	if (!m_pWorldEditor) {
+		m_pConsole->Println("Erreur, MaWorld Editor n'existe pas");
+	}
+}
 
 IEntity* CreateEntity( string sName )
 {
@@ -120,11 +139,12 @@ void DisplayGlslVersion(IScriptState* pState)
 	m_pConsole->Println(sVersion);
 }
 
-void SetEditionMode(IScriptState* pState)
+void SetMapEditionMode(IScriptState* pState)
 {
 	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
 	bool enable = pEnable->m_nValue != 0;
-	m_pEditor->SetEditionMode(enable);
+	
+	m_pMapEditor->SetEditionMode(enable);
 }
 
 void SpawnEntity(IScriptState* pState)
@@ -137,8 +157,8 @@ void SpawnEntity(IScriptState* pState)
 	m_pRessourceManager->EnableCatchingException(false);
 	try
 	{
-		m_pEditor->SetEditionMode(true);
-		m_pEditor->SpawnEntity(sName);
+		m_pMapEditor->SetEditionMode(true);
+		m_pMapEditor->SpawnEntity(sName);
 	}
 	catch (CFileNotFoundException& e)
 	{
@@ -162,13 +182,6 @@ void SpawnEntity(IScriptState* pState)
 		m_pConsole->Println(e.what());
 	}
 	m_pRessourceManager->EnableCatchingException(bak);
-}
-
-void SaveLevel(IScriptState* pState)
-{
-	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
-	string sName = pName->m_sValue;
-	m_pEditor->SaveLevel(sName);
 }
 
 void ShowGUICursor(IScriptState* pState)
@@ -2382,7 +2395,7 @@ void WearShoes(IScriptState* pState)
 void DisplayRayPicking(IScriptState* pState)
 {
 	CScriptFuncArgInt* pDisplay = (CScriptFuncArgInt*)(pState->GetArg(0));
-	m_pEditor->DisplayPickingRay(pDisplay->m_nValue > 0);
+	m_pMapEditor->DisplayPickingRay(pDisplay->m_nValue > 0);
 }
 
 void DisplayEntitiesResume(void* params)
@@ -2629,24 +2642,24 @@ void CreateEntity( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
-void SaveScene( IScriptState* pState )
+void SaveMap(IScriptState* pState)
 {
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sName = pName->m_sValue;
 	try
 	{
-		CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-		string sFileName = pName->m_sValue;
-		if( pName->m_sValue.find( '.' ) == -1 )
-			sFileName += ".bse";
-		m_pScene->Export( sFileName );
-		m_pConsole->Println( "Scène sauvegardée" );
+		m_pMapEditor->Save(sName);
+		m_pConsole->Println("Map sauvegardée");
 	}
-	catch( exception e )
-	{
-		m_pConsole->Println( e.what() );
+	catch (CFileException& e) {
+		m_pConsole->Println(string("Erreur d'acces au fichier \"" + sName + "\", verifiez que vous disposez des droits suffisants et que votre antivirus ne bloque pas l'operation"));
+	}
+	catch (exception e)	{
+		m_pConsole->Println(e.what());
 	}
 }
 
-void LoadLevel( IScriptState* pState )
+void LoadMap( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
 	string sFileName = pName->m_sValue;
@@ -2662,7 +2675,7 @@ void LoadLevel( IScriptState* pState )
 	m_pFileSystem->GetLastDirectory(root);
 	try
 	{
-		m_pScene->Load(root + "/levels/" + folderName + "/" + sFileName);
+		m_pMapEditor->Load(root + "/levels/" + folderName + "/" + sFileName);
 	}
 	catch( CFileNotFoundException& e )
 	{
@@ -2961,7 +2974,7 @@ void DisplayGroundHeight(IScriptState* pState)
 void SetGroundAdaptationHeight(IScriptState* pState)
 {
 	CScriptFuncArgFloat* pHeight = (CScriptFuncArgFloat*)pState->GetArg(0);
-	m_pEditor->SetGroundAdaptationHeight(pHeight->m_fValue);
+	m_pMapEditor->SetGroundAdaptationHeight(pHeight->m_fValue);
 }
 
 void SetGroundMargin(IScriptState* pState)
@@ -3062,11 +3075,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	
 	vType.clear();
 	vType.push_back(eInt);
-	m_pScriptManager->RegisterFunction("SetEditionMode", SetEditionMode, vType);
-
-	vType.clear();
-	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("SaveLevel", SaveLevel, vType);
+	m_pScriptManager->RegisterFunction("SetMapEditionMode", SetMapEditionMode, vType);
 
 	vType.clear();
 	vType.push_back(eInt);
@@ -3142,11 +3151,11 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eString );
-	m_pScriptManager->RegisterFunction( "LoadLevel", LoadLevel, vType );
+	m_pScriptManager->RegisterFunction( "LoadMap", LoadMap, vType );
 
 	vType.clear();
 	vType.push_back( eString );
-	m_pScriptManager->RegisterFunction( "SaveScene", SaveScene, vType );
+	m_pScriptManager->RegisterFunction( "SaveMap", SaveMap, vType );
 
 	vType.clear();
 	vType.push_back( eString );

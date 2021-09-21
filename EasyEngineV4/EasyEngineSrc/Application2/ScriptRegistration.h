@@ -5,6 +5,7 @@ class IScriptManager;
 
 void RegisterAllFunctions( IScriptManager* pScriptManager );
 
+void InitScriptRegistration();
 void SaveScene( IScriptState* pState );
 void LoadLevel( IScriptState* pState );
 void Merge( IScriptState* pState );

@@ -20,6 +20,8 @@
 #include "IShader.h"
 #include "IConsole.h"
 #include "Bone.h"
+#include "NPCEntity.h"
+#include "Player.h"
 
 using namespace std;
 
@@ -123,7 +125,7 @@ void CScene::SetRessource(string sFileName, bool bDuplicate)
 	if (m_bUseDisplacementMap) {
 		m_sHMFileName = sFileName;
 		int sliceCount = m_nMapLength / 500;
-		string levelFileName = m_sHMFileName.substr(m_sHMFileName.find_last_of("/HMA_") + 1);
+		string levelFileName = m_sHMFileName.substr(m_sHMFileName.find_last_of("/HMA_"));
 		string levelName = levelFileName.substr(0, levelFileName.find('.'));
 		string levelPath = string("/levels/") + levelName + "/ground.bme";
 		try {
@@ -200,6 +202,12 @@ void CScene::SetRessource(string sFileName, bool bDuplicate)
 	for (int i = 0; i < m_vEntityCallback.size(); i++) {
 		m_vEntityCallback[i](nullptr, IEventDispatcher::TEntityEvent::T_LOAD_RESSOURCE, this);
 	}
+}
+
+IGeometry* CScene::GetBoundingGeometry()
+{
+	IMesh* pMesh = static_cast< IMesh* >(m_pRessource);
+	return pMesh->GetBBox();
 }
 
 IGrid* CScene::GetCollisionGrid()
@@ -535,19 +543,6 @@ void CScene::Load( const ILoader::CSceneInfos& si )
 	m_pEntityManager->SetPlayer( m_pEntityManager->GetPlayer() );
 }
 
-void CScene::Load( string sFileName )
-{
-	ILoader::CSceneInfos si;
-	m_oLoaderManager.Load( sFileName, si );
-	Load( si );
-}
-
-void CScene::Export( string sFileName )
-{
-	ILoader::CSceneInfos si;
-	GetInfos( si );
-	m_oLoaderManager.Export( sFileName, si );
-}
 
 void CScene::Clear()
 {
@@ -562,6 +557,29 @@ void CScene::Clear()
 	m_pRessource = NULL;
 	m_pEntityManager->Clear();
 	m_oCollisionManager.ClearHeightMaps();
+}
+
+void CScene::ClearCharacters()
+{
+	ClearCharacters(this);
+}
+
+void CScene::ClearCharacters(INode* pParent)
+{
+	for (int i = 0; i < pParent->GetChildCount(); i++)
+	{
+		INode* pChild = pParent->GetChild(i);
+		IEntity* pChildCharacter = dynamic_cast< CNPCEntity* >(pChild);
+		if (!pChildCharacter)
+			pChildCharacter = dynamic_cast< CPlayer* >(pChild);
+		if (pChildCharacter) {
+			pChildCharacter->Unlink();
+			m_pEntityManager->DestroyEntity(pChildCharacter);
+			i--;
+		}
+		else
+			ClearCharacters(pChild);
+	}
 }
 
 float CScene::GetGroundHeight( float x, float z )

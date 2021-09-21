@@ -37,7 +37,7 @@ void CFreeCamera::Move( float fOffsetYaw, float fOffsetPitch, float fOffsetRoll,
 	{
 		m_fYaw += fOffsetYaw;
 		m_fPitch += fOffsetPitch;
-		LocalTranslate( -fLeftOffset, 0.f, -fAvanceOffet );
+		LocalTranslate( -fLeftOffset, fUpOffset, -fAvanceOffet );
 
 		CVector vAvance = m_oLocalMatrix * CVector( 0,0,0,1 );
 		m_oLocalMatrix = CMatrix::GetyRotation( m_fYaw ) * CMatrix::GetxRotation( m_fPitch );

@@ -4,7 +4,7 @@ SetCameraType("free");
 r=CreateRepere();
 
 
-LoadLevel("map03");
+LoadMap("Hopital");
 return;
 
 /*

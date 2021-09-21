@@ -117,15 +117,15 @@
     <ClInclude Include="..\..\Interfaces\Interface.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="IEditor.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ScriptRegistration.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

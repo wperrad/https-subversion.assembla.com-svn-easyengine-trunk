@@ -52,12 +52,13 @@ public:
 	
 	IEntity*							Merge( string sRessourceName, float x, float y, float z ) override;
 	IEntity*							Merge( string sRessourceName, CMatrix& oXForm );
-	void								Update();	
-	void								Load( string sFileName );
-	void								Export( string sFileName );
+	void								Update();
 	void								Clear();
+	void								ClearCharacters();
+	void								ClearCharacters(INode* pParent);
 	float								GetGroundHeight( float x, float z );
 	void								SetRessource( string sFileName, bool bDuplicate = false );
+	IGeometry*							GetBoundingGeometry();
 	IGrid*								GetCollisionGrid();
 	void								CreateCollisionMap();
 	void								RenderScene();

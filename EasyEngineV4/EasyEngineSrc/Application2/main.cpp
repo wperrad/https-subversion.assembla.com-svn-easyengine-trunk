@@ -32,7 +32,7 @@
 #include "ICollisionManager.h"
 #include "IGeometry.h"
 #include "IPathFinder.h"
-#include "Editor.h"
+#include "IEditor.h"
 #include "Interface.h"
 
 #define CATCH_EXCEPTION
@@ -72,6 +72,7 @@ IEventDispatcher*		m_pEventDispatcher = NULL;
 IXMLParser*				m_pXMLParser = NULL;
 IGeometryManager*		m_pGeometryManager = NULL;
 IPathFinder*			m_pPathFinder = NULL;
+IEditorManager*			m_pEditorManager = nullptr;
 int						g_nSlotPosition = 0;
 
 
@@ -80,7 +81,6 @@ bool	m_bFirstTimeOpenFile = true;
 CDebugTool* m_pDebugTool = NULL;
 CNode* m_pEntity = NULL;
 IScene* m_pScene = NULL;
-CEditor* m_pEditor = NULL;
 
 float m_nDeltaTickCount = 0;
 float m_nLastTickCount = 0;
@@ -94,6 +94,7 @@ void InitScene( ISceneManager* pSceneManager )
 {	
 	try
 	{
+		InitScriptRegistration();
 		m_pScene->DeleteTempDirectories();
 		g_nSlotPosition = m_pHud->CreateNewSlot(800, 100);
 		m_pConsole->Open(true);
@@ -347,6 +348,8 @@ EEInterface* InitPlugins( string sCmdLine )
 	m_pScriptManager = static_cast< IScriptManager* >(CPlugin::Create(*pInterface, sDirectoryName + "Script.dll", "CreateScriptManager" ));
 	RegisterAllFunctions( m_pScriptManager );
 
+	m_pEditorManager = static_cast< IEditorManager* >(CPlugin::Create(*pInterface, sDirectoryName + "Editor.dll", "CreateEditorManager"));
+
 	m_pConsole = static_cast< IConsole* >( CPlugin::Create(*pInterface, sDirectoryName + "IO.dll", "CreateConsole" ) );
 	m_pConsole->SetConsoleShortCut(192);
 
@@ -389,7 +392,6 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 	{
 #endif // CATCH_EXCEPTION
 		EEInterface* pInterface = InitPlugins( plCmdLine );
-		m_pEditor = new CEditor;
 		
 		ICamera* pFreeCamera = m_pCameraManager->CreateCamera( ICameraManager::T_FREE_CAMERA, 40.f, *m_pEntityManager );
 		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 60.f, *m_pEntityManager );
