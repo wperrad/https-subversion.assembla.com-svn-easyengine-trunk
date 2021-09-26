@@ -40,6 +40,7 @@ m_pPlayer(NULL)
 	m_itCurrentParsedEntity = m_mCollideEntities.end();
 	m_itCurrentIAEntity = m_mIAEntities.end();
 	CMobileEntity::InitStatics();
+	LoadCharacterInfos();
 }
 
 void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
@@ -68,10 +69,13 @@ CEntity* CEntityManager::CreateEntityFromType(std::string sFileName, string sTyp
 		pEntity = new CMobileEntity(m_oInterface, sFileName, sID);
 	else if (sTypeName == "NPC")
 		pEntity = new CNPCEntity(m_oInterface, sFileName, sID);
-	else if( sTypeName == "Player")
+	else if (sTypeName == "Player") {
 		pEntity = new CPlayer(m_oInterface, sFileName);
+		IPlayer* pPlayer = dynamic_cast<IPlayer*>(pEntity);
+		SetPlayer(pPlayer);
+	}
 	else if(sTypeName == "MapEntity")
-		pEntity = new CMapEntity(m_oInterface, sFileName);
+		pEntity = new CMinimapEntity(m_oInterface, sFileName);
 
 	string sName;
 	pEntity->GetName( sName );
@@ -189,13 +193,6 @@ IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFil
 	return pEntity;
 }
 
-IEntity* CEntityManager::CreatePlayer(string sFileName, IFileSystem* pFileSystem)
-{
-	IEntity* pEntity = new CPlayer(m_oInterface, sFileName);
-	CreateEntity(pEntity);
-	return pEntity;
-}
-
 IEntity* CEntityManager::CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture)
 {
 	CPlaneEntity* planeEntity = new CPlaneEntity(m_oRenderer, m_oRessourceManager, slices, size, heightTexture, diffuseTexture);
@@ -212,6 +209,20 @@ void CEntityManager::AddNewCharacter(IEntity* pEntity)
 		throw CCharacterAlreadyExistsException(sCharacterName);
 	CMobileEntity* pCharacter = dynamic_cast<CMobileEntity*>(pEntity);
 	m_mCharacters[sCharacterName] = pCharacter;
+}
+
+IEntity* CEntityManager::BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent)
+{
+	CEntity* pEntity = nullptr;
+	map<string, ILoader::CAnimatedEntityInfos>::iterator itCharacter = m_mCharacterInfos.find(sCharacterId);
+	if (itCharacter == m_mCharacterInfos.end()) {
+		ostringstream oss;
+		oss << "Erreur : CEntityManager::BuildCharacterFromDatabase() -> id " << sCharacterId << " inexistant dans la base de donneees des personnages.";
+		CEException e(oss.str());
+	}
+	pEntity = CreateEntityFromType(itCharacter->second.m_sRessourceFileName, itCharacter->second.m_sTypeName, sCharacterId);
+	pEntity->BuildFromInfos(itCharacter->second, dynamic_cast<CEntity*>(pParent));
+	return pEntity;
 }
 
 void CEntityManager::SetPlayer(IPlayer* player)
@@ -232,19 +243,29 @@ IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem, 
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
+	sName = string("Meshes/Bodies/") + sName;
 	IEntity* pEntity = new CNPCEntity(m_oInterface, sName, sID);
 	CreateEntity( pEntity );
 	return pEntity;
 }
 
-
+IEntity* CEntityManager::CreatePlayer(string sFileName, IFileSystem* pFileSystem)
+{
+	string sName = sFileName;
+	if (sName.find(".bme") == -1)
+		sName += ".bme";
+	sName = string("Meshes/Bodies/") + sName;
+	IEntity* pEntity = new CPlayer(m_oInterface, sName);
+	CreateEntity(pEntity);
+	return pEntity;
+}
 
 IEntity* CEntityManager::CreateMinimapEntity(string sFileName, IFileSystem* pFileSystem)
 {
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
-	IEntity* pEntity = new CMapEntity(m_oInterface, sName);
+	IEntity* pEntity = new CMinimapEntity(m_oInterface, sName);
 	CreateEntity(pEntity);
 	return pEntity;
 }
@@ -498,16 +519,15 @@ void CEntityManager::SaveCharacter(string sNPCID)
 	if (itNPC != m_mCharacters.end()) {
 		ILoader::CObjectInfos* pInfos = nullptr;
 		itNPC->second->GetEntityInfos(pInfos);
-		map<string, ILoader::CAnimatedEntityInfos> characterInfos;
-		LoadCharacterInfos(characterInfos);
+		LoadCharacterInfos();
 		ILoader::CAnimatedEntityInfos* pAnimatedEntity = static_cast<ILoader::CAnimatedEntityInfos*>(pInfos);
-		characterInfos[sNPCID] = *pAnimatedEntity;
-		SaveCharacterInfos(characterInfos);
+		m_mCharacterInfos[sNPCID] = *pAnimatedEntity;
+		SaveCharacterInfos(m_mCharacterInfos);
 		delete pAnimatedEntity;
 	}
 }
 
-void CEntityManager::LoadCharacterInfos(map<string, ILoader::CAnimatedEntityInfos>& characterInfos)
+void CEntityManager::LoadCharacterInfos()
 {
 	CBinaryFileStorage fs;
 	if (!fs.OpenFile(m_sCharactersDatabaseFileName, IFileStorage::eRead)) {
@@ -523,7 +543,7 @@ void CEntityManager::LoadCharacterInfos(map<string, ILoader::CAnimatedEntityInfo
 		int type;
 		fs >> type;
 		fs >> infos;
-		characterInfos[infos.m_sObjectName] = infos;
+		m_mCharacterInfos[infos.m_sObjectName] = infos;
 	}
 	fs.CloseFile();
 }

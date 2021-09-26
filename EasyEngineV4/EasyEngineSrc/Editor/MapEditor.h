@@ -3,6 +3,7 @@
 #include "ILoader.h"
 #include "IEditor.h"
 #include "IEventDispatcher.h"
+#include "SpawnableEditor.h"
 #include <string>
 
 class IInputManager;
@@ -20,43 +21,38 @@ class ICollisionManager;
 class IHud;
 class IScene;
 class IHeightMap;
+class IConsole;
 
 //#define DEBUG_TEST_PLANE
 
 using namespace std;
 
-class CMapEditor : public IMapEditor//, public CSpawnableEditor
+class CMapEditor : public IMapEditor, public CSpawnableEditor
 {
 public:
 
 	CMapEditor(EEInterface& oInterface);
 
-	void							SetEditionMode(bool bEditionMode);
 	void							SpawnEntity(string sEntityFileName);
 	void							Save(string fileName);
 	void							Load(string sFileName);
 	void							SetGroundAdaptationHeight(float fHeight);
 	string							GetName() override;
-	void							DisplayLocalRepere();
-	void							DisplayPickingRay(bool enable);
 
 private:
-	static void						OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent, int x, int y);
+
 	static void						OnKeyEventCallback(CPlugin*, IEventDispatcher::TKeyEvent e, int n);
 	static void						OnSceneLoadRessource(CPlugin*, IEventDispatcher::TEntityEvent, IEntity*);
 	
-
-	void							GetRayPlanIntersection(int x, int y, float h, CVector& intersect);
-	void							SelectEntity(int x, int y);
-	void							RayCast(int x, int y, CVector& p1, CVector& ray);
-	bool							IsIntersect(const CVector& linePt1, const CVector& linePt2, const CVector& M, float radius) const;
 	void							AdaptGroundToEntity(IEntity* pEntity);
-	void							ManageGroundAdaptation(float deltaHeight);
+	void							OnEntityAdded();
 	void							UpdateGround();
 	bool							CreateLevelFolderIfNotExists(string levelName, string& levelFolder);
-	void							OnLeftMouseDown(int x, int y);
 	void							SaveMap(string sFileName);
 	void							ClearCharacters(vector<ILoader::CObjectInfos*>& objects);
+	void							OnEntitySelected();
+	float							GetPlanHeight() override;
+	void							SetEditionMode(bool bEditionMode) override;
 
 
 	struct AdaptGroundThreadStruct
@@ -64,38 +60,26 @@ private:
 		CMapEditor* editor;
 		CVector pos;
 		CVector dim;
+		CMatrix entityWorldTM;
 		float adaptationHeight;
 		int hudMsgIdx;
 	};
 	static DWORD WINAPI				AdaptGround(void* params);
 	void							OnEndAdaptGround(int hudMsgIdx);
 
-	bool							m_bEditionMode;
-	IInputManager&					m_oInputManager;
-	ICameraManager&					m_oCameraManager;
-	IRenderer&						m_oRenderer;
-	IEntityManager&					m_oEntityManager;
-	IGeometryManager&				m_oGeometryManager;
 	ILoaderManager&					m_oLoaderManager;
 	IRessourceManager&				m_oRessourceManager;
-	ICollisionManager&				m_oCollisionManager;
 	IFileSystem&					m_oFileSystem;
-	IHud&							m_oHud;
-	bool							m_bAddEntityMode;
-	IEntity*						m_pCurrentAddedEntity;
+	IConsole&						m_oConsole;
 	float							m_fPlanHeight;
 	ILoader::CAnimatableMeshData	m_oAnimatableMeshData;
-	IEntity*						m_pSelectedEntity;
 	float							m_fGroundAdaptationHeight;
-	int								m_nHudX;
-	int								m_nHudY;
-	IScene*							m_pScene;
 	IHeightMap*						m_pHeightMap;
-	int								m_nHudLineHeight;
 	string							m_sTmpAdaptedHeightMapFileName;
-	bool							m_bDisplayPickingRay;
 	string							m_sTmpFolder;
+	string							m_sCurrentMapName;
 
+	static void						SaveResponseCallback(string sResponse, void* pData);
 	static IEventDispatcher::TKeyEvent	m_eLastKeyEvent;
 
 #ifdef DEBUG_TEST_PLANE

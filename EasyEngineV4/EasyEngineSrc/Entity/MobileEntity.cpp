@@ -192,12 +192,10 @@ void CMobileEntity::UpdateCollision()
 	m_vNextLocalTranslate += m_vConstantLocalTranslate;
 
 	CMatrix backupLocal = m_oLocalMatrix;
-	backupLocal.m_13 -= h / 2.f - m_fMaxStepHeight;
 
 	CNode::LocalTranslate(m_vNextLocalTranslate.m_x, m_vNextLocalTranslate.m_y, m_vNextLocalTranslate.m_z);
 	CNode::UpdateWorldMatrix();
 	CMatrix oLocalMatrix = m_oLocalMatrix;
-	oLocalMatrix.m_13 -= h / 2.f - m_fMaxStepHeight;
 
 	vector<INode*> entities;
 	if (!m_bFirstUpdate)
@@ -228,17 +226,14 @@ void CMobileEntity::UpdateCollision()
 		if (collisionFace != IBox::eNone) {
 			lastBottom = R;
 			last = R;
-			last.m_y += h / 2.f;
 			bCollision = true;
 			if (collisionFace == IBox::eYPositive) {
+				last.m_y += h / 2.f;
 				if (fMaxHeight < last.m_y)
 					fMaxHeight = last.m_y;
 				else
 					last.m_y = fMaxHeight;
 				m_oBody.m_oSpeed.m_y = 0;
-			}
-			else {
-				last.m_y -= m_fMaxStepHeight;
 			}
 		}
 		else {			
@@ -260,8 +255,7 @@ void CMobileEntity::UpdateCollision()
 	}
 	SetLocalPosition(last);
 
-	// Still into parent ?
-	//CEntity* pParentEntity = static_cast<CEntity*>(m_pParent);
+	// Still into parent ?	
 	if (!TestCollision(m_pParent)) {
 		CEntity* pEntity = dynamic_cast<CEntity*>(m_pParent->GetParent());
 		if (pEntity)

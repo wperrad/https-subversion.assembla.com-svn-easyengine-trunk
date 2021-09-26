@@ -53,6 +53,7 @@ public:
 	void			AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback) override {}
 	void			DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback) override {}
 	void			SetDiffuseTexture(string sFileName) override {}
+	void			GetEntityInfos(ILoader::CObjectInfos*& pInfos) {}
 };
 
 #endif // SHAPE_H

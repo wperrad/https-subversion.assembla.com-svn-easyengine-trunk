@@ -2,7 +2,9 @@
 
 #include "EEPlugin.h"
 
-class IEditor : public CPlugin
+class IEditorManager;
+
+class IEditor : virtual public CPlugin
 {
 public:
 	enum Type
@@ -18,13 +20,16 @@ public:
 	virtual void	Load(string fileName) = 0;
 	virtual void	Save(string fileName) = 0;
 	virtual void	DisplayPickingRay(bool enable) = 0;
+	virtual void	HandleEditorManagerCreation(IEditorManager* pEditor) = 0;
+	virtual bool	IsEnabled() = 0;
+	virtual void	SpawnEntity(string sEntityFileName) = 0;
 };
 
-class IMapEditor : public IEditor
+class IMapEditor : virtual public IEditor
 {
 public:
 	IMapEditor(EEInterface& oInterface) : IEditor(oInterface) {}
-	virtual void	SpawnEntity(string sEntityFileName) = 0;
+
 	virtual void	SetGroundAdaptationHeight(float fHeight) = 0;
 };
 
@@ -34,7 +39,7 @@ public:
 	ICharacterEditor(EEInterface& oInterface) : IEditor(oInterface) {}
 };
 
-class IWorldEditor : public IEditor
+class IWorldEditor : virtual public IEditor
 {
 public:
 	IWorldEditor(EEInterface& oInterface) : IEditor(oInterface) {}
@@ -44,6 +49,7 @@ public:
 class IEditorManager : public CPlugin
 {
 public:
-	IEditorManager(EEInterface& oInterface) : CPlugin(nullptr, "") {}
+	IEditorManager(EEInterface& oInterface) : CPlugin(nullptr, "EditorManager") {}
 	virtual IEditor*	GetEditor(IEditor::Type type) = 0;
+	virtual void		CloseAllEditor() = 0;
 };

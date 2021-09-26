@@ -43,6 +43,7 @@ public:
 	void											SetConsoleShortCut(int key);
 	void											EnableInput(bool enable);
 	string											GetName() override;
+	void											WaitForResponse(ResponseProc callback, void* data) override;
 
 private:
 
@@ -73,6 +74,12 @@ private:
 	int												m_nAutoCompletionLastIndexFound;
 	string											m_sCompletionPrefix;
 	bool											m_bPauseMode;
+	ResumeProc										m_PauseCallback;
+	void*											m_PauseCallbackParams;
+	ResponseProc									m_ResponseCallback;
+	string											m_sResponse;
+	int												m_nBeginReponseCursorPos;
+	void*											m_pResponseData;
 
 	void											OnKeyPress(unsigned char key);
 	void											OnKeyRelease(unsigned char key);
@@ -90,9 +97,6 @@ private:
 	void											SetPauseModeOn(ResumeProc callback, void* params) override;
 	void											SetPauseModeOff();
 	void											UpdateConsoleHeight();
-
-	ResumeProc										m_PauseCallback;
-	void*											m_PauseCallbackParams;
 
 	static void										OnKeyAction(CPlugin*, unsigned int key, IInputManager::KEY_STATE);
 };

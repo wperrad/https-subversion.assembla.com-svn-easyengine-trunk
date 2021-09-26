@@ -7,7 +7,7 @@
 #include "ICamera.h"
 #include "EntityManager.h"
 
-CMapEntity::CMapEntity(EEInterface& oInterface, const string& sFileName, bool bDuplicate) :
+CMinimapEntity::CMinimapEntity(EEInterface& oInterface, const string& sFileName, bool bDuplicate) :
 	CEntity(oInterface, sFileName, bDuplicate),
 	m_oCameraManager(static_cast<ICameraManager&>(*oInterface.GetPlugin("CameraManager"))),
 	m_sFirstPassShaderName("mapFirstPass"),
@@ -17,18 +17,18 @@ CMapEntity::CMapEntity(EEInterface& oInterface, const string& sFileName, bool bD
 	SetShader(m_oRenderer.GetShader(m_sSecondPassShaderName));
 }
 
-CMapEntity::~CMapEntity()
+CMinimapEntity::~CMinimapEntity()
 {
 }
 
-void CMapEntity::Link(CNode* pNode)
+void CMinimapEntity::Link(CNode* pNode)
 {
 	CEntity::Link(pNode);
 	IMesh* pMesh = static_cast<IMesh*>(m_pRessource);
 	pMesh->SetTexture(m_pScene->GetMinimapTexture());
 }
 
-void CMapEntity::Update()
+void CMinimapEntity::Update()
 {
 	CNode::Update();
 	m_pScene->RenderMinimap();

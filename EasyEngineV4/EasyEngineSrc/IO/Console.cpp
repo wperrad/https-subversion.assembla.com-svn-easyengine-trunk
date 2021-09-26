@@ -44,7 +44,10 @@ m_bInputEnabled(true),
 m_nAutoCompletionLastIndexFound(-1),
 m_bPauseMode(false),
 m_PauseCallback(nullptr),
-m_PauseCallbackParams(nullptr)
+m_PauseCallbackParams(nullptr),
+m_ResponseCallback(nullptr),
+m_nBeginReponseCursorPos(0),
+m_pResponseData(nullptr)
 {
 	m_oInputManager.AbonneToKeyEvent( static_cast< CPlugin* > ( this ), OnKeyAction );
 	m_xPos = 30;
@@ -192,6 +195,15 @@ void CConsole::OnKeyAction( CPlugin* pPlugin, unsigned int key, IInputManager::K
 void CConsole::OnPressEnter()
 {
 	string sCommand = m_vLines.back();
+	if (m_ResponseCallback) {
+		m_sResponse = sCommand.substr(m_nBeginReponseCursorPos);
+		m_ResponseCallback(m_sResponse, m_pResponseData);
+		m_ResponseCallback = nullptr;
+		m_pResponseData = nullptr;
+		return;
+	}
+	
+	
 	m_vLines.back() = m_sLinePrefix + m_vLines.back();
 	if (m_nStaticTextID != -1)
 		m_oGUIManager.DestroyStaticTest(m_nStaticTextID);
@@ -507,6 +519,13 @@ void CConsole::EnableInput(bool enable)
 string CConsole::GetName()
 {
 	return "Console";
+}
+
+void CConsole::WaitForResponse(ResponseProc callback, void* data)
+{
+	m_ResponseCallback = callback;
+	m_nBeginReponseCursorPos = m_nCursorPos;
+	m_pResponseData = data;
 }
 
 extern "C" _declspec(dllexport) IConsole* CreateConsole(EEInterface& oInterface)

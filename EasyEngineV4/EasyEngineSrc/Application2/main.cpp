@@ -45,7 +45,7 @@ struct CGFXOption
 	CGFXOption() : m_bFullscreen( true ){}
 };
 
-void  OnWindowEvent( CPlugin* pPlugin, IEventDispatcher::TWindowEvent e, int nWidth, int nHeight );
+void OnWindowEvent( CPlugin* pPlugin, IEventDispatcher::TWindowEvent e, int nWidth, int nHeight );
 void OnMouseEvent(CPlugin*, IEventDispatcher::TMouseEvent, int, int);
 void UpdateCamera();
 void GetOptionsByCommandLine( string sCommandArguments, CGFXOption& oOption );
@@ -73,8 +73,6 @@ IXMLParser*				m_pXMLParser = NULL;
 IGeometryManager*		m_pGeometryManager = NULL;
 IPathFinder*			m_pPathFinder = NULL;
 IEditorManager*			m_pEditorManager = nullptr;
-int						g_nSlotPosition = 0;
-
 
 vector< IEntity* > m_vLight;
 bool	m_bFirstTimeOpenFile = true;
@@ -96,7 +94,6 @@ void InitScene( ISceneManager* pSceneManager )
 	{
 		InitScriptRegistration();
 		m_pScene->DeleteTempDirectories();
-		g_nSlotPosition = m_pHud->CreateNewSlot(800, 100);
 		m_pConsole->Open(true);
 		FILE* pFile = NULL;
 		pFile = m_pFileSystem->OpenFile("start.eas", "r");
@@ -348,10 +345,10 @@ EEInterface* InitPlugins( string sCmdLine )
 	m_pScriptManager = static_cast< IScriptManager* >(CPlugin::Create(*pInterface, sDirectoryName + "Script.dll", "CreateScriptManager" ));
 	RegisterAllFunctions( m_pScriptManager );
 
-	m_pEditorManager = static_cast< IEditorManager* >(CPlugin::Create(*pInterface, sDirectoryName + "Editor.dll", "CreateEditorManager"));
-
 	m_pConsole = static_cast< IConsole* >( CPlugin::Create(*pInterface, sDirectoryName + "IO.dll", "CreateConsole" ) );
 	m_pConsole->SetConsoleShortCut(192);
+
+	m_pEditorManager = static_cast< IEditorManager* >(CPlugin::Create(*pInterface, sDirectoryName + "Editor.dll", "CreateEditorManager"));
 
 	return pInterface;
 }

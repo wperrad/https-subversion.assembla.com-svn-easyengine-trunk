@@ -14,6 +14,7 @@ public:
 	void RegisterPlugin(CPlugin* plugin)
 	{
 		m_mPlugins.insert(map<string, CPlugin*>::value_type(plugin->GetName(), plugin));
+		plugin->OnPluginRegistered();
 	}
 
 	CPlugin* GetPlugin(string sName)

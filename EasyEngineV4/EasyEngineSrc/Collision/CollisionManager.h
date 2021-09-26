@@ -24,7 +24,7 @@ public:
 	void			CreateHeightMap( IMesh* pGround, ILoader::CTextureInfos& ti , IRenderer::TPixelFormat format = IRenderer::T_RGB );
 	void			CreateHeightMap(string sFileName);
 	void			CreateHeightMapWithoutRender(string sFileName);
-	int				LoadHeightMap( string sFileName, IBox* pBox);
+	int				LoadHeightMap( string sFileName, IBox* pBox, bool forceReload = false) override;
 	void			LoadHeightMap( string sFileName, vector< vector< unsigned char > >& vPixels  );
 	float			GetMapHeight( int nHeightMapID, float x, float z );
 	void 			DisplayHeightMap( IMesh* pMesh );

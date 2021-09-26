@@ -76,7 +76,8 @@ public:
 	void								SetHeight(float height) override;
 	void								SetHMFile(string sHMFile) override;
 	void								DeleteTempDirectories() override;
-
+	void								HandleLoadingComplete(LevelCompleteProc callback, void* pData) override;
+	void								UnhandleLoadingComplete();
 
 private:
 	ICameraManager&						m_oCameraManager;
@@ -109,17 +110,20 @@ private:
 	string								m_sDiffuseFileName;
 	int									m_nMapLength;
 	float								m_fMapHeight;
+	vector<CEntity*>					m_vCollideEntities;
+	LevelCompleteProc					m_LoadingCompleteCallback;
+	void*								m_pLoadingCompleteData;
 
 	void								GetInfos(ILoader::CSceneInfos& si);
 	void								Load(const ILoader::CSceneInfos& si);
 	void								LoadSceneObject(const ILoader::CObjectInfos* pSceneObjInfos, CEntity* pParent);
-	ILoader::CObjectInfos*				GetEntityInfos(CEntity* pEntity);
 	void								CreateCollisionGrid();
 	void								CreateHeightMap();
-	void								CollectMapEntities(vector<IEntity*>& entities);
+	void								CollectMinimapEntities(vector<IEntity*>& entities);
 	void								DisplayEntities(vector<IEntity*>& entities);
-	void								OnChangeSector();
+	void								OnChangeSector() override;
 	void								UpdateMapEntities();
+	bool								IsLoadingComplete();
 };
 
 #endif // SCENE_NODE_H

@@ -49,7 +49,8 @@ m_pScene(NULL),
 m_pMesh(nullptr),
 m_bEmptyEntity(false),
 m_pBaseTexture(nullptr),
-m_pCustomTexture(nullptr)
+m_pCustomTexture(nullptr),
+m_bIsOnTheGround(true)
 {
 	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 }
@@ -81,7 +82,8 @@ m_pScene(NULL),
 m_pMesh(nullptr),
 m_bEmptyEntity(false),
 m_pBaseTexture(nullptr),
-m_pCustomTexture(nullptr)
+m_pCustomTexture(nullptr),
+m_bIsOnTheGround(true)
 {
 	if( sFileName.size() > 0 )
 	{
@@ -240,6 +242,7 @@ void CEntity::UpdateCollision()
 			float fEntityZ = m_oLocalMatrix.m_13 + m_pBoundingGeometry->GetBase().m_y + m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f;
 			if( fEntityZ > fGroundHeight + CBody::GetEpsilonError() )
 			{
+				m_bIsOnTheGround = false;
 				if( nDelta != 0 )
 				{
 					CVector vTranslation = m_oBody.m_oSpeed * ((float)nDelta / 1000.f);
@@ -251,8 +254,10 @@ void CEntity::UpdateCollision()
 				m_oBody.m_oSpeed.m_x = 0;
 				m_oBody.m_oSpeed.m_y = 0;
 				m_oBody.m_oSpeed.m_z = 0;
-				if( fEntityZ < fGroundHeight + CBody::GetEpsilonError() )
-					SetLocalPosition( m_oLocalMatrix.m_03, fGroundHeight - m_pBoundingGeometry->GetBase().m_y, m_oLocalMatrix.m_23  );
+				if (fEntityZ < fGroundHeight + CBody::GetEpsilonError()) {
+					SetLocalPosition(m_oLocalMatrix.m_03, fGroundHeight - m_pBoundingGeometry->GetBase().m_y, m_oLocalMatrix.m_23);
+					m_bIsOnTheGround = true;
+				}
 			}
 		}
 	}
@@ -284,7 +289,11 @@ void CEntity::LinkAndUpdateMatrices(CEntity* pEntity)
 	GetWorldMatrix(tmThis);
 	SetLocalMatrix(tmInv * tmThis);
 	Link(pEntity);
-	//pEntity->Update();
+}
+
+bool CEntity::IsOnTheGround()
+{
+	return m_bIsOnTheGround;
 }
 
 float CEntity::GetGroundHeight(float x, float z)
@@ -618,6 +627,7 @@ float CEntity::GetWeight()
 void CEntity::SetWeight( float fWeight )
 {
 	m_oBody.m_fWeight = fWeight;
+	m_bIsOnTheGround = false;
 }
 
 
@@ -708,7 +718,6 @@ IBone* CEntity::GetSkeletonRoot()
 {
 	return m_pSkeletonRoot;
 }
-
 
 void CEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
 {

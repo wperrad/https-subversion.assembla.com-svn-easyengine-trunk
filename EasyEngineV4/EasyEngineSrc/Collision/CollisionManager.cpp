@@ -477,11 +477,11 @@ void CCollisionManager::OnRenderHeightMap( IRenderer* pRenderer )
 	pRenderer->SetProjectionMatrix( oBakProj );
 }
 
-int CCollisionManager::LoadHeightMap( string sFileName, IBox* pBox)
+int CCollisionManager::LoadHeightMap( string sFileName, IBox* pBox, bool forceReload)
 {
 	int nID = 0;
 	map<string, int>::iterator it = m_mMapFileToId.find(sFileName);
-	if (it == m_mMapFileToId.end()) {
+	if (forceReload || (it == m_mMapFileToId.end()) ) {
 		CHeightMap hm(m_oInterface, sFileName, *pBox);
 		hm.SetPrecision(m_nHeightMapPrecision);
 		nID = (int)m_mHeigtMap.size();

@@ -84,7 +84,6 @@ void DisplayNodeInfos( IScriptState* );
 void StopRender( IScriptState* );
 void SetAnimationSpeed( IScriptState* pState );
 void SetGravity( IScriptState* pState );
-void SetCurrentPerso( IScriptState* pState );
 void SetCameraType( IScriptState* pState );
 void LocalTranslate( IScriptState* pState );
 void RunAction( IScriptState* pState );

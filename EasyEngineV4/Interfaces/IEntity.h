@@ -125,20 +125,19 @@ public:
 class IScene : virtual public IEntity
 {
 public:
+	typedef void(*LevelCompleteProc)(void*);
 	virtual void				RenderMinimap() = 0;
 	virtual ITexture*			GetMinimapTexture() = 0;
 	virtual void				DisplayMinimap(bool display) = 0;
 	virtual void				UpdateMapEntities() = 0;
-	virtual void				CollectMapEntities(vector<IEntity*>& entities) = 0;
+	virtual void				CollectMinimapEntities(vector<IEntity*>& entities) = 0;
 	virtual void				SetGroundMargin(float margin) = 0;
 	virtual float				GetGroundMargin() = 0;
-	//virtual void				Export(string sFileName) = 0;
 	virtual void				GetInfos(ILoader::CSceneInfos& si) = 0;
 	virtual void				GetOriginalSceneFileName(string& sFileName) = 0;
 	virtual void				SetOriginalSceneFileName(string sFileName) = 0;
 	virtual void				Clear() = 0;
 	virtual void				ClearCharacters() = 0;
-	//virtual void				Load(string sFileName) = 0;
 	virtual void				Load(const ILoader::CSceneInfos& si) = 0;
 	virtual IEntity*			Merge(string sRessourceName, float x, float y, float z) = 0;
 	virtual void				CreateCollisionMap() = 0;
@@ -148,6 +147,9 @@ public:
 	virtual void				SetHeight(float height) = 0;
 	virtual void				SetHMFile(string sHMFile) = 0;
 	virtual void				DeleteTempDirectories() = 0;
+	virtual void				HandleLoadingComplete(LevelCompleteProc callback, void* pData) = 0;
+	virtual void				UnhandleLoadingComplete() = 0;
+	virtual void				OnChangeSector() = 0;
 };
 
 class IFighterEntityInterface
@@ -221,6 +223,7 @@ public:
 	virtual IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) = 0;
 	virtual IBone*				CreateBone() const = 0;
 	virtual void				AddNewCharacter(IEntity* pEntity) = 0;
+	virtual IEntity*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) = 0;
 	virtual void				SaveCharacter(string sNPCID) = 0;
 };
 

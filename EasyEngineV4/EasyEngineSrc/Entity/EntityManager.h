@@ -32,6 +32,7 @@ public:
 	IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem);
 	IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) override;
 	void				AddNewCharacter(IEntity* pEntity) override;
+	IEntity*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) override;
 	void				SetPlayer(IPlayer* player);
 	IPlayer*			GetPlayer();
 	IEntity*			GetEntity( int nEntityID );
@@ -71,7 +72,7 @@ public:
 	void				WearArmorToDummy(int entityId, string armorName) override;
 	void				WearShoes(int entityId, string shoesName) override;
 	void				SaveCharacter(string sNPCID) override;
-	void				LoadCharacterInfos(map<string, ILoader::CAnimatedEntityInfos>& characterInfos);
+	void				LoadCharacterInfos();
 	void				SaveCharacterInfos(const map<string, ILoader::CAnimatedEntityInfos>& characterInfos);
 
 	template<class T>
@@ -81,32 +82,33 @@ public:
 	IBone*				CreateBone() const override;
 
 private:
-	EEInterface&							m_oInterface;
-	map< CEntity*, int >::const_iterator	m_itCurrentParsedEntity;
-	IRessourceManager&						m_oRessourceManager;
-	IGeometryManager&						m_oGeometryManager;
-	IPathFinder&							m_oPathFinder;
-	IRenderer&								m_oRenderer;
-	map< int, IEntity* >					m_mIDEntities;
-	map< IEntity*, int >					m_mEntitiesID;
-	map< string, IEntity* >					m_mNameEntities;
-	map< IEntity*, string >					m_mEntitiesName;
-	int										m_nLastEntityID;
-	IFileSystem&							m_oFileSystem;
-	ICollisionManager&						m_oCollisionManager;
-	ICameraManager&							m_oCameraManager;
-	void									CreateEntity(IEntity* pEntity, string sName = "noname");
-	map< CEntity*, int >					m_mCollideEntities;
-	map< IAEntity*, int >					m_mIAEntities;
-	map< IAEntity*, int >::iterator			m_itCurrentIAEntity;
-	map< IEntity*, int >					m_mMobileEntity;
-	map< IEntity*, int >::iterator			m_itCurrentMobileEntity;
-	map< IFighterEntity*, int >				m_mFighterEntities;
-	map< IFighterEntity*, int >::iterator	m_itCurrentFighterEntity;
-	IGUIManager*							m_pGUIManager;
-	CPlayer*								m_pPlayer;
-	map<string, CMobileEntity*>				m_mCharacters;
-	string									m_sCharactersDatabaseFileName;
+	EEInterface&										m_oInterface;
+	map< CEntity*, int >::const_iterator				m_itCurrentParsedEntity;
+	IRessourceManager&									m_oRessourceManager;
+	IGeometryManager&									m_oGeometryManager;
+	IPathFinder&										m_oPathFinder;
+	IRenderer&											m_oRenderer;
+	map< int, IEntity* >								m_mIDEntities;
+	map< IEntity*, int >								m_mEntitiesID;
+	map< string, IEntity* >								m_mNameEntities;
+	map< IEntity*, string >								m_mEntitiesName;
+	int													m_nLastEntityID;
+	IFileSystem&										m_oFileSystem;
+	ICollisionManager&									m_oCollisionManager;
+	ICameraManager&										m_oCameraManager;
+	void												CreateEntity(IEntity* pEntity, string sName = "noname");
+	map< CEntity*, int >								m_mCollideEntities;
+	map< IAEntity*, int >								m_mIAEntities;
+	map< IAEntity*, int >::iterator						m_itCurrentIAEntity;
+	map< IEntity*, int >								m_mMobileEntity;
+	map< IEntity*, int >::iterator						m_itCurrentMobileEntity;
+	map< IFighterEntity*, int >							m_mFighterEntities;
+	map< IFighterEntity*, int >::iterator				m_itCurrentFighterEntity;
+	IGUIManager*										m_pGUIManager;
+	CPlayer*											m_pPlayer;
+	map<string, CMobileEntity*>							m_mCharacters;
+	string												m_sCharactersDatabaseFileName;
+	map<string, ILoader::CAnimatedEntityInfos>			m_mCharacterInfos;
 };
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager(EEInterface& oInterface);

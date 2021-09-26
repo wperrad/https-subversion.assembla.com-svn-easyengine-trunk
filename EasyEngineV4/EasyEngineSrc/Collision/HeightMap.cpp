@@ -32,45 +32,7 @@ IBox* CHeightMap::GetModelBBox()
 	return m_pModelBox;
 }
 
-void CHeightMap::AdaptGroundMapToModel(CVector& modelPos, CVector modelDim, float groundAdaptationHeight)
-{
-	float hMin = 99999999.f;
-
-	CVector pixel;
-	float xGround, zGround;
-
-	for (int xMap = 0; xMap < m_nWidth; xMap++) {
-		for (int yMap = 0; yMap < m_nHeight; yMap++) {
-			CVector pixel;
-			GetPixel(xMap, yMap, pixel);
-			MapToModel(xMap, yMap, xGround, zGround);
-			float height = GetHeight(pixel);
-
-			if ((xGround >= (modelPos.m_x - modelDim.m_x)) && (xGround <= (modelPos.m_x + modelDim.m_x)) &&
-				(zGround >= (modelPos.m_z - modelDim.m_z)) && (zGround <= (modelPos.m_z + modelDim.m_z))) {
-				if (hMin > height)
-					hMin = height;
-			}
-		}
-	}
-	hMin += groundAdaptationHeight;
-	if (hMin < 0.f) hMin = 0.f;
-	if (hMin > 255.f) hMin = 255.f;
-
-	for (int xMap = 0; xMap < m_nWidth; xMap++) {
-		for (int yMap = 0; yMap < m_nHeight; yMap++) {
-			CVector pixel;
-			GetPixel(xMap, yMap, pixel);
-			MapToModel(xMap, yMap, xGround, zGround);
-			if ((xGround >= (modelPos.m_x - modelDim.m_x)) && (xGround <= (modelPos.m_x + modelDim.m_x)) &&
-				(zGround >= (modelPos.m_z - modelDim.m_z)) && (zGround <= (modelPos.m_z + modelDim.m_z))) {
-				SetPixelValue(xMap, yMap, hMin);
-			}
-		}
-	}
-}
-
-void CHeightMap::AdaptGroundMapToModelOptimized(const CMatrix& modelTM, const CVector modelDim, float groundAdaptationHeight)
+void CHeightMap::AdaptGroundMapToModel(const CMatrix& modelTM, const CVector modelDim, float groundAdaptationHeight)
 {
 	float xMargin = modelDim.m_y;
 	float zMargin = modelDim.m_y;

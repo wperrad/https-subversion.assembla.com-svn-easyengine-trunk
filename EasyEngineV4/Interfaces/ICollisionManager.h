@@ -25,8 +25,7 @@ class IEntityManager;
 class IHeightMap
 {
 public:
-	virtual void	AdaptGroundMapToModel(CVector& modelPos, CVector modelDim, float groundAdaptationHeight) = 0;
-	virtual void	AdaptGroundMapToModelOptimized(const CMatrix& modelTM, const CVector modelDim, float groundAdaptationHeight) = 0;
+	virtual void	AdaptGroundMapToModel(const CMatrix& modelTM, const CVector modelDim, float groundAdaptationHeight) = 0;
 	virtual void	Save(string sFileName) = 0;
 	virtual void	GetFileName(string& fileName) = 0;
 	virtual void	RestoreHeightMap(const CMatrix& modelTM, const CVector& modelDim, string originalHeightMap) = 0;
@@ -41,7 +40,7 @@ public:
 	virtual void			CreateHeightMap( IMesh* pMesh, ILoader::CTextureInfos& ti, IRenderer::TPixelFormat format = IRenderer::T_RGB ) = 0;	
 	virtual void			CreateHeightMap( string sFileName) = 0;
 	virtual void			LoadHeightMap( string sFileName, vector< vector< unsigned char > >& vPixels  ) = 0;
-	virtual int				LoadHeightMap( string sFileName, IBox* pBox) = 0;
+	virtual int				LoadHeightMap( string sFileName, IBox* pBox, bool forceReload = false) = 0;
 	virtual float			GetMapHeight( int nHeightMapID, float xModel, float yModel ) = 0;
 	virtual void			DisplayHeightMap( IMesh* pMesh ) = 0;
 	virtual void			StopDisplayHeightMap() = 0;

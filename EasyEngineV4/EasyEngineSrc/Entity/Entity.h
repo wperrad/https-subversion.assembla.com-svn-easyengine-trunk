@@ -41,7 +41,7 @@ public:
 	void							SetCurrentAnimation( std::string sAnimation );
 	IAnimation*						GetCurrentAnimation();
 	IBone*							GetSkeletonRoot();
-	virtual void					GetEntityInfos(ILoader::CObjectInfos*& pInfos);
+	void							GetEntityInfos(ILoader::CObjectInfos*& pInfos);
 	virtual void					BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent);
 	bool							HasAnimation( string sAnimationName );
 	void							DetachCurrentAnimation();
@@ -70,6 +70,7 @@ public:
 	IGeometry*						GetBoundingGeometry();
 	float							GetHeight();
 	void							LinkAndUpdateMatrices(CEntity* pEntity);
+	bool							IsOnTheGround();
 	virtual float					GetGroundHeight(float x, float z);
 	virtual void					UpdateRessource();
 	void							AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback);
@@ -115,6 +116,7 @@ protected:
 	vector<IEventDispatcher::TEntityCallback>		m_vEntityCallback;
 	ITexture*										m_pBaseTexture;
 	ITexture*										m_pCustomTexture;
+	bool											m_bIsOnTheGround;
 	
 
 
@@ -137,7 +139,6 @@ class CCollisionEntity : public CEntity
 {
 public:
 	CCollisionEntity(EEInterface& oInterface) : CEntity(oInterface) {}
-	void GetEntityInfos(ILoader::CObjectInfos*& pInfos) override {}
 private:
 };
 

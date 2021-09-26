@@ -3,12 +3,12 @@
 
 class ICamera;
 
-class CMapEntity : public CEntity
+class CMinimapEntity : public CEntity
 {
 public:
-	CMapEntity(EEInterface& oInterface, const string& sFileName, bool bDuplicate = false);
+	CMinimapEntity(EEInterface& oInterface, const string& sFileName, bool bDuplicate = false);
 
-	~CMapEntity();
+	~CMinimapEntity();
 
 	void				Update();
 	void                Link(CNode* pNode);

@@ -22,6 +22,7 @@
 #include "Bone.h"
 #include "NPCEntity.h"
 #include "Player.h"
+#include "Repere.h"
 
 using namespace std;
 
@@ -64,7 +65,9 @@ CScene::CScene(EEInterface& oInterface, string ressourceFileName, string diffuse
 	m_fTiling(200.f),
 	m_sDiffuseFileName(diffuseFileName),
 	m_nMapLength(1000),
-	m_fMapHeight(10)
+	m_fMapHeight(10),
+	m_LoadingCompleteCallback(nullptr),
+	m_pLoadingCompleteData(nullptr)
 {
 	SetName("Scene");
 	SetEntityName("Scene");
@@ -121,11 +124,13 @@ void CScene::SetRessource(string sFileName, bool bDuplicate)
 		throw e;
 	}
 
+	bool forceReloadHeightMap = true;
 	int nDotPos = (int)sFileName.find('.');
 	if (m_bUseDisplacementMap) {
 		m_sHMFileName = sFileName;
 		int sliceCount = m_nMapLength / 500;
-		string levelFileName = m_sHMFileName.substr(m_sHMFileName.find_last_of("/HMA_"));
+		string prefix = "/HMA_";
+		string levelFileName = m_sHMFileName.substr(m_sHMFileName.find("/HMA_") + prefix.size());
 		string levelName = levelFileName.substr(0, levelFileName.find('.'));
 		string levelPath = string("/levels/") + levelName + "/ground.bme";
 		try {
@@ -144,6 +149,7 @@ void CScene::SetRessource(string sFileName, bool bDuplicate)
 				string levelFullPath = string("../Data") + levelPath;
 				CreateDirectoryA(directoryFullPath.c_str(), nullptr);
 				m_pRessource = m_oRessourceManager.CreatePlane2(sliceCount, m_nMapLength, m_fMapHeight, m_sHMFileName, m_sDiffuseFileName);
+				forceReloadHeightMap = false;
 				if (!CopyFileA("../Data/tmp/Ground.bme", levelFullPath.c_str(), false)) {
 					CFileException e("Impossible de copier le fichier");
 					e.m_sFileName = "../Data/tmp/Ground.bme";
@@ -166,7 +172,7 @@ void CScene::SetRessource(string sFileName, bool bDuplicate)
 			m_fTiling = 4.f * pMesh->GetBBox()->GetDimension().m_x / w;
 		}
 		IBox* pBox = pMesh->GetBBox();
-		m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pBox);
+		m_nHeightMapID = m_oCollisionManager.LoadHeightMap(m_sHMFileName, pBox, forceReloadHeightMap);
 		m_oCollisionManager.SetGroundBoxHeight(m_nHeightMapID, m_fMapHeight);
 	}
 	catch( CFileNotFoundException& )
@@ -207,7 +213,9 @@ void CScene::SetRessource(string sFileName, bool bDuplicate)
 IGeometry* CScene::GetBoundingGeometry()
 {
 	IMesh* pMesh = static_cast< IMesh* >(m_pRessource);
-	return pMesh->GetBBox();
+	if(pMesh)
+		return pMesh->GetBBox();
+	return nullptr;
 }
 
 IGrid* CScene::GetCollisionGrid()
@@ -370,6 +378,18 @@ void CScene::DeleteTempDirectories()
 	m_oFileSystem.DeleteDirectory(root + "/Levels/Tmp");
 }
 
+void CScene::HandleLoadingComplete(LevelCompleteProc callback, void* pData)
+{
+	m_LoadingCompleteCallback = callback;
+	m_pLoadingCompleteData = pData;
+}
+
+void CScene::UnhandleLoadingComplete()
+{
+	m_LoadingCompleteCallback = nullptr;
+	m_pLoadingCompleteData = nullptr;
+}
+
 void  CScene::RenderScene()
 {
 	if (m_oCameraManager.GetActiveCamera()) {
@@ -379,6 +399,9 @@ void  CScene::RenderScene()
 		m_oRenderer.SetCameraMatrix(oCamMatrix);
 	}
 	CNode::Update();
+	if (IsLoadingComplete() && m_LoadingCompleteCallback)
+		m_LoadingCompleteCallback(m_pLoadingCompleteData);
+
 	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
 	if (m_pRessource) {
 		if (m_pHeightMaptexture) {
@@ -398,26 +421,22 @@ void CScene::RenderMinimap()
 	DisplayEntities(m_vMapEntities);
 }
 
-void CScene::CollectMapEntities(vector<IEntity*>& entities)
+void CScene::CollectMinimapEntities(vector<IEntity*>& entities)
 {
 	for (int i = 0; i < GetChildCount(); i++) {
 		CEntity* pEntity = dynamic_cast<CEntity*>(GetChild(i));
 		if (pEntity) {
 			if (pEntity != this) {
+				IPlayer* pPlayer = dynamic_cast<IPlayer*>(pEntity);
+				if (pPlayer)
+					m_pPlayer = pEntity;
 				CMobileEntity* pMobile = dynamic_cast<CMobileEntity*>(pEntity);
 				if (!pMobile) {
 					CLightEntity* pLightEntity = dynamic_cast<CLightEntity*>(pEntity);
 					if (!pLightEntity) {
-						CMapEntity* pMapEntity = dynamic_cast<CMapEntity*>(pEntity);
-						if(!pMapEntity)
+						CMinimapEntity* pMapEntity = dynamic_cast<CMinimapEntity*>(pEntity);
+						if (!pMapEntity)
 							entities.push_back(pEntity);
-					}
-				}
-				else {
-					IPlayer* pPlayer = dynamic_cast<IPlayer*>(pMobile);
-					if (pPlayer) {
-						m_pPlayer = pEntity;
-						entities.push_back(m_pPlayer);
 					}
 				}
 			}
@@ -427,12 +446,24 @@ void CScene::CollectMapEntities(vector<IEntity*>& entities)
 
 void CScene::OnChangeSector()
 {
-	CollectMapEntities(m_vMapEntities);
+	CollectMinimapEntities(m_vMapEntities);
 }
 
 void CScene::UpdateMapEntities()
 {
-	CollectMapEntities(m_vMapEntities);
+	CollectMinimapEntities(m_vMapEntities);
+}
+
+bool CScene::IsLoadingComplete()
+{
+	bool loadingComplete = true;
+	for (int i = 0; i < m_vCollideEntities.size(); i++) {
+		if (!m_vCollideEntities[i]->IsOnTheGround()) {
+			loadingComplete = false;
+			break;
+		}
+	}
+	return loadingComplete;
 }
 
 void CScene::DisplayEntities(vector<IEntity*>& entities)
@@ -460,11 +491,14 @@ void CScene::DisplayEntities(vector<IEntity*>& entities)
 
 	for (int i = 0; i < entities.size(); i++) {
 		CEntity* pEntity = dynamic_cast<CEntity*>(entities[i]);
-		pBackupShader = pEntity->GetRessource()->GetShader();
-		pEntity->SetShader(pFirstPassShader);
-		m_oRenderer.SetModelMatrix(pEntity->GetWorldMatrix());
-		pEntity->UpdateRessource();
-		pEntity->SetShader(pBackupShader);
+		IRessource* pRessource = pEntity->GetRessource();
+		if (pRessource) {
+			pBackupShader = pRessource->GetShader();
+			pEntity->SetShader(pFirstPassShader);
+			m_oRenderer.SetModelMatrix(pEntity->GetWorldMatrix());
+			pEntity->UpdateRessource();
+			pEntity->SetShader(pBackupShader);
+		}
 	}
 	
 	m_pPlayerMapSphere->SetLocalMatrix(m_pPlayer->GetWorldMatrix());
@@ -472,13 +506,6 @@ void CScene::DisplayEntities(vector<IEntity*>& entities)
 
 	m_oCameraManager.SetActiveCamera(pActiveCamera);
 	m_oRenderer.SetInvCameraMatrix(oBackupInvCameraMatrix);
-}
-
-ILoader::CObjectInfos* CScene::GetEntityInfos( CEntity* pEntity )
-{
-	ILoader::CObjectInfos* pObjectInfos = nullptr;
-	pEntity->GetEntityInfos(pObjectInfos);
-	return pObjectInfos;
 }
 
 void CScene::GetInfos( ILoader::CSceneInfos& si )
@@ -496,9 +523,13 @@ void CScene::GetInfos( ILoader::CSceneInfos& si )
 	GetName( si.m_sName );
 	m_oRenderer.GetBackgroundColor(si.m_oBackgroundColor);
 	for( unsigned int i= 0; i < m_vChild.size(); i++ ) {
+		CCamera* pCamera = dynamic_cast< CCamera* >(m_vChild[i]);
+		if (pCamera)
+			continue;
 		CEntity* pEntity = dynamic_cast< CEntity* >( m_vChild[ i ] );
 		if (pEntity) {
-			ILoader::CObjectInfos* pInfos = GetEntityInfos(pEntity);
+			ILoader::CObjectInfos* pInfos = nullptr;
+			pEntity->GetEntityInfos(pInfos);
 			if (pInfos)
 				si.m_vObject.push_back(pInfos);
 		}
@@ -521,6 +552,7 @@ void CScene::LoadSceneObject( const ILoader::CObjectInfos* pSceneObjInfos, CEnti
 			const ILoader::CEntityInfos* pEntityInfos = dynamic_cast< const ILoader::CEntityInfos* >( pSceneObjInfos );
 			CEntity* pEntity = m_pEntityManager->CreateEntityFromType( sRessourceFileName, pEntityInfos->m_sTypeName, pEntityInfos->m_sObjectName);
 			pEntity->BuildFromInfos(*pSceneObjInfos, pParent);
+			m_vCollideEntities.push_back(pEntity);
 		}
 	}
 }
@@ -528,6 +560,7 @@ void CScene::LoadSceneObject( const ILoader::CObjectInfos* pSceneObjInfos, CEnti
 void CScene::Load( const ILoader::CSceneInfos& si )
 {
 	Clear();
+	m_vCollideEntities.clear();
 	m_oRenderer.SetBackgroundColor(si.m_oBackgroundColor);
 	if (si.m_bUseDisplacementMap) {
 		m_nMapLength = si.m_nMapLength;
@@ -540,19 +573,20 @@ void CScene::Load( const ILoader::CSceneInfos& si )
 		const ILoader::CObjectInfos* pSceneObjInfos = si.m_vObject.at( i );
 		LoadSceneObject( pSceneObjInfos, this );
 	}
-	m_pEntityManager->SetPlayer( m_pEntityManager->GetPlayer() );
 }
 
 
 void CScene::Clear()
 {
 	m_oCameraManager.UnlinkCameras();
-	int nChildCount = (int)m_vChild.size();
-	for( int i = 0; i < nChildCount; i++ )
+	for( int i = 0; i < m_vChild.size(); i++ )
 	{
-		IEntity* pChild = dynamic_cast< IEntity* >( m_vChild[ 0 ] );
-		pChild->Unlink();
-		m_pEntityManager->DestroyEntity( pChild );
+		IEntity* pChild = dynamic_cast< IEntity* >( m_vChild[ i ] );
+		if (!dynamic_cast<CRepere*>(pChild)) {
+			pChild->Unlink();
+			m_pEntityManager->DestroyEntity(pChild);
+			i--;
+		}
 	}
 	m_pRessource = NULL;
 	m_pEntityManager->Clear();

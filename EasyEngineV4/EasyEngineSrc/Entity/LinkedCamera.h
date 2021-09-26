@@ -19,7 +19,7 @@ public:
 	void				SetSpeed(float fSpeed) {}
 	void				Update();
 	void				SetInventoryMode(bool bInventoryMode) {}
-	void				GetEntityInfos(ILoader::CObjectInfos*& pInfos) override;
+	void				GetEntityInfos(ILoader::CObjectInfos*& pInfos);
 
 private:
 	string				m_sEntityName;

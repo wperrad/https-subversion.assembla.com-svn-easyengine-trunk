@@ -48,7 +48,6 @@ extern IGeometryManager*	m_pGeometryManager;
 extern bool					m_bRenderScene;
 extern IEventDispatcher*	m_pEventDispatcher;
 extern IEditorManager*		m_pEditorManager;
-extern int					g_nSlotPosition;
 
 IEntity* m_pRepere = NULL;
 vector< string > g_vStringsResumeMode;
@@ -56,6 +55,7 @@ map<IEntity*, int> g_mEntityPositionLine;
 IMapEditor* m_pMapEditor = nullptr;
 ICharacterEditor* m_pCharacterEditor = nullptr;
 IWorldEditor* m_pWorldEditor = nullptr;
+int g_nSlotPosition = 0;
 
 enum TObjectType
 {
@@ -85,8 +85,10 @@ void InitScriptRegistration()
 	}
 	m_pWorldEditor = dynamic_cast<IWorldEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eWorld));
 	if (!m_pWorldEditor) {
-		m_pConsole->Println("Erreur, MaWorld Editor n'existe pas");
+		m_pConsole->Println("Erreur, World Editor n'existe pas");
 	}
+
+	g_nSlotPosition = m_pHud->CreateNewSlot(800, 100);
 }
 
 IEntity* CreateEntity( string sName )
@@ -147,6 +149,13 @@ void SetMapEditionMode(IScriptState* pState)
 	m_pMapEditor->SetEditionMode(enable);
 }
 
+void SetWorldEditionMode(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
+	bool enable = pEnable->m_nValue != 0;
+	m_pWorldEditor->SetEditionMode(enable);
+}
+
 void SpawnEntity(IScriptState* pState)
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
@@ -176,6 +185,25 @@ void SpawnEntity(IScriptState* pState)
 		ostringstream oss;
 		oss << "\"" << sName << "\" : Mauvais format de fichier, essayez de le réexporter";
 		m_pConsole->Println(oss.str());
+	}
+	catch (CEException& e)
+	{
+		m_pConsole->Println(e.what());
+	}
+	m_pRessourceManager->EnableCatchingException(bak);
+}
+
+void SpawnCharacter(IScriptState* pState)
+{
+	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string id = pID->m_sValue;
+	m_pEditorManager;
+	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
+	m_pRessourceManager->EnableCatchingException(false);
+	try
+	{
+		m_pWorldEditor->SetEditionMode(true);
+		m_pWorldEditor->SpawnEntity(id);
 	}
 	catch (CEException& e)
 	{
@@ -610,7 +638,7 @@ void SetCameraType( IScriptState* pState )
 			if (player)
 				pCamera->Link(dynamic_cast<IEntity*>(player));
 			else
-				m_pConsole->Println("Erreur : vous devez définir un personnage (fonction SetCurrentPerso(persoID)) avant de définir une caméra liée.");
+				m_pConsole->Println("Erreur : vous devez définir un personnage (fonction SetCurrentPlayer(persoID)) avant de définir une caméra liée.");
 		}
 	}
 	else {
@@ -659,16 +687,16 @@ void GetCameraID(IScriptState* pState)
 	pState->SetReturnValue(m_pEntityManager->GetEntityID(pCamera));
 }
 
-void SetCurrentPerso( IScriptState* pState )
+void SetCurrentPlayer( IScriptState* pState )
 {
-	CScriptFuncArgInt* pPersoID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
-	IEntity* pPerso = m_pEntityManager->GetEntity( pPersoID->m_nValue );
-	if(pPerso)
-		m_pEntityManager->SetPlayer( dynamic_cast<IPlayer*>(pPerso) );
+	CScriptFuncArgInt* pPlayerID = static_cast< CScriptFuncArgInt* >( pState->GetArg( 0 ) );
+	IPlayer* pPlayer = dynamic_cast<IPlayer*>(m_pEntityManager->GetEntity(pPlayerID->m_nValue ));
+	if(pPlayer)
+		m_pEntityManager->SetPlayer( dynamic_cast<IPlayer*>(pPlayer) );
 	else
 	{
 		ostringstream oss;
-		oss << "Erreur : SetCurrentPerso(" << pPersoID->m_nValue << ") -> Id not exists";
+		oss << "Erreur : SetCurrentPlayer(" << pPlayerID->m_nValue << ") -> Id not exists";
 		m_pConsole->Println(oss.str());
 	}		
 }
@@ -928,51 +956,6 @@ void CreateMobileEntity( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
-void CreatePlayer(IScriptState* pState)
-{
-	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
-	string sName = pName->m_sValue;
-	if (sName.find(".bme") == -1)
-		sName += ".bme";
-	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
-	m_pRessourceManager->EnableCatchingException(false);
-
-	try
-	{
-		IEntity* pEntity = m_pEntityManager->CreatePlayer(sName, m_pFileSystem);
-		pEntity->Link(m_pScene);
-		int id = m_pEntityManager->GetEntityID(pEntity);
-		ostringstream oss;
-		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
-		m_pConsole->Println(oss.str());
-		pState->SetReturnValue(id);
-	}
-	catch (CFileNotFoundException& e)
-	{
-		ostringstream oss;
-		oss << "Erreur : fichier \"" << e.m_sFileName << "\" manquant, l'entité \"" << pName->m_sValue << "\" ne peut pas être chargée.";
-		m_pConsole->Println(oss.str());
-	}
-	catch (CRessourceException& e)
-	{
-		string s;
-		e.GetErrorMessage(s);
-		m_pConsole->Println(s);
-	}
-	catch (CBadFileFormat& e)
-	{
-		string sMessage;
-		e.GetErrorMessage(sMessage);
-		m_pConsole->Println(sMessage);
-	}
-	catch (CEException)
-	{
-		string sMessage = string("\"") + sName + "\" introuvable";
-		m_pConsole->Println(sMessage);
-	}
-	m_pRessourceManager->EnableCatchingException(bak);
-}
-
 void GetVec3DFromArg(IScriptState* pState, int argIdx, CVector& v)
 {
 	v.m_x = ((CScriptFuncArgFloat*)pState->GetArg(argIdx))->m_fValue;
@@ -999,9 +982,6 @@ void CreateNPC( IScriptState* pState )
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
 	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(1));
 	string sFileName = pName->m_sValue;
-	if(sFileName.find( ".bme" ) == -1 )
-		sFileName += ".bme";
-	sFileName = string("Meshes/Bodies/") + sFileName;
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException( false );
 
@@ -1039,6 +1019,50 @@ void CreateNPC( IScriptState* pState )
 		m_pConsole->Println( sMessage );
 	}
 	m_pRessourceManager->EnableCatchingException( bak );
+}
+
+
+void CreatePlayer(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sName = pName->m_sValue;
+	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
+	m_pRessourceManager->EnableCatchingException(false);
+
+	try
+	{
+		IEntity* pEntity = m_pEntityManager->CreatePlayer(sName, m_pFileSystem);
+		pEntity->Link(m_pScene);
+		int id = m_pEntityManager->GetEntityID(pEntity);
+		ostringstream oss;
+		oss << "L'entité \"" << pName->m_sValue << "\"a été chargée avec l'identifiant " << id << ".";
+		m_pConsole->Println(oss.str());
+		pState->SetReturnValue(id);
+	}
+	catch (CFileNotFoundException& e)
+	{
+		ostringstream oss;
+		oss << "Erreur : fichier \"" << e.m_sFileName << "\" manquant, l'entité \"" << pName->m_sValue << "\" ne peut pas être chargée.";
+		m_pConsole->Println(oss.str());
+	}
+	catch (CRessourceException& e)
+	{
+		string s;
+		e.GetErrorMessage(s);
+		m_pConsole->Println(s);
+	}
+	catch (CBadFileFormat& e)
+	{
+		string sMessage;
+		e.GetErrorMessage(sMessage);
+		m_pConsole->Println(sMessage);
+	}
+	catch (CEException)
+	{
+		string sMessage = string("\"") + sName + "\" introuvable";
+		m_pConsole->Println(sMessage);
+	}
+	m_pRessourceManager->EnableCatchingException(bak);
 }
 
 void SaveCharacter(IScriptState* pState)
@@ -2510,11 +2534,13 @@ void EntityCallback(CPlugin*, IEventDispatcher::TEntityEvent e, IEntity* pEntity
 		pEntity->GetLocalPosition(pos);
 		ostringstream oss;
 		oss << "Entity " << pEntity->GetID() << ", Position = (" << pos.m_x << ", " << pos.m_y << ", " << pos.m_z << ")";
-		m_pHud->PrintInSlot(g_nSlotPosition, g_mEntityPositionLine[pEntity], oss.str());
+		m_pHud->PrintInSlot(g_nSlotPosition, 0, oss.str());
 		FILE* pFile = fopen("log.txt", "a");
-		oss << "\n";
-		fwrite(oss.str().c_str(), sizeof(char), oss.str().size(), pFile);
-		fclose(pFile);
+		if (pFile) {
+			oss << "\n";
+			fwrite(oss.str().c_str(), sizeof(char), oss.str().size(), pFile);
+			fclose(pFile);
+		}
 	}
 }
 
@@ -2642,6 +2668,33 @@ void CreateEntity( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
+void LoadMap(IScriptState* pState)
+{
+	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string sFileName = pName->m_sValue;
+	try
+	{
+		m_pMapEditor->Load(pName->m_sValue);
+	}
+	catch (CFileNotFoundException& e)
+	{
+		string s = string("Fichier \"") + e.what() + "\" introuvable";
+		m_pConsole->Println(s);
+	}
+	catch (CExtensionNotFoundException)
+	{
+		m_pConsole->Println("Erreur inconnue, veuillez contacter l'administrateur pour plus d'information");
+	}
+	catch (CBadFileFormat)
+	{
+		m_pConsole->Println("Mauvais format de fichier,essayez de réexporter la scene");
+	}
+	catch (CEException& e)
+	{
+		m_pConsole->Println(e.what());
+	}
+}
+
 void SaveMap(IScriptState* pState)
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
@@ -2652,47 +2705,40 @@ void SaveMap(IScriptState* pState)
 		m_pConsole->Println("Map sauvegardée");
 	}
 	catch (CFileException& e) {
-		m_pConsole->Println(string("Erreur d'acces au fichier \"" + sName + "\", verifiez que vous disposez des droits suffisants et que votre antivirus ne bloque pas l'operation"));
+		m_pConsole->Println(string("Erreur d'acces au fichier \"") + sName + "\", verifiez que vous disposez des droits suffisants et que votre antivirus ne bloque pas l'operation");
 	}
-	catch (exception e)	{
+	catch (CEException e)	{
 		m_pConsole->Println(e.what());
 	}
 }
 
-void LoadMap( IScriptState* pState )
+void LoadWorld(IScriptState* pState)
 {
-	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
-	string sFileName = pName->m_sValue;
-	string folderName;
-	int dotPos = sFileName.find('.');
-	if (dotPos == -1) {
-		folderName = sFileName;
-		sFileName += ".bse";
-	}
-	else
-		folderName = sFileName.substr(0, dotPos);
-	string root;
-	m_pFileSystem->GetLastDirectory(root);
 	try
 	{
-		m_pMapEditor->Load(root + "/levels/" + folderName + "/" + sFileName);
+		m_pWorldEditor->Load("");
 	}
-	catch( CFileNotFoundException& e )
+	catch (CFileException& e)
 	{
-		string s = string("Fichier \"") + e.what() + "\" introuvable";
-		m_pConsole->Println( s );
+		m_pConsole->Println(string("Erreur d'acces au fichier  \"") + e.what() + "\", verifiez que vous disposez des droits suffisants et que votre antivirus ne bloque pas l'operation");
 	}
-	catch( CExtensionNotFoundException )
+	catch (CEException& e)
 	{
-		//m_pConsole->Println( "L'extension \"bse\" n'est pas gérée par le gestionnaire de ressource" );
-		m_pConsole->Println( "Erreur inconnue, veuillez contacter l'administrateur pour plus d'information" );
+		m_pConsole->Println(e.what());
 	}
-	catch( CBadFileFormat )
+}
+
+void SaveWorld(IScriptState* pState)
+{
+	try
 	{
-		m_pConsole->Println( "Mauvais format de fichier,essayez de réexporter la scene" );
+		m_pWorldEditor->Save("");
+		m_pConsole->Println("Monde sauvegardé");
 	}
-	catch( CEException& e )
-	{
+	catch (CFileException& e) {
+		m_pConsole->Println(string("Erreur d'acces au fichier  \"") + e.what() + "\", verifiez que vous disposez des droits suffisants et que votre antivirus ne bloque pas l'operation");
+	}
+	catch (CEException e) {
 		m_pConsole->Println(e.what());
 	}
 }
@@ -2971,12 +3017,6 @@ void DisplayGroundHeight(IScriptState* pState)
 	m_pConsole->Println(h);
 }
 
-void SetGroundAdaptationHeight(IScriptState* pState)
-{
-	CScriptFuncArgFloat* pHeight = (CScriptFuncArgFloat*)pState->GetArg(0);
-	m_pMapEditor->SetGroundAdaptationHeight(pHeight->m_fValue);
-}
-
 void SetGroundMargin(IScriptState* pState)
 {
 	CScriptFuncArgFloat* pMargin = (CScriptFuncArgFloat*)pState->GetArg(0);
@@ -3071,11 +3111,19 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("SpawnCharacter", SpawnCharacter, vType);
+
+	vType.clear();
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("PrintReg", PrintReg, vType);
 	
 	vType.clear();
 	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("SetMapEditionMode", SetMapEditionMode, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("SetWorldEditionMode", SetWorldEditionMode, vType);
 
 	vType.clear();
 	vType.push_back(eInt);
@@ -3156,6 +3204,12 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back( eString );
 	m_pScriptManager->RegisterFunction( "SaveMap", SaveMap, vType );
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("LoadWorld", LoadWorld, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("SaveWorld", SaveWorld, vType);
 
 	vType.clear();
 	vType.push_back( eString );
@@ -3528,7 +3582,7 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back( eInt );
-	m_pScriptManager->RegisterFunction( "SetCurrentPerso", SetCurrentPerso, vType );
+	m_pScriptManager->RegisterFunction( "SetCurrentPlayer", SetCurrentPlayer, vType );
 
 	vType.clear();
 	vType.push_back( eString );

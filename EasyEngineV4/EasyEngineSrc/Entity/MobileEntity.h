@@ -11,7 +11,7 @@ public:
 	CMobileEntity(EEInterface& oInterface, string sFileName, string sID);
 
 	float						GetAnimationSpeed(IEntity::TAnimation eAnimationType);
-	void						GetEntityInfos(ILoader::CObjectInfos*& pInfos) override;
+	void						GetEntityInfos(ILoader::CObjectInfos*& pInfos);
 	void						BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent) override;
 	void						SetAnimationSpeed(TAnimation eAnimationType, float fSpeed);
 	TAnimation					GetCurrentAnimationType() const;

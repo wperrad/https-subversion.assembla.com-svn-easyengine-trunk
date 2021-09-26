@@ -4,7 +4,8 @@ SetCameraType("free");
 r=CreateRepere();
 
 
-LoadMap("Hopital");
+//	LoadMap("Hopital02");
+LoadWorld();
 return;
 
 /*
@@ -19,7 +20,7 @@ SetEntityPos(light2, -1000000, 500000, 0);
 
 perso=CreatePlayer("testExport15");
 SetEntityName(perso, "perso");
-SetCurrentPerso(perso);
+SetCurrentPlayer(perso);
 Stand(perso);
 SetAnimationSpeed(perso, "run", 2);
 SetAnimationSpeed(perso, "walk", 1.5);
@@ -92,7 +93,7 @@ SetEntityPos(light3, 0, 0, -400000);
 
 perso=CreatePlayer("testExport15");
 SetEntityName(perso, "perso");
-SetCurrentPerso(perso);
+SetCurrentPlayer(perso);
 Stand(perso);
 SetAnimationSpeed(perso, "run", 2);
 SetAnimationSpeed(perso, "walk", 1.5);

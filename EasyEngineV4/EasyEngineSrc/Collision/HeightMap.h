@@ -27,8 +27,7 @@ public:
 	void	ModelToMap(int xModel, int zModel, int& xMap, int& yMap) override;
 	void	SetPrecision( int nPrecision );
 	IBox*	GetModelBBox();
-	void	AdaptGroundMapToModel(CVector& modelPos, CVector modelDim, float groundAdaptationHeight) override;
-	void	AdaptGroundMapToModelOptimized(const CMatrix& modelTM, const CVector modelDim, float groundAdaptationHeight) override;
+	void	AdaptGroundMapToModel(const CMatrix& modelTM, const CVector modelDim, float groundAdaptationHeight) override;
 	void	RestoreHeightMap(const CMatrix& modelTM, const CVector& modelDim, string originalHeightMap) override;
 	void	GetFileName(string& fileName) override;
 

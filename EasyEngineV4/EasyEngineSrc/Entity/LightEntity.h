@@ -17,7 +17,7 @@ public:
 	CVector				GetColor();
 	IRessource::TLight	GetType();
 	void				Unlink();
-	void				GetEntityInfos(ILoader::CObjectInfos*& pInfos) override;
+	void				GetEntityInfos(ILoader::CObjectInfos*& pInfos);
 	void				BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent);
 
 };

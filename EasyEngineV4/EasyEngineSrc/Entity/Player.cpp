@@ -10,9 +10,8 @@ CPlayer::CPlayer(EEInterface& oInterface, string sFileName) :
 	m_pPlayerWindow(NULL)
 {
 	m_sTypeName = "Player";
+	m_sName = "Player";
 	m_pPlayerWindow = m_oGUIManager.CreatePlayerWindow(600, 800);
-	IEntityManager* pEntityManager = static_cast<IEntityManager*>(oInterface.GetPlugin("EntityManager"));
-	 pEntityManager->SetPlayer(this);
 }
 
 

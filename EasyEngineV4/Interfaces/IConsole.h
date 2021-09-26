@@ -18,6 +18,7 @@ protected:
 
 public:
 	typedef void(*ResumeProc)(void*);
+	typedef void(*ResponseProc)(string, void*);
 
 
 	virtual void	Update() = 0;
@@ -35,6 +36,7 @@ public:
 	virtual int		GetLineHeight() = 0;
 	virtual int		GetClientHeight() = 0;
 	virtual void	SetPauseModeOn(ResumeProc callback, void* params) = 0;
+	virtual void	WaitForResponse(ResponseProc callback, void* data) = 0;
 };
 
 #endif // _ICONSOLE_H_
