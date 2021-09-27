@@ -20,6 +20,7 @@
 #include "IFileSystem.h"
 #include "ICollisionManager.h"
 #include "Bone.h"
+#include "IEditor.h"
 
 CEntityManager::CEntityManager(EEInterface& oInterface):
 IEntityManager(oInterface),
@@ -31,6 +32,7 @@ m_oCollisionManager(static_cast<ICollisionManager&>(*m_oInterface.GetPlugin("Col
 m_oGeometryManager(static_cast<IGeometryManager&>(*m_oInterface.GetPlugin("GeometryManager"))),
 m_oPathFinder(static_cast<IPathFinder&>(*m_oInterface.GetPlugin("PathFinder"))),
 m_oCameraManager(static_cast<ICameraManager&>(*m_oInterface.GetPlugin("CameraManager"))),
+m_pEditorManager(nullptr),
 m_nLastEntityID( -1 ),
 m_pPlayer(NULL)
 {
@@ -41,6 +43,13 @@ m_pPlayer(NULL)
 	m_itCurrentIAEntity = m_mIAEntities.end();
 	CMobileEntity::InitStatics();
 	LoadCharacterInfos();
+	oInterface.HandlePluginCreation("EditorManager", HandleEditorManagerCreation, this);
+}
+
+void CEntityManager::HandleEditorManagerCreation(CPlugin* plugin, void* pData)
+{
+	CEntityManager* pEntityManager = static_cast<CEntityManager*>(pData);
+	pEntityManager->m_pEditorManager = static_cast<IEditorManager*>(pEntityManager->m_oInterface.GetPlugin("EditorManager"));
 }
 
 void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
@@ -208,10 +217,11 @@ void CEntityManager::AddNewCharacter(IEntity* pEntity)
 	if (itCharacter != m_mCharacters.end())
 		throw CCharacterAlreadyExistsException(sCharacterName);
 	CMobileEntity* pCharacter = dynamic_cast<CMobileEntity*>(pEntity);
+	CreateEntity(pCharacter, "Player");
 	m_mCharacters[sCharacterName] = pCharacter;
 }
 
-IEntity* CEntityManager::BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent)
+ICharacter* CEntityManager::BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent)
 {
 	CEntity* pEntity = nullptr;
 	map<string, ILoader::CAnimatedEntityInfos>::iterator itCharacter = m_mCharacterInfos.find(sCharacterId);
@@ -220,9 +230,11 @@ IEntity* CEntityManager::BuildCharacterFromDatabase(string sCharacterId, IEntity
 		oss << "Erreur : CEntityManager::BuildCharacterFromDatabase() -> id " << sCharacterId << " inexistant dans la base de donneees des personnages.";
 		CEException e(oss.str());
 	}
-	pEntity = CreateEntityFromType(itCharacter->second.m_sRessourceFileName, itCharacter->second.m_sTypeName, sCharacterId);
-	pEntity->BuildFromInfos(itCharacter->second, dynamic_cast<CEntity*>(pParent));
-	return pEntity;
+	else {
+		pEntity = CreateEntityFromType(itCharacter->second.m_sRessourceFileName, itCharacter->second.m_sTypeName, sCharacterId);
+		pEntity->BuildFromInfos(itCharacter->second, dynamic_cast<CEntity*>(pParent));
+	}
+	return dynamic_cast<ICharacter*>(pEntity);
 }
 
 void CEntityManager::SetPlayer(IPlayer* player)
@@ -244,8 +256,12 @@ IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem, 
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
 	sName = string("Meshes/Bodies/") + sName;
-	IEntity* pEntity = new CNPCEntity(m_oInterface, sName, sID);
+	ICharacter* pEntity = new CNPCEntity(m_oInterface, sName, sID);
 	CreateEntity( pEntity );
+	ICharacterEditor* pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacter));
+	if (pCharacterEditor->IsEnabled()) {
+		pCharacterEditor->SetCurrentEditableNPC(pEntity);
+	}
 	return pEntity;
 }
 
@@ -255,8 +271,12 @@ IEntity* CEntityManager::CreatePlayer(string sFileName, IFileSystem* pFileSystem
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
 	sName = string("Meshes/Bodies/") + sName;
-	IEntity* pEntity = new CPlayer(m_oInterface, sName);
+	ICharacter* pEntity = new CPlayer(m_oInterface, sName);
 	CreateEntity(pEntity);
+	ICharacterEditor* pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacter));
+	if (pCharacterEditor->IsEnabled()) {
+		pCharacterEditor->SetCurrentEditablePlayer(pEntity);
+	}
 	return pEntity;
 }
 
@@ -356,6 +376,7 @@ void CEntityManager::Clear()
 	m_mEntitiesID.clear();
 	m_mNameEntities.clear();
 	m_mEntitiesName.clear();
+	m_mCharacters.clear();
 	m_nLastEntityID = -1;
 	m_pPlayer = nullptr;
 }
@@ -500,16 +521,6 @@ void CEntityManager::WearArmorToDummy(int entityId, string sArmorName)
 		oss << "Erreur dans CEntityManager::WearArmorToDummy() : entite " << entityId << " introuvable";
 		CEException e(oss.str());
 		throw e;
-	}
-}
-
-void CEntityManager::WearShoes(int entityId, string shoesName)
-{
-	CMobileEntity* pEntity = dynamic_cast<CMobileEntity*>(GetEntity(entityId));
-	if (pEntity)
-		pEntity->WearShoes(shoesName);
-	else {
-		throw CEException("Entity not found");
 	}
 }
 

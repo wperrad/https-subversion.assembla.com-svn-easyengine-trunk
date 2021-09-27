@@ -44,6 +44,10 @@ ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityMana
 		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "GuiMapCamera";
 		break;
+	case ICameraManager::T_CHARACTER_EDITOR:
+		pCamera = new CFreeCamera(m_oInterface, fFov);
+		sCameraName = "CharacterEditorCamera";
+		break;
 	default:
 		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "noNameCamera";

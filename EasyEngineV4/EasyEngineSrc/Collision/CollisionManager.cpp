@@ -506,8 +506,10 @@ void CCollisionManager::LoadHeightMap(string sFileName, vector< vector< unsigned
 
 float CCollisionManager::GetMapHeight( int nHeightMapID, float xModel, float zModel )
 {
+	float fInterpolate = 0.f;
 	map< int, CHeightMap >::iterator itMap = m_mHeigtMap.find( nHeightMapID );
-	float fInterpolate = itMap->second.GetHeight( xModel, zModel );
+	if (itMap != m_mHeigtMap.end())
+		fInterpolate = itMap->second.GetHeight(xModel, zModel);
 	return fInterpolate;
 }
 

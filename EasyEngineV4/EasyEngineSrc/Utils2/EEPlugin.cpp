@@ -5,7 +5,6 @@
 EEInterface* CPlugin::s_pEngineInterface = NULL;
 std::map<std::string, CPlugin*>	CPlugin::s_mPlugins;
 
-map<string, pair<ProcPluginCreation, void*>> CPlugin::s_vPluginCreationCallback;
 
 CPlugin::CPlugin(CPlugin* pParent, const std::string& sName) :
 	m_pParent(pParent)
@@ -95,16 +94,7 @@ CPlugin* CPlugin::Create(EEInterface& oInterface, std::string sDllPath, const st
 	CPlugin* plugin = pCreate(oInterface);
 	s_mPlugins[plugin->GetName()] = plugin;
 	s_pEngineInterface->RegisterPlugin(plugin);
-	map<string, pair<ProcPluginCreation, void*>>::iterator itCallback = s_vPluginCreationCallback.find(plugin->GetName());
-	if (itCallback != s_vPluginCreationCallback.end()) {
-		itCallback->second.first(plugin, itCallback->second.second);
-	}
 	return plugin;
-}
-
-void CPlugin::HandlePluginCreation(string pluginName, ProcPluginCreation callback, void* pData)
-{
-	s_vPluginCreationCallback[pluginName] = pair<ProcPluginCreation, void*>(callback, pData);
 }
 
 void CPlugin::SetEngineInterface(EEInterface* pInterface)

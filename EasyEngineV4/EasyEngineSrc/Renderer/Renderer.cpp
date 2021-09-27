@@ -1323,10 +1323,14 @@ void CRenderer::VertexAttribPointer( unsigned int nAttributeID, int nSize, TNumb
 {
 	std::map< TNumberType, GLenum >::const_iterator it = m_mNumberType.find( type );
 	GLenum glType = it->second;
-	glVertexAttribPointer( nAttributeID, nSize, glType, GL_FALSE, 0, BUFFER_OFFSET( nPos ) );
 	GLenum error = glGetError();
-	if( error != 0 )
-		throw 1;
+	glVertexAttribPointer( nAttributeID, nSize, glType, GL_FALSE, 0, BUFFER_OFFSET( nPos ) );
+	error = glGetError();
+	if (error != 0) {
+		ostringstream oss;
+		oss << "OpenGL error : " << error;
+		throw CEException(oss.str());
+	}
 }
 
 void CRenderer::AbonneToRenderEvent( TRenderEventCallback callback )

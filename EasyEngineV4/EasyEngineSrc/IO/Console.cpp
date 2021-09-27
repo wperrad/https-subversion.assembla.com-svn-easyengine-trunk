@@ -238,6 +238,11 @@ void CConsole::OnPressEnter()
 		e.GetErrorMessage(msg);
 		Println(string("Erreur a l'ouverture du ficher '") + msg + "'");
 	}
+	catch (CCharacterAlreadyExistsException& e) {
+		string id;
+		e.GetErrorMessage(id);
+		Println(string("Erreur : le personnage '" + id + " existe deja."));
+	}
 	catch (CEException& e) {
 		string msg;
 		e.GetErrorMessage(msg);

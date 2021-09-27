@@ -4,7 +4,7 @@
 #include "Entity.h"
 #include "FighterEntity.h"
 
-class CMobileEntity : public CEntity, public virtual IFighterEntity
+class CMobileEntity : public CEntity, public virtual IFighterEntity, public ICharacter
 {
 
 public:
@@ -18,7 +18,8 @@ public:
 	void						RunAction(string sAction, bool bLoop);
 	void						Die();
 	void						WearArmorToDummy(string armorName);
-	void						WearShoes(string shoesName);
+	void						WearShoes(string shoesName) override;
+	void						AddHairs(string sHairsPath) override;
 	void						Yaw(float fAngle);
 	void						Pitch(float fAngle);
 	void						Roll(float fAngle);

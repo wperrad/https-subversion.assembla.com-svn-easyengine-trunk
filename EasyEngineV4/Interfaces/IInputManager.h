@@ -74,6 +74,7 @@ public:
 	virtual void				SetMouseSensitivity( float s ) = 0;
 	virtual void				SetEditionMode( bool bEdition ) = 0;
 	virtual void				OnUpdate() = 0;
+	virtual void				ShowMouseCursor(bool bShow) = 0;
 };
 
 #endif // IINPUTMANAGER_H

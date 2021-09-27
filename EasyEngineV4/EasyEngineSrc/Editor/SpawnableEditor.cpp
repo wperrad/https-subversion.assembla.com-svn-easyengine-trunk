@@ -8,17 +8,11 @@
 #include "IGeometry.h"
 #include "ICollisionManager.h"
 #include "IHud.h"
+#include "IConsole.h"
 
 
 CSpawnableEditor::CSpawnableEditor(EEInterface& oInterface) :
-IEditor(oInterface),
-m_oInterface(oInterface),
-m_oInputManager(*static_cast<IInputManager*>(oInterface.GetPlugin("InputManager"))),
-m_oRenderer(*static_cast<IRenderer*>(oInterface.GetPlugin("Renderer"))),
-m_oCameraManager(*static_cast<ICameraManager*>(oInterface.GetPlugin("CameraManager"))),
-m_oCollisionManager(*static_cast<ICollisionManager*>(oInterface.GetPlugin("CollisionManager"))),
-m_oGeometryManager(*static_cast<IGeometryManager*>(oInterface.GetPlugin("GeometryManager"))),
-m_oEntityManager(*static_cast<IEntityManager*>(oInterface.GetPlugin("EntityManager"))),
+CEditor(oInterface),
 m_oHud(*static_cast<IHud*>(oInterface.GetPlugin("HUD"))),
 m_bEditionMode(false),
 m_pCurrentAddedEntity(nullptr),
@@ -27,8 +21,7 @@ m_pSelectedEntity(nullptr),
 m_bDisplayPickingRay(false),
 m_nHudX(800),
 m_nHudY(150),
-m_nHudLineHeight(15),
-m_pEditorManager(nullptr)
+m_nHudLineHeight(15)
 {
 	IEventDispatcher* pEventDispatcher = static_cast<IEventDispatcher*>(oInterface.GetPlugin("EventDispatcher"));
 	pEventDispatcher->AbonneToMouseEvent(this, OnMouseEventCallback);

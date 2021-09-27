@@ -120,8 +120,10 @@ public:
 	virtual void SetAmbient(float r, float g, float b, float a) = 0;
 	virtual void SetDiffuse(float r, float g, float b, float a) = 0;
 	virtual void SetSpecular(float r, float g, float b, float a) = 0;
+	virtual void SetSpecular(const CVector& pos) = 0;
 	virtual void SetShininess(float shininess) = 0;
 	virtual void SetAdditionalColor(float r, float g, float b, float a) = 0;
+	virtual CVector GetSpecular() = 0;
 };
 
 class IMesh : public IRessource

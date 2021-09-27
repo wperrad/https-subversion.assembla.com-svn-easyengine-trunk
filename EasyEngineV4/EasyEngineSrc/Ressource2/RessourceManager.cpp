@@ -119,6 +119,7 @@ ITexture* CRessourceManager::CreateTexture2D(string sFileName, bool bGenerateMip
 	desc.m_vTexels.swap(ti.m_vTexels);
 	desc.m_nUnitTexture = 3;
 	desc.m_bGenerateMipmaps = bGenerateMipmaps;
+	desc.m_sFileName = sFileName;
 	CTexture2D* pTexture = new CTexture2D(desc);
 	return static_cast< ITexture* > (pTexture);
 }

@@ -19,12 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CharacterEditor.cpp" />
+    <ClCompile Include="Editor.cpp" />
     <ClCompile Include="EditorManager.cpp" />
     <ClCompile Include="MapEditor.cpp" />
     <ClCompile Include="SpawnableEditor.cpp" />
     <ClCompile Include="WorldEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CharacterEditor.h" />
+    <ClInclude Include="Editor.h" />
     <ClInclude Include="EditorManager.h" />
     <ClInclude Include="MapEditor.h" />
     <ClInclude Include="SpawnableEditor.h" />

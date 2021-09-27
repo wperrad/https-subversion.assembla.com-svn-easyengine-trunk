@@ -60,7 +60,9 @@ public:
 	void						SetAmbient(float r, float g, float b, float a) override;
 	void						SetDiffuse(float r, float g, float b, float a) override;
 	void						SetSpecular(float r, float g, float b, float a) override;
+	void						SetSpecular(const CVector& pos) override;
 	void						SetShininess(float shininess) override;
+	CVector						GetSpecular() override;
 };
 
 

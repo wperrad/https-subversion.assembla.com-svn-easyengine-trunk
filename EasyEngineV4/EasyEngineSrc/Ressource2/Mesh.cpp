@@ -339,7 +339,7 @@ int CMesh::GetMaterialCount()
 IMaterial* CMesh::GetMaterial(int index)
 {
 	std::map< int, CMaterial* >::iterator itMat = m_mMaterials.find(index);
-	if(itMat != m_mMaterials.end()){
+	if(itMat != m_mMaterials.end()) {
 		return itMat->second;
 	}
 	return nullptr;

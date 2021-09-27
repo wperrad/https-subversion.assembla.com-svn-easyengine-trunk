@@ -10,23 +10,22 @@
 #include "IHud.h"
 #include "ILoader.h"
 #include "IFileSystem.h"
-#include "IConsole.h"
 #include "EEPlugin.h"
 #include "WorldEditor.h"
+#include "IConsole.h"
 
 #include <algorithm>
 
 IEventDispatcher::TKeyEvent	CMapEditor::m_eLastKeyEvent = IEventDispatcher::TKeyEvent::T_KEYUP;
 
 CMapEditor::CMapEditor(EEInterface& oInterface) :
+ISpawnableEditor(oInterface),
 CSpawnableEditor(oInterface),
 IMapEditor(oInterface),
 CPlugin(nullptr, ""),
-IEditor(oInterface),
 m_oLoaderManager(*static_cast<ILoaderManager*>(oInterface.GetPlugin("LoaderManager"))),
 m_oRessourceManager(*static_cast<IRessourceManager*>(oInterface.GetPlugin("RessourceManager"))),
 m_oFileSystem(*static_cast<IFileSystem*>(oInterface.GetPlugin("FileSystem"))),
-m_oConsole(*static_cast<IConsole*>(oInterface.GetPlugin("Console"))),
 m_fPlanHeight(3000.f),
 m_fGroundAdaptationHeight(0.f),
 m_pHeightMap(nullptr)

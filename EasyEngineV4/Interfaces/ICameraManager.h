@@ -33,7 +33,8 @@ public:
 		T_LINKED_CAMERA,
 		T_MAP_CAMERA,
 		T_GUI_MAP_CAMERA,
-		T_MAP_ENTITY_CAMERA
+		T_MAP_ENTITY_CAMERA,
+		T_CHARACTER_EDITOR
 	};
 
 	virtual ICamera*		CreateCamera( TCameraType, float fFov, IEntityManager& oEntityManager ) = 0;

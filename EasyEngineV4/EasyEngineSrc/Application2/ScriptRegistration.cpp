@@ -79,7 +79,7 @@ void InitScriptRegistration()
 	if (!m_pMapEditor) {
 		m_pConsole->Println("Erreur, Map Editor n'existe pas");
 	}
-	m_pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacer));
+	m_pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacter));
 	if (!m_pCharacterEditor) {
 		m_pConsole->Println("Erreur, Character Editor n'existe pas");
 	}
@@ -156,6 +156,13 @@ void SetWorldEditionMode(IScriptState* pState)
 	m_pWorldEditor->SetEditionMode(enable);
 }
 
+void SetCharacterEditionMode(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
+	bool enable = pEnable->m_nValue != 0;
+	m_pCharacterEditor->SetEditionMode(enable);
+}
+
 void SpawnEntity(IScriptState* pState)
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
@@ -197,7 +204,6 @@ void SpawnCharacter(IScriptState* pState)
 {
 	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
 	string id = pID->m_sValue;
-	m_pEditorManager;
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException(false);
 	try
@@ -210,6 +216,30 @@ void SpawnCharacter(IScriptState* pState)
 		m_pConsole->Println(e.what());
 	}
 	m_pRessourceManager->EnableCatchingException(bak);
+}
+
+void EditCharacter(IScriptState* pState)
+{
+	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string id = pID->m_sValue;
+	try
+	{
+		m_pCharacterEditor->SetEditionMode(true);
+		m_pCharacterEditor->SpawnEntity(id);
+	}
+	catch (CCharacterAlreadyExistsException& e) {
+		m_pConsole->Println(string("Erreur, le personnage ") + e.what() + " existe deja");
+	}
+	catch (CEException& e)
+	{
+		m_pConsole->Println(e.what());
+	}
+}
+
+void AddHairs(IScriptState* pState)
+{
+	CScriptFuncArgString* pHairs = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	m_pCharacterEditor->AddHairs(pHairs->m_sValue);
 }
 
 void ShowGUICursor(IScriptState* pState)
@@ -1067,8 +1097,7 @@ void CreatePlayer(IScriptState* pState)
 
 void SaveCharacter(IScriptState* pState)
 {
-	CScriptFuncArgString* pId = dynamic_cast< CScriptFuncArgString* >(pState->GetArg(0));
-	m_pEntityManager->SaveCharacter(pId->m_sValue);
+	m_pCharacterEditor->Save();
 }
 
 void CreateMinimapEntity(IScriptState* pState)
@@ -2026,19 +2055,10 @@ void SetSceneMap( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
-void SetEntityTexture(IScriptState* pState)
+void SetTexture(IScriptState* pState)
 {
-	CScriptFuncArgInt* pId = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(0));
-	CScriptFuncArgString* pTextureName = dynamic_cast<CScriptFuncArgString*>(pState->GetArg(1));
-	IEntity* pEntity = m_pEntityManager->GetEntity(pId->m_nValue);
-	if (!pEntity) {
-		ostringstream oss;
-		oss << "Erreur, Entity " << pId->m_nValue << " introuvable";
-		m_pConsole->Println(oss.str());
-	}
-	else {
-		pEntity->SetDiffuseTexture(pTextureName->m_sValue);
-	}
+	CScriptFuncArgString* pTextureName = dynamic_cast<CScriptFuncArgString*>(pState->GetArg(0));
+	m_pCharacterEditor->SetTexture(pTextureName->m_sValue);
 }
 
 void SetEntityWeight( IScriptState* pState )
@@ -2339,12 +2359,7 @@ void SetEntitySpecular(IScriptState* pState)
 	CScriptFuncArgFloat* pg = (CScriptFuncArgFloat*)pState->GetArg(2);
 	CScriptFuncArgFloat* pb = (CScriptFuncArgFloat*)pState->GetArg(3);
 	IEntity* pEntity = m_pEntityManager->GetEntity(pID->m_nValue);
-	IMesh* pMesh = dynamic_cast<IMesh*>(pEntity->GetRessource());
-	if (pMesh) {
-		for (int i = 0; i < pMesh->GetMaterialCount(); i++) {
-			pMesh->GetMaterial(i)->SetSpecular(pr->m_fValue, pr->m_fValue, pr->m_fValue, 1.f);
-		}
-	}
+	pEntity->SetCustomSpecular(CVector(pr->m_fValue, pg->m_fValue, pb->m_fValue));
 }
 
 void SetEntityShininess(IScriptState* pState)
@@ -2411,9 +2426,8 @@ void WearArmorToDummy(IScriptState* pState)
 
 void WearShoes(IScriptState* pState)
 {
-	CScriptFuncArgInt* pId = (CScriptFuncArgInt*)(pState->GetArg(0));
-	CScriptFuncArgString* pShoes = (CScriptFuncArgString*)(pState->GetArg(1));
-	m_pEntityManager->WearShoes(pId->m_nValue, pShoes->m_sValue);
+	CScriptFuncArgString* pShoes = (CScriptFuncArgString*)(pState->GetArg(0));
+	m_pCharacterEditor->WearShoes(pShoes->m_sValue);
 }
 
 void DisplayRayPicking(IScriptState* pState)
@@ -2566,6 +2580,24 @@ void SetCamPos( IScriptState* pState )
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
 	m_pCameraManager->GetActiveCamera()->SetLocalPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
+}
+
+void YawCamera(IScriptState* pState)
+{
+	CScriptFuncArgFloat* pYaw = static_cast< CScriptFuncArgFloat* >(pState->GetArg(0));
+	m_pCameraManager->GetActiveCamera()->Yaw(pYaw->m_fValue);
+}
+
+void PitchCamera(IScriptState* pState)
+{
+	CScriptFuncArgFloat* pPitch = static_cast< CScriptFuncArgFloat* >(pState->GetArg(0));
+	m_pCameraManager->GetActiveCamera()->Pitch(pPitch->m_fValue);
+}
+
+void RollCamera(IScriptState* pState)
+{
+	CScriptFuncArgFloat* pRoll = static_cast< CScriptFuncArgFloat* >(pState->GetArg(0));
+	m_pCameraManager->GetActiveCamera()->Roll(pRoll->m_fValue);
 }
 
 void SetEntityPos( IScriptState* pState )
@@ -2863,11 +2895,27 @@ void DisplayMatrix(CMatrix m)
 	m_pConsole->Println(s);
 }
 
+void DisplayEntityMatrix(IScriptState* pState)
+{
+	CScriptFuncArgInt* pID = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(0));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pID->m_nValue);
+	if (pEntity)
+		DisplayMatrix(pEntity->GetWorldMatrix());
+}
+
 void DisplayModelViewProjectionMatrix(IScriptState* pState)
 {
 	CMatrix m;
 	m_pRenderer->GetModelViewProjectionMatrix(m);
 	DisplayMatrix(m);
+}
+
+void DisplayCameraMatrix(IScriptState* pState)
+{
+	CMatrix m;
+	ICamera* pCamera = m_pCameraManager->GetActiveCamera();
+	if (pCamera)
+		DisplayMatrix(pCamera->GetWorldMatrix());
 }
 
 void DisplayProjectionMatrix(IScriptState* pState)
@@ -3046,9 +3094,8 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vector< TFuncArgType > vType;
 
 	vType.clear();
-	vType.push_back(eInt);
 	vType.push_back(eString);
-	m_pScriptManager->RegisterFunction("SetEntityTexture", SetEntityTexture, vType);
+	m_pScriptManager->RegisterFunction("SetTexture", SetTexture, vType);
 
 	vType.clear();
 	vType.push_back(eInt);
@@ -3115,6 +3162,14 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("EditCharacter", EditCharacter, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("AddHairs", AddHairs, vType);
+
+	vType.clear();
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("PrintReg", PrintReg, vType);
 	
 	vType.clear();
@@ -3124,6 +3179,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	vType.clear();
 	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("SetWorldEditionMode", SetWorldEditionMode, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("SetCharacterEditionMode", SetCharacterEditionMode, vType);
 
 	vType.clear();
 	vType.push_back(eInt);
@@ -3373,6 +3432,18 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SetCamPos", SetCamPos, vType );
 
 	vType.clear();
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("YawCamera", YawCamera, vType);
+
+	vType.clear();
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("PitchCamera", PitchCamera, vType);
+
+	vType.clear();
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("RollCamera", RollCamera, vType);
+
+	vType.clear();
 	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("WatchEntityPosition", WatchEntityPosition, vType);
 
@@ -3538,7 +3609,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "CreateNPC", CreateNPC, vType );
 
 	vType.clear();
-	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("SaveCharacter", SaveCharacter, vType);
 
 	vType.clear();
@@ -3742,6 +3812,13 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction("DisplayModelViewProjectionMatrix", DisplayModelViewProjectionMatrix, vType);
 
 	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayCameraMatrix", DisplayCameraMatrix, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("DisplayEntityMatrix", DisplayEntityMatrix, vType);
+
+	vType.clear();
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("testCollisionShader", testCollisionShader, vType);
 	
@@ -3793,7 +3870,6 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction("WearArmorToDummy", WearArmorToDummy, vType);
 
 	vType.clear();
-	vType.push_back(eInt);
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("WearShoes", WearShoes, vType);
 

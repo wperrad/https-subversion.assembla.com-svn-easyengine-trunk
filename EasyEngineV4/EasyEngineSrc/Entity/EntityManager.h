@@ -15,6 +15,7 @@ class CPlayer;
 class CNode;
 class CNPCEntity;
 class CCollisionEntity;
+class IEditorManager;
 
 class CEntityManager : public IEntityManager
 {
@@ -32,7 +33,7 @@ public:
 	IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem);
 	IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) override;
 	void				AddNewCharacter(IEntity* pEntity) override;
-	IEntity*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) override;
+	ICharacter*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) override;
 	void				SetPlayer(IPlayer* player);
 	IPlayer*			GetPlayer();
 	IEntity*			GetEntity( int nEntityID );
@@ -70,7 +71,6 @@ public:
 	IGUIManager* 		GetGUIManager();
 	void				Kill(int entityId);
 	void				WearArmorToDummy(int entityId, string armorName) override;
-	void				WearShoes(int entityId, string shoesName) override;
 	void				SaveCharacter(string sNPCID) override;
 	void				LoadCharacterInfos();
 	void				SaveCharacterInfos(const map<string, ILoader::CAnimatedEntityInfos>& characterInfos);
@@ -88,14 +88,15 @@ private:
 	IGeometryManager&									m_oGeometryManager;
 	IPathFinder&										m_oPathFinder;
 	IRenderer&											m_oRenderer;
+	IFileSystem&										m_oFileSystem;
+	ICollisionManager&									m_oCollisionManager;
+	ICameraManager&										m_oCameraManager;
+	IEditorManager*										m_pEditorManager;
 	map< int, IEntity* >								m_mIDEntities;
 	map< IEntity*, int >								m_mEntitiesID;
 	map< string, IEntity* >								m_mNameEntities;
 	map< IEntity*, string >								m_mEntitiesName;
 	int													m_nLastEntityID;
-	IFileSystem&										m_oFileSystem;
-	ICollisionManager&									m_oCollisionManager;
-	ICameraManager&										m_oCameraManager;
 	void												CreateEntity(IEntity* pEntity, string sName = "noname");
 	map< CEntity*, int >								m_mCollideEntities;
 	map< IAEntity*, int >								m_mIAEntities;
@@ -109,6 +110,8 @@ private:
 	map<string, CMobileEntity*>							m_mCharacters;
 	string												m_sCharactersDatabaseFileName;
 	map<string, ILoader::CAnimatedEntityInfos>			m_mCharacterInfos;
+
+	static void											HandleEditorManagerCreation(CPlugin* plugin, void* pData);
 };
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager(EEInterface& oInterface);

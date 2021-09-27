@@ -12,7 +12,6 @@ public:
 
 private:
 
-	void							OnPluginRegistered() override;
 	map<IEditor::Type, IEditor*>	m_mEditors;
 };
 

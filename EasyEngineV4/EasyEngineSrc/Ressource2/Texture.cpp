@@ -113,6 +113,7 @@ CTexture2D::CTexture2D(  CDesc& oDesc ):
 CTextureBase( oDesc ),
 m_nReponse( -1 )
 {
+	m_sFileName = oDesc.m_sFileName;
 	m_nWidth = oDesc.m_nWidth;
 	m_nHeight = oDesc.m_nHeight;
 	if (oDesc.m_nTextureId == -1) {

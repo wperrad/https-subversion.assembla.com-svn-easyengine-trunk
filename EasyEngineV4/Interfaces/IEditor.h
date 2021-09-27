@@ -3,6 +3,8 @@
 #include "EEPlugin.h"
 
 class IEditorManager;
+class IEntity;
+class ICharacter;
 
 class IEditor : virtual public CPlugin
 {
@@ -10,7 +12,7 @@ public:
 	enum Type
 	{
 		eMap = 0,
-		eCharacer,
+		eCharacter,
 		eWorld
 	};
 
@@ -18,18 +20,23 @@ public:
 	virtual			~IEditor() = 0 {}
 	virtual void	SetEditionMode(bool bEditionMode) = 0;
 	virtual void	Load(string fileName) = 0;
-	virtual void	Save(string fileName) = 0;
-	virtual void	DisplayPickingRay(bool enable) = 0;
 	virtual void	HandleEditorManagerCreation(IEditorManager* pEditor) = 0;
 	virtual bool	IsEnabled() = 0;
 	virtual void	SpawnEntity(string sEntityFileName) = 0;
 };
 
-class IMapEditor : virtual public IEditor
+class ISpawnableEditor : public IEditor
 {
 public:
-	IMapEditor(EEInterface& oInterface) : IEditor(oInterface) {}
+	ISpawnableEditor(EEInterface& oInterface) : IEditor(oInterface) {}
+	virtual void	DisplayPickingRay(bool enable) = 0;
+	virtual void	Save(string fileName) = 0;
+};
 
+class IMapEditor : virtual public ISpawnableEditor
+{
+public:
+	IMapEditor(EEInterface& oInterface) : ISpawnableEditor(oInterface) {}
 	virtual void	SetGroundAdaptationHeight(float fHeight) = 0;
 };
 
@@ -37,12 +44,19 @@ class ICharacterEditor : public IEditor
 {
 public:
 	ICharacterEditor(EEInterface& oInterface) : IEditor(oInterface) {}
+	virtual void	SetCurrentEditablePlayer(ICharacter* pPlayer) = 0;
+	virtual void	SetCurrentEditableNPC(ICharacter* pNPCEntity) = 0;
+	virtual void	AddHairs(string sHairsName) = 0;
+	virtual void	WearShoes(string sShoesName) = 0;
+	virtual void	SetTexture(string sTexture) = 0;
+	virtual void	Save() = 0;
 };
 
-class IWorldEditor : virtual public IEditor
+class IWorldEditor : virtual public ISpawnableEditor
 {
 public:
-	IWorldEditor(EEInterface& oInterface) : IEditor(oInterface) {}
+	IWorldEditor(EEInterface& oInterface) : ISpawnableEditor(oInterface) {}
+	virtual ~IWorldEditor() = 0 {}
 };
 
 

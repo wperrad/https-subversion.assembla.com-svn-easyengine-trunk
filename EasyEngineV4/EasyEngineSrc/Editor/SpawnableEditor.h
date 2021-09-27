@@ -3,6 +3,7 @@
 #include "IEventDispatcher.h"
 #include "ICameraManager.h"
 #include "IEditor.h"
+#include "Editor.h"
 
 #include "../Utils/Math/Vector.h"
 
@@ -12,8 +13,9 @@ class IGeometryManager;
 class IScene;
 class IHud;
 class CEditorManager;
+class IConsole;
 
-class CSpawnableEditor : virtual public IEditor
+class CSpawnableEditor : virtual public ISpawnableEditor, public CEditor
 {
 public:
 	CSpawnableEditor(EEInterface& oInterface);
@@ -28,25 +30,17 @@ protected:
 	void							DisplayLocalRepere();
 	void							SetEditionMode(bool bEditionMode);
 	void							HandleEditorManagerCreation(IEditorManager* pEditor) override;
-	void							DisplayPickingRay(bool enable) override;
+	void							DisplayPickingRay(bool enable);
 	virtual void					OnEntityAdded() = 0;
 	virtual float					GetPlanHeight() = 0;
 	virtual void					OnEntitySelected() = 0;
 	virtual void					InitSpawnedEntity();
 	
-
+protected:
 	static void						OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent, int x, int y);
 
 	bool							m_bEditionMode;
 	IEntity*						m_pCurrentAddedEntity;
-	EEInterface&					m_oInterface;
-	IInputManager&					m_oInputManager;
-	IRenderer&						m_oRenderer;
-	ICameraManager&					m_oCameraManager;
-	ICollisionManager&				m_oCollisionManager;
-	IGeometryManager&				m_oGeometryManager;
-	IEntityManager&					m_oEntityManager;
-	IEditorManager*					m_pEditorManager;
 	IScene*							m_pScene;
 	IEntity*						m_pSelectedEntity;
 	bool							m_bDisplayPickingRay;

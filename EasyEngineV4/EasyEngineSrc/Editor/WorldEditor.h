@@ -12,14 +12,14 @@ class CWorldEditor : public IWorldEditor, public CSpawnableEditor
 public:
 	CWorldEditor(EEInterface& oInterface);
 	void						HandleMapLoaded(string sMapName);
-	void						CleanWorld();
+	void						ClearWorld();
+	void						Load(string fileName) override;
 
 private:
 	void						OnEntityAdded() override;
 	float						GetPlanHeight() override;
 	void						OnEntitySelected() override;
-	string						GetName() override;	
-	void						Load(string fileName) override;
+	string						GetName() override;
 	void						Save(string sFileName) override;
 	void						SpawnEntity(string id);
 	void						SetEditionMode(bool bEditionMode) override;

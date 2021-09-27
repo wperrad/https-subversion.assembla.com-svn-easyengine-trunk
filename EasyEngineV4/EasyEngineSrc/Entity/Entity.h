@@ -75,6 +75,7 @@ public:
 	virtual void					UpdateRessource();
 	void							AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback);
 	void							DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback);
+	void							SetCustomSpecular(const CVector& customSpecular) override;
 	static void						GetSkeletonEntities(CBone* pRoot, vector< CEntity* >& vEntity, string sFileFilter);
 	
 
@@ -117,6 +118,8 @@ protected:
 	ITexture*										m_pBaseTexture;
 	ITexture*										m_pCustomTexture;
 	bool											m_bIsOnTheGround;
+	CVector											m_vCustomSpecular;
+	bool											m_bUseCustomSpecular;
 	
 
 

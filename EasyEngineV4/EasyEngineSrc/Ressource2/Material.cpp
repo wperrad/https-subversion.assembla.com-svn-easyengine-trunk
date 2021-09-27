@@ -171,7 +171,21 @@ void CMaterial::SetSpecular(float r, float g, float b, float a)
 	m_vSpecular.push_back(a);
 }
 
+void CMaterial::SetSpecular(const CVector& pos)
+{
+	m_vSpecular.clear();
+	m_vSpecular.push_back(pos.m_x);
+	m_vSpecular.push_back(pos.m_y);
+	m_vSpecular.push_back(pos.m_z);
+	m_vSpecular.push_back(1.f);
+}
+
 void CMaterial::SetShininess(float shininess)
 {
 	m_fShininess = shininess;
+}
+
+CVector CMaterial::GetSpecular()
+{
+	return CVector(m_vSpecular[0], m_vSpecular[1], m_vSpecular[2], 1.f);
 }

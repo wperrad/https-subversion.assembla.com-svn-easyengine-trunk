@@ -54,6 +54,7 @@ public:
 	void			DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback) override {}
 	void			SetDiffuseTexture(string sFileName) override {}
 	void			GetEntityInfos(ILoader::CObjectInfos*& pInfos) {}
+	void			SetCustomSpecular(const CVector& customSpecular) override {}
 };
 
 #endif // SHAPE_H

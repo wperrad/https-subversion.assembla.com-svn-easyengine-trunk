@@ -120,6 +120,14 @@ public:
 	virtual void				LinkDummyParentToDummyEntity(IEntity* pEntity, string sDummyName) = 0;
 	virtual void				AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback) = 0;
 	virtual void				DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback) = 0;
+	virtual void				SetCustomSpecular(const CVector& customSpecular) = 0;
+};
+
+class ICharacter : public virtual IEntity
+{
+public:
+	virtual void				WearShoes(string shoesName)  = 0;
+	virtual void				AddHairs(string sHairsPath) = 0;
 };
 
 class IScene : virtual public IEntity
@@ -214,7 +222,6 @@ public:
 	virtual IEntity*			CreateCylinder( float fRadius, float fHeight ) = 0;
 	virtual void				Kill(int entityId) = 0;
 	virtual void				WearArmorToDummy(int entityId, string armorName) = 0;
-	virtual void				WearShoes(int entityId, string shoesName) = 0;
 	virtual void				SerializeMobileEntities(INode* pRoot, string& sText) = 0;
 	virtual IGUIManager* 		GetGUIManager() = 0;
 	virtual void				SetGUIManager(IGUIManager* pGUIManager) = 0;
@@ -223,7 +230,7 @@ public:
 	virtual IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) = 0;
 	virtual IBone*				CreateBone() const = 0;
 	virtual void				AddNewCharacter(IEntity* pEntity) = 0;
-	virtual IEntity*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) = 0;
+	virtual ICharacter*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) = 0;
 	virtual void				SaveCharacter(string sNPCID) = 0;
 };
 

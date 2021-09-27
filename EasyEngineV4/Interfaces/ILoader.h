@@ -317,13 +317,15 @@ public:
 	struct CAnimatedEntityInfos : public CEntityInfos
 	{
 		string								m_sAnimationFileName;
+		string								m_sTextureName;
+		CVector								m_vSpecular;
 		map< string, float>					m_mAnimationSpeed;
 
 		const IPersistantObject& operator >> (CBinaryFileStorage& store) const override
 		{
 			store << (int)eAnimatedEntity;
 			ILoader::CEntityInfos::operator >> (store);
-			store << m_sAnimationFileName;
+			store << m_sAnimationFileName << m_sTextureName << m_vSpecular;
 			store << m_mAnimationSpeed;
 			return *this;
 		}
@@ -342,7 +344,7 @@ public:
 			int nType;
 			store >> nType;
 			ILoader::CEntityInfos::operator << (store);
-			store >> m_sAnimationFileName;
+			store >> m_sAnimationFileName >> m_sTextureName >> m_vSpecular;
 			store >> m_mAnimationSpeed;
 			return *this;
 		}

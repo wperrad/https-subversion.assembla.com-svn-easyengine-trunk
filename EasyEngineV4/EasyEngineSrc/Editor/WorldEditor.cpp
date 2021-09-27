@@ -4,10 +4,12 @@
 #include "IFileSystem.h"
 #include "ICamera.h"
 #include "IGeometry.h"
+#include "IConsole.h"
+
 
 CWorldEditor::CWorldEditor(EEInterface& oInterface) :
 CPlugin(nullptr, ""),
-IEditor(oInterface),
+ISpawnableEditor(oInterface),
 IWorldEditor(oInterface),
 CSpawnableEditor(oInterface),
 m_oSceneManager(static_cast<ISceneManager&>(*oInterface.GetPlugin("SceneManager"))),
@@ -21,9 +23,9 @@ void CWorldEditor::HandleMapLoaded(string sMapName)
 	m_mMaps[sMapName] = CVector();
 }
 
-void CWorldEditor::CleanWorld()
+void CWorldEditor::ClearWorld()
 {
-
+	m_pScene->Clear();
 }
 
 void CWorldEditor::OnEntityAdded()
@@ -139,11 +141,26 @@ void CWorldEditor::GetRelativeDatabasePath(string& path)
 void CWorldEditor::OnSceneLoadingComplete(void* pWorldEditorData)
 {
 	CWorldEditor* pWorldEditor = (CWorldEditor*)pWorldEditorData;
-	if (pWorldEditor) {
-		for (map<string, CMatrix>::iterator itCharacter = pWorldEditor->m_mCharacters.begin(); itCharacter != pWorldEditor->m_mCharacters.end(); itCharacter++) {
-			IEntity* pEntity = pWorldEditor->m_oEntityManager.BuildCharacterFromDatabase(itCharacter->first, pWorldEditor->m_pScene);
-			pEntity->SetLocalMatrix(itCharacter->second);
+	try {
+		if (pWorldEditor) {
+			for (map<string, CMatrix>::iterator itCharacter = pWorldEditor->m_mCharacters.begin(); itCharacter != pWorldEditor->m_mCharacters.end(); itCharacter++) {
+				IEntity* pEntity = nullptr;
+				if (itCharacter != pWorldEditor->m_mCharacters.end()) {
+					pEntity = pWorldEditor->m_oEntityManager.BuildCharacterFromDatabase(itCharacter->first, pWorldEditor->m_pScene);
+					if (pEntity)
+						pEntity->SetLocalMatrix(itCharacter->second);
+				}
+				if ((itCharacter == pWorldEditor->m_mCharacters.end()) || !pEntity) {
+					ostringstream oss;
+					oss << "Erreur dans CWorldEditor::OnSceneLoadingComplete() : le personnage " << itCharacter->first << " n'existe pas.";
+					pWorldEditor->m_oConsole.Println(oss.str());
+				}
+			}
 		}
+	}
+	catch (CEException& e)
+	{
+		pWorldEditor->m_oConsole.Println(e.what());
 	}
 	pWorldEditor->m_pScene->UnhandleLoadingComplete();
 	pWorldEditor->m_pScene->OnChangeSector();

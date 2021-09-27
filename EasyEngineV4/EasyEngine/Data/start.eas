@@ -32,10 +32,10 @@ npc1=CreateNPC("body01", "Geraldine");
 Stand(npc1);
 h=CreateEntity("hairs/hairs02");
 LinkDummyParentToDummyEntity(h, npc1, "BodyDummyHairs");
-SetEntityTexture(npc1, "texture3-noire.bmp");
+//SetEntityTexture(npc1, "texture3-noire.bmp");
 WearArmorToDummy(npc1, "2");
 YawEntity(npc1, 90);
-WearShoes(npc1, "Sandal");
+//WearShoes(npc1, "Sandal");
 SetEntityPos(npc1, -161000, -7400, -151000);
 
 
@@ -44,8 +44,8 @@ YawEntity(npc2, 90);
 Stand(npc2);
 h2=CreateEntity("hairs/hairs01");
 LinkDummyParentToDummyEntity(h2, npc2, "BodyDummyHairs");
-SetEntityTexture(npc2, "texture3-blanche.bmp");
-WearShoes(npc2, "Sandal");
+//SetEntityTexture(npc2, "texture3-blanche.bmp");
+//WearShoes(npc2, "Sandal");
 SetEntityPos(npc2, -161000, -7400, -151080);
 
 
@@ -54,9 +54,9 @@ YawEntity(npc3, 90);
 Stand(npc3);
 h3=CreateEntity("hairs/hairs01");
 LinkDummyParentToDummyEntity(h3, npc3, "BodyDummyHairs");
-SetEntityTexture(npc3, "texture3-ebene.bmp");
+//SetEntityTexture(npc3, "texture3-ebene.bmp");
 SetEntityPos(npc3, -161000, -7400, -151160);
-WearShoes(npc3, "Sandal-body03");
+//WearShoes(npc3, "Sandal-body03");
 
 
 //SetCamPos(160000, -12000, -326000);

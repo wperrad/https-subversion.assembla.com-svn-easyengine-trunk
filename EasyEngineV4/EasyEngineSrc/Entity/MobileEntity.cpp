@@ -308,7 +308,7 @@ void CMobileEntity::WearShoes(string shoesPath)
 	else
 		m_sStandAnimation = "stand-normal";
 	Stand();
-	
+
 	// unlink old shoes if exists
 	IBone* pDummyLShoes = m_pSkeletonRoot->GetChildBoneByName("DummyLFoot");
 	IBone* pDummyRShoes = m_pSkeletonRoot->GetChildBoneByName("DummyRFoot");
@@ -323,7 +323,22 @@ void CMobileEntity::WearShoes(string shoesPath)
 	Lshoes->LinkDummyParentToDummyEntity(this, "BodyDummyLFoot");
 	IEntity* Rshoes = m_pEntityManager->CreateEntity(string("meshes/clothes/shoes/") + sPrefix + "R" + shoesName + ".bme", "");
 	Rshoes->LinkDummyParentToDummyEntity(this, "BodyDummyRFoot");
+}
 
+void CMobileEntity::AddHairs(string hairsName)
+{
+	string shoesPathLower = hairsName;
+	std::transform(hairsName.begin(), hairsName.end(), shoesPathLower.begin(), tolower);
+
+	// unlink old hairs if exists
+	IBone* pDummyHairs = m_pSkeletonRoot->GetChildBoneByName("DummyHairs");
+	
+	if (pDummyHairs)
+		pDummyHairs->Unlink();
+
+	// link new hairs
+	IEntity* hairs = m_pEntityManager->CreateEntity(string("meshes/hairs/") + hairsName + ".bme", "");
+	hairs->LinkDummyParentToDummyEntity(this, "BodyDummyHairs");
 	
 }
 
@@ -538,6 +553,13 @@ void CMobileEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)
 	GetTypeName(sTypeName);
 	animatedEntityInfos.m_sTypeName = sTypeName;
 	animatedEntityInfos.m_fWeight = GetWeight();
+	string sCustomTextureName;
+	if (m_pCustomTexture) {
+		m_pCustomTexture->GetFileName(sCustomTextureName);
+		animatedEntityInfos.m_sTextureName = sCustomTextureName;
+	}
+	if (m_bUseCustomSpecular)
+		animatedEntityInfos.m_vSpecular = m_vCustomSpecular;
 }
 
 void CMobileEntity::BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent)
@@ -547,6 +569,10 @@ void CMobileEntity::BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* 
 	if (GetSkeletonRoot()) {
 		AddAnimation(pAnimatedEntityInfos->m_sAnimationFileName);
 		SetCurrentAnimation(pAnimatedEntityInfos->m_sAnimationFileName);
+		if(!pAnimatedEntityInfos->m_sTextureName.empty())
+			SetDiffuseTexture(pAnimatedEntityInfos->m_sTextureName);
+		for (int i = 0; i < m_pMesh->GetMaterialCount(); i++)
+			m_pMesh->GetMaterial(i)->SetSpecular(pAnimatedEntityInfos->m_vSpecular);
 		for (map<string, float>::const_iterator it = pAnimatedEntityInfos->m_mAnimationSpeed.begin(); it != pAnimatedEntityInfos->m_mAnimationSpeed.end(); it++)
 			SetAnimationSpeed(CMobileEntity::s_mStringToAnimation[it->first], it->second);
 		GetCurrentAnimation()->Play(true);

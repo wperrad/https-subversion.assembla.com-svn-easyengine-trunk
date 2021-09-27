@@ -70,7 +70,6 @@ private:
 	ILoaderManager&					m_oLoaderManager;
 	IRessourceManager&				m_oRessourceManager;
 	IFileSystem&					m_oFileSystem;
-	IConsole&						m_oConsole;
 	float							m_fPlanHeight;
 	ILoader::CAnimatableMeshData	m_oAnimatableMeshData;
 	float							m_fGroundAdaptationHeight;

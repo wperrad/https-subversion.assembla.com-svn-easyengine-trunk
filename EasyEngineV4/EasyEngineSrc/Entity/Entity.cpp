@@ -50,7 +50,8 @@ m_pMesh(nullptr),
 m_bEmptyEntity(false),
 m_pBaseTexture(nullptr),
 m_pCustomTexture(nullptr),
-m_bIsOnTheGround(true)
+m_bIsOnTheGround(true),
+m_bUseCustomSpecular(false)
 {
 	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 }
@@ -83,7 +84,8 @@ m_pMesh(nullptr),
 m_bEmptyEntity(false),
 m_pBaseTexture(nullptr),
 m_pCustomTexture(nullptr),
-m_bIsOnTheGround(true)
+m_bIsOnTheGround(true),
+m_bUseCustomSpecular(false)
 {
 	if( sFileName.size() > 0 )
 	{
@@ -346,6 +348,10 @@ void CEntity::UpdateRessource()
 		{
 			m_pMesh->SetRenderingType(m_eRenderType);
 			m_pMesh->DrawAnimationBoundingBox(m_bDrawAnimationBoundingBox);
+			if (m_bUseCustomSpecular) {
+				for (int i = 0; i < m_pMesh->GetMaterialCount(); i++)
+					m_pMesh->GetMaterial(i)->SetSpecular(m_vCustomSpecular);
+			}
 		}
 		if (m_pRessource) {
 			if (m_pMesh && m_pCustomTexture)
@@ -955,6 +961,12 @@ void CEntity::DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback)
 	if (it != m_vEntityCallback.end()) {
 		m_vEntityCallback.erase(it);
 	}
+}
+
+void CEntity::SetCustomSpecular(const CVector& customSpecular)
+{
+	m_vCustomSpecular = customSpecular;
+	m_bUseCustomSpecular = true;
 }
 
 void CEntity::GetSkeletonEntities(CBone* pRoot, vector< CEntity* >& vEntity, string sFileFilter)
