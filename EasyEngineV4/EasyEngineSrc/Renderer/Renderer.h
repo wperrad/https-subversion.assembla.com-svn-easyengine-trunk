@@ -233,6 +233,7 @@ public:
 	void						GetGlslVersion(string& sVersion);
 	void						GetOpenglVersion(string& sVersion);
 	string						GetName() override;
+	int							GetLastError();
 };
 
 extern "C" _declspec(dllexport) IRenderer* CreateRenderer(EEInterface& oInterface );

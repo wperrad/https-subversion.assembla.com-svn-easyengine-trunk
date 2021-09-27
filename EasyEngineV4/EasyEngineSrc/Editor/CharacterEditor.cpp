@@ -14,7 +14,8 @@ CPlugin(nullptr, ""),
 ICharacterEditor(oInterface),
 m_bIsLeftMousePressed(false),
 m_pWorldEditor(nullptr),
-m_pEditorCamera(nullptr)
+m_pEditorCamera(nullptr),
+m_pCurrentCharacter(nullptr)
 {
 	m_pScene = m_oSceneManager.GetScene("Game");
 	IEventDispatcher* pEventDispatcher = static_cast<IEventDispatcher*>(oInterface.GetPlugin("EventDispatcher"));
@@ -69,7 +70,7 @@ void CCharacterEditor::Load(string sCharacterId)
 
 void CCharacterEditor::Save()
 {
-	if (m_pCurrentCharacter) {
+	if (m_bEditionMode && m_pCurrentCharacter) {
 		string sId;
 		m_pCurrentCharacter->GetEntityName(sId);
 		m_oEntityManager.SaveCharacter(sId);

@@ -172,6 +172,7 @@ public:
 	virtual void			ClearFrameBuffer() = 0;
 	virtual void			GetGlslVersion(string& sVersion) = 0;
 	virtual void			GetOpenglVersion(string& sVersion) = 0;
+	virtual int				GetLastError() = 0;
 };
 
 

@@ -954,6 +954,10 @@ void CRenderer::SetLightSpotProp( unsigned int nLightID, float fCutoff, float fE
 
 void CRenderer::SetLightLocalPos(unsigned int nLightID, float x, float y, float z, float w)
 {
+	if (nLightID > GL_LIGHT7) {
+		CRenderException e("Erreur : CRenderer::SetLightLocalPos() -> Nombre maximum de lumieres atteint");
+		throw e;
+	}
 	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
 	LoadMatrix( oModelView );
 	GLfloat light_position[] = {x,y,z,w};
@@ -1323,9 +1327,8 @@ void CRenderer::VertexAttribPointer( unsigned int nAttributeID, int nSize, TNumb
 {
 	std::map< TNumberType, GLenum >::const_iterator it = m_mNumberType.find( type );
 	GLenum glType = it->second;
-	GLenum error = glGetError();
 	glVertexAttribPointer( nAttributeID, nSize, glType, GL_FALSE, 0, BUFFER_OFFSET( nPos ) );
-	error = glGetError();
+	GLenum error = glGetError();
 	if (error != 0) {
 		ostringstream oss;
 		oss << "OpenGL error : " << error;
@@ -1520,4 +1523,9 @@ void CRenderer::GetOpenglVersion(string& sVersion)
 string CRenderer::GetName()
 {
 	return "Renderer";
+}
+
+int CRenderer::GetLastError()
+{
+	return glGetError();
 }

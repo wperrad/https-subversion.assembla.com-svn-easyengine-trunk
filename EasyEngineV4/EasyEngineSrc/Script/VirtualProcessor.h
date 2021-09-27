@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define MEM_SIZE 128
+#define MEM_SIZE 1024
 
 class CVirtualProcessor
 {

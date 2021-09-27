@@ -5,6 +5,7 @@
 
 unsigned int CLight::s_nCurrentLightID = GL_LIGHT0;
 map< int, bool > CLight::s_mEnabledLight;
+IRenderer* CLight::s_pRenderer = nullptr;;
 
 CLight::Desc::Desc( IRenderer& oRenderer, IShader* pShader ):
 IRessource::Desc( oRenderer, pShader ),
@@ -26,6 +27,7 @@ m_Type( oDesc.type ),
 m_ID( s_nCurrentLightID ),
 m_Ambient(0.1f, 0.1f, 0.1f, 1.f)
 {
+	s_pRenderer = &oDesc.m_oRenderer;
 	s_nCurrentLightID ++;	
 	oDesc.m_oRenderer.SetLightAttenuation( m_ID, oDesc.fAttenuationConstant, oDesc.fAttenuationLinear, oDesc.fAttenuationQuadratic );
 	SetIntensity( oDesc.fIntensity );
@@ -40,6 +42,17 @@ m_Ambient(0.1f, 0.1f, 0.1f, 1.f)
 	ostringstream ossName;
 	ossName << "Light" << m_ID;
 	m_sName = ossName.str();
+}
+
+void CLight::RemoveAllLights()
+{
+	if (s_pRenderer) {
+		s_nCurrentLightID = GL_LIGHT0;
+		for (map<int, bool>::iterator itLight = s_mEnabledLight.begin(); itLight != s_mEnabledLight.end(); itLight++) {
+			if (itLight->second)
+				s_pRenderer->DisableLight(itLight->first);
+		}
+	}
 }
 
 CLight::~CLight(void)

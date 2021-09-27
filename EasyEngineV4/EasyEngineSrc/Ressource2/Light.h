@@ -17,19 +17,6 @@
 
 class CLight : public IRessource
 {	
-	static unsigned int			s_nCurrentLightID;
-	static map< int, bool >		s_mEnabledLight;
-
-	CVector						m_Ambient;
-	CVector						m_Diffuse;
-	CVector						m_Specular;		
-	TLight						m_Type;
-	float						m_fIntensity;
-	unsigned int				m_ID;
-	bool						m_bIsEnabled;
-	GLUquadricObj*				m_pDebugQuadricObj;	
-	
-
 public:
 	struct Desc : public IRessource::Desc
 	{
@@ -41,8 +28,7 @@ public:
 		float 				fAttenuationQuadratic;
 		Desc( IRenderer& oRenderer, IShader* pShader );
 	};
-
-
+	
 
 								CLight( const Desc& oDesc );
 	virtual 					~CLight();
@@ -56,6 +42,21 @@ public:
 	float						GetIntensity();
 	CVector						GetColor();
 	IShader*					GetShader() const { return NULL; }
+	static void					RemoveAllLights();
+
+private:
+	static unsigned int			s_nCurrentLightID;
+	static map< int, bool >		s_mEnabledLight;
+	static IRenderer*			s_pRenderer;
+
+	CVector						m_Ambient;
+	CVector						m_Diffuse;
+	CVector						m_Specular;
+	TLight						m_Type;
+	float						m_fIntensity;
+	unsigned int				m_ID;
+	bool						m_bIsEnabled;
+	GLUquadricObj*				m_pDebugQuadricObj;
 };
 
 #endif //LIGHT_H

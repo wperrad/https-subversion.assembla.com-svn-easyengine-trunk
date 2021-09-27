@@ -379,6 +379,7 @@ void CEntityManager::Clear()
 	m_mCharacters.clear();
 	m_nLastEntityID = -1;
 	m_pPlayer = nullptr;
+	m_oRessourceManager.RemoveAllLights();
 }
 
 void CEntityManager::DestroyAll()

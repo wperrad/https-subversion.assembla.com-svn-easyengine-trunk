@@ -271,6 +271,9 @@ void OnUpdateWindow()
 			bCapture = false;
 		}
 	}
+	catch (CRenderException& e) {
+		MessageBoxA(NULL, e.what(), "RenderException", MB_ICONERROR);
+	}
 	catch (CEException& e) {
 		m_pConsole->Println(e.what());
 	}

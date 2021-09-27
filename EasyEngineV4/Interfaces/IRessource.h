@@ -210,6 +210,7 @@ public:
 	virtual ITexture*			CreateRenderTexture(int width, int height, string sShaderName) = 0;
 	virtual ITexture*			CreateTexture2D(IShader* pShader, int nUnitTexture, vector< unsigned char >& vData, int nWidth, int nHeight, IRenderer::TPixelFormat eFormat) = 0;
 	virtual ITexture*			CreateTexture2D(string sFileName, bool bGenerateMipmaps) = 0;
+	virtual void				RemoveAllLights() = 0;
 };
 
 #endif // IRESSOURCE_H
