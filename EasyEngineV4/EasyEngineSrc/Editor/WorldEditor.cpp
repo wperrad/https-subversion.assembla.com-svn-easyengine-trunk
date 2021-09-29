@@ -5,13 +5,14 @@
 #include "ICamera.h"
 #include "IGeometry.h"
 #include "IConsole.h"
+#include "EditorManager.h"
 
 
-CWorldEditor::CWorldEditor(EEInterface& oInterface) :
+CWorldEditor::CWorldEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType) :
 CPlugin(nullptr, ""),
 ISpawnableEditor(oInterface),
 IWorldEditor(oInterface),
-CSpawnableEditor(oInterface),
+CSpawnableEditor(oInterface, cameraType),
 m_oSceneManager(static_cast<ISceneManager&>(*oInterface.GetPlugin("SceneManager"))),
 m_oFileSystem(static_cast<IFileSystem&>(*oInterface.GetPlugin("FileSystem")))
 {
@@ -58,6 +59,7 @@ string CWorldEditor::GetName()
 
 void CWorldEditor::Load(string fileName)
 {
+	m_pEditorManager->CloseAllEditorButThis(this);
 	m_pScene->Clear();
 	if (fileName.empty())
 		GetRelativeDatabasePath(fileName);
@@ -95,6 +97,7 @@ void CWorldEditor::Save(string fileName)
 {
 	if (fileName.empty())
 		GetRelativeDatabasePath(fileName);
+	CopyFile(fileName.c_str(), (fileName + ".bak").c_str(), FALSE);
 
 	CBinaryFileStorage fs;
 	if (fs.OpenFile(fileName, IFileStorage::TOpenMode::eWrite)) {
@@ -104,23 +107,33 @@ void CWorldEditor::Save(string fileName)
 		fs << (int)m_mCharacters.size();
 		for (map<string, CMatrix>::iterator it = m_mCharacters.begin(); it != m_mCharacters.end(); it++) {
 			IEntity* pEntity = m_oEntityManager.GetEntity(it->first);
-			fs << it->first << pEntity->GetWorldMatrix();
+			if (pEntity)
+				fs << it->first << pEntity->GetWorldMatrix();
+			else {
+				ostringstream oss;
+				oss << "Erreur : CWorldEditor::Save() -> Personnage " << it->first << " introuvable dans l'EntityManager";
+				throw CEException(oss.str());
+			}
 		}
 	}
 }
 
-void CWorldEditor::SpawnEntity(string id)
+void CWorldEditor::SpawnEntity(string sID)
 {
-	m_pCurrentAddedEntity = m_oEntityManager.BuildCharacterFromDatabase(id, m_pScene);
+	if(!m_bEditionMode)
+		SetEditionMode(true);
+
+	m_pCurrentAddedEntity = m_oEntityManager.BuildCharacterFromDatabase(sID, m_pScene);
+	m_oEntityManager.AddEntity(m_pCurrentAddedEntity, sID);
 	InitSpawnedEntity();
 	CMatrix m;
-	m_mCharacters[id] = m;
+	m_mCharacters[sID] = m;
 }
 
 void CWorldEditor::SetEditionMode(bool bEditionMode)
 {
 	if (m_bEditionMode != bEditionMode) {
-		CSpawnableEditor::SetEditionMode(bEditionMode);
+		CEditor::SetEditionMode(bEditionMode);
 		if (bEditionMode) {
 			m_pScene->Clear();
 			Load("");
@@ -129,6 +142,12 @@ void CWorldEditor::SetEditionMode(bool bEditionMode)
 			// Ask to save world
 		}
 	}
+}
+
+void CWorldEditor::Edit(string id)
+{
+	SetEditionMode(true);
+	Load(id);
 }
 
 void CWorldEditor::GetRelativeDatabasePath(string& path)
@@ -156,6 +175,8 @@ void CWorldEditor::OnSceneLoadingComplete(void* pWorldEditorData)
 					pWorldEditor->m_oConsole.Println(oss.str());
 				}
 			}
+			if(pWorldEditor->m_bEditionMode)
+				pWorldEditor->InitCamera();
 		}
 	}
 	catch (CEException& e)

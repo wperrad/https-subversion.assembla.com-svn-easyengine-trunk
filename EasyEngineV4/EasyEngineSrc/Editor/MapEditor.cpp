@@ -1,6 +1,5 @@
 #include "IInputManager.h"
 #include "MapEditor.h"
-#include "ICameraManager.h"
 #include "IRenderer.h"
 #include "ICamera.h"
 #include "IGeometry.h"
@@ -13,14 +12,15 @@
 #include "EEPlugin.h"
 #include "WorldEditor.h"
 #include "IConsole.h"
+#include "EditorManager.h"
 
 #include <algorithm>
 
 IEventDispatcher::TKeyEvent	CMapEditor::m_eLastKeyEvent = IEventDispatcher::TKeyEvent::T_KEYUP;
 
-CMapEditor::CMapEditor(EEInterface& oInterface) :
+CMapEditor::CMapEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType) :
 ISpawnableEditor(oInterface),
-CSpawnableEditor(oInterface),
+CSpawnableEditor(oInterface, cameraType),
 IMapEditor(oInterface),
 CPlugin(nullptr, ""),
 m_oLoaderManager(*static_cast<ILoaderManager*>(oInterface.GetPlugin("LoaderManager"))),
@@ -287,12 +287,8 @@ void CMapEditor::Load(string sFileName)
 	ILoader::CSceneInfos si;
 	m_oLoaderManager.Load(sFileName, si);
 	m_pScene->Load(si);
-	ICamera* pCamera = m_oCameraManager.GetCameraFromType(ICameraManager::TCameraType::T_FREE_CAMERA);
-	m_oEntityManager.AddEntity(pCamera, "FreeCamera");
-	m_oCameraManager.SetActiveCamera(pCamera);
-	IBox* pBBox = dynamic_cast<IBox*>(m_pScene->GetBoundingGeometry());
-	if (pBBox)
-		pCamera->Move(0, -60.f, 0, 0, 0, pBBox->GetDimension().m_x / 8.f);
+	if(m_bEditionMode)
+		InitCamera();
 	m_sCurrentMapName = sFileName;
 	
 	CWorldEditor* pWorldEditor = dynamic_cast<CWorldEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eWorld));
@@ -342,14 +338,14 @@ float CMapEditor::GetPlanHeight()
 void CMapEditor::SetEditionMode(bool bEditionMode)
 {
 	if (m_bEditionMode != bEditionMode) {
-		CSpawnableEditor::SetEditionMode(bEditionMode);
+		CEditor::SetEditionMode(bEditionMode);
 		if (bEditionMode) {
 			m_pScene->Clear();
 		}
 		else {
 			// Ask to save
-			m_oConsole.Print("Voulez-vous sauvegarder la map O/N ? ");
-			m_oConsole.WaitForResponse(SaveResponseCallback, this);
+			//m_oConsole.Print("Voulez-vous sauvegarder la map O/N ? ");
+			//m_oConsole.WaitForResponse(SaveResponseCallback, this);
 		}
 	}
 }
@@ -375,8 +371,16 @@ string CMapEditor::GetName()
 	return "Editor";
 }
 
+void CMapEditor::Edit(string id)
+{
+	SetEditionMode(true);
+	Load(id);
+}
+
 void CMapEditor::SpawnEntity(string sEntityFileName)
 {
+	if(!m_bEditionMode)
+		SetEditionMode(true);
 	m_pCurrentAddedEntity = m_oEntityManager.CreateEntity(sEntityFileName, "");
 	InitSpawnedEntity();
 }

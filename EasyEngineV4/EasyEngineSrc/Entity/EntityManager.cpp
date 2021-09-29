@@ -1,6 +1,5 @@
 #include "Interface.h"
 #include "EntityManager.h"
-#include "ICameraManager.h"
 #include "ICamera.h"
 #include "Entity.h"
 #include "Repere.h"
@@ -52,13 +51,17 @@ void CEntityManager::HandleEditorManagerCreation(CPlugin* plugin, void* pData)
 	pEntityManager->m_pEditorManager = static_cast<IEditorManager*>(pEntityManager->m_oInterface.GetPlugin("EditorManager"));
 }
 
-void CEntityManager::CreateEntity( IEntity* pEntity, string sName )
+void CEntityManager::AddEntity( IEntity* pEntity, string sName, int id )
 {
-	if( m_nLastEntityID == -1 )
-		m_nLastEntityID = 0;
-	m_nLastEntityID++;
-	m_mIDEntities[ m_nLastEntityID ] = pEntity;
-	m_mEntitiesID[ pEntity ] = m_nLastEntityID;
+	if (id == -1)
+	{
+		if (m_nLastEntityID == -1)
+			m_nLastEntityID = 0;
+		m_nLastEntityID++;
+		id = m_nLastEntityID;
+	}
+	m_mIDEntities[id] = pEntity;
+	m_mEntitiesID[ pEntity ] = id;
 	m_mNameEntities[ sName ] = pEntity;
 	m_mEntitiesName[ pEntity ] = sName;
 	IAEntity* pIAEntity = dynamic_cast< IAEntity* >( pEntity );
@@ -88,7 +91,7 @@ CEntity* CEntityManager::CreateEntityFromType(std::string sFileName, string sTyp
 
 	string sName;
 	pEntity->GetName( sName );
-	CreateEntity( pEntity, sName );
+	AddEntity( pEntity, sName );
 	return pEntity;
 }
 
@@ -98,14 +101,14 @@ IEntity* CEntityManager::CreateEntity(std::string sFileName, bool bDuplicate)
 	pEntity = new CEntity(m_oInterface, sFileName, bDuplicate);
 	string sName;
 	pEntity->GetName(sName);
-	CreateEntity(pEntity, sName);
+	AddEntity(pEntity, sName);
 	return pEntity;
 }
 
 IEntity* CEntityManager::CreateEmptyEntity( string sName )
 {
 	CEntity* pEntity = new CEntity(m_oInterface);
-	CreateEntity( pEntity );
+	AddEntity( pEntity );
 	m_mNameEntities[ sName ] = pEntity;
 	m_mEntitiesName[ pEntity ] = sName;
 	return pEntity;
@@ -170,7 +173,7 @@ IEntity* CEntityManager::GetNextMobileEntity()
 IEntity* CEntityManager::CreateRepere( IRenderer& oRenderer )
 {
 	IEntity* pEntity = new CRepere( oRenderer );
-	CreateEntity( pEntity );
+	AddEntity( pEntity, "Repere" );
 	return pEntity;
 }
 
@@ -179,7 +182,7 @@ IEntity* CEntityManager::CreateBox(const CVector& oDimension )
 	IBox* pBox = m_oGeometryManager.CreateBox();
 	pBox->Set( -oDimension / 2.f, oDimension );	
 	CBoxEntity* pBoxEntity = new CBoxEntity(m_oRenderer, *pBox );
-	CreateEntity( pBoxEntity );
+	AddEntity( pBoxEntity );
 	return pBoxEntity;
 }
 
@@ -198,14 +201,14 @@ IBox& CEntityManager::GetBox( IEntity* pEntity )
 IEntity* CEntityManager::CreateMobileEntity( string sFileName, IFileSystem* pFileSystem, string sID )
 {
 	IEntity* pEntity = new CMobileEntity(m_oInterface, sFileName, sID);
-	CreateEntity( pEntity );
+	AddEntity( pEntity );
 	return pEntity;
 }
 
 IEntity* CEntityManager::CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture)
 {
 	CPlaneEntity* planeEntity = new CPlaneEntity(m_oRenderer, m_oRessourceManager, slices, size, heightTexture, diffuseTexture);
-	CreateEntity(planeEntity, "PlaneEntity");
+	AddEntity(planeEntity, "PlaneEntity");
 	return planeEntity;
 }
 
@@ -217,7 +220,7 @@ void CEntityManager::AddNewCharacter(IEntity* pEntity)
 	if (itCharacter != m_mCharacters.end())
 		throw CCharacterAlreadyExistsException(sCharacterName);
 	CMobileEntity* pCharacter = dynamic_cast<CMobileEntity*>(pEntity);
-	CreateEntity(pCharacter, "Player");
+	AddEntity(pCharacter, "Player");
 	m_mCharacters[sCharacterName] = pCharacter;
 }
 
@@ -257,7 +260,7 @@ IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem, 
 		sName += ".bme";
 	sName = string("Meshes/Bodies/") + sName;
 	ICharacter* pEntity = new CNPCEntity(m_oInterface, sName, sID);
-	CreateEntity( pEntity );
+	AddEntity( pEntity );
 	ICharacterEditor* pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacter));
 	if (pCharacterEditor->IsEnabled()) {
 		pCharacterEditor->SetCurrentEditableNPC(pEntity);
@@ -272,7 +275,7 @@ IEntity* CEntityManager::CreatePlayer(string sFileName, IFileSystem* pFileSystem
 		sName += ".bme";
 	sName = string("Meshes/Bodies/") + sName;
 	ICharacter* pEntity = new CPlayer(m_oInterface, sName);
-	CreateEntity(pEntity);
+	AddEntity(pEntity);
 	ICharacterEditor* pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacter));
 	if (pCharacterEditor->IsEnabled()) {
 		pCharacterEditor->SetCurrentEditablePlayer(pEntity);
@@ -286,7 +289,7 @@ IEntity* CEntityManager::CreateMinimapEntity(string sFileName, IFileSystem* pFil
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
 	IEntity* pEntity = new CMinimapEntity(m_oInterface, sName);
-	CreateEntity(pEntity);
+	AddEntity(pEntity);
 	return pEntity;
 }
 
@@ -296,7 +299,7 @@ IEntity* CEntityManager::CreateTestEntity(string sFileName, IFileSystem* pFileSy
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
 	IEntity* pEntity = new CTestEntity(m_oInterface, sName);
-	CreateEntity(pEntity);
+	AddEntity(pEntity);
 	return pEntity;
 }
 
@@ -316,7 +319,7 @@ int CEntityManager::GetEntityCount()
 CEntity* CEntityManager::CreateLightEntity()
 {
 	CLightEntity* pLightEntity = new CLightEntity(m_oInterface, nullptr);
-	CreateEntity(pLightEntity);
+	AddEntity(pLightEntity);
 	return pLightEntity;
 }
 
@@ -324,7 +327,7 @@ IEntity* CEntityManager::CreateLightEntity( CVector Color, IRessource::TLight ty
 {
 	IRessource* pLight = m_oRessourceManager.CreateLight(Color, type, fIntensity);
 	CLightEntity* pLightEntity = new CLightEntity(m_oInterface, pLight);
-	CreateEntity( pLightEntity );
+	AddEntity( pLightEntity );
 	return pLightEntity;
 }
 
@@ -393,21 +396,6 @@ void CEntityManager::DestroyAll()
 	}
 }
 
-void CEntityManager::AddEntity( IEntity* pEntity, string sEntityName, int nID )
-{
-	if( nID == -1 )
-	{
-		if( m_nLastEntityID == -1 )
-			m_nLastEntityID = 0;
-		m_nLastEntityID++;
-		nID = m_nLastEntityID;
-	}
-	m_mIDEntities[ nID ] = pEntity;
-	m_mEntitiesID[ pEntity ] = nID;
-	m_mNameEntities[ sEntityName ] = pEntity;
-	m_mEntitiesName[ pEntity ] = sEntityName;
-}
-
 void CEntityManager::SetZCollisionError( float e )
 {
 	CBody::SetZCollisionError( e );
@@ -417,7 +405,7 @@ IEntity* CEntityManager::CreateSphere( float fSize )
 {
 	IEntity* pSphere = CreateEntity("sphere.bme", "");
 	pSphere->SetScaleFactor( fSize, fSize, fSize );
-	CreateEntity( pSphere, "Sphere" );
+	AddEntity( pSphere, "Sphere" );
 	return pSphere;
 }
 
@@ -425,7 +413,7 @@ IEntity* CEntityManager::CreateQuad(float lenght, float width)
 {
 	IQuad* pQuad = m_oGeometryManager.CreateQuad(lenght, width);
 	CQuadEntity* pQuadEntity = new CQuadEntity(m_oRenderer, m_oRessourceManager, *pQuad);
-	CreateEntity(pQuadEntity, "Quad");
+	AddEntity(pQuadEntity, "Quad");
 	return pQuadEntity;
 }
 

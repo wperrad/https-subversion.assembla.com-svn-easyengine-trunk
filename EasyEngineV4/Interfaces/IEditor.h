@@ -18,7 +18,7 @@ public:
 
 	IEditor(EEInterface& oInterface) : CPlugin(nullptr, "") {}
 	virtual			~IEditor() = 0 {}
-	virtual void	SetEditionMode(bool bEditionMode) = 0;
+	virtual void	Edit(string id) = 0;
 	virtual void	Load(string fileName) = 0;
 	virtual void	HandleEditorManagerCreation(IEditorManager* pEditor) = 0;
 	virtual bool	IsEnabled() = 0;
@@ -65,5 +65,4 @@ class IEditorManager : public CPlugin
 public:
 	IEditorManager(EEInterface& oInterface) : CPlugin(nullptr, "EditorManager") {}
 	virtual IEditor*	GetEditor(IEditor::Type type) = 0;
-	virtual void		CloseAllEditor() = 0;
 };

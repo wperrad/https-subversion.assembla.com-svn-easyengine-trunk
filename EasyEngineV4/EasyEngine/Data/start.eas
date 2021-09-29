@@ -1,6 +1,5 @@
 OpenConsole(0);
 SetBkgColor(0, 100, 255);
-SetCameraType("free");
 r=CreateRepere();
 
 

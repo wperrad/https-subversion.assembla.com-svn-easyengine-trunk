@@ -19,7 +19,6 @@
 #include "ILoader.h"
 #include "IXMLParser.h"
 #include "IDrawTool.h"
-#include "ICameraManager.h"
 #include "IActionManager.h"
 #include "IConsole.h"
 #include "IHud.h"
@@ -148,7 +147,7 @@ void UpdateCamera()
 	m_pActionManager->GetGameMousePos( m_nLastGameMousePosx, m_nLastGameMousePosy );
 
 	ICamera* pActiveCamera = m_pCameraManager->GetActiveCamera();
-	if( m_pCameraManager->GetCameraType( pActiveCamera ) == ICameraManager::T_FREE_CAMERA )
+	if( m_pCameraManager->GetCameraType( pActiveCamera ) == ICameraManager::TFree )
 	{
 		int x, y;
 		m_pInputManager->GetOffsetMouse( x, y );
@@ -392,21 +391,12 @@ int WINAPI WinMain( HINSTANCE hIstance, HINSTANCE hPrevInstance, LPSTR plCmdLine
 	{
 #endif // CATCH_EXCEPTION
 		EEInterface* pInterface = InitPlugins( plCmdLine );
-		
-		ICamera* pFreeCamera = m_pCameraManager->CreateCamera( ICameraManager::T_FREE_CAMERA, 40.f, *m_pEntityManager );
-		ICamera* pLinkCamera = m_pCameraManager->CreateCamera( ICameraManager::T_LINKED_CAMERA, 60.f, *m_pEntityManager );
-		
-
 		InitKeyActions();
-
 		m_pEventDispatcher->AbonneToWindowEvent( NULL, OnWindowEvent );
 		m_pInputManager->AbonneToKeyEvent( NULL, OnKeyAction );
-				
 		InitScene( m_pSceneManager );
-		pFreeCamera->Link(m_pScene);
 		m_pWindow->ShowModal();
 		m_pRenderer->DestroyContext();
-
 		DestroyPlugins();
 
 #ifdef CATCH_EXCEPTION

@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "IRenderer.h"
 #include "FreeCamera.h"
-#include "ICameraManager.h"
 #include "IRessource.h"
 #include "Shape.h"
 #include "IEntity.h"
@@ -75,7 +74,7 @@ CScene::CScene(EEInterface& oInterface, string ressourceFileName, string diffuse
 	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 
 
-	ICamera* pMapCamera = m_oCameraManager.CreateCamera(ICameraManager::T_MAP_CAMERA, 40.f, *m_pEntityManager);
+	ICamera* pMapCamera = m_oCameraManager.CreateCamera(ICameraManager::T_MAP_CAMERA, 40.f);
 	pMapCamera->Link(this);
 
 	m_pMapCamera = m_oCameraManager.GetCameraFromType(ICameraManager::T_MAP_CAMERA);
@@ -86,6 +85,9 @@ CScene::CScene(EEInterface& oInterface, string ressourceFileName, string diffuse
 
 	m_pPlayerMapSphere = dynamic_cast<CEntity*>(m_pEntityManager->CreateEntity("playerPointer.bme", ""));
 	m_pPlayerMapSphere->SetShader(m_oRenderer.GetShader(m_sMapFirstPassShaderName));
+
+	ICamera* pFreeCamera = m_oCameraManager.CreateCamera(ICameraManager::TFree, 40.f);
+	pFreeCamera->Link(this);
 }
 
 CScene::~CScene()

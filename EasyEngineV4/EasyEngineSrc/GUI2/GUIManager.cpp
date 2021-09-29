@@ -11,7 +11,6 @@
 #include "IRenderer.h"
 #include "IShader.h"
 #include "IRessource.h"
-#include "ICameraManager.h"
 #include "ICamera.h"
 #include "IEntity.h"
 #include "PlayerWindow.h"

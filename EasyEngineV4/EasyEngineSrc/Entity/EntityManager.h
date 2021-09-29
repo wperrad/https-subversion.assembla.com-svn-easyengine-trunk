@@ -47,7 +47,6 @@ public:
 	void				DestroyEntity( IEntity* pEntity );
 	void				DestroyAll();
 	void				Clear();
-	void				AddEntity( IEntity* pEntity, string sEntityName = "noname", int nID = -1 );
 	void				SetZCollisionError( float e );
 	IEntity*			CreateSphere( float fSize );
 	IEntity*			CreateQuad(float lenght, float width);
@@ -97,7 +96,7 @@ private:
 	map< string, IEntity* >								m_mNameEntities;
 	map< IEntity*, string >								m_mEntitiesName;
 	int													m_nLastEntityID;
-	void												CreateEntity(IEntity* pEntity, string sName = "noname");
+	void												AddEntity(IEntity* pEntity, string sName = "noname", int id = -1) override;
 	map< CEntity*, int >								m_mCollideEntities;
 	map< IAEntity*, int >								m_mIAEntities;
 	map< IAEntity*, int >::iterator						m_itCurrentIAEntity;

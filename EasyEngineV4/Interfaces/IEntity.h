@@ -187,6 +187,7 @@ class IEntityManager : public CPlugin
 {
 public:
 	IEntityManager(EEInterface& oInterface) : CPlugin( NULL, "" ){}
+	virtual void				AddEntity(IEntity* pEntity, string sName = "noname", int id = -1) = 0;
 	virtual IEntity*			CreateEntity(std::string sFileName, bool bDuplicate = false ) = 0;
 	virtual IEntity*			CreateEmptyEntity( string sFileName = "noname" ) = 0;
 	virtual IEntity*			CreateRepere( IRenderer& oRenderer ) = 0;
@@ -205,7 +206,6 @@ public:
 	virtual void				DestroyEntity( IEntity* pEntity ) = 0;
 	virtual void				DestroyAll() = 0;
 	virtual void				Clear() = 0;
-	virtual void				AddEntity( IEntity* pEntity, string sEntityName = "noname", int nID = -1 ) = 0;
 	virtual IEntity*			CreateSphere( float fSize ) = 0;
 	virtual IEntity*			CreateBox(const CVector& oDimension ) = 0;
 	virtual IEntity*			CreateQuad(float lenght, float width) = 0;

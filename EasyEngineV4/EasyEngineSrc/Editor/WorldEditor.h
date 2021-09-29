@@ -10,10 +10,11 @@ class ISceneManager;
 class CWorldEditor : public IWorldEditor, public CSpawnableEditor
 {
 public:
-	CWorldEditor(EEInterface& oInterface);
+	CWorldEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType);
 	void						HandleMapLoaded(string sMapName);
 	void						ClearWorld();
 	void						Load(string fileName) override;
+	void						Edit(string id) override;
 
 private:
 	void						OnEntityAdded() override;

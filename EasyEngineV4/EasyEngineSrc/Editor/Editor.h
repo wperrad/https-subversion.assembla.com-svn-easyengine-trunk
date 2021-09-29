@@ -1,5 +1,8 @@
 #pragma once
 
+#include "ICamera.h"
+#include "IEditor.h"
+
 class IEntityManager;
 class ISceneManager;
 class IInputManager;
@@ -9,20 +12,22 @@ class ICollisionManager;
 class IGeometryManager;
 class EEInterface;
 class CPlugin;
-class IEditorManager;
+class CEditorManager;
 class IRenderer;
+class IHud;
 
-class CEditor
+class CEditor : public IEditor
 {
 public:
-	CEditor(EEInterface& oInterface);
+	CEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType);
 
-	
+	virtual void			SetEditionMode(bool bEditionMode);
 
-protected:
+protected:	
+
 	static void HandleEditorManagerCreation(CPlugin* plugin, void* pData);
 
-	IEditorManager*			m_pEditorManager;
+	CEditorManager*			m_pEditorManager;
 	IEntityManager&			m_oEntityManager;
 	ISceneManager&			m_oSceneManager;
 	EEInterface&			m_oInterface;
@@ -32,5 +37,11 @@ protected:
 	ICollisionManager&		m_oCollisionManager;
 	IGeometryManager&		m_oGeometryManager;
 	IConsole&				m_oConsole;
+	ICamera*				m_pEditorCamera;
+	bool					m_bEditionMode;
+	IHud&					m_oHud;
+	int						m_nHudX;
+	int						m_nHudY;
+	int						m_nHudLineHeight;
 
 };

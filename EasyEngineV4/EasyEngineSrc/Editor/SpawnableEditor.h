@@ -1,7 +1,6 @@
 #pragma once
 
 #include "IEventDispatcher.h"
-#include "ICameraManager.h"
 #include "IEditor.h"
 #include "Editor.h"
 
@@ -11,14 +10,13 @@ class IInputManager;
 class ICollisionManager;
 class IGeometryManager;
 class IScene;
-class IHud;
 class CEditorManager;
 class IConsole;
 
 class CSpawnableEditor : virtual public ISpawnableEditor, public CEditor
 {
 public:
-	CSpawnableEditor(EEInterface& oInterface);
+	CSpawnableEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType);
 	bool							IsEnabled() override;
 
 protected:
@@ -28,7 +26,6 @@ protected:
 	void							SelectEntity(int x, int y);
 	bool							IsIntersect(const CVector& linePt1, const CVector& linePt2, const CVector& M, float radius) const;
 	void							DisplayLocalRepere();
-	void							SetEditionMode(bool bEditionMode);
 	void							HandleEditorManagerCreation(IEditorManager* pEditor) override;
 	void							DisplayPickingRay(bool enable);
 	virtual void					OnEntityAdded() = 0;
@@ -37,15 +34,12 @@ protected:
 	virtual void					InitSpawnedEntity();
 	
 protected:
-	static void						OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent, int x, int y);
+	void							InitCamera();
 
-	bool							m_bEditionMode;
+	static void						OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent, int x, int y);
+	
 	IEntity*						m_pCurrentAddedEntity;
 	IScene*							m_pScene;
 	IEntity*						m_pSelectedEntity;
 	bool							m_bDisplayPickingRay;
-	int								m_nHudX;
-	int								m_nHudY;
-	IHud&							m_oHud;
-	int								m_nHudLineHeight;
 };

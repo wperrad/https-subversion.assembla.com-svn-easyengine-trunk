@@ -2,6 +2,7 @@
 #include "MobileEntity.h"
 
 class IGUIWindow;
+class ICamera;
 
 class CPlayer :	public CMobileEntity, public IPlayer
 {
@@ -17,5 +18,6 @@ public:
 protected:
 	IGUIManager&	m_oGUIManager;
 	IGUIWindow*		m_pPlayerWindow;
+	ICamera*		m_pLinkCamera;
 };
 

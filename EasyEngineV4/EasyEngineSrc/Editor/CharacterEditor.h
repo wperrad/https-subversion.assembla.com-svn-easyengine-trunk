@@ -18,7 +18,7 @@ class ICamera;
 class CCharacterEditor : public ICharacterEditor, public CEditor
 {
 public:
-	CCharacterEditor(EEInterface& oInterface);
+	CCharacterEditor(EEInterface& oInterface, ICameraManager::TCameraType type);
 	void					SetEditionMode(bool bEditionMode) override;
 	void					Load(string sCharacterId) override;
 	void					Save() override;
@@ -31,18 +31,16 @@ public:
 	void					AddHairs(string sHairsName) override;
 	void					WearShoes(string sShoesName) override;
 	void					SetTexture(string sTexture) override;
+	void					Edit(string id) override;
 
 private:
 
 	void					InitSpawnedCharacter();
 	static void				OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent e, int x, int y);
 	static void				HandleEditorCreation(CPlugin* pPlugin, void* pDatar);
-	
-	bool					m_bEditionMode;
 	IScene*					m_pScene;
 	ICharacter*				m_pCurrentCharacter;
 	bool					m_bIsLeftMousePressed;
 	int						m_nMousePosX;
 	CWorldEditor*			m_pWorldEditor;
-	ICamera*				m_pEditorCamera;
 };

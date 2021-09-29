@@ -10,7 +10,6 @@
 #include "ILoader.h"
 #include "IEntity.h"
 #include "IRenderer.h"
-#include "ICameraManager.h"
 #include "ICamera.h"
 #include "IRessource.h"
 #include "Exception.h"
@@ -141,28 +140,6 @@ void DisplayGlslVersion(IScriptState* pState)
 	m_pConsole->Println(sVersion);
 }
 
-void SetMapEditionMode(IScriptState* pState)
-{
-	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
-	bool enable = pEnable->m_nValue != 0;
-	
-	m_pMapEditor->SetEditionMode(enable);
-}
-
-void SetWorldEditionMode(IScriptState* pState)
-{
-	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
-	bool enable = pEnable->m_nValue != 0;
-	m_pWorldEditor->SetEditionMode(enable);
-}
-
-void SetCharacterEditionMode(IScriptState* pState)
-{
-	CScriptFuncArgInt* pEnable = (CScriptFuncArgInt*)pState->GetArg(0);
-	bool enable = pEnable->m_nValue != 0;
-	m_pCharacterEditor->SetEditionMode(enable);
-}
-
 void SpawnEntity(IScriptState* pState)
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
@@ -173,7 +150,6 @@ void SpawnEntity(IScriptState* pState)
 	m_pRessourceManager->EnableCatchingException(false);
 	try
 	{
-		m_pMapEditor->SetEditionMode(true);
 		m_pMapEditor->SpawnEntity(sName);
 	}
 	catch (CFileNotFoundException& e)
@@ -208,8 +184,12 @@ void SpawnCharacter(IScriptState* pState)
 	m_pRessourceManager->EnableCatchingException(false);
 	try
 	{
-		m_pWorldEditor->SetEditionMode(true);
 		m_pWorldEditor->SpawnEntity(id);
+	}
+	catch (CCharacterAlreadyExistsException& e) {
+		ostringstream oss;
+		oss << "Erreur : Il existe deja une instance de " << e.what() << " dans le monde";
+		m_pConsole->Println(oss.str());
 	}
 	catch (CEException& e)
 	{
@@ -224,11 +204,38 @@ void EditCharacter(IScriptState* pState)
 	string id = pID->m_sValue;
 	try
 	{
-		m_pCharacterEditor->SetEditionMode(true);
 		m_pCharacterEditor->SpawnEntity(id);
 	}
 	catch (CCharacterAlreadyExistsException& e) {
 		m_pConsole->Println(string("Erreur, le personnage ") + e.what() + " existe deja");
+	}
+	catch (CEException& e)
+	{
+		m_pConsole->Println(e.what());
+	}
+}
+
+void EditWorld(IScriptState* pState)
+{
+	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string id = pID->m_sValue;
+	try
+	{
+		m_pWorldEditor->Edit(id);
+	}
+	catch (CEException& e)
+	{
+		m_pConsole->Println(e.what());
+	}
+}
+
+void EditMap(IScriptState* pState)
+{
+	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	string id = pID->m_sValue;
+	try
+	{
+		m_pMapEditor->Edit(id);
 	}
 	catch (CEException& e)
 	{
@@ -388,10 +395,10 @@ void RayTrace(IScriptState* pState)
 
 void CreateRepere( IScriptState* pState )
 {
-	IEntity* pRepere = m_pEntityManager->CreateRepere(*m_pRenderer);
-	pRepere->Link(m_pScene);
+	m_pRepere = m_pEntityManager->CreateRepere(*m_pRenderer);
+	m_pRepere->Link(m_pScene);
 	ostringstream oss;
-	int id = m_pEntityManager->GetEntityID(pRepere);
+	int id = m_pEntityManager->GetEntityID(m_pRepere);
 	oss << "Le repère a été créé avec l'identifiant " << id  << ".";
 	m_pConsole->Println( oss.str() );
 	pState->SetReturnValue(id);
@@ -650,7 +657,7 @@ ICameraManager::TCameraType GetCamTypeByString(string sCamType)
 	if (sCamType == "link")
 		return ICameraManager::T_LINKED_CAMERA;
 	if(sCamType == "free")
-		return ICameraManager::T_FREE_CAMERA;
+		return ICameraManager::TFree;
 	if (sCamType == "map")
 		return ICameraManager::T_MAP_CAMERA;
 }
@@ -708,7 +715,7 @@ void InitCamera(IScriptState* pState)
 void GetCameraID(IScriptState* pState)
 {
 	CScriptFuncArgString* pType = (CScriptFuncArgString*)pState->GetArg(0);
-	ICameraManager::TCameraType type = ICameraManager::T_FREE_CAMERA;
+	ICameraManager::TCameraType type = ICameraManager::TFree;
 	if(pType->m_sValue == "link")
 		type = ICameraManager::T_LINKED_CAMERA;
 	else if(pType->m_sValue == "map")
@@ -1997,7 +2004,7 @@ void ClearScene( IScriptState* pState )
 
 	m_pScene->Clear();
 
-	ICamera* pCamera = m_pCameraManager->GetCameraFromType( ICameraManager::T_FREE_CAMERA );
+	ICamera* pCamera = m_pCameraManager->GetCameraFromType( ICameraManager::TFree );
 	m_pCameraManager->SetActiveCamera( pCamera );
 	m_pEntityManager->AddEntity( pCamera, "FreeCamera" );
 	m_pEntityManager->AddEntity( pLinkedCamera, "LinkedCamera" );
@@ -3045,7 +3052,7 @@ void OpenConsole(IScriptState* pState)
 
 void ResetFreeCamera(IScriptState* pState)
 {
-	ICamera* pFreeCamera = m_pCameraManager->GetCameraFromType(ICameraManager::T_FREE_CAMERA);
+	ICamera* pFreeCamera = m_pCameraManager->GetCameraFromType(ICameraManager::TFree);
 	CMatrix m;
 	pFreeCamera->SetLocalMatrix(m);
 }
@@ -3166,24 +3173,20 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("EditWorld", EditWorld, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("EditMap", EditMap, vType);
+
+	vType.clear();
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("AddHairs", AddHairs, vType);
 
 	vType.clear();
 	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("PrintReg", PrintReg, vType);
 	
-	vType.clear();
-	vType.push_back(eInt);
-	m_pScriptManager->RegisterFunction("SetMapEditionMode", SetMapEditionMode, vType);
-
-	vType.clear();
-	vType.push_back(eInt);
-	m_pScriptManager->RegisterFunction("SetWorldEditionMode", SetWorldEditionMode, vType);
-
-	vType.clear();
-	vType.push_back(eInt);
-	m_pScriptManager->RegisterFunction("SetCharacterEditionMode", SetCharacterEditionMode, vType);
-
 	vType.clear();
 	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("ShowGUICursor", ShowGUICursor, vType);

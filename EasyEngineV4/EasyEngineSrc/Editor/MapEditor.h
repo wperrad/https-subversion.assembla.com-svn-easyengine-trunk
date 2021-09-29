@@ -31,13 +31,14 @@ class CMapEditor : public IMapEditor, public CSpawnableEditor
 {
 public:
 
-	CMapEditor(EEInterface& oInterface);
+	CMapEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType);
 
 	void							SpawnEntity(string sEntityFileName);
 	void							Save(string fileName);
 	void							Load(string sFileName);
 	void							SetGroundAdaptationHeight(float fHeight);
 	string							GetName() override;
+	void							Edit(string id) override;
 
 private:
 

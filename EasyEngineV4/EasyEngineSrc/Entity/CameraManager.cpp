@@ -14,19 +14,29 @@ m_pActiveCamera( NULL )
 {
 	IRenderer* pRenderer = static_cast<IRenderer*>(oInterface.GetPlugin("Renderer"));
 	m_vRenderer.push_back(pRenderer);
+
+	oInterface.HandlePluginCreation("EntityManager", HandleEntityManagerCreated, this);
+	
 }
 
 CCameraManager::~CCameraManager()
 {
 }
 
-ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityManager& oEntityManager )
+
+void CCameraManager::HandleEntityManagerCreated(CPlugin* plugin, void* pData)
+{
+	CCameraManager* pCameraManager = (CCameraManager*)pData;
+	pCameraManager->m_pEntityManager = (IEntityManager*)plugin; //static_cast<IEntityManager*>(pCameraManager->m_oInterface.GetPlugin("EntityManager"));
+}
+
+ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov)
 {
 	ICamera* pCamera = NULL;
 	string sCameraName;
 	switch( type )
 	{
-	case ICameraManager::T_FREE_CAMERA:
+	case ICameraManager::TFree:
 		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "FreeCamera";
 		/*if (!m_pActiveCamera)
@@ -44,7 +54,7 @@ ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityMana
 		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "GuiMapCamera";
 		break;
-	case ICameraManager::T_CHARACTER_EDITOR:
+	case ICameraManager::TEditor:
 		pCamera = new CFreeCamera(m_oInterface, fFov);
 		sCameraName = "CharacterEditorCamera";
 		break;
@@ -55,7 +65,7 @@ ICamera* CCameraManager::CreateCamera( TCameraType type, float fFov, IEntityMana
 	}
 	m_mCameraType[ pCamera ] = type;
 	m_mCamera[ type ] = pCamera;
-	oEntityManager.AddEntity( pCamera, sCameraName );
+	m_pEntityManager->AddEntity( pCamera, sCameraName );
 	return pCamera;
 }
 
@@ -83,7 +93,10 @@ ICameraManager::TCameraType	CCameraManager::GetCameraType( ICamera* pCamera )
 
 ICamera* CCameraManager::GetCameraFromType( TCameraType type )
 {
-	return m_mCamera[ type ];
+	map<ICameraManager::TCameraType, ICamera*>::iterator itCamera = m_mCamera.find(type);
+	if (itCamera != m_mCamera.end())
+		return itCamera->second;
+	return nullptr;
 }
 
 string CCameraManager::GetName()

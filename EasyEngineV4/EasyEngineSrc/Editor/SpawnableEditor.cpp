@@ -3,25 +3,18 @@
 #include "IInputManager.h"
 #include "IRenderer.h"
 #include "IEntity.h"
-#include "ICameraManager.h"
 #include "ICamera.h"
 #include "IGeometry.h"
 #include "ICollisionManager.h"
-#include "IHud.h"
 #include "IConsole.h"
+#include "EditorManager.h"
 
-
-CSpawnableEditor::CSpawnableEditor(EEInterface& oInterface) :
-CEditor(oInterface),
-m_oHud(*static_cast<IHud*>(oInterface.GetPlugin("HUD"))),
-m_bEditionMode(false),
+CSpawnableEditor::CSpawnableEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType) :
+CEditor(oInterface, cameraType),
 m_pCurrentAddedEntity(nullptr),
 m_pScene(nullptr),
 m_pSelectedEntity(nullptr),
-m_bDisplayPickingRay(false),
-m_nHudX(800),
-m_nHudY(150),
-m_nHudLineHeight(15)
+m_bDisplayPickingRay(false)
 {
 	IEventDispatcher* pEventDispatcher = static_cast<IEventDispatcher*>(oInterface.GetPlugin("EventDispatcher"));
 	pEventDispatcher->AbonneToMouseEvent(this, OnMouseEventCallback);
@@ -29,7 +22,7 @@ m_nHudLineHeight(15)
 
 void CSpawnableEditor::HandleEditorManagerCreation(IEditorManager* pEditorManager)
 {
-	m_pEditorManager = pEditorManager;
+	m_pEditorManager = static_cast<CEditorManager*>(pEditorManager);
 }
 
 void CSpawnableEditor::OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent e, int x, int y)
@@ -200,30 +193,6 @@ bool CSpawnableEditor::IsIntersect(const CVector& linePt1, const CVector& linePt
 	return d < radius;
 }
 
-void CSpawnableEditor::SetEditionMode(bool bEditionMode)
-{
-	if (m_bEditionMode != bEditionMode) {
-		m_bEditionMode = bEditionMode;
-		m_pEditorManager->CloseAllEditor();
-		m_bEditionMode = bEditionMode;
-		m_oInputManager.SetEditionMode(m_bEditionMode);
-		if (m_bEditionMode) {
-			ICamera* pFreeCamera = m_oCameraManager.GetCameraFromType(ICameraManager::T_FREE_CAMERA);
-			m_oCameraManager.SetActiveCamera(pFreeCamera);
-		}
-		else {
-			ICamera* pLinkCamera = m_oCameraManager.GetCameraFromType(ICameraManager::T_LINKED_CAMERA);
-			m_oCameraManager.SetActiveCamera(pLinkCamera);
-		}
-
-		m_oHud.Clear();
-		if (m_bEditionMode) {
-			m_oHud.Print("Mode Edition : Vous pouvez importer un modele en utilisant la commande 'SpawnEntity'", m_nHudX, m_nHudY);
-			m_oHud.Print("Vous pouvez sauvegarder le niveau grace la commande 'SaveLavel(levelName)'", m_nHudX, m_nHudY + m_nHudLineHeight);
-		}
-	}
-}
-
 
 void CSpawnableEditor::DisplayPickingRay(bool enable)
 {
@@ -241,4 +210,15 @@ void CSpawnableEditor::InitSpawnedEntity()
 	m_pCurrentAddedEntity->SetLocalPosition(0, GetPlanHeight(), 0);
 	m_pCurrentAddedEntity->SetWeight(0.f);
 	m_pCurrentAddedEntity->Update();
+}
+
+void CSpawnableEditor::InitCamera()
+{
+	m_oCameraManager.SetActiveCamera(m_pEditorCamera);
+	IBox* pBBox = dynamic_cast<IBox*>(m_pScene->GetBoundingGeometry());
+	if (pBBox) {
+		CMatrix m;
+		m_pEditorCamera->SetLocalMatrix(m);
+		m_pEditorCamera->Move(0, -60.f, 0, 0, 0, pBBox->GetDimension().m_x / 8.f);
+	}
 }

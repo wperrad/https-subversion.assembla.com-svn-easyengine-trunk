@@ -3,7 +3,6 @@
 #include "Scene.h"
 #include "MobileEntity.h"
 #include "LightEntity.h"
-#include "ICameraManager.h"
 #include "ICamera.h"
 #include "EntityManager.h"
 

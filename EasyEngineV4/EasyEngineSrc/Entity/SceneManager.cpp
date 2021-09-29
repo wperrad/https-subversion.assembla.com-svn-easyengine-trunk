@@ -1,8 +1,8 @@
 #include "Interface.h"
 #include "SceneManager.h"
 #include "Scene.h"
-#include "ICameraManager.h"
 #include "ICollisionManager.h"
+#include "ICamera.h"
 
 using namespace std;
 

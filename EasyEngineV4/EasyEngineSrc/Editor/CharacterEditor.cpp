@@ -2,19 +2,17 @@
 #include "IEntity.h"
 #include "Interface.h"
 #include "IInputManager.h"
-#include "ICameraManager.h"
 #include "ICamera.h"
 #include "IConsole.h"
 #include "WorldEditor.h"
 #include "EditorManager.h"
 
-CCharacterEditor::CCharacterEditor(EEInterface& oInterface) :
-CEditor(oInterface),
+CCharacterEditor::CCharacterEditor(EEInterface& oInterface, ICameraManager::TCameraType type) :
+CEditor(oInterface, type),
 CPlugin(nullptr, ""),
 ICharacterEditor(oInterface),
 m_bIsLeftMousePressed(false),
 m_pWorldEditor(nullptr),
-m_pEditorCamera(nullptr),
 m_pCurrentCharacter(nullptr)
 {
 	m_pScene = m_oSceneManager.GetScene("Game");
@@ -34,32 +32,24 @@ void CCharacterEditor::HandleEditorCreation(CPlugin* pPlugin, void* pData)
 
 void CCharacterEditor::SetEditionMode(bool bEditionMode)
 {
-	m_bEditionMode = bEditionMode;
-	if (m_bEditionMode) {
-		m_pScene->Clear();
-		m_pEditorCamera = m_oCameraManager.GetCameraFromType(ICameraManager::TCameraType::T_CHARACTER_EDITOR);
-		if (!m_pEditorCamera) {
-			ICamera* pFreeCamera = m_oCameraManager.GetCameraFromType(ICameraManager::TCameraType::T_FREE_CAMERA);
-			m_pEditorCamera = m_oCameraManager.CreateCamera(ICameraManager::TCameraType::T_CHARACTER_EDITOR, pFreeCamera->GetFov(), m_oEntityManager);
+	if (m_bEditionMode != bEditionMode) {
+		CEditor::SetEditionMode(bEditionMode);
+		if (m_bEditionMode) {
+			m_pScene->Clear();
+			CMatrix m;
+			m_pEditorCamera->SetLocalMatrix(m);
+			CVector pos(230, 150, -35);
+			m_pEditorCamera->SetLocalPosition(pos);
+			m_pEditorCamera->Yaw(106);
+			m_pEditorCamera->Pitch(-12);
+			m_pEditorCamera->Roll(-1);
+			m_pEditorCamera->Update();
+			IEntity* pLight = m_oEntityManager.CreateLightEntity(CVector(1, 1, 1), IRessource::TLight::OMNI, 0.1f);
+			pLight->SetLocalPosition(pos);
+			pLight->Link(m_pScene);
+			m_oInputManager.ShowMouseCursor(true);
+			m_pScene->Update();
 		}
-		m_oCameraManager.SetActiveCamera(m_pEditorCamera);
-		CMatrix m;
-		m_pEditorCamera->SetLocalMatrix(m);
-		CVector pos(230, 150, -35);
-		m_pEditorCamera->SetLocalPosition(pos);
-		m_pEditorCamera->Yaw(106);
-		m_pEditorCamera->Pitch(-12);
-		m_pEditorCamera->Roll(-1);
-		m_pEditorCamera->Update();
-		IEntity* pLight = m_oEntityManager.CreateLightEntity(CVector(1, 1, 1), IRessource::TLight::OMNI, 0.1f);
-		pLight->SetLocalPosition(pos);
-		pLight->Link(m_pScene);
-		m_oInputManager.ShowMouseCursor(true);
-		m_pScene->Update();
-	}
-	else {
-		m_oInputManager.ShowMouseCursor(false);
-		m_pWorldEditor->Load("");
 	}
 }
 
@@ -94,6 +84,8 @@ bool CCharacterEditor::IsEnabled()
 
 void CCharacterEditor::SpawnEntity(string sCharacterId)
 {
+	if(!m_bEditionMode)
+		SetEditionMode(true);
 	m_pCurrentCharacter = dynamic_cast<ICharacter*>(m_oEntityManager.GetEntity(sCharacterId));
 	if (!m_pCurrentCharacter) {
 		m_pCurrentCharacter = m_oEntityManager.BuildCharacterFromDatabase(sCharacterId, m_pScene);
@@ -148,6 +140,12 @@ void CCharacterEditor::WearShoes(string sShoesName)
 void CCharacterEditor::SetTexture(string sTexture)
 {
 	m_pCurrentCharacter->SetDiffuseTexture(sTexture);
+}
+
+void CCharacterEditor::Edit(string id)
+{
+	SetEditionMode(true);
+	SpawnEntity(id);
 }
 
 void CCharacterEditor::OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent e, int x, int y)
