@@ -318,6 +318,7 @@ public:
 	{
 		string								m_sAnimationFileName;
 		string								m_sTextureName;
+		bool								m_bUseCustomSpecular;
 		CVector								m_vSpecular;
 		map< string, float>					m_mAnimationSpeed;
 
@@ -325,7 +326,7 @@ public:
 		{
 			store << (int)eAnimatedEntity;
 			ILoader::CEntityInfos::operator >> (store);
-			store << m_sAnimationFileName << m_sTextureName << m_vSpecular;
+			store << m_sAnimationFileName << m_sTextureName << m_bUseCustomSpecular << m_vSpecular;
 			store << m_mAnimationSpeed;
 			return *this;
 		}
@@ -335,6 +336,9 @@ public:
 			store << "\nEntity type : " << (int)eAnimatedEntity;
 			ILoader::CEntityInfos::operator >> (store);
 			store << "\nAnimation file name : " << m_sAnimationFileName;
+			store << "\nTexture file name : " << m_sTextureName;
+			store << "\nUse custom specular : " << m_bUseCustomSpecular;
+			store << "\nCustom specular : " << m_vSpecular;
 			//store << m_mAnimationSpeed;
 			return *this;
 		}
@@ -344,7 +348,7 @@ public:
 			int nType;
 			store >> nType;
 			ILoader::CEntityInfos::operator << (store);
-			store >> m_sAnimationFileName >> m_sTextureName >> m_vSpecular;
+			store >> m_sAnimationFileName >> m_sTextureName >> m_bUseCustomSpecular >> m_vSpecular;
 			store >> m_mAnimationSpeed;
 			return *this;
 		}

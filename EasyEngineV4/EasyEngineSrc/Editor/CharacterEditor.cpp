@@ -36,14 +36,8 @@ void CCharacterEditor::SetEditionMode(bool bEditionMode)
 		CEditor::SetEditionMode(bEditionMode);
 		if (m_bEditionMode) {
 			m_pScene->Clear();
-			CMatrix m;
-			m_pEditorCamera->SetLocalMatrix(m);
 			CVector pos(230, 150, -35);
-			m_pEditorCamera->SetLocalPosition(pos);
-			m_pEditorCamera->Yaw(106);
-			m_pEditorCamera->Pitch(-12);
-			m_pEditorCamera->Roll(-1);
-			m_pEditorCamera->Update();
+			InitCamera(pos);
 			IEntity* pLight = m_oEntityManager.CreateLightEntity(CVector(1, 1, 1), IRessource::TLight::OMNI, 0.1f);
 			pLight->SetLocalPosition(pos);
 			pLight->Link(m_pScene);
@@ -51,6 +45,17 @@ void CCharacterEditor::SetEditionMode(bool bEditionMode)
 			m_pScene->Update();
 		}
 	}
+}
+
+void CCharacterEditor::InitCamera(const CVector& pos)
+{
+	CMatrix m;
+	m_pEditorCamera->SetLocalMatrix(m);
+	m_pEditorCamera->SetLocalPosition(pos);
+	m_pEditorCamera->Yaw(106);
+	m_pEditorCamera->Pitch(-14);
+	m_pEditorCamera->Roll(-1);
+	m_pEditorCamera->Update();
 }
 
 void CCharacterEditor::Load(string sCharacterId)
@@ -89,21 +94,32 @@ void CCharacterEditor::SpawnEntity(string sCharacterId)
 	m_pCurrentCharacter = dynamic_cast<ICharacter*>(m_oEntityManager.GetEntity(sCharacterId));
 	if (!m_pCurrentCharacter) {
 		m_pCurrentCharacter = m_oEntityManager.BuildCharacterFromDatabase(sCharacterId, m_pScene);
-		InitSpawnedCharacter();
-		m_oCameraManager.SetActiveCamera(m_pEditorCamera);
+		if (!m_pCurrentCharacter) {
+			if (!sCharacterId.empty()) {
+				if (sCharacterId == "Player")				
+					m_pCurrentCharacter = m_oEntityManager.CreatePlayer("body03");
+				else
+					m_pCurrentCharacter = m_oEntityManager.CreateNPC("body03", sCharacterId);
+				m_pCurrentCharacter->Link(m_pScene);
+			}
+			else
+				throw CEException("Erreur : CCharacterEditor::SpawnEntity() -> Vous devez indiquer un ID pour votre personnage");
+		}
 	}
+	InitSpawnedCharacter();
+	m_oCameraManager.SetActiveCamera(m_pEditorCamera);
 }
 
 void CCharacterEditor::InitSpawnedCharacter()
 {
 	if (m_pCurrentCharacter) {
 		m_pCurrentCharacter->SetWeight(0);
-		m_pCurrentCharacter->SetWorldPosition(0, 0, 0);
+		m_pCurrentCharacter->SetWorldPosition(0, m_pCurrentCharacter->GetHeight() / 2.f, 0);
 		m_pCurrentCharacter->RunAction("stand", true);
 	}
 }
 
-void CCharacterEditor::SetCurrentEditablePlayer(ICharacter* pPlayer)
+void CCharacterEditor::SetCurrentEditablePlayer(IPlayer* pPlayer)
 {
 	m_pCurrentCharacter = pPlayer;
 	InitSpawnedCharacter();
@@ -146,6 +162,11 @@ void CCharacterEditor::Edit(string id)
 {
 	SetEditionMode(true);
 	SpawnEntity(id);
+}
+
+void CCharacterEditor::SetSpecular(float r, float g, float b)
+{
+	m_pCurrentCharacter->SetCustomSpecular(CVector(r, g, b));
 }
 
 void CCharacterEditor::OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent e, int x, int y)

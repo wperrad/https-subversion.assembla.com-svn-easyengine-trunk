@@ -26,11 +26,12 @@ public:
 	IEntity*			CreateEmptyEntity( string sName = "noname" );
 	CCollisionEntity*	CreateCollisionEntity(string sName = "noname");
 	IEntity*			CreateRepere( IRenderer& oRenderer );
-	IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem, string sID ) override;
+	ICharacter*			CreateNPC( string sFileName, string sID ) override;
 	IEntity*			CreateMinimapEntity(string sFileName, IFileSystem* pFileSystem);
 	IEntity*			CreateTestEntity(string sFileName, IFileSystem* pFileSystem);
+	void				GetCharactersName(vector<string>& vCharactersName);
 	IEntity*			CreateMobileEntity( string sFileNamee, IFileSystem* pFileSystem, string sID ) override;
-	IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem);
+	IPlayer*			CreatePlayer(string sFileName) override;
 	IEntity*			CreatePlaneEntity(int slices, int size, string heightTexture, string diffuseTexture) override;
 	void				AddNewCharacter(IEntity* pEntity) override;
 	ICharacter*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) override;
@@ -73,6 +74,7 @@ public:
 	void				SaveCharacter(string sNPCID) override;
 	void				LoadCharacterInfos();
 	void				SaveCharacterInfos(const map<string, ILoader::CAnimatedEntityInfos>& characterInfos);
+	void				RemoveCharacterFromDB(string sID) override;
 
 	template<class T>
 	void				SerializeNodeInfos(INode* pNode, ostringstream& sLine, int nLevel = 0);

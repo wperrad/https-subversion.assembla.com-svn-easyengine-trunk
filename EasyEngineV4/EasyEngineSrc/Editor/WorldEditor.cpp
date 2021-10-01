@@ -41,7 +41,7 @@ float CWorldEditor::GetPlanHeight()
 		CVector camPos;
 		pCamera->GetWorldPosition(camPos);
 		IBox* pBox = dynamic_cast<IBox*>(m_pCurrentAddedEntity->GetBoundingGeometry());
-		if (pBox)			
+		if (pBox)
 			return camPos.m_y - pBox->GetDimension().m_y;
 	}
 	return 0.f;
@@ -60,7 +60,7 @@ string CWorldEditor::GetName()
 void CWorldEditor::Load(string fileName)
 {
 	m_pEditorManager->CloseAllEditorButThis(this);
-	m_pScene->Clear();
+	ClearEntities();
 	if (fileName.empty())
 		GetRelativeDatabasePath(fileName);
 	
@@ -88,9 +88,10 @@ void CWorldEditor::Load(string fileName)
 			string id;
 			CMatrix tm;
 			fs >> id >> tm;
-			m_mCharacters[id] = tm;
+			m_mCharacterMatrices[id] = tm;
 		}
 	}
+	m_pEditorCamera->Link(m_pScene);
 }
 
 void CWorldEditor::Save(string fileName)
@@ -104,8 +105,8 @@ void CWorldEditor::Save(string fileName)
 		fs << (int)m_mMaps.size();
 		for (map<string, CVector>::iterator itMap = m_mMaps.begin(); itMap != m_mMaps.end(); itMap++)
 			fs << itMap->first << itMap->second;
-		fs << (int)m_mCharacters.size();
-		for (map<string, CMatrix>::iterator it = m_mCharacters.begin(); it != m_mCharacters.end(); it++) {
+		fs << (int)m_mCharacterMatrices.size();
+		for (map<string, CMatrix>::iterator it = m_mCharacterMatrices.begin(); it != m_mCharacterMatrices.end(); it++) {
 			IEntity* pEntity = m_oEntityManager.GetEntity(it->first);
 			if (pEntity)
 				fs << it->first << pEntity->GetWorldMatrix();
@@ -120,6 +121,7 @@ void CWorldEditor::Save(string fileName)
 
 void CWorldEditor::SpawnEntity(string sID)
 {
+	throw CMethodNotImplementedException("CWorldEditor::SpawnEntity()");
 	if(!m_bEditionMode)
 		SetEditionMode(true);
 
@@ -127,7 +129,34 @@ void CWorldEditor::SpawnEntity(string sID)
 	m_oEntityManager.AddEntity(m_pCurrentAddedEntity, sID);
 	InitSpawnedEntity();
 	CMatrix m;
-	m_mCharacters[sID] = m;
+	m_mCharacterMatrices[sID] = m;
+}
+
+void CWorldEditor::RemoveCharacter(string sID)
+{
+	m_mCharacterMatrices.erase(sID);
+	IEntity* pCharacter = m_oEntityManager.GetEntity(sID);
+	vector<IEntity*>::iterator itCharacter = std::find(m_vCharacters.begin(), m_vCharacters.end(), pCharacter);
+	m_vCharacters.erase(itCharacter);
+}
+
+void CWorldEditor::SpawnCharacter(string sID)
+{
+	if (!m_bEditionMode)
+		SetEditionMode(true);
+
+	m_pCurrentAddedEntity = m_oEntityManager.BuildCharacterFromDatabase(sID, m_pScene);
+	if (!m_pCurrentAddedEntity) {
+		ostringstream oss;
+		oss << "Erreur : Personnage " << sID << " introuvable dans la base de donnee des personnages.";
+		throw CEException(oss.str());
+	}
+	m_oEntityManager.AddEntity(m_pCurrentAddedEntity, sID);
+	InitSpawnedEntity();
+	CMatrix m;
+	m_mCharacterMatrices[sID] = m;
+	m_vCharacters.push_back(m_pCurrentAddedEntity);
+	m_oCameraManager.SetActiveCamera(m_pEditorCamera);
 }
 
 void CWorldEditor::SetEditionMode(bool bEditionMode)
@@ -144,6 +173,11 @@ void CWorldEditor::SetEditionMode(bool bEditionMode)
 	}
 }
 
+void CWorldEditor::CollectSelectableEntity(vector<IEntity*>& entities)
+{
+	entities = m_vCharacters;
+}
+
 void CWorldEditor::Edit(string id)
 {
 	SetEditionMode(true);
@@ -157,19 +191,30 @@ void CWorldEditor::GetRelativeDatabasePath(string& path)
 	path = root + "/" + m_sDatabaseFileName;
 }
 
+void CWorldEditor::ClearEntities()
+{
+	m_pScene->Clear();
+	m_vCharacters.clear();
+	m_mCharacterMatrices.clear();
+	m_oEntityManager.Clear();
+}
+
 void CWorldEditor::OnSceneLoadingComplete(void* pWorldEditorData)
 {
 	CWorldEditor* pWorldEditor = (CWorldEditor*)pWorldEditorData;
 	try {
 		if (pWorldEditor) {
-			for (map<string, CMatrix>::iterator itCharacter = pWorldEditor->m_mCharacters.begin(); itCharacter != pWorldEditor->m_mCharacters.end(); itCharacter++) {
+			for (map<string, CMatrix>::iterator itCharacter = pWorldEditor->m_mCharacterMatrices.begin(); itCharacter != pWorldEditor->m_mCharacterMatrices.end(); itCharacter++) {
 				IEntity* pEntity = nullptr;
-				if (itCharacter != pWorldEditor->m_mCharacters.end()) {
+				if (itCharacter != pWorldEditor->m_mCharacterMatrices.end()) {
 					pEntity = pWorldEditor->m_oEntityManager.BuildCharacterFromDatabase(itCharacter->first, pWorldEditor->m_pScene);
-					if (pEntity)
+					if (pEntity) {
 						pEntity->SetLocalMatrix(itCharacter->second);
+						pEntity->SetWeight(1);
+						pWorldEditor->m_vCharacters.push_back(pEntity);
+					}
 				}
-				if ((itCharacter == pWorldEditor->m_mCharacters.end()) || !pEntity) {
+				if ((itCharacter == pWorldEditor->m_mCharacterMatrices.end()) || !pEntity) {
 					ostringstream oss;
 					oss << "Erreur dans CWorldEditor::OnSceneLoadingComplete() : le personnage " << itCharacter->first << " n'existe pas.";
 					pWorldEditor->m_oConsole.Println(oss.str());

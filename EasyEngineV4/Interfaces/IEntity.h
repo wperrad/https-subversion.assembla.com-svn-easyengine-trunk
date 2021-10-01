@@ -130,7 +130,14 @@ public:
 	virtual void				AddHairs(string sHairsPath) = 0;
 };
 
-class IScene : virtual public IEntity
+class IPlayer : public virtual ICharacter
+{
+public:
+	virtual void				Action() = 0;
+	virtual void				ToggleDisplayPlayerWindow() = 0;
+};
+
+class IScene : public virtual IEntity
 {
 public:
 	typedef void(*LevelCompleteProc)(void*);
@@ -176,13 +183,6 @@ public:
 	virtual void Attack(IFighterEntityInterface* pEntity) = 0;
 };
 
-class IPlayer : virtual public IEntity
-{
-public:
-	virtual void Action() = 0;
-	virtual void ToggleDisplayPlayerWindow() = 0;
-};
-
 class IEntityManager : public CPlugin
 {
 public:
@@ -192,10 +192,11 @@ public:
 	virtual IEntity*			CreateEmptyEntity( string sFileName = "noname" ) = 0;
 	virtual IEntity*			CreateRepere( IRenderer& oRenderer ) = 0;
 	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem, string sID ) = 0;
-	virtual IEntity*			CreatePlayer(string sFileName, IFileSystem* pFileSystem) = 0;
-	virtual IEntity*			CreateNPC( string sFileName, IFileSystem* pFileSystem, string sID ) = 0;
+	virtual IPlayer*			CreatePlayer(string sFileName) = 0;
+	virtual ICharacter*			CreateNPC( string sFileName, string sID ) = 0;
 	virtual IEntity*			CreateMinimapEntity(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual IEntity*			CreateTestEntity(string sFileName, IFileSystem* pFileSystem) = 0;
+	virtual void				GetCharactersName(vector<string>& vCharactersName) = 0;
 	virtual IEntity*			GetEntity( int nEntityID ) = 0;
 	virtual IEntity*			GetEntity( string sEntityName ) = 0;
 	virtual int					GetEntityID( IEntity* pEntity ) = 0;
@@ -232,6 +233,7 @@ public:
 	virtual void				AddNewCharacter(IEntity* pEntity) = 0;
 	virtual ICharacter*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) = 0;
 	virtual void				SaveCharacter(string sNPCID) = 0;
+	virtual void				RemoveCharacterFromDB(string sID) = 0;
 };
 
 class ISceneManager : public CPlugin

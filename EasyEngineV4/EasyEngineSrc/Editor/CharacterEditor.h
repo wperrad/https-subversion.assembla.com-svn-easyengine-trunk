@@ -26,16 +26,18 @@ public:
 	string					GetName() override;
 	bool					IsEnabled() override;
 	void					SpawnEntity(string sEntityFileName) override;
-	void					SetCurrentEditablePlayer(ICharacter* pPlayer) override;
+	void					SetCurrentEditablePlayer(IPlayer* pPlayer) override;
 	void					SetCurrentEditableNPC(ICharacter* pNPCEntity) override;
 	void					AddHairs(string sHairsName) override;
 	void					WearShoes(string sShoesName) override;
 	void					SetTexture(string sTexture) override;
 	void					Edit(string id) override;
+	void					SetSpecular(float r, float g, float b) override;
 
 private:
 
 	void					InitSpawnedCharacter();
+	void					InitCamera(const CVector& pos);
 	static void				OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent e, int x, int y);
 	static void				HandleEditorCreation(CPlugin* pPlugin, void* pDatar);
 	IScene*					m_pScene;

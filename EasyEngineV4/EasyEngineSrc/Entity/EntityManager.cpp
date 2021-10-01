@@ -90,7 +90,7 @@ CEntity* CEntityManager::CreateEntityFromType(std::string sFileName, string sTyp
 		pEntity = new CMinimapEntity(m_oInterface, sFileName);
 
 	string sName;
-	pEntity->GetName( sName );
+	pEntity->GetEntityName( sName );
 	AddEntity( pEntity, sName );
 	return pEntity;
 }
@@ -253,14 +253,14 @@ IPlayer* CEntityManager::GetPlayer()
 	return m_pPlayer;
 }
 
-IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem, string sID )
+ICharacter* CEntityManager::CreateNPC( string sFileName, string sID )
 {
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
 	sName = string("Meshes/Bodies/") + sName;
 	ICharacter* pEntity = new CNPCEntity(m_oInterface, sName, sID);
-	AddEntity( pEntity );
+	AddEntity( pEntity, sID );
 	ICharacterEditor* pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacter));
 	if (pCharacterEditor->IsEnabled()) {
 		pCharacterEditor->SetCurrentEditableNPC(pEntity);
@@ -268,13 +268,13 @@ IEntity* CEntityManager::CreateNPC( string sFileName, IFileSystem* pFileSystem, 
 	return pEntity;
 }
 
-IEntity* CEntityManager::CreatePlayer(string sFileName, IFileSystem* pFileSystem)
+IPlayer* CEntityManager::CreatePlayer(string sFileName)
 {
 	string sName = sFileName;
 	if (sName.find(".bme") == -1)
 		sName += ".bme";
 	sName = string("Meshes/Bodies/") + sName;
-	ICharacter* pEntity = new CPlayer(m_oInterface, sName);
+	IPlayer* pEntity = new CPlayer(m_oInterface, sName);
 	AddEntity(pEntity);
 	ICharacterEditor* pCharacterEditor = dynamic_cast<ICharacterEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eCharacter));
 	if (pCharacterEditor->IsEnabled()) {
@@ -301,6 +301,12 @@ IEntity* CEntityManager::CreateTestEntity(string sFileName, IFileSystem* pFileSy
 	IEntity* pEntity = new CTestEntity(m_oInterface, sName);
 	AddEntity(pEntity);
 	return pEntity;
+}
+
+void CEntityManager::GetCharactersName(vector<string>& vCharactersName)
+{
+	for (map<string, ILoader::CAnimatedEntityInfos>::iterator itCharacter = m_mCharacterInfos.begin(); itCharacter != m_mCharacterInfos.end(); itCharacter++)
+		vCharactersName.push_back(itCharacter->first);
 }
 
 int	CEntityManager::GetEntityID( IEntity* pEntity )
@@ -563,6 +569,12 @@ void CEntityManager::SaveCharacterInfos(const map<string, ILoader::CAnimatedEnti
 		CEException e(oss.str());
 		throw e;
 	}
+}
+
+void CEntityManager::RemoveCharacterFromDB(string sID)
+{
+	LoadCharacterInfos();
+	m_mCharacterInfos.erase(sID);
 }
 
 template<class T>

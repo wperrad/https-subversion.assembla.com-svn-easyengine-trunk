@@ -8,7 +8,8 @@ m_fPitch( 0.f ),
 m_fSpeed(1.f),
 m_bDisplayViewCone(false)
 {
-	m_sEntityName = "Free camera";
+	m_sEntityName = "FreeCamera";
+	m_sName = "FreeCamera";
 }
 
 CFreeCamera::~CFreeCamera()

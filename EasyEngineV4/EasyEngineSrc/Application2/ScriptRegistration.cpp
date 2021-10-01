@@ -150,7 +150,10 @@ void SpawnEntity(IScriptState* pState)
 	m_pRessourceManager->EnableCatchingException(false);
 	try
 	{
-		m_pMapEditor->SpawnEntity(sName);
+		if(m_pMapEditor->IsEnabled())
+			m_pMapEditor->SpawnEntity(sName);
+		else if(m_pWorldEditor->IsEnabled())
+			m_pWorldEditor->SpawnEntity(sName);
 	}
 	catch (CFileNotFoundException& e)
 	{
@@ -169,6 +172,11 @@ void SpawnEntity(IScriptState* pState)
 		oss << "\"" << sName << "\" : Mauvais format de fichier, essayez de le réexporter";
 		m_pConsole->Println(oss.str());
 	}
+	catch (CMethodNotImplementedException& e) {
+		ostringstream oss;
+		oss << "Erreur : la méthode " << e.what() << " n'est pas implementée.";
+		m_pConsole->Println(oss.str());
+	}
 	catch (CEException& e)
 	{
 		m_pConsole->Println(e.what());
@@ -184,7 +192,10 @@ void SpawnCharacter(IScriptState* pState)
 	m_pRessourceManager->EnableCatchingException(false);
 	try
 	{
-		m_pWorldEditor->SpawnEntity(id);
+		if (m_pWorldEditor->IsEnabled())
+			m_pWorldEditor->SpawnCharacter(id);
+		else
+			m_pConsole->Println("Erreur : impossible de spawner un personnage en dehors du world editor");
 	}
 	catch (CCharacterAlreadyExistsException& e) {
 		ostringstream oss;
@@ -904,7 +915,7 @@ void GenerateRandomNPC(IScriptState* pState)
 
 	for (int i = 0; i < pNPCCount->m_nValue; i++) {
 		ossNPCId << "NPC_" << i;
-		IEntity* pEntity = m_pEntityManager->CreateNPC(pNPCFileName->m_sValue, m_pFileSystem, ossNPCId.str());
+		IEntity* pEntity = m_pEntityManager->CreateNPC(pNPCFileName->m_sValue, ossNPCId.str());
 		pEntity->Link(m_pScene);
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -1024,7 +1035,7 @@ void CreateNPC( IScriptState* pState )
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreateNPC(sFileName, m_pFileSystem, pID->m_sValue);
+		IEntity* pEntity = m_pEntityManager->CreateNPC(sFileName, pID->m_sValue);
 		pEntity->Link( m_pScene );
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -1068,7 +1079,7 @@ void CreatePlayer(IScriptState* pState)
 
 	try
 	{
-		IEntity* pEntity = m_pEntityManager->CreatePlayer(sName, m_pFileSystem);
+		IEntity* pEntity = m_pEntityManager->CreatePlayer(sName);
 		pEntity->Link(m_pScene);
 		int id = m_pEntityManager->GetEntityID(pEntity);
 		ostringstream oss;
@@ -1105,6 +1116,19 @@ void CreatePlayer(IScriptState* pState)
 void SaveCharacter(IScriptState* pState)
 {
 	m_pCharacterEditor->Save();
+}
+
+void RemoveCharacterFromWorld(IScriptState* pState)
+{
+	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	if(m_pWorldEditor->IsEnabled())
+		m_pWorldEditor->RemoveCharacter(pID->m_sValue);
+}
+
+void RemoveCharacterFromDB(IScriptState* pState)
+{
+	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
+	m_pEntityManager->RemoveCharacterFromDB(pID->m_sValue);
 }
 
 void CreateMinimapEntity(IScriptState* pState)
@@ -2369,6 +2393,16 @@ void SetEntitySpecular(IScriptState* pState)
 	pEntity->SetCustomSpecular(CVector(pr->m_fValue, pg->m_fValue, pb->m_fValue));
 }
 
+void SetSpecular(IScriptState* pState)
+{
+	CScriptFuncArgFloat* pr = (CScriptFuncArgFloat*)pState->GetArg(0);
+	CScriptFuncArgFloat* pg = (CScriptFuncArgFloat*)pState->GetArg(1);
+	CScriptFuncArgFloat* pb = (CScriptFuncArgFloat*)pState->GetArg(2);
+	if (m_pCharacterEditor->IsEnabled())
+		m_pCharacterEditor->SetSpecular(pr->m_fValue, pg->m_fValue, pb->m_fValue);
+}
+
+
 void SetEntityShininess(IScriptState* pState)
 {
 	CScriptFuncArgInt* pID = (CScriptFuncArgInt*)pState->GetArg(0);
@@ -2437,10 +2471,44 @@ void WearShoes(IScriptState* pState)
 	m_pCharacterEditor->WearShoes(pShoes->m_sValue);
 }
 
-void DisplayRayPicking(IScriptState* pState)
+void DisplayPickingRaySelected(IScriptState* pState)
 {
 	CScriptFuncArgInt* pDisplay = (CScriptFuncArgInt*)(pState->GetArg(0));
-	m_pMapEditor->DisplayPickingRay(pDisplay->m_nValue > 0);
+	if(m_pMapEditor->IsEnabled())
+		m_pMapEditor->EnableDisplayPickingRaySelected(pDisplay->m_nValue > 0);
+	else if (m_pWorldEditor->IsEnabled()) {
+		m_pWorldEditor->EnableDisplayPickingRayMouseMove(pDisplay->m_nValue > 0);
+	}
+}
+
+void DisplayPickingRayMouseMove(IScriptState* pState)
+{
+	CScriptFuncArgInt* pDisplay = (CScriptFuncArgInt*)(pState->GetArg(0));
+	if (m_pMapEditor->IsEnabled())
+		m_pMapEditor->EnableDisplayPickingRayMouseMove(pDisplay->m_nValue > 0);
+	else if (m_pWorldEditor->IsEnabled()) {
+		m_pWorldEditor->EnableDisplayPickingRayMouseMove(pDisplay->m_nValue > 0);
+	}
+}
+
+void DisplayPickingIntersectPlane(IScriptState* pState)
+{
+	CScriptFuncArgInt* pDisplay = (CScriptFuncArgInt*)(pState->GetArg(0));
+	if (m_pMapEditor->IsEnabled())
+		m_pMapEditor->EnableDisplayPickingIntersectPlane(pDisplay->m_nValue > 0);
+	else if (m_pWorldEditor->IsEnabled()) {
+		m_pWorldEditor->EnableDisplayPickingIntersectPlane(pDisplay->m_nValue > 0);
+	}
+}
+
+void DisplayCharacters(IScriptState* pState)
+{
+	vector<string> vCharactersName;
+	m_pEntityManager->GetCharactersName(vCharactersName);
+	for (int i = 0; i < vCharactersName.size(); i++) {
+		m_pConsole->Println(vCharactersName[i]);
+	}
+
 }
 
 void DisplayEntitiesResume(void* params)
@@ -3128,6 +3196,12 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction("SetEntitySpecular", SetEntitySpecular, vType);
 
 	vType.clear();
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	vType.push_back(eFloat);
+	m_pScriptManager->RegisterFunction("SetSpecular", SetSpecular, vType);
+
+	vType.clear();
 	vType.push_back(eInt);
 	vType.push_back(eInt);
 	vType.push_back(eString);
@@ -3421,6 +3495,21 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "DisplayRepere", DisplayRepere, vType );
 
 	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("DisplayPickingRaySelected", DisplayPickingRaySelected, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("DisplayPickingRayMouseMove", DisplayPickingRayMouseMove, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("DisplayPickingIntersectPlane", DisplayPickingIntersectPlane, vType);
+
+	vType.clear();
+	m_pScriptManager->RegisterFunction("DisplayCharacters", DisplayCharacters, vType);
+
+	vType.clear();
 	vType.push_back( eString );
 	m_pScriptManager->RegisterFunction( "LoadImage", LoadImage, vType );
 
@@ -3613,6 +3702,14 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	m_pScriptManager->RegisterFunction("SaveCharacter", SaveCharacter, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("RemoveCharacterFromWorld", RemoveCharacterFromWorld, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("RemoveCharacterFromDB", RemoveCharacterFromDB, vType);
 
 	vType.clear();
 	vType.push_back(eString);

@@ -4,7 +4,7 @@
 #include "Entity.h"
 #include "FighterEntity.h"
 
-class CMobileEntity : public CEntity, public virtual IFighterEntity, public ICharacter
+class CMobileEntity : public CEntity, public virtual IFighterEntity, public virtual ICharacter
 {
 
 public:

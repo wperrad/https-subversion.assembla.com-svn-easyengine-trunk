@@ -5,6 +5,7 @@
 class IEditorManager;
 class IEntity;
 class ICharacter;
+class IPlayer;
 
 class IEditor : virtual public CPlugin
 {
@@ -29,7 +30,9 @@ class ISpawnableEditor : public IEditor
 {
 public:
 	ISpawnableEditor(EEInterface& oInterface) : IEditor(oInterface) {}
-	virtual void	DisplayPickingRay(bool enable) = 0;
+	virtual void	EnableDisplayPickingRaySelected(bool enable) = 0;
+	virtual void	EnableDisplayPickingRayMouseMove(bool enable) = 0;
+	virtual void	EnableDisplayPickingIntersectPlane(bool enable) = 0;
 	virtual void	Save(string fileName) = 0;
 };
 
@@ -44,12 +47,13 @@ class ICharacterEditor : public IEditor
 {
 public:
 	ICharacterEditor(EEInterface& oInterface) : IEditor(oInterface) {}
-	virtual void	SetCurrentEditablePlayer(ICharacter* pPlayer) = 0;
+	virtual void	SetCurrentEditablePlayer(IPlayer* pPlayer) = 0;
 	virtual void	SetCurrentEditableNPC(ICharacter* pNPCEntity) = 0;
 	virtual void	AddHairs(string sHairsName) = 0;
 	virtual void	WearShoes(string sShoesName) = 0;
 	virtual void	SetTexture(string sTexture) = 0;
 	virtual void	Save() = 0;
+	virtual void	SetSpecular(float r, float g, float b) = 0;
 };
 
 class IWorldEditor : virtual public ISpawnableEditor
@@ -57,6 +61,8 @@ class IWorldEditor : virtual public ISpawnableEditor
 public:
 	IWorldEditor(EEInterface& oInterface) : ISpawnableEditor(oInterface) {}
 	virtual ~IWorldEditor() = 0 {}
+	virtual void	SpawnCharacter(string sID) = 0;
+	virtual void	RemoveCharacter(string sID) = 0;
 };
 
 

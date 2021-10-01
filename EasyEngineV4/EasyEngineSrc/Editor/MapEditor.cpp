@@ -350,6 +350,11 @@ void CMapEditor::SetEditionMode(bool bEditionMode)
 	}
 }
 
+void CMapEditor::CollectSelectableEntity(vector<IEntity*>& entities)
+{
+	m_pScene->CollectMinimapEntities(entities);
+}
+
 void CMapEditor::SaveResponseCallback(string sResponse, void* pData)
 {
 	CMapEditor* pMapEditor = (CMapEditor*)pData;

@@ -27,19 +27,28 @@ protected:
 	bool							IsIntersect(const CVector& linePt1, const CVector& linePt2, const CVector& M, float radius) const;
 	void							DisplayLocalRepere();
 	void							HandleEditorManagerCreation(IEditorManager* pEditor) override;
-	void							DisplayPickingRay(bool enable);
+	void							EnableDisplayPickingRaySelected(bool enable) override;
+	void							EnableDisplayPickingRayMouseMove(bool enable) override;
+	void							EnableDisplayPickingIntersectPlane (bool enable) override;
+	void							DisplayPickingRay(const CVector& camPos, const CVector& far);
 	virtual void					OnEntityAdded() = 0;
 	virtual float					GetPlanHeight() = 0;
 	virtual void					OnEntitySelected() = 0;
+	virtual void					CollectSelectableEntity(vector<IEntity*>& entities) = 0;
 	virtual void					InitSpawnedEntity();
 	
 protected:
 	void							InitCamera();
+	void							OnMouseMove(int x, int y);
 
 	static void						OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::TMouseEvent, int x, int y);
 	
 	IEntity*						m_pCurrentAddedEntity;
 	IScene*							m_pScene;
 	IEntity*						m_pSelectedEntity;
-	bool							m_bDisplayPickingRay;
+	bool							m_bDisplayPickingRaySelected;
+	bool							m_bDisplayPickingRayMouseMove;
+	bool							m_bDisplayPickingIntersectPlane;
+	IEntity*						m_pQuadEntity;
+	IEntity*						m_pDebugSphere;
 };

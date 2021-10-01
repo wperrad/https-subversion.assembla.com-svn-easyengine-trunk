@@ -51,10 +51,10 @@ private:
 	bool							CreateLevelFolderIfNotExists(string levelName, string& levelFolder);
 	void							SaveMap(string sFileName);
 	void							ClearCharacters(vector<ILoader::CObjectInfos*>& objects);
-	void							OnEntitySelected();
+	void							OnEntitySelected() override;
 	float							GetPlanHeight() override;
 	void							SetEditionMode(bool bEditionMode) override;
-
+	void							CollectSelectableEntity(vector<IEntity*>& entities) override;
 
 	struct AdaptGroundThreadStruct
 	{

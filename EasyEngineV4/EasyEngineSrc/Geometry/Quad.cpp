@@ -11,7 +11,9 @@ CQuad::CQuad(float fLenght, float fWidth) :
 
 void CQuad::GetLineIntersection(const CVector& A, const CVector& B, CVector& I)
 {	
-	static float d = m_oTM.GetPosition().Norm();
+	float d = m_oTM.GetPosition().Norm();
+	if (m_oTM.m_13 < 0)
+		d = -d;
 	CVector n;
 	ComputeNormal(n);
 	n.m_w = 0.f;

@@ -133,26 +133,23 @@ void UpdateCamera()
 	avance *= 10;
 	gauche *= 10;
 
-	if ( eLessSpeed == IInputManager::JUST_PRESSED )
-		m_pCameraManager->GetActiveCamera()->SetSpeed( m_pCameraManager->GetActiveCamera()->GetSpeed() / 2.f );
-	if (eMoreSpeed == IInputManager::JUST_PRESSED) {
-		if(m_pCameraManager->GetActiveCamera())
-			m_pCameraManager->GetActiveCamera()->SetSpeed(m_pCameraManager->GetActiveCamera()->GetSpeed() * 2.f);
-		else
-		{
-			m_pConsole->Open(true);
-			m_pConsole->Println("Error : No active camera selected");
-		}
+	ICamera* pActiveCamera = m_pCameraManager->GetActiveCamera();
+	if (pActiveCamera) {
+		if (eLessSpeed == IInputManager::JUST_PRESSED)
+			pActiveCamera->SetSpeed(pActiveCamera->GetSpeed() / 2.f);
+		if (eMoreSpeed == IInputManager::JUST_PRESSED)
+			pActiveCamera->SetSpeed(pActiveCamera->GetSpeed() * 2.f);
 	}
 	m_pActionManager->GetGameMousePos( m_nLastGameMousePosx, m_nLastGameMousePosy );
-
-	ICamera* pActiveCamera = m_pCameraManager->GetActiveCamera();
-	if( m_pCameraManager->GetCameraType( pActiveCamera ) == ICameraManager::TFree )
-	{
-		int x, y;
-		m_pInputManager->GetOffsetMouse( x, y );
-		float s = m_pInputManager->GetMouseSensitivity(); // 1/20
-		m_pCameraManager->GetActiveCamera()->Move( -x * s, -y * s, 0.f, (float)avance, (float)gauche, 0.f );
+	
+	if (pActiveCamera) {
+		if (m_pCameraManager->GetCameraType(pActiveCamera) == ICameraManager::TFree)
+		{
+			int x, y;
+			m_pInputManager->GetOffsetMouse(x, y);
+			float s = m_pInputManager->GetMouseSensitivity(); // 1/20
+			pActiveCamera->Move(-x * s, -y * s, 0.f, (float)avance, (float)gauche, 0.f);
+		}
 	}
 }
 

@@ -14,7 +14,11 @@ CEditor(oInterface, cameraType),
 m_pCurrentAddedEntity(nullptr),
 m_pScene(nullptr),
 m_pSelectedEntity(nullptr),
-m_bDisplayPickingRay(false)
+m_bDisplayPickingRaySelected(false),
+m_bDisplayPickingRayMouseMove(false),
+m_bDisplayPickingIntersectPlane(false),
+m_pQuadEntity(nullptr),
+m_pDebugSphere(nullptr)
 {
 	IEventDispatcher* pEventDispatcher = static_cast<IEventDispatcher*>(oInterface.GetPlugin("EventDispatcher"));
 	pEventDispatcher->AbonneToMouseEvent(this, OnMouseEventCallback);
@@ -33,15 +37,25 @@ void CSpawnableEditor::OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::T
 			pEditor->OnLeftMouseDown(x, y);
 		else if (e == IEventDispatcher::TMouseEvent::T_RBUTTONDOWN)
 			pEditor->m_oInputManager.SetEditionMode(false);
-		else if (e == IEventDispatcher::TMouseEvent::T_RBUTTONUP) {
+		else if (e == IEventDispatcher::TMouseEvent::T_RBUTTONUP)
 			pEditor->m_oInputManager.SetEditionMode(true);
-		}
-		else if (e == IEventDispatcher::TMouseEvent::T_MOVE) {
-			if (pEditor->m_pCurrentAddedEntity) {
-				CVector intersect;
-				pEditor->GetRayPlanIntersection(x, y, pEditor->GetPlanHeight(), intersect);
-				pEditor->m_pCurrentAddedEntity->SetLocalPosition(intersect.m_x, pEditor->GetPlanHeight(), intersect.m_z);
-			}
+		else if (e == IEventDispatcher::TMouseEvent::T_MOVE)
+			pEditor->OnMouseMove(x, y);
+	}
+}
+
+void CSpawnableEditor::OnMouseMove(int x, int y)
+{
+	if (m_pCurrentAddedEntity) {
+		CVector intersect;
+		GetRayPlanIntersection(x, y, GetPlanHeight(), intersect);
+		m_pCurrentAddedEntity->SetLocalPosition(intersect);
+		if (m_bDisplayPickingRayMouseMove) {
+			CVector camPos, ray_wor;
+			RayCast(x, y, camPos, ray_wor);
+			CVector farPoint = camPos + ray_wor * 50000.f;
+			farPoint.m_w = 1.f;
+			DisplayPickingRay(camPos, farPoint);
 		}
 	}
 }
@@ -92,17 +106,26 @@ void CSpawnableEditor::GetRayPlanIntersection(int x, int y, float h, CVector& in
 	quad->GetLineIntersection(camPos, B, intersect);
 	delete quad;
 
-#ifdef DEBUG_TEST_PLANE
-	IEntity* pSphere = m_oEntityManager.CreateSphere(100.f);
-	pSphere->Link(m_pScene);
-	pSphere->SetLocalPosition(intersect);
+	if (m_bDisplayPickingIntersectPlane) {
+		if (!m_pDebugSphere) {
+			m_pDebugSphere = m_oEntityManager.CreateSphere(50.f);
+			m_pDebugSphere->Link(m_pScene);
+		}
+		m_pDebugSphere->SetLocalPosition(intersect);
 
-	if (!m_pQuadEntity) {
-		m_pQuadEntity = m_oEntityManager.CreateQuad(d.m_x, d.m_z);
-		m_pQuadEntity->Link(m_pScene);
+		if (!m_pQuadEntity) {
+			m_pQuadEntity = m_oEntityManager.CreateQuad(d.m_x, d.m_z);
+			m_pQuadEntity->Link(m_pScene);
+		}
 		m_pQuadEntity->SetLocalPosition(0.f, h, 0.f);
 	}
-#endif // DEBUG_TEST_PLANE
+	else {
+		if (m_pQuadEntity) {
+			m_pQuadEntity->Unlink();
+			delete m_pQuadEntity;
+			m_pQuadEntity = nullptr;
+		}
+	}
 }
 
 void CSpawnableEditor::RayCast(int x, int y, CVector& p1, CVector& ray)
@@ -130,27 +153,31 @@ void CSpawnableEditor::RayCast(int x, int y, CVector& p1, CVector& ray)
 	Vinv.GetPosition(p1);
 }
 
+void CSpawnableEditor::DisplayPickingRay(const CVector& camPos, const CVector& farPoint)
+{
+	IEntity* pLineEntity = m_oEntityManager.CreateLineEntity(camPos, farPoint);
+	pLineEntity->Link(m_pScene);
+}
+
 void CSpawnableEditor::SelectEntity(int x, int y)
 {
 	CVector camPos, ray_wor;
 	RayCast(x, y, camPos, ray_wor);
-	CVector B = camPos + ray_wor * 50000.f;
-	B.m_w = 1.f;
+	CVector farPoint = camPos + ray_wor * 50000.f;
+	farPoint.m_w = 1.f;
 
-	if (m_bDisplayPickingRay) {
-		IEntity* pLineEntity = m_oEntityManager.CreateLineEntity(camPos, B);
-		pLineEntity->Link(m_pScene);
+	if (m_bDisplayPickingRaySelected) {
+		DisplayPickingRay(camPos, farPoint);
 	}
 
 	IEntity* pSelectedEntity = NULL;
-	IScene* pScene = dynamic_cast<IScene*>(m_pScene);
 	vector<IEntity*> entities;
-	pScene->CollectMinimapEntities(entities);
+	CollectSelectableEntity(entities);
 	for (int i = 0; i < entities.size(); i++) {
 		IEntity* pEntity = entities[i];
 		CVector pos;
 		pEntity->GetWorldPosition(pos);
-		if (IsIntersect(camPos, B, pos, pEntity->GetBoundingSphereRadius())) {
+		if (IsIntersect(camPos, farPoint, pos, pEntity->GetBoundingSphereRadius())) {
 			float lastDistanceToCam = 999999999.f;
 			CVector lastPos, currentPos;
 			if (pSelectedEntity) {
@@ -194,9 +221,19 @@ bool CSpawnableEditor::IsIntersect(const CVector& linePt1, const CVector& linePt
 }
 
 
-void CSpawnableEditor::DisplayPickingRay(bool enable)
+void CSpawnableEditor::EnableDisplayPickingRaySelected(bool enable)
 {
-	m_bDisplayPickingRay = enable;
+	m_bDisplayPickingRaySelected = enable;
+}
+
+void CSpawnableEditor::EnableDisplayPickingRayMouseMove(bool enable)
+{
+	m_bDisplayPickingRayMouseMove = enable;
+}
+
+void CSpawnableEditor::EnableDisplayPickingIntersectPlane(bool enable)
+{
+	m_bDisplayPickingIntersectPlane = enable;
 }
 
 bool CSpawnableEditor::IsEnabled()
