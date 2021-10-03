@@ -85,41 +85,9 @@ ITexture* CRessourceManager::CreateTexture2D( IShader* pShader, int nUnitTexture
 
 ITexture* CRessourceManager::CreateTexture2D(string sFileName, bool bGenerateMipmaps)
 {
-	ILoader::CTextureInfos ti;
-	m_oLoaderManager.LoadTexture(sFileName, ti);
-	ti.m_sFileName = sFileName;
-	IRenderer::TPixelFormat format = IRenderer::T_FormatNone;
-	switch (ti.m_ePixelFormat)
-	{
-	case ILoader::eRGB:
-		format = IRenderer::T_RGB;
-		break;
-	case ILoader::eRGBA:
-		format = IRenderer::T_RGBA;
-		break;
-	case ILoader::eBGR:
-		format = IRenderer::T_BGR;
-		break;
-	case ILoader::eBGRA:
-		format = IRenderer::T_BGRA;
-		break;
-	default:
-	{
-		ostringstream oss;
-		oss << "Error : \"" << sFileName << "\" : Bad Texture format";
-		CRessourceException e(oss.str());
-		throw e;
-	}
-	}
-
 	CTexture2D::CDesc desc(m_oRenderer, NULL, 0);
-	desc.m_nWidth = ti.m_nWidth;
-	desc.m_nHeight = ti.m_nHeight;
-	desc.m_eFormat = format;
-	desc.m_vTexels.swap(ti.m_vTexels);
-	desc.m_nUnitTexture = 3;
+	CreateTextureDesc(sFileName, desc);
 	desc.m_bGenerateMipmaps = bGenerateMipmaps;
-	desc.m_sFileName = sFileName;
 	CTexture2D* pTexture = new CTexture2D(desc);
 	return static_cast< ITexture* > (pTexture);
 }
@@ -584,13 +552,22 @@ IRessource* CRessourceManager::CreateAnimation( string sFileName, CRessourceMana
 }
 
 
-IRessource* CRessourceManager::CreateTexture( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer )
+void CRessourceManager::CreateTextureDesc(string sFileName, CTexture2D::CDesc& desc)
 {
 	ILoader::CTextureInfos ti;
-	pRessourceManager->m_oLoaderManager.LoadTexture( sFileName, ti );
+	try {
+		m_oLoaderManager.LoadTexture(sFileName, ti);
+	}
+	catch (CFileNotFoundException& e) {
+		string sPrefix = "Textures";
+		if (sFileName.empty() || (sFileName[0] != '/' && sFileName[0] != '\\') )
+			sPrefix += "/";
+		sFileName = sPrefix + sFileName;
+		m_oLoaderManager.LoadTexture(sFileName, ti);
+	}
 	ti.m_sFileName = sFileName;
 	IRenderer::TPixelFormat format = IRenderer::T_FormatNone;
-	switch(ti.m_ePixelFormat)
+	switch (ti.m_ePixelFormat)
 	{
 	case ILoader::eRGB:
 		format = IRenderer::T_RGB;
@@ -605,20 +582,26 @@ IRessource* CRessourceManager::CreateTexture( string sFileName, CRessourceManage
 		format = IRenderer::T_BGRA;
 		break;
 	default:
-		{
-			ostringstream oss;
-			oss << "Error : \"" << sFileName << "\" : Bad Texture format";
-			CRessourceException e(oss.str());
-			throw e;
-		}
-	}	
-
-	CTexture2D::CDesc desc( oRenderer, NULL, 0 );
+	{
+		ostringstream oss;
+		oss << "Error : \"" << sFileName << "\" : Bad Texture format";
+		CRessourceException e(oss.str());
+		throw e;
+	}
+	}
+	
 	desc.m_nWidth = ti.m_nWidth;
 	desc.m_nHeight = ti.m_nHeight;
 	desc.m_eFormat = format;
-	desc.m_vTexels.swap( ti.m_vTexels );
+	desc.m_vTexels.swap(ti.m_vTexels);
+	desc.m_sFileName = sFileName;
 	desc.m_nUnitTexture = 3;
+}
+
+IRessource* CRessourceManager::CreateTexture( string sFileName, CRessourceManager* pRessourceManager, IRenderer& oRenderer)
+{
+	CTexture2D::CDesc desc(oRenderer, NULL, 0);
+	pRessourceManager->CreateTextureDesc(sFileName, desc);
 	CTexture2D* pTexture = new CTexture2D( desc );
 	return static_cast< ITexture* > ( pTexture );
 }

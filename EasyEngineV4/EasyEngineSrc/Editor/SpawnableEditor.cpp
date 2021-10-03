@@ -18,10 +18,12 @@ m_bDisplayPickingRaySelected(false),
 m_bDisplayPickingRayMouseMove(false),
 m_bDisplayPickingIntersectPlane(false),
 m_pQuadEntity(nullptr),
-m_pDebugSphere(nullptr)
+m_pDebugSphere(nullptr),
+m_eLastKeyEvent(IEventDispatcher::TKeyEvent::T_KEYUP)
 {
 	IEventDispatcher* pEventDispatcher = static_cast<IEventDispatcher*>(oInterface.GetPlugin("EventDispatcher"));
 	pEventDispatcher->AbonneToMouseEvent(this, OnMouseEventCallback);
+	pEventDispatcher->AbonneToKeyEvent(this, OnKeyEventCallback);
 }
 
 void CSpawnableEditor::HandleEditorManagerCreation(IEditorManager* pEditorManager)
@@ -41,6 +43,36 @@ void CSpawnableEditor::OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::T
 			pEditor->m_oInputManager.SetEditionMode(true);
 		else if (e == IEventDispatcher::TMouseEvent::T_MOVE)
 			pEditor->OnMouseMove(x, y);
+	}
+}
+
+void CSpawnableEditor::OnKeyEventCallback(CPlugin* plugin, IEventDispatcher::TKeyEvent e, int key)
+{
+	if (e == IEventDispatcher::T_KEYDOWN) {
+		CSpawnableEditor* pEditor = dynamic_cast<CSpawnableEditor*>(plugin);
+		if (pEditor && pEditor->m_bEditionMode) {
+			if (pEditor->m_pSelectedEntity) {
+				if (key == VK_DELETE) {
+					pEditor->OnEntityRemoved(pEditor->m_pSelectedEntity);
+					pEditor->m_pSelectedEntity->Unlink();
+					pEditor->m_pSelectedEntity = nullptr;
+				}
+			}
+			else if (pEditor->m_pCurrentAddedEntity) {
+				if (key == VK_DELETE) {
+					pEditor->OnEntityRemoved(pEditor->m_pCurrentAddedEntity);
+					pEditor->m_pCurrentAddedEntity->Unlink();
+					pEditor->m_pCurrentAddedEntity = nullptr;
+				}
+				else if (key == VK_LEFT) {
+					pEditor->m_pCurrentAddedEntity->Yaw(10.f);
+				}
+				else if (key == VK_RIGHT) {
+					pEditor->m_pCurrentAddedEntity->Yaw(-10.f);
+				}
+			}
+		}
+		pEditor->m_eLastKeyEvent = e;
 	}
 }
 
@@ -66,7 +98,8 @@ void CSpawnableEditor::OnLeftMouseDown(int x, int y)
 		m_pCurrentAddedEntity->SetWeight(1.f);
 		m_pScene->UpdateMapEntities();
 		OnEntityAdded();
-		m_pCurrentAddedEntity = NULL;
+		m_pCurrentAddedEntity->DrawBoundingBox(false);
+		m_pCurrentAddedEntity = nullptr;
 	}
 	else {
 		CVector intersect;
@@ -75,6 +108,7 @@ void CSpawnableEditor::OnLeftMouseDown(int x, int y)
 			m_pCurrentAddedEntity = m_pSelectedEntity;
 			CVector pos;
 			m_pCurrentAddedEntity->GetWorldPosition(pos);
+			m_pCurrentAddedEntity->Link(m_pScene);
 			m_pCurrentAddedEntity->SetLocalPosition(pos.m_x, GetPlanHeight(), pos.m_z);
 			m_pCurrentAddedEntity->SetWeight(0.f);
 			m_pCurrentAddedEntity->Update();

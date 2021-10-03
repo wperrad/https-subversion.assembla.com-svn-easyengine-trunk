@@ -16,6 +16,7 @@
 #include "IRessource.h"
 #include "IRessource.h"
 #include "ILoader.h"
+#include "Texture.h"
 
 using namespace std;
 
@@ -96,6 +97,7 @@ private:
 	static void										CollectMaterials(const ILoader::CMaterialInfos& oMaterialInfos, IRenderer& oRenderer, IShader* pShader, IRessourceManager* pRessourceManager, std::map< int, CMaterial* >& vMaterials);
 	static CMaterial*								CreateMaterial(const ILoader::CMaterialInfos*, IRenderer& oRenderer, IShader* pShader, IRessourceManager* pRessourceManager);
 
+	void											CreateTextureDesc(string sFileName, CTexture2D::CDesc& desc);
 	std::map< std::string, TRessourceCreation >		m_mRessourceCreation;
 	std::map< std::string, TTestRessourceCreation >	m_mTestRessourceCreation;
 	int												m_nLightCount;

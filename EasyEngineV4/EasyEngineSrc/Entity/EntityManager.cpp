@@ -105,6 +105,16 @@ IEntity* CEntityManager::CreateEntity(std::string sFileName, bool bDuplicate)
 	return pEntity;
 }
 
+IEntity* CEntityManager::CreateObject(string sFileName)
+{
+	CObject* pEntity = NULL;
+	pEntity = new CObject(m_oInterface, sFileName);
+	string sName;
+	pEntity->GetName(sName);
+	AddEntity(pEntity, sName);
+	return pEntity;
+}
+
 IEntity* CEntityManager::CreateEmptyEntity( string sName )
 {
 	CEntity* pEntity = new CEntity(m_oInterface);

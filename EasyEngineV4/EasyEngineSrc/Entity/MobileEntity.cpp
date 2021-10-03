@@ -18,9 +18,148 @@ vector< CMobileEntity* >							CMobileEntity::s_vHumans;
 map<string, IEntity::TAnimation> CMobileEntity::s_mStringToAnimation;
 
 
+
+CObject::CObject(EEInterface& oInterface, string sFileName) :
+	CEntity(oInterface, sFileName)
+{
+	m_pfnCollisionCallback = OnCollision;
+}
+
+void CObject::Update()
+{
+	ManageGravity();
+	UpdateCollision();
+
+	if (m_pCurrentAnimation) {
+		m_pCurrentAnimation->Update();
+		m_pBoundingGeometry = GetBoundingGeometry();
+	}
+
+	UpdateWorldMatrix();
+	UpdateChildren();
+	SendBonesToShader();
+
+	m_oWorldMatrix *= m_oScaleMatrix;
+	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
+	UpdateRessource();
+
+	if (m_bDrawBoundingBox && m_pBoundingGeometry)
+		UpdateBoundingBox();
+
+	m_vNextLocalTranslate.Fill(0, 0, 0, 1);
+	DispatchEntityEvent();
+}
+
+void CObject::OnCollision(CEntity* pThis, vector<INode*> entities)
+{
+	for (int i = 0; i < entities.size(); i++) {
+		CEntity* pEntity = dynamic_cast<CEntity*>(entities[i]);
+		IMesh* pMesh = static_cast<IMesh*>(pThis->GetRessource());
+		ICollisionMesh* pCollisionMesh = pEntity ? pEntity->GetCollisionMesh() : NULL;
+		if (pCollisionMesh)
+			pThis->LinkAndUpdateMatrices(pEntity);
+	}
+}
+
+void CObject::ManageGravity()
+{
+	m_oBody.Update();
+	if (m_oBody.m_fWeight > 0.f)
+	{
+		float x, y, z;
+		m_oLocalMatrix.GetPosition(x, y, z);
+		int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
+		m_vNextLocalTranslate.m_y += m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f;
+	}
+}
+
+void CObject::UpdateCollision()
+{
+	if (GetWeight() > 0) {
+		float h = GetHeight();
+
+		m_vNextLocalTranslate += m_vConstantLocalTranslate;
+
+		CMatrix backupLocal = m_oLocalMatrix;
+
+		CNode::LocalTranslate(m_vNextLocalTranslate.m_x, m_vNextLocalTranslate.m_y, m_vNextLocalTranslate.m_z);
+		CNode::UpdateWorldMatrix();
+		CMatrix oLocalMatrix = m_oLocalMatrix;
+
+		vector<INode*> entities;
+		if (!m_bFirstUpdate)
+			GetEntitiesCollision(entities);
+		else
+			m_bFirstUpdate = false;
+
+		CVector localPos;
+		oLocalMatrix.GetPosition(localPos);
+
+		CVector directriceLine = m_vNextLocalTranslate;
+		CVector first = backupLocal.GetPosition();
+		CVector last = localPos;
+		CVector firstBottom = first;
+		CVector lastBottom = last;
+		CVector R = last;
+		bool bCollision = false;
+		float fMaxHeight = -999999.f;
+		for (int i = 0; i < entities.size(); i++) {
+			INode* pEntity = entities[i];
+			pEntity->GetBoundingGeometry()->SetTM(pEntity->GetLocalMatrix());
+			IGeometry* firstBox = GetBoundingGeometry()->Duplicate();
+			firstBox->SetTM(backupLocal);
+			IGeometry* lastBox = GetBoundingGeometry();
+			lastBox->SetTM(oLocalMatrix);
+			IGeometry::TFace collisionFace = IGeometry::eNone;
+			collisionFace = pEntity->GetBoundingGeometry()->GetReactionYAlignedBox(*firstBox, *lastBox, R);
+			if (collisionFace != IBox::eNone) {
+				lastBottom = R;
+				last = R;
+				bCollision = true;
+				if (collisionFace == IBox::eYPositive) {
+					last.m_y += h / 2.f;
+					if (fMaxHeight < last.m_y)
+						fMaxHeight = last.m_y;
+					else
+						last.m_y = fMaxHeight;
+					m_oBody.m_oSpeed.m_y = 0;
+				}
+			}
+			else {
+				bCollision = true;
+			}
+		}
+		// Ground collision
+		const float margin = 10.f;
+		CVector nextPosition = m_oLocalMatrix * CVector(0, 0, 100);
+		float fGroundHeight = m_pParent->GetGroundHeight(localPos.m_x, localPos.m_z) + margin;
+		float fGroundHeightNext = m_pParent->GetGroundHeight(nextPosition.m_x, nextPosition.m_z) + margin;
+		float fEntityY = last.m_y - h / 2.f;
+		if (fEntityY <= fGroundHeight + CBody::GetEpsilonError()) {
+			m_oBody.m_oSpeed.m_x = 0;
+			m_oBody.m_oSpeed.m_y = 0;
+			m_oBody.m_oSpeed.m_z = 0;
+			float newY = fGroundHeight + h / 2.f;
+			last.m_y = newY;
+		}
+		SetLocalPosition(last);
+
+		// Still into parent ?	
+		if (!TestCollision(m_pParent)) {
+			CEntity* pEntity = dynamic_cast<CEntity*>(m_pParent->GetParent());
+			if (pEntity)
+				LinkAndUpdateMatrices(pEntity);
+		}
+
+		if (bCollision && m_pfnCollisionCallback) {
+			m_pfnCollisionCallback(this, entities);
+		}
+	}
+}
+
+
 CMobileEntity::CMobileEntity(EEInterface& oInterface, string sFileName, string sID):
-CEntity(oInterface, sFileName),
-m_oInterface(oInterface),
+CObject(oInterface, sFileName),
 m_bInitSkeletonOffset( false ),
 m_fMaxEyeRotationH( 15 ),
 m_fMaxEyeRotationV( 15 ),
@@ -111,43 +250,6 @@ void CMobileEntity::OnCollision(CEntity* pThis, vector<INode*> entities)
 	}
 }
 
-void CMobileEntity::ManageGravity()
-{
-	m_oBody.Update();
-	if (m_oBody.m_fWeight > 0.f)
-	{
-		float x, y, z;
-		m_oLocalMatrix.GetPosition(x, y, z);
-		int nDelta = CTimeManager::Instance()->GetTimeElapsedSinceLastUpdate();
-		m_vNextLocalTranslate.m_y += m_oBody.m_oSpeed.m_y * (float)nDelta / 1000.f;
-	}
-}
-
-void CMobileEntity::Update()
-{
-	ManageGravity();
-	UpdateCollision();
-
-	if (m_pCurrentAnimation) {
-		m_pCurrentAnimation->Update();
-		m_pBoundingGeometry = GetBoundingGeometry();
-	}
-
-	UpdateWorldMatrix();
-	UpdateChildren();
-	SendBonesToShader();
-
-	m_oWorldMatrix *= m_oScaleMatrix;
-	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
-	UpdateRessource();
-
-	if (m_bDrawBoundingBox && m_pBoundingGeometry)
-		UpdateBoundingBox();
-
-	m_vNextLocalTranslate.Fill(0, 0, 0, 1);
-	DispatchEntityEvent();
-}
-
 IGeometry* CMobileEntity::GetBoundingGeometry()
 {
 	if (m_pCurrentAnimation) {
@@ -183,90 +285,6 @@ IGeometry* CMobileEntity::GetBoundingGeometry()
 		return m_pMesh->GetBBox();
 	}
 	return nullptr;
-}
-
-void CMobileEntity::UpdateCollision()
-{
-	if (this->GetWeight() > 0) {
-		float h = GetHeight();
-
-		m_vNextLocalTranslate += m_vConstantLocalTranslate;
-
-		CMatrix backupLocal = m_oLocalMatrix;
-
-		CNode::LocalTranslate(m_vNextLocalTranslate.m_x, m_vNextLocalTranslate.m_y, m_vNextLocalTranslate.m_z);
-		CNode::UpdateWorldMatrix();
-		CMatrix oLocalMatrix = m_oLocalMatrix;
-
-		vector<INode*> entities;
-		if (!m_bFirstUpdate)
-			GetEntitiesCollision(entities);
-		else
-			m_bFirstUpdate = false;
-
-		CVector localPos;
-		oLocalMatrix.GetPosition(localPos);
-
-		CVector directriceLine = m_vNextLocalTranslate;
-		CVector first = backupLocal.GetPosition();
-		CVector last = localPos;
-		CVector firstBottom = first;
-		CVector lastBottom = last;
-		CVector R = last;
-		bool bCollision = false;
-		float fMaxHeight = -999999.f;
-		for (int i = 0; i < entities.size(); i++) {
-			INode* pEntity = entities[i];
-			pEntity->GetBoundingGeometry()->SetTM(pEntity->GetLocalMatrix());
-			IGeometry* firstBox = GetBoundingGeometry()->Duplicate();
-			firstBox->SetTM(backupLocal);
-			IGeometry* lastBox = GetBoundingGeometry();
-			lastBox->SetTM(oLocalMatrix);
-			IGeometry::TFace collisionFace = IGeometry::eNone;
-			collisionFace = pEntity->GetBoundingGeometry()->GetReactionYAlignedBox(*firstBox, *lastBox, R);
-			if (collisionFace != IBox::eNone) {
-				lastBottom = R;
-				last = R;
-				bCollision = true;
-				if (collisionFace == IBox::eYPositive) {
-					last.m_y += h / 2.f;
-					if (fMaxHeight < last.m_y)
-						fMaxHeight = last.m_y;
-					else
-						last.m_y = fMaxHeight;
-					m_oBody.m_oSpeed.m_y = 0;
-				}
-			}
-			else {
-				bCollision = true;
-			}
-		}
-		// Ground collision
-		const float margin = 10.f;
-		CVector nextPosition = m_oLocalMatrix * CVector(0, 0, 100);
-		float fGroundHeight = m_pParent->GetGroundHeight(localPos.m_x, localPos.m_z) + margin;
-		float fGroundHeightNext = m_pParent->GetGroundHeight(nextPosition.m_x, nextPosition.m_z) + margin;
-		float fEntityY = last.m_y - h / 2.f;
-		if (fEntityY <= fGroundHeight + CBody::GetEpsilonError()) {
-			m_oBody.m_oSpeed.m_x = 0;
-			m_oBody.m_oSpeed.m_y = 0;
-			m_oBody.m_oSpeed.m_z = 0;
-			float newY = fGroundHeight + h / 2.f;
-			last.m_y = newY;
-		}
-		SetLocalPosition(last);
-
-		// Still into parent ?	
-		if (!TestCollision(m_pParent)) {
-			CEntity* pEntity = dynamic_cast<CEntity*>(m_pParent->GetParent());
-			if (pEntity)
-				LinkAndUpdateMatrices(pEntity);
-		}
-
-		if (bCollision && m_pfnCollisionCallback) {
-			m_pfnCollisionCallback(this, entities);
-		}
-	}
 }
 
 const string& CMobileEntity::GetAttackBoneName()

@@ -22,6 +22,7 @@ class CEntityManager : public IEntityManager
 public:
 	CEntityManager(EEInterface& oInterface);
 	IEntity*			CreateEntity(string sFileName, bool bDuplicate = false );
+	IEntity*			CreateObject(string sFileName);
 	CEntity*			CreateEntityFromType(std::string sFileName, string sTypeName, string sID, bool bDuplicate = false);
 	IEntity*			CreateEmptyEntity( string sName = "noname" );
 	CCollisionEntity*	CreateCollisionEntity(string sName = "noname");

@@ -4,7 +4,22 @@
 #include "Entity.h"
 #include "FighterEntity.h"
 
-class CMobileEntity : public CEntity, public virtual IFighterEntity, public virtual ICharacter
+
+class CObject : public CEntity
+{
+public:
+	CObject(EEInterface& oInterface, string sFileName);
+	void						Update();
+	void						ManageGravity();
+	void						UpdateCollision();
+
+private:
+	CVector						m_vNextLocalTranslate;
+	bool						m_bFirstUpdate;
+	static void 				OnCollision(CEntity* pThis, vector<INode*> entities);
+};
+
+class CMobileEntity : public CObject, public virtual IFighterEntity, public virtual ICharacter
 {
 
 public:
@@ -23,9 +38,6 @@ public:
 	void						Yaw(float fAngle);
 	void						Pitch(float fAngle);
 	void						Roll(float fAngle);
-	void						ManageGravity();
-	void						Update();
-	void						UpdateCollision();
 	IAnimation*					GetCurrentAnimation();
 	static void					InitStatics();
 
@@ -34,7 +46,6 @@ public:
 protected:
 	typedef void (*TAction)( CMobileEntity*, bool );
 
-	EEInterface&								m_oInterface;
 	string										m_sFileNameWithoutExt;
 	bool										m_bInitSkeletonOffset;
 	CMatrix										m_oSkeletonOffset;

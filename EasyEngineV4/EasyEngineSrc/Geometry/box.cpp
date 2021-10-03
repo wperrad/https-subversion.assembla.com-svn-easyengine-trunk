@@ -455,7 +455,7 @@ IGeometry::TFace CBox::GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeom
 		CVector O = box1PointsLocal[i];
 		CVector P = box2PointsLocal[i];
 
-		if (O.m_y < dimy && (O.m_y + box1.GetDimension().m_y) > -dimy) {
+		if ( box1.GetDimension().m_y  < dimy && O.m_y < dimy && (O.m_y + box1.GetDimension().m_y) > -dimy) {
 			CVector A, B;
 			// collision sur le plan x positif
 			if (P.m_x > (dimx - margin - box1.GetDimension().m_z / 2.f) && P.m_x < dimx && P.m_x < O.m_x && P.m_z < dimz && P.m_z > -dimz) {
@@ -509,7 +509,8 @@ IGeometry::TFace CBox::GetReactionYAlignedBox(IGeometry& firstPositionBox, IGeom
 		else {
 			O = oTMInv * firstPositionBox.GetTM().GetPosition();
 			P = oTMInv * lastPositionBox.GetTM().GetPosition();
-			if (O.m_y > dimy) {
+			if ( (O.m_y > dimy) ||
+				((O.m_y < dimy) && (O.m_y + box1.GetDimension().m_y) > dimy) ) {
 				RLocal = P;
 				RLocal.m_y = dimy;
 				face = eYPositive;

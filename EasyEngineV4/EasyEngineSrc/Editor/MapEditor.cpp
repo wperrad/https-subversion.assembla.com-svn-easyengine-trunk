@@ -16,7 +16,6 @@
 
 #include <algorithm>
 
-IEventDispatcher::TKeyEvent	CMapEditor::m_eLastKeyEvent = IEventDispatcher::TKeyEvent::T_KEYUP;
 
 CMapEditor::CMapEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType) :
 ISpawnableEditor(oInterface),
@@ -31,8 +30,6 @@ m_fGroundAdaptationHeight(0.f),
 m_pHeightMap(nullptr)
 {
 	IEventDispatcher* pEventDispatcher = static_cast<IEventDispatcher*>(oInterface.GetPlugin("EventDispatcher"));
-
-	pEventDispatcher->AbonneToKeyEvent(this, OnKeyEventCallback);
 	pEventDispatcher->AbonneToEntityEvent(this, OnSceneLoadRessource);
 	string sSceneFileName;
 	ISceneManager* pSceneManager = static_cast<ISceneManager*>(oInterface.GetPlugin("SceneManager"));
@@ -41,38 +38,8 @@ m_pHeightMap(nullptr)
 	m_sTmpAdaptedHeightMapFileName = "/" + m_sTmpFolder + "/HMA_tmp.bmp";
 }
 
-void CMapEditor::OnKeyEventCallback(CPlugin* plugin, IEventDispatcher::TKeyEvent e, int key)
-{
-	if (e == IEventDispatcher::T_KEYUP) {
-		CMapEditor* pEditor = dynamic_cast<CMapEditor*>(plugin);
-		if (pEditor && pEditor->m_bEditionMode) {
-			if (m_eLastKeyEvent == IEventDispatcher::T_KEYDOWN) {
-				if (pEditor->m_pSelectedEntity) {
-					if (key == VK_DELETE) {
-						pEditor->m_pSelectedEntity->Unlink();
-						pEditor->m_pSelectedEntity = nullptr;
-					}
-				}
-				else if (pEditor->m_pCurrentAddedEntity) {
-					if (key == VK_DELETE) {
-						pEditor->m_pCurrentAddedEntity->Unlink();
-						pEditor->m_pCurrentAddedEntity = nullptr;
-					}
-					else if (key == VK_LEFT) {
-						pEditor->m_pCurrentAddedEntity->Yaw(1.f);
-					}
-					else if (key == VK_RIGHT) {
-						pEditor->m_pCurrentAddedEntity->Yaw(-1.f);
-					}
-				}
-			}
-		}
-	}
-	m_eLastKeyEvent = e;
-}
-
 void CMapEditor::OnEntityAdded()
-{;
+{
 	AdaptGroundToEntity(m_pCurrentAddedEntity);
 }
 
@@ -353,6 +320,11 @@ void CMapEditor::SetEditionMode(bool bEditionMode)
 void CMapEditor::CollectSelectableEntity(vector<IEntity*>& entities)
 {
 	m_pScene->CollectMinimapEntities(entities);
+}
+
+void CMapEditor::OnEntityRemoved(IEntity* pEntity)
+{
+
 }
 
 void CMapEditor::SaveResponseCallback(string sResponse, void* pData)

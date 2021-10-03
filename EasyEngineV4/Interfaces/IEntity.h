@@ -194,6 +194,7 @@ public:
 	virtual IEntity*			CreateMobileEntity( string sFileName, IFileSystem* pFileSystem, string sID ) = 0;
 	virtual IPlayer*			CreatePlayer(string sFileName) = 0;
 	virtual ICharacter*			CreateNPC( string sFileName, string sID ) = 0;
+	virtual IEntity*			CreateObject(string sFileName) = 0;
 	virtual IEntity*			CreateMinimapEntity(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual IEntity*			CreateTestEntity(string sFileName, IFileSystem* pFileSystem) = 0;
 	virtual void				GetCharactersName(vector<string>& vCharactersName) = 0;

@@ -21,7 +21,7 @@ class CEditor : public IEditor
 public:
 	CEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType);
 
-	virtual void			SetEditionMode(bool bEditionMode);
+	virtual void			SetEditionMode(bool bEditionMode) override;
 
 protected:	
 

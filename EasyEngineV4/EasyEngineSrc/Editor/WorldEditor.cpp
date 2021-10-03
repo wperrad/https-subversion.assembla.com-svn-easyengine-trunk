@@ -9,12 +9,12 @@
 
 
 CWorldEditor::CWorldEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType) :
-CPlugin(nullptr, ""),
-ISpawnableEditor(oInterface),
-IWorldEditor(oInterface),
-CSpawnableEditor(oInterface, cameraType),
-m_oSceneManager(static_cast<ISceneManager&>(*oInterface.GetPlugin("SceneManager"))),
-m_oFileSystem(static_cast<IFileSystem&>(*oInterface.GetPlugin("FileSystem")))
+	CPlugin(nullptr, ""),
+	ISpawnableEditor(oInterface),
+	IWorldEditor(oInterface),
+	CSpawnableEditor(oInterface, cameraType),
+	m_oSceneManager(static_cast<ISceneManager&>(*oInterface.GetPlugin("SceneManager"))),
+	m_oFileSystem(static_cast<IFileSystem&>(*oInterface.GetPlugin("FileSystem")))
 {
 	m_pScene = m_oSceneManager.GetScene("Game");
 }
@@ -31,7 +31,12 @@ void CWorldEditor::ClearWorld()
 
 void CWorldEditor::OnEntityAdded()
 {
-
+	map<string, vector<pair<IEntity*, CMatrix>>>::iterator itEntity = m_mEntityMatrices.find(m_pCurrentAddedEntity->GetName());
+	if (itEntity != m_mEntityMatrices.end()) {
+		vector<pair<IEntity*, CMatrix>>& vMatrices = itEntity->second;
+		vMatrices.back().first = m_pCurrentAddedEntity;
+		vMatrices.back().second = m_pCurrentAddedEntity->GetWorldMatrix();
+	}
 }
 
 float CWorldEditor::GetPlanHeight()
@@ -42,7 +47,7 @@ float CWorldEditor::GetPlanHeight()
 		pCamera->GetWorldPosition(camPos);
 		IBox* pBox = dynamic_cast<IBox*>(m_pCurrentAddedEntity->GetBoundingGeometry());
 		if (pBox)
-			return camPos.m_y - pBox->GetDimension().m_y;
+			return camPos.m_y - 200.f;
 	}
 	return 0.f;
 }
@@ -50,6 +55,21 @@ float CWorldEditor::GetPlanHeight()
 void CWorldEditor::OnEntitySelected()
 {
 
+}
+
+void CWorldEditor::OnEntityRemoved(IEntity* pEntity)
+{
+	map<string, vector<pair<IEntity*, CMatrix>>>::iterator itEntity = m_mEntityMatrices.find(pEntity->GetName());
+	if (itEntity != m_mEntityMatrices.end()) {
+		vector<pair<IEntity*, CMatrix>>& vMatrices = itEntity->second;
+		for (vector<pair<IEntity*, CMatrix>>::iterator itMat = vMatrices.begin(); itMat != vMatrices.end(); itMat++)
+			if (itMat->first == pEntity)
+				itMat = vMatrices.erase(itMat);
+	}
+	else {
+		map<string, CMatrix>::iterator itCharacter = m_mCharacterMatrices.find(pEntity->GetName());
+		m_mCharacterMatrices.erase(itCharacter);
+	}
 }
 
 string CWorldEditor::GetName()
@@ -63,7 +83,7 @@ void CWorldEditor::Load(string fileName)
 	ClearEntities();
 	if (fileName.empty())
 		GetRelativeDatabasePath(fileName);
-	
+
 	CBinaryFileStorage fs;
 	if (fs.OpenFile(fileName, IFileStorage::TOpenMode::eRead)) {
 		int mapCount = 0;
@@ -78,7 +98,7 @@ void CWorldEditor::Load(string fileName)
 			string root;
 			m_oFileSystem.GetLastDirectory(root);
 			IMapEditor* pMapEditor = dynamic_cast<IMapEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eMap));
-			m_pScene->HandleLoadingComplete(OnSceneLoadingComplete, this);
+			m_pScene->HandleLoadingComplete(HandleSceneLoadingComplete, this);
 			pMapEditor->Load(m_mMaps.begin()->first);
 		}
 
@@ -89,6 +109,18 @@ void CWorldEditor::Load(string fileName)
 			CMatrix tm;
 			fs >> id >> tm;
 			m_mCharacterMatrices[id] = tm;
+		}
+		int entityCount = 0;
+		fs >> entityCount;
+		for (int i = 0; i < entityCount; i++) {
+			string sFileName;
+			int instanceCount = 0;
+			fs >> sFileName >> instanceCount;
+			for (int iInstance = 0; iInstance < instanceCount; iInstance++) {
+				CMatrix tm;
+				fs >> tm;
+				m_mEntityMatrices[sFileName].push_back(pair<IEntity*, CMatrix>(nullptr, tm));
+			}
 		}
 	}
 	m_pEditorCamera->Link(m_pScene);
@@ -116,28 +148,39 @@ void CWorldEditor::Save(string fileName)
 				throw CEException(oss.str());
 			}
 		}
+		fs << (int)m_mEntityMatrices.size();
+		for (map<string, vector<pair<IEntity*, CMatrix>>>::iterator it = m_mEntityMatrices.begin(); it != m_mEntityMatrices.end(); it++) {
+			fs << it->first;
+			fs << (int)it->second.size();
+			for(int iMatrix = 0; iMatrix < it->second.size(); iMatrix++) {
+				if(it->second[iMatrix].first)
+					fs << it->second[iMatrix].first->GetWorldMatrix();
+			}
+		}
 	}
 }
 
-void CWorldEditor::SpawnEntity(string sID)
+void CWorldEditor::SpawnEntity(string sFileName)
 {
-	throw CMethodNotImplementedException("CWorldEditor::SpawnEntity()");
 	if(!m_bEditionMode)
 		SetEditionMode(true);
 
-	m_pCurrentAddedEntity = m_oEntityManager.BuildCharacterFromDatabase(sID, m_pScene);
-	m_oEntityManager.AddEntity(m_pCurrentAddedEntity, sID);
+	string relativePath = string("Meshes/") + sFileName;
+	m_pCurrentAddedEntity = m_oEntityManager.CreateObject(relativePath);
+	m_pCurrentAddedEntity->SetName(sFileName);
+	m_oEntityManager.AddEntity(m_pCurrentAddedEntity, relativePath);
 	InitSpawnedEntity();
 	CMatrix m;
-	m_mCharacterMatrices[sID] = m;
+	m_mEntityMatrices[sFileName].push_back(pair<IEntity*, CMatrix>(nullptr, m));
+	m_vEntities.push_back(m_pCurrentAddedEntity);
 }
 
 void CWorldEditor::RemoveCharacter(string sID)
 {
 	m_mCharacterMatrices.erase(sID);
 	IEntity* pCharacter = m_oEntityManager.GetEntity(sID);
-	vector<IEntity*>::iterator itCharacter = std::find(m_vCharacters.begin(), m_vCharacters.end(), pCharacter);
-	m_vCharacters.erase(itCharacter);
+	vector<IEntity*>::iterator itCharacter = std::find(m_vEntities.begin(), m_vEntities.end(), pCharacter);
+	m_vEntities.erase(itCharacter);
 }
 
 void CWorldEditor::SpawnCharacter(string sID)
@@ -148,14 +191,14 @@ void CWorldEditor::SpawnCharacter(string sID)
 	m_pCurrentAddedEntity = m_oEntityManager.BuildCharacterFromDatabase(sID, m_pScene);
 	if (!m_pCurrentAddedEntity) {
 		ostringstream oss;
-		oss << "Erreur : Personnage " << sID << " introuvable dans la base de donnee des personnages.";
+		oss << "Erreur : Personnage " << sID << " introuvable dans la base de donnees des personnages.";
 		throw CEException(oss.str());
 	}
 	m_oEntityManager.AddEntity(m_pCurrentAddedEntity, sID);
 	InitSpawnedEntity();
 	CMatrix m;
 	m_mCharacterMatrices[sID] = m;
-	m_vCharacters.push_back(m_pCurrentAddedEntity);
+	m_vEntities.push_back(m_pCurrentAddedEntity);
 	m_oCameraManager.SetActiveCamera(m_pEditorCamera);
 }
 
@@ -175,13 +218,12 @@ void CWorldEditor::SetEditionMode(bool bEditionMode)
 
 void CWorldEditor::CollectSelectableEntity(vector<IEntity*>& entities)
 {
-	entities = m_vCharacters;
+	entities = m_vEntities;
 }
 
 void CWorldEditor::Edit(string id)
 {
 	SetEditionMode(true);
-	Load(id);
 }
 
 void CWorldEditor::GetRelativeDatabasePath(string& path)
@@ -194,34 +236,45 @@ void CWorldEditor::GetRelativeDatabasePath(string& path)
 void CWorldEditor::ClearEntities()
 {
 	m_pScene->Clear();
-	m_vCharacters.clear();
+	m_vEntities.clear();
 	m_mCharacterMatrices.clear();
+	m_mEntityMatrices.clear();
 	m_oEntityManager.Clear();
 }
 
-void CWorldEditor::OnSceneLoadingComplete(void* pWorldEditorData)
+void CWorldEditor::OnSceneLoaded()
+{
+	for (map<string, CMatrix>::iterator itCharacter = m_mCharacterMatrices.begin(); itCharacter != m_mCharacterMatrices.end(); itCharacter++) {
+		IEntity* pEntity = m_oEntityManager.BuildCharacterFromDatabase(itCharacter->first, m_pScene);
+		if (pEntity) {
+			pEntity->SetLocalMatrix(itCharacter->second);
+			pEntity->SetWeight(1);
+			m_vEntities.push_back(pEntity);
+		}
+	}
+	for (map<string, vector<pair<IEntity*, CMatrix>>>::iterator itEntity = m_mEntityMatrices.begin(); itEntity != m_mEntityMatrices.end(); itEntity++) {
+		vector<pair<IEntity*, CMatrix>>& vMatrices = itEntity->second;
+		for (int i = 0; i < vMatrices.size(); i++) {
+			IEntity* pEntity = m_oEntityManager.CreateObject(string("Meshes/") + itEntity->first);
+			if (pEntity) {
+				pEntity->Link(m_pScene);
+				vMatrices[i].first = pEntity;
+				pEntity->SetLocalMatrix(vMatrices[i].second);
+				pEntity->SetWeight(1);
+				m_vEntities.push_back(pEntity);
+			}
+		}
+	}
+	if (m_bEditionMode)
+		InitCamera();
+}
+
+void CWorldEditor::HandleSceneLoadingComplete(void* pWorldEditorData)
 {
 	CWorldEditor* pWorldEditor = (CWorldEditor*)pWorldEditorData;
 	try {
 		if (pWorldEditor) {
-			for (map<string, CMatrix>::iterator itCharacter = pWorldEditor->m_mCharacterMatrices.begin(); itCharacter != pWorldEditor->m_mCharacterMatrices.end(); itCharacter++) {
-				IEntity* pEntity = nullptr;
-				if (itCharacter != pWorldEditor->m_mCharacterMatrices.end()) {
-					pEntity = pWorldEditor->m_oEntityManager.BuildCharacterFromDatabase(itCharacter->first, pWorldEditor->m_pScene);
-					if (pEntity) {
-						pEntity->SetLocalMatrix(itCharacter->second);
-						pEntity->SetWeight(1);
-						pWorldEditor->m_vCharacters.push_back(pEntity);
-					}
-				}
-				if ((itCharacter == pWorldEditor->m_mCharacterMatrices.end()) || !pEntity) {
-					ostringstream oss;
-					oss << "Erreur dans CWorldEditor::OnSceneLoadingComplete() : le personnage " << itCharacter->first << " n'existe pas.";
-					pWorldEditor->m_oConsole.Println(oss.str());
-				}
-			}
-			if(pWorldEditor->m_bEditionMode)
-				pWorldEditor->InitCamera();
+			pWorldEditor->OnSceneLoaded();
 		}
 	}
 	catch (CEException& e)

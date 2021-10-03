@@ -41,8 +41,7 @@ public:
 	void							Edit(string id) override;
 
 private:
-
-	static void						OnKeyEventCallback(CPlugin*, IEventDispatcher::TKeyEvent e, int n);
+		
 	static void						OnSceneLoadRessource(CPlugin*, IEventDispatcher::TEntityEvent, IEntity*);
 	
 	void							AdaptGroundToEntity(IEntity* pEntity);
@@ -55,6 +54,7 @@ private:
 	float							GetPlanHeight() override;
 	void							SetEditionMode(bool bEditionMode) override;
 	void							CollectSelectableEntity(vector<IEntity*>& entities) override;
+	void							OnEntityRemoved(IEntity* pEntity) override;
 
 	struct AdaptGroundThreadStruct
 	{
@@ -79,8 +79,7 @@ private:
 	string							m_sTmpFolder;
 	string							m_sCurrentMapName;
 
-	static void						SaveResponseCallback(string sResponse, void* pData);
-	static IEventDispatcher::TKeyEvent	m_eLastKeyEvent;
+	static void						SaveResponseCallback(string sResponse, void* pData);	
 
 #ifdef DEBUG_TEST_PLANE
 	IEntity* m_pQuadEntity;

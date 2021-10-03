@@ -24,6 +24,7 @@ public:
 	virtual void	HandleEditorManagerCreation(IEditorManager* pEditor) = 0;
 	virtual bool	IsEnabled() = 0;
 	virtual void	SpawnEntity(string sEntityFileName) = 0;
+	virtual void	SetEditionMode(bool bEditionMode) = 0;
 };
 
 class ISpawnableEditor : public IEditor

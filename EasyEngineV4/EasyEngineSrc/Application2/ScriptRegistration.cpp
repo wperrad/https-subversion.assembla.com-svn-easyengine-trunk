@@ -1118,6 +1118,12 @@ void SaveCharacter(IScriptState* pState)
 	m_pCharacterEditor->Save();
 }
 
+void SaveCharacterInWorld(IScriptState* pState)
+{
+	CScriptFuncArgString* pID = (CScriptFuncArgString*)(pState->GetArg(0));
+	m_pEntityManager->SaveCharacter(pID->m_sValue);
+}
+
 void RemoveCharacterFromWorld(IScriptState* pState)
 {
 	CScriptFuncArgString* pID = static_cast< CScriptFuncArgString* >(pState->GetArg(0));
@@ -2823,6 +2829,7 @@ void LoadWorld(IScriptState* pState)
 {
 	try
 	{
+		m_pWorldEditor->SetEditionMode(false);
 		m_pWorldEditor->Load("");
 	}
 	catch (CFileException& e)
@@ -3702,6 +3709,10 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	m_pScriptManager->RegisterFunction("SaveCharacter", SaveCharacter, vType);
+
+	vType.clear();
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("SaveCharacterInWorld", SaveCharacterInWorld, vType);	
 
 	vType.clear();
 	vType.push_back(eString);
