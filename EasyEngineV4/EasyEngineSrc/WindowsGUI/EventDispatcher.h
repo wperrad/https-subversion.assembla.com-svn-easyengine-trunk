@@ -25,6 +25,7 @@ public:
 	void 			AbonneToMouseEvent( CPlugin* pPlugin, TMouseCallback pfnCallback ) override;
 	void 			AbonneToWindowEvent( CPlugin* pPlugin, TWindowCallback pfnCallback ) override;
 	void			AbonneToEntityEvent(CPlugin* pPlugin, TEntityCallback pfnEntityCallback) override;
+	void			DesabonneToKeyEvent(CPlugin* pPlugin, TKeyCallback pfnCallback) override;
 	void			DesabonneToMouseEvent(TMouseCallback pfnCallback);
 	void			DesabonneToWindowEvent(TWindowCallback pfnCallback);	
 

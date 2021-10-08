@@ -27,6 +27,13 @@ void CEventDispatcher::AbonneToEntityEvent(CPlugin* pPlugin, TEntityCallback pfn
 	m_vEntityAbonnedPlugins.push_back(pair< CPlugin*, TEntityCallback>::pair(pPlugin, pfnCallback));
 }
 
+void CEventDispatcher::DesabonneToKeyEvent(CPlugin* pPlugin, TKeyCallback pfnCallback)
+{
+	vector<pair<CPlugin*, TKeyCallback>>::iterator itCallback = std::find(m_vKeyAbonnedPlugins.begin(), m_vKeyAbonnedPlugins.end(), pair<CPlugin*, TKeyCallback>(pPlugin, pfnCallback));
+	if (itCallback != m_vKeyAbonnedPlugins.end())
+		m_vKeyAbonnedPlugins.erase(itCallback);
+}
+
 void CEventDispatcher::DesabonneToMouseEvent(TMouseCallback pfnCallback)
 {
 	for (vector< pair< CPlugin*, TMouseCallback > >::iterator it = m_vMouseAbonnedPlugins.begin(); it != m_vMouseAbonnedPlugins.end(); it++) {

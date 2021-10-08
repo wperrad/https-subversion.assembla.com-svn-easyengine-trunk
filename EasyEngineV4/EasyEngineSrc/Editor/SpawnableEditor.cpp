@@ -11,19 +11,19 @@
 
 CSpawnableEditor::CSpawnableEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType) :
 CEditor(oInterface, cameraType),
-m_pCurrentAddedEntity(nullptr),
+m_oEventDispatcher(static_cast<IEventDispatcher&>(*oInterface.GetPlugin("EventDispatcher"))),
+m_pEditingEntity(nullptr),
 m_pScene(nullptr),
-m_pSelectedEntity(nullptr),
 m_bDisplayPickingRaySelected(false),
 m_bDisplayPickingRayMouseMove(false),
 m_bDisplayPickingIntersectPlane(false),
 m_pQuadEntity(nullptr),
 m_pDebugSphere(nullptr),
-m_eLastKeyEvent(IEventDispatcher::TKeyEvent::T_KEYUP)
-{
-	IEventDispatcher* pEventDispatcher = static_cast<IEventDispatcher*>(oInterface.GetPlugin("EventDispatcher"));
-	pEventDispatcher->AbonneToMouseEvent(this, OnMouseEventCallback);
-	pEventDispatcher->AbonneToKeyEvent(this, OnKeyEventCallback);
+m_eLastKeyEvent(IEventDispatcher::TKeyEvent::T_KEYUP),
+m_eEditorMode(Type::eNone)
+{	
+	m_oEventDispatcher.AbonneToMouseEvent(this, OnMouseEventCallback);
+	m_oEventDispatcher.AbonneToKeyEvent(this, OnKeyEventCallback);
 }
 
 void CSpawnableEditor::HandleEditorManagerCreation(IEditorManager* pEditorManager)
@@ -41,7 +41,7 @@ void CSpawnableEditor::OnMouseEventCallback(CPlugin* plugin, IEventDispatcher::T
 			pEditor->m_oInputManager.SetEditionMode(false);
 		else if (e == IEventDispatcher::TMouseEvent::T_RBUTTONUP)
 			pEditor->m_oInputManager.SetEditionMode(true);
-		else if (e == IEventDispatcher::TMouseEvent::T_MOVE)
+		else if ( (e == IEventDispatcher::TMouseEvent::T_MOVE) && (pEditor->m_eEditorMode == Type::eAdding) )
 			pEditor->OnMouseMove(x, y);
 	}
 }
@@ -50,38 +50,42 @@ void CSpawnableEditor::OnKeyEventCallback(CPlugin* plugin, IEventDispatcher::TKe
 {
 	if (e == IEventDispatcher::T_KEYDOWN) {
 		CSpawnableEditor* pEditor = dynamic_cast<CSpawnableEditor*>(plugin);
-		if (pEditor && pEditor->m_bEditionMode) {
-			if (pEditor->m_pSelectedEntity) {
+		if (!pEditor->m_oConsole.IsOpen()) {
+			if (pEditor->m_pEditingEntity) {
+				float yawStep = (pEditor->m_oInputManager.GetKeyState(VK_CONTROL) == IInputManager::KEY_STATE::PRESSED) ? 1.f : 10.f;
+				float translateValue = 10.f;
 				if (key == VK_DELETE) {
-					pEditor->OnEntityRemoved(pEditor->m_pSelectedEntity);
-					pEditor->m_pSelectedEntity->Unlink();
-					pEditor->m_pSelectedEntity = nullptr;
-				}
-			}
-			else if (pEditor->m_pCurrentAddedEntity) {
-				if (key == VK_DELETE) {
-					pEditor->OnEntityRemoved(pEditor->m_pCurrentAddedEntity);
-					pEditor->m_pCurrentAddedEntity->Unlink();
-					pEditor->m_pCurrentAddedEntity = nullptr;
+					pEditor->OnEntityRemoved(pEditor->m_pEditingEntity);
+					pEditor->m_pEditingEntity->Unlink();
+					pEditor->m_pEditingEntity = nullptr;
 				}
 				else if (key == VK_LEFT) {
-					pEditor->m_pCurrentAddedEntity->Yaw(10.f);
+					if(pEditor->m_oInputManager.GetKeyState(VK_SHIFT) == IInputManager::KEY_STATE::PRESSED)
+						pEditor->m_pEditingEntity->LocalTranslate(translateValue, 0, 0);
+					else
+						pEditor->m_pEditingEntity->Yaw(-yawStep);
 				}
 				else if (key == VK_RIGHT) {
-					pEditor->m_pCurrentAddedEntity->Yaw(-10.f);
+					if (pEditor->m_oInputManager.GetKeyState(VK_SHIFT) == IInputManager::KEY_STATE::PRESSED)
+						pEditor->m_pEditingEntity->LocalTranslate(-translateValue, 0, 0);
+					else
+						pEditor->m_pEditingEntity->Yaw(yawStep);
 				}
+				else if (key == VK_UP)
+					pEditor->m_pEditingEntity->LocalTranslate(0, 0, translateValue);
+				else if (key == VK_DOWN)
+					pEditor->m_pEditingEntity->LocalTranslate(0, 0, -translateValue);
 			}
 		}
-		pEditor->m_eLastKeyEvent = e;
 	}
 }
 
 void CSpawnableEditor::OnMouseMove(int x, int y)
 {
-	if (m_pCurrentAddedEntity) {
+	if (m_pEditingEntity) {
 		CVector intersect;
 		GetRayPlanIntersection(x, y, GetPlanHeight(), intersect);
-		m_pCurrentAddedEntity->SetLocalPosition(intersect);
+		m_pEditingEntity->SetLocalPosition(intersect);
 		if (m_bDisplayPickingRayMouseMove) {
 			CVector camPos, ray_wor;
 			RayCast(x, y, camPos, ray_wor);
@@ -94,25 +98,27 @@ void CSpawnableEditor::OnMouseMove(int x, int y)
 
 void CSpawnableEditor::OnLeftMouseDown(int x, int y)
 {
-	if (m_pCurrentAddedEntity) {
-		m_pCurrentAddedEntity->SetWeight(1.f);
+	if (m_pEditingEntity) {
+		m_pEditingEntity->SetWeight(1.f);
 		m_pScene->UpdateMapEntities();
 		OnEntityAdded();
-		m_pCurrentAddedEntity->DrawBoundingBox(false);
-		m_pCurrentAddedEntity = nullptr;
+		m_pEditingEntity->DrawBoundingBox(false);
+		m_pEditingEntity = nullptr;
 	}
 	else {
 		CVector intersect;
 		SelectEntity(x, y);
-		if (m_pSelectedEntity) {
-			m_pCurrentAddedEntity = m_pSelectedEntity;
-			CVector pos;
-			m_pCurrentAddedEntity->GetWorldPosition(pos);
-			m_pCurrentAddedEntity->Link(m_pScene);
-			m_pCurrentAddedEntity->SetLocalPosition(pos.m_x, GetPlanHeight(), pos.m_z);
-			m_pCurrentAddedEntity->SetWeight(0.f);
-			m_pCurrentAddedEntity->Update();
-
+		if (m_pEditingEntity) {
+			m_pEditingEntity->DrawBoundingBox(true);
+			m_eEditorMode = m_oInputManager.GetKeyState(VK_SHIFT) == IInputManager::KEY_STATE::PRESSED ? Type::eEditing : Type::eAdding;
+			if (m_eEditorMode == Type::eAdding) {
+				CVector pos;
+				m_pEditingEntity->GetWorldPosition(pos);
+				m_pEditingEntity->Link(m_pScene);
+				m_pEditingEntity->SetLocalPosition(pos.m_x, GetPlanHeight(), pos.m_z);
+				m_pEditingEntity->SetWeight(0.f);
+				m_pEditingEntity->Update();
+			}
 			OnEntitySelected();
 		}
 	}
@@ -226,14 +232,14 @@ void CSpawnableEditor::SelectEntity(int x, int y)
 		}
 	}
 	if (pSelectedEntity) {
-		if (m_pSelectedEntity)
-			m_pSelectedEntity->DrawBoundingBox(false);
+		if (m_pEditingEntity)
+			m_pEditingEntity->DrawBoundingBox(false);
 		pSelectedEntity->DrawBoundingBox(true);
-		m_pSelectedEntity = pSelectedEntity;
+		m_pEditingEntity = pSelectedEntity;
 		DisplayLocalRepere();
 	}
-	else if (m_pSelectedEntity) {
-		m_pSelectedEntity->DrawBoundingBox(false);
+	else if (m_pEditingEntity) {
+		m_pEditingEntity->DrawBoundingBox(false);
 	}
 }
 
@@ -241,7 +247,7 @@ void CSpawnableEditor::DisplayLocalRepere()
 {
 	return;
 	CVector position;
-	m_pSelectedEntity->GetWorldPosition(position);
+	m_pEditingEntity->GetWorldPosition(position);
 	IEntity* x = m_oEntityManager.CreateCylinder(500, 10000);
 }
 
@@ -270,6 +276,14 @@ void CSpawnableEditor::EnableDisplayPickingIntersectPlane(bool enable)
 	m_bDisplayPickingIntersectPlane = enable;
 }
 
+void CSpawnableEditor::SetEditionMode(bool bEnable)
+{
+	if(bEnable)
+		m_oEventDispatcher.AbonneToKeyEvent(this, OnKeyEventCallback);
+	else
+		m_oEventDispatcher.DesabonneToKeyEvent(this, OnKeyEventCallback);
+}
+
 bool CSpawnableEditor::IsEnabled()
 {
 	return m_bEditionMode;
@@ -277,10 +291,10 @@ bool CSpawnableEditor::IsEnabled()
 
 void CSpawnableEditor::InitSpawnedEntity()
 {
-	m_pCurrentAddedEntity->Link(m_pScene);
-	m_pCurrentAddedEntity->SetLocalPosition(0, GetPlanHeight(), 0);
-	m_pCurrentAddedEntity->SetWeight(0.f);
-	m_pCurrentAddedEntity->Update();
+	m_pEditingEntity->Link(m_pScene);
+	m_pEditingEntity->SetLocalPosition(0, GetPlanHeight(), 0);
+	m_pEditingEntity->SetWeight(0.f);
+	m_pEditingEntity->Update();
 }
 
 void CSpawnableEditor::InitCamera()

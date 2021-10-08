@@ -432,6 +432,10 @@ void DestroyPlugins()
 	delete m_pInputManager;
 	delete m_pEventDispatcher;
 	delete m_pFileSystem;
+	delete m_pEditorManager;
+	delete m_pCollisionManager;
+	delete m_pHud;
+	//delete m_pScene;
 }
 
 

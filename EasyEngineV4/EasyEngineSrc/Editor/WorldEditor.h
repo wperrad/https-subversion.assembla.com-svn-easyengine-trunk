@@ -14,7 +14,7 @@ public:
 	void											HandleMapLoaded(string sMapName);
 	void											ClearWorld();
 	void											Load(string fileName) override;
-	void											Edit(string id) override;
+	void											Edit(string worldName) override;
 
 private:
 	void											OnEntityAdded() override;
@@ -23,13 +23,13 @@ private:
 	void											OnEntityRemoved(IEntity* pEntity) override;
 	string											GetName() override;
 	void											Save(string sFileName) override;
+	void											Save();
 	void											SpawnEntity(string sFileName) override;
 	void											RemoveCharacter(string sID) override;
 	void											SpawnCharacter(string sID) override;
 	void											SetEditionMode(bool bEditionMode) override;
 	void											CollectSelectableEntity(vector<IEntity*>& entities) override;
-	void											GetRelativeDatabasePath(string& path);
-	void											ClearEntities();
+	void											GetRelativeDatabasePath(string worldName, string& path);
 	void											OnSceneLoaded();
 
 	static void										HandleSceneLoadingComplete(void* pWorldEditor);
@@ -40,5 +40,6 @@ private:
 	map<string, CMatrix>							m_mCharacterMatrices;
 	map<string, vector<pair<IEntity*, CMatrix>>>	m_mEntityMatrices;
 	vector<IEntity*>								m_vEntities;
+	string											m_sCurrentWorldName;
 	const string									m_sDatabaseFileName = "world.db";
 };

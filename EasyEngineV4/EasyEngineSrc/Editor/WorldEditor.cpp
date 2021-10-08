@@ -27,25 +27,31 @@ void CWorldEditor::HandleMapLoaded(string sMapName)
 void CWorldEditor::ClearWorld()
 {
 	m_pScene->Clear();
+	m_vEntities.clear();
+	m_mCharacterMatrices.clear();
+	m_mEntityMatrices.clear();
+	m_oEntityManager.Clear();
+	m_pEditingEntity = nullptr;
+	m_mMaps.clear();
 }
 
 void CWorldEditor::OnEntityAdded()
 {
-	map<string, vector<pair<IEntity*, CMatrix>>>::iterator itEntity = m_mEntityMatrices.find(m_pCurrentAddedEntity->GetName());
+	map<string, vector<pair<IEntity*, CMatrix>>>::iterator itEntity = m_mEntityMatrices.find(m_pEditingEntity->GetName());
 	if (itEntity != m_mEntityMatrices.end()) {
 		vector<pair<IEntity*, CMatrix>>& vMatrices = itEntity->second;
-		vMatrices.back().first = m_pCurrentAddedEntity;
-		vMatrices.back().second = m_pCurrentAddedEntity->GetWorldMatrix();
+		vMatrices.back().first = m_pEditingEntity;
+		vMatrices.back().second = m_pEditingEntity->GetWorldMatrix();
 	}
 }
 
 float CWorldEditor::GetPlanHeight()
 {
-	if (m_pCurrentAddedEntity) {
+	if (m_pEditingEntity) {
 		ICamera* pCamera = m_oCameraManager.GetActiveCamera();
 		CVector camPos;
 		pCamera->GetWorldPosition(camPos);
-		IBox* pBox = dynamic_cast<IBox*>(m_pCurrentAddedEntity->GetBoundingGeometry());
+		IBox* pBox = dynamic_cast<IBox*>(m_pEditingEntity->GetBoundingGeometry());
 		if (pBox)
 			return camPos.m_y - 200.f;
 	}
@@ -59,16 +65,32 @@ void CWorldEditor::OnEntitySelected()
 
 void CWorldEditor::OnEntityRemoved(IEntity* pEntity)
 {
-	map<string, vector<pair<IEntity*, CMatrix>>>::iterator itEntity = m_mEntityMatrices.find(pEntity->GetName());
+	string entityName;
+	pEntity->GetRessource()->GetFileName(entityName);
+	string prefix = "Meshes/";
+	entityName = entityName.substr(prefix.size());
+	map<string, vector<pair<IEntity*, CMatrix>>>::iterator itEntity = m_mEntityMatrices.find(entityName);
 	if (itEntity != m_mEntityMatrices.end()) {
 		vector<pair<IEntity*, CMatrix>>& vMatrices = itEntity->second;
-		for (vector<pair<IEntity*, CMatrix>>::iterator itMat = vMatrices.begin(); itMat != vMatrices.end(); itMat++)
+		vector<pair<IEntity*, CMatrix>>::iterator itMat = vMatrices.begin();
+		while(itMat != vMatrices.end()) {
 			if (itMat->first == pEntity)
 				itMat = vMatrices.erase(itMat);
+			else
+				itMat++;
+		}
+
 	}
 	else {
-		map<string, CMatrix>::iterator itCharacter = m_mCharacterMatrices.find(pEntity->GetName());
-		m_mCharacterMatrices.erase(itCharacter);
+		pEntity->GetEntityName(entityName);
+		map<string, CMatrix>::iterator itCharacter = m_mCharacterMatrices.find(entityName);
+		if(itCharacter != m_mCharacterMatrices.end())
+			m_mCharacterMatrices.erase(itCharacter);
+		else {
+			ostringstream oss;
+			oss << "CWorldEditor::OnEntityRemoved() : Erreur, entite " << entityName << " introuvable";
+			throw CEException(oss.str());
+		}
 	}
 }
 
@@ -79,10 +101,11 @@ string CWorldEditor::GetName()
 
 void CWorldEditor::Load(string fileName)
 {
+	m_sCurrentWorldName = fileName;
+	GetRelativeDatabasePath(fileName, fileName);
+
 	m_pEditorManager->CloseAllEditorButThis(this);
-	ClearEntities();
-	if (fileName.empty())
-		GetRelativeDatabasePath(fileName);
+	ClearWorld();
 
 	CBinaryFileStorage fs;
 	if (fs.OpenFile(fileName, IFileStorage::TOpenMode::eRead)) {
@@ -126,10 +149,14 @@ void CWorldEditor::Load(string fileName)
 	m_pEditorCamera->Link(m_pScene);
 }
 
+void CWorldEditor::Save()
+{
+	Save(m_sCurrentWorldName);
+}
+
 void CWorldEditor::Save(string fileName)
 {
-	if (fileName.empty())
-		GetRelativeDatabasePath(fileName);
+	GetRelativeDatabasePath(fileName, fileName);
 	CopyFile(fileName.c_str(), (fileName + ".bak").c_str(), FALSE);
 
 	CBinaryFileStorage fs;
@@ -166,13 +193,16 @@ void CWorldEditor::SpawnEntity(string sFileName)
 		SetEditionMode(true);
 
 	string relativePath = string("Meshes/") + sFileName;
-	m_pCurrentAddedEntity = m_oEntityManager.CreateObject(relativePath);
-	m_pCurrentAddedEntity->SetName(sFileName);
-	m_oEntityManager.AddEntity(m_pCurrentAddedEntity, relativePath);
+	if(m_pEditingEntity)
+		m_pEditingEntity->DrawBoundingBox(false);
+	m_pEditingEntity = m_oEntityManager.CreateObject(relativePath);
+	m_pEditingEntity->SetName(sFileName);
+	m_oEntityManager.AddEntity(m_pEditingEntity, relativePath);
 	InitSpawnedEntity();
 	CMatrix m;
 	m_mEntityMatrices[sFileName].push_back(pair<IEntity*, CMatrix>(nullptr, m));
-	m_vEntities.push_back(m_pCurrentAddedEntity);
+	m_vEntities.push_back(m_pEditingEntity);
+	m_eEditorMode = Type::eAdding;
 }
 
 void CWorldEditor::RemoveCharacter(string sID)
@@ -188,18 +218,19 @@ void CWorldEditor::SpawnCharacter(string sID)
 	if (!m_bEditionMode)
 		SetEditionMode(true);
 
-	m_pCurrentAddedEntity = m_oEntityManager.BuildCharacterFromDatabase(sID, m_pScene);
-	if (!m_pCurrentAddedEntity) {
+	m_pEditingEntity = m_oEntityManager.BuildCharacterFromDatabase(sID, m_pScene);
+	if (!m_pEditingEntity) {
 		ostringstream oss;
 		oss << "Erreur : Personnage " << sID << " introuvable dans la base de donnees des personnages.";
 		throw CEException(oss.str());
 	}
-	m_oEntityManager.AddEntity(m_pCurrentAddedEntity, sID);
+	m_oEntityManager.AddEntity(m_pEditingEntity, sID);
 	InitSpawnedEntity();
 	CMatrix m;
 	m_mCharacterMatrices[sID] = m;
-	m_vEntities.push_back(m_pCurrentAddedEntity);
+	m_vEntities.push_back(m_pEditingEntity);
 	m_oCameraManager.SetActiveCamera(m_pEditorCamera);
+	m_eEditorMode = Type::eAdding;
 }
 
 void CWorldEditor::SetEditionMode(bool bEditionMode)
@@ -208,7 +239,7 @@ void CWorldEditor::SetEditionMode(bool bEditionMode)
 		CEditor::SetEditionMode(bEditionMode);
 		if (bEditionMode) {
 			m_pScene->Clear();
-			Load("");
+			Load(m_sCurrentWorldName);
 		}
 		else {
 			// Ask to save world
@@ -221,25 +252,25 @@ void CWorldEditor::CollectSelectableEntity(vector<IEntity*>& entities)
 	entities = m_vEntities;
 }
 
-void CWorldEditor::Edit(string id)
+void CWorldEditor::Edit(string worldName)
 {
+	if (m_sCurrentWorldName != worldName)
+		m_bEditionMode = false;
+	m_sCurrentWorldName = worldName;
+	CSpawnableEditor::SetEditionMode(true);
 	SetEditionMode(true);
 }
 
-void CWorldEditor::GetRelativeDatabasePath(string& path)
+void CWorldEditor::GetRelativeDatabasePath(string worldName, string& path)
 {
+	if (!worldName.empty() && worldName.find(".db") == -1)
+		worldName += ".db";
+	if (worldName.empty())
+		worldName = m_sDatabaseFileName;
+
 	string root;
 	m_oFileSystem.GetLastDirectory(root);
-	path = root + "/" + m_sDatabaseFileName;
-}
-
-void CWorldEditor::ClearEntities()
-{
-	m_pScene->Clear();
-	m_vEntities.clear();
-	m_mCharacterMatrices.clear();
-	m_mEntityMatrices.clear();
-	m_oEntityManager.Clear();
+	path = root + "/" + worldName;
 }
 
 void CWorldEditor::OnSceneLoaded()

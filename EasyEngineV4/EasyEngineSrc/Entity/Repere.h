@@ -11,4 +11,5 @@ public:
 	void			Colorize(float r, float g, float b, float a) {}
 	void			GetEntityName(string& sName);
 	void			SetEntityName(string sName);
+	void			DrawCollisionBoundingBoxes(bool bDraw) {}
 };

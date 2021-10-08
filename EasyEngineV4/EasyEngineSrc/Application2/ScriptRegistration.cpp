@@ -2092,10 +2092,37 @@ void SetSceneMap( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( bak );
 }
 
+void DrawCollisionModels(IScriptState* pState)
+{
+	CScriptFuncArgInt* pCharacterID = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(0));
+	CScriptFuncArgInt* pDisplay = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(1));
+	IEntity* pEntity = m_pEntityManager->GetEntity(pCharacterID->m_nValue);
+	
+	if (pEntity) {
+		pEntity->DrawCollisionBoundingBoxes(pDisplay->m_nValue == 0 ? false : true);
+	}
+}
+
 void SetTexture(IScriptState* pState)
 {
 	CScriptFuncArgString* pTextureName = dynamic_cast<CScriptFuncArgString*>(pState->GetArg(0));
 	m_pCharacterEditor->SetTexture(pTextureName->m_sValue);
+}
+
+void SetTextureInWorld(IScriptState* pState)
+{
+	CScriptFuncArgInt* pCharacterID = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(0));
+	CScriptFuncArgString* pTextureName = dynamic_cast<CScriptFuncArgString*>(pState->GetArg(1));
+	ICharacter* pCharacter = dynamic_cast<ICharacter*>(m_pEntityManager->GetEntity(pCharacterID->m_nValue));
+	if (pCharacter) {
+		pCharacter->SetDiffuseTexture(pTextureName->m_sValue);
+	}
+	else {
+		ostringstream oss;
+		oss << "Erreur, l'entite " << pCharacterID << " n'est pas un Character";
+		m_pConsole->Println(oss.str());
+	}
+	
 }
 
 void SetEntityWeight( IScriptState* pState )
@@ -2829,8 +2856,9 @@ void LoadWorld(IScriptState* pState)
 {
 	try
 	{
+		CScriptFuncArgString* pWorldName = (CScriptFuncArgString*)pState->GetArg(0);
 		m_pWorldEditor->SetEditionMode(false);
-		m_pWorldEditor->Load("");
+		m_pWorldEditor->Load(pWorldName->m_sValue);
 	}
 	catch (CFileException& e)
 	{
@@ -2846,7 +2874,8 @@ void SaveWorld(IScriptState* pState)
 {
 	try
 	{
-		m_pWorldEditor->Save("");
+		CScriptFuncArgString* pWorldName = (CScriptFuncArgString*)pState->GetArg(0);
+		m_pWorldEditor->Save(pWorldName->m_sValue);
 		m_pConsole->Println("Monde sauvegardé");
 	}
 	catch (CFileException& e) {
@@ -3181,6 +3210,16 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 
 	vType.clear();
 	vType.push_back(eInt);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("SetTextureInWorld", SetTextureInWorld, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("DrawCollisionModels", DrawCollisionModels, vType);
+
+	vType.clear();
+	vType.push_back(eInt);
 	m_pScriptManager->RegisterFunction("GenerateAssemblerListing", GenerateAssemblerListing, vType);
 
 	vType.clear();
@@ -3349,9 +3388,11 @@ void RegisterAllFunctions( IScriptManager* pScriptManager )
 	m_pScriptManager->RegisterFunction( "SaveMap", SaveMap, vType );
 
 	vType.clear();
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("LoadWorld", LoadWorld, vType);
 
 	vType.clear();
+	vType.push_back(eString);
 	m_pScriptManager->RegisterFunction("SaveWorld", SaveWorld, vType);
 
 	vType.clear();

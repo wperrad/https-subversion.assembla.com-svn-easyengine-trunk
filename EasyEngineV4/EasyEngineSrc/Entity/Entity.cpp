@@ -267,6 +267,7 @@ void CEntity::UpdateCollision()
 
 bool CEntity::TestCollision(INode* pEntity)
 {
+	bool ret = false;
 	if (GetBoundingSphereDistance(pEntity) < 0)
 	{
 		IGeometry* pCurrentGeometry = GetBoundingGeometry()->Duplicate();
@@ -277,10 +278,12 @@ bool CEntity::TestCollision(INode* pEntity)
 			CMatrix oOtherWorldMatrix;
 			pEntity->GetWorldMatrix(oOtherWorldMatrix);
 			pOtherGeometry->SetTM(oOtherWorldMatrix);
-			return pCurrentGeometry->IsIntersect(*pOtherGeometry);
+			ret = pCurrentGeometry->IsIntersect(*pOtherGeometry);
+			delete pCurrentGeometry;
+			delete pOtherGeometry;
 		}
 	}
-	return false;
+	return ret;
 }
 
 void CEntity::LinkAndUpdateMatrices(CEntity* pEntity)
@@ -967,6 +970,16 @@ void CEntity::SetCustomSpecular(const CVector& customSpecular)
 {
 	m_vCustomSpecular = customSpecular;
 	m_bUseCustomSpecular = true;
+}
+
+void CEntity::DrawCollisionBoundingBoxes(bool bDraw)
+{
+	for (int i = 0; i < GetChildCount(); i++) {
+		CCollisionEntity* pCollisionEntity = dynamic_cast<CCollisionEntity*>(GetChild(i));
+		if (pCollisionEntity) {
+			pCollisionEntity->DrawBoundingBox(bDraw);
+		}
+	}
 }
 
 void CEntity::GetSkeletonEntities(CBone* pRoot, vector< CEntity* >& vEntity, string sFileFilter)

@@ -121,6 +121,7 @@ public:
 	virtual void				AbonneToEntityEvent(IEventDispatcher::TEntityCallback callback) = 0;
 	virtual void				DeabonneToEntityEvent(IEventDispatcher::TEntityCallback callback) = 0;
 	virtual void				SetCustomSpecular(const CVector& customSpecular) = 0;
+	virtual void				DrawCollisionBoundingBoxes(bool bDraw) = 0;
 };
 
 class ICharacter : public virtual IEntity

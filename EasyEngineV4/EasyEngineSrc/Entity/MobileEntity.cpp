@@ -112,6 +112,7 @@ void CObject::UpdateCollision()
 			lastBox->SetTM(oLocalMatrix);
 			IGeometry::TFace collisionFace = IGeometry::eNone;
 			collisionFace = pEntity->GetBoundingGeometry()->GetReactionYAlignedBox(*firstBox, *lastBox, R);
+			delete firstBox;
 			if (collisionFace != IBox::eNone) {
 				lastBottom = R;
 				last = R;

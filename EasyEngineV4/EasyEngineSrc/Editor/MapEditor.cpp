@@ -40,7 +40,7 @@ m_pHeightMap(nullptr)
 
 void CMapEditor::OnEntityAdded()
 {
-	AdaptGroundToEntity(m_pCurrentAddedEntity);
+	AdaptGroundToEntity(m_pEditingEntity);
 }
 
 void CMapEditor::AdaptGroundToEntity(IEntity* pEntity)
@@ -285,12 +285,12 @@ void CMapEditor::ClearCharacters(vector<ILoader::CObjectInfos*>& objects)
 
 void CMapEditor::OnEntitySelected()
 {
-	IBox* pBox = dynamic_cast<IBox*>(m_pSelectedEntity->GetBoundingGeometry());
+	IBox* pBox = dynamic_cast<IBox*>(m_pEditingEntity->GetBoundingGeometry());
 	string originalRessourceName;
 	m_pScene->GetOriginalSceneFileName(originalRessourceName);
 	if (!m_pHeightMap)
 		m_pHeightMap = m_oCollisionManager.GetHeightMap(m_pScene->GetCurrentHeightMapIndex());
-	m_pHeightMap->RestoreHeightMap(m_pSelectedEntity->GetWorldMatrix(), pBox->GetDimension(), originalRessourceName);
+	m_pHeightMap->RestoreHeightMap(m_pEditingEntity->GetWorldMatrix(), pBox->GetDimension(), originalRessourceName);
 	UpdateGround();
 }
 
@@ -358,7 +358,7 @@ void CMapEditor::SpawnEntity(string sEntityFileName)
 {
 	if(!m_bEditionMode)
 		SetEditionMode(true);
-	m_pCurrentAddedEntity = m_oEntityManager.CreateEntity(sEntityFileName, "");
+	m_pEditingEntity = m_oEntityManager.CreateEntity(sEntityFileName, "");
 	InitSpawnedEntity();
 }
 

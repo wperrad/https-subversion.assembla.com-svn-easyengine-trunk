@@ -50,6 +50,7 @@ public:
 	virtual void 			AbonneToMouseEvent(CPlugin* pPlugin, TMouseCallback pfnCallback) = 0;
 	virtual void 			AbonneToWindowEvent(CPlugin* pPlugin, TWindowCallback pfnCallback) = 0;
 	virtual void 			AbonneToEntityEvent(CPlugin* plugin, TEntityCallback pfnCallback) = 0;
+	virtual void			DesabonneToKeyEvent(CPlugin* pPlugin, TKeyCallback pfnCallback) = 0;
 	virtual void			DesabonneToMouseEvent(TMouseCallback pfnCallback) = 0;
 	virtual void			DesabonneToWindowEvent(TWindowCallback pfnCallback) = 0;
 
