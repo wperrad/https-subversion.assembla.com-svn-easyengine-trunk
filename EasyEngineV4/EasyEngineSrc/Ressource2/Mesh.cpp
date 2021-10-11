@@ -54,7 +54,8 @@ m_eRenderType( IRenderer::eFill ),
 m_mAnimationKeyBox( oDesc.m_mAnimationKeyBox ),
 m_bDrawAnimationBoundingBox( false ),
 m_pCurrentAnimationBoundingBox( NULL ),
-m_eDrawStyle(IRenderer::T_TRIANGLES)
+m_eDrawStyle(IRenderer::T_TRIANGLES),
+m_nEntityMatricesBufferID(-1)
 {
 	m_pShader->Enable( true );
 	
@@ -237,6 +238,112 @@ void CMesh::Update()
 	if( m_bDrawAnimationBoundingBox && m_pCurrentAnimationBoundingBox )
 		CRenderUtils::DrawBox( m_pCurrentAnimationBoundingBox->GetMinPoint(), m_pCurrentAnimationBoundingBox->GetDimension(), GetRenderer() );
 	GetRenderer().SetRenderType( IRenderer::eFill );
+}
+
+void CMesh::UpdateInstances(vector<CMatrix>& matrices)
+{
+	IShader* pShader = GetRenderer().GetShader("PerPixelLightingInstanced");
+	SetShader(pShader);
+	m_pShader->Enable(true);
+	GetRenderer().SetRenderType(m_eRenderType);
+	if (m_mMaterials.size() == 1)
+	{
+		map< int, CMaterial* >::iterator itMat = m_mMaterials.begin();
+		itMat->second->Update();
+	}
+	else
+	{
+		m_pMaterialTexture->Update();
+	}
+
+	unsigned int nVertexWeightID = -1;
+	unsigned int nWeightedVertexID = -1;
+	string shaderName;
+	m_pShader->GetName(shaderName);
+	transform(shaderName.begin(), shaderName.end(), shaderName.begin(), tolower);
+
+	if (shaderName == "skinning")
+	{
+		nVertexWeightID = m_pShader->EnableVertexAttribArray("vVertexWeight");
+		GetRenderer().BindVertexBuffer(m_nVertexWeightBufferID);
+		m_pShader->VertexAttributePointerf(nVertexWeightID, 4, 0);
+
+		nWeightedVertexID = m_pShader->EnableVertexAttribArray("vWeightedVertexID");
+		GetRenderer().BindVertexBuffer(m_nWeightedVertexIDBufferID);
+		m_pShader->VertexAttributePointerf(nWeightedVertexID, 4, 0);
+	}
+	
+#if 0
+	unsigned int nWorldMatrices = m_pShader->EnableVertexAttribArray("vWorldMatrices");
+	if (m_nEntityMatricesBufferID == -1) {
+		m_nEntityMatricesBufferID = GetRenderer().CreateBuffer((int)matrices.size());
+	}
+		
+	const unsigned int matrixSize = 16;
+	int nEntityMatrix = m_pShader->EnableVertexAttribArray("vEntityMatrix");
+	GetRenderer().BindVertexBuffer(m_nEntityMatricesBufferID);
+	GetRenderer().FillBuffer(matrices, m_nEntityMatricesBufferID, 0);
+	m_pShader->VertexAttributePointerf(nEntityMatrix, matrixSize, 0);
+	m_pShader->AttribDivisor(nEntityMatrix, matrixSize);
+#else
+	m_pShader->SendUniformMatrix4Array("vEntityMatrix", matrices, true);
+#endif // 0
+
+	if (m_bIndexedGeometry) {
+		GetRenderer().DrawIndexedGeometryInstanced(m_pBuffer, m_eDrawStyle, matrices.size());
+	}
+	else
+	{
+		if (m_mMaterials.size() > 1)
+		{
+			try
+			{
+				int nMatID = m_pShader->EnableVertexAttribArray("nMatID");
+				GetRenderer().BindVertexBuffer(m_nFaceMaterialBufferID);
+				m_pShader->VertexAttributePointerf(nMatID, 1, 0);
+				m_pShader->SendUniformValues("fMultimaterial", 1.f);
+			}
+			catch (exception&)
+			{
+				if (m_bFirstUpdate)
+				{
+					string s = string("Attribut \"nMatID\" et/ou variable uniform \"fMultimaterial\" non défini(s) dans \"") + m_sShaderName + "\"";
+					MessageBox(NULL, s.c_str(), "CMesh::Update()", MB_ICONEXCLAMATION);
+				}
+			}
+		}
+		else
+		{
+			try
+			{
+				m_pShader->SendUniformValues("fMultimaterial", 0.f);
+			}
+			catch (exception& e)
+			{
+				if (m_nReponse != 6)
+				{
+					string sMessage = e.what();
+					sMessage += "\nVoulez vous continuer et ignorer tous les avertissements de ce type ?";
+					m_nReponse = MessageBox(NULL, sMessage.c_str(), "", MB_YESNO);
+				}
+			}
+		}
+		GetRenderer().DrawGeometryInstanced(m_pBuffer, matrices.size());
+	}
+
+	if (shaderName == "skinning")
+	{
+		m_pShader->DisableVertexAttribArray(nVertexWeightID);
+		m_pShader->DisableVertexAttribArray(nWeightedVertexID);
+	}
+	if (m_bFirstUpdate)
+		m_bFirstUpdate = false;
+
+	if (m_bDrawBoundingBox)
+		CRenderUtils::DrawBox(m_pBbox->GetMinPoint(), m_pBbox->GetDimension(), GetRenderer());
+	if (m_bDrawAnimationBoundingBox && m_pCurrentAnimationBoundingBox)
+		CRenderUtils::DrawBox(m_pCurrentAnimationBoundingBox->GetMinPoint(), m_pCurrentAnimationBoundingBox->GetDimension(), GetRenderer());
+	GetRenderer().SetRenderType(IRenderer::eFill);
 }
 
 void CMesh::DisplaySkeletonInfo( INode* pRoot, bool bRecurse )

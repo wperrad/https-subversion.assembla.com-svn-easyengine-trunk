@@ -304,6 +304,7 @@ void CSpawnableEditor::InitCamera()
 	if (pBBox) {
 		CMatrix m;
 		m_pEditorCamera->SetLocalMatrix(m);
+		m_pEditorCamera->SetSpeed(1.f);
 		m_pEditorCamera->Move(0, -60.f, 0, 0, 0, pBBox->GetDimension().m_x / 8.f);
 	}
 }

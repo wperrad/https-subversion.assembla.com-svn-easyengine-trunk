@@ -236,6 +236,7 @@ public:
 	virtual ICharacter*			BuildCharacterFromDatabase(string sCharacterId, IEntity* pParent) = 0;
 	virtual void				SaveCharacter(string sNPCID) = 0;
 	virtual void				RemoveCharacterFromDB(string sID) = 0;
+	virtual void				EnableInstancing(bool enable) = 0;
 };
 
 class ISceneManager : public CPlugin

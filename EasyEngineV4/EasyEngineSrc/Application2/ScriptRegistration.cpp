@@ -2027,22 +2027,22 @@ void ExportBSEToAscii(IScriptState* pState)
 void ClearScene( IScriptState* pState )
 {
 	ICamera* pLinkedCamera = m_pCameraManager->GetCameraFromType( ICameraManager::T_LINKED_CAMERA );
-	if( pLinkedCamera->GetParent() )
-		pLinkedCamera->Unlink();
-	CMatrix oLinkedMatrix;
-	pLinkedCamera->SetLocalMatrix( oLinkedMatrix );
+	if (pLinkedCamera) {
+		if (pLinkedCamera->GetParent())
+			pLinkedCamera->Unlink();
+		CMatrix oLinkedMatrix;
+		pLinkedCamera->SetLocalMatrix(oLinkedMatrix);
+	}
 
 	m_pScene->Clear();
-
 	ICamera* pCamera = m_pCameraManager->GetCameraFromType( ICameraManager::TFree );
 	m_pCameraManager->SetActiveCamera( pCamera );
 	m_pEntityManager->AddEntity( pCamera, "FreeCamera" );
-	m_pEntityManager->AddEntity( pLinkedCamera, "LinkedCamera" );
+	if (pLinkedCamera)
+		m_pEntityManager->AddEntity( pLinkedCamera, "LinkedCamera" );
 	m_pRepere = m_pEntityManager->CreateRepere( *m_pRenderer );
 	m_pRepere->Link( m_pScene );
 	m_pEntityManager->AddEntity( m_pScene, "SceneGame", 0 );
-
-	//m_pRessourceManager->DestroyAllRessources();
 }
 
 void SetSceneMap( IScriptState* pState )
@@ -2058,14 +2058,18 @@ void SetSceneMap( IScriptState* pState )
 	m_pRessourceManager->EnableCatchingException( false );
 	try
 	{
-		m_pScene->SetLength(pLength->m_nValue);
-		m_pScene->SetHeight(pHeight->m_fValue);
-		m_pScene->SetDiffuseFileName(diffuseFileName);
-		m_pScene->SetRessource(ressourceFileName);
-		string sError;
-		m_pRessourceManager->PopErrorMessage( sError );
-		if( sError.size() > 0 )
-			m_pConsole->Println( sError );
+		if (m_pMapEditor->IsEnabled()) {
+			m_pScene->SetLength(pLength->m_nValue);
+			m_pScene->SetHeight(pHeight->m_fValue);
+			m_pScene->SetDiffuseFileName(diffuseFileName);
+			m_pScene->SetRessource(ressourceFileName);
+			string sError;
+			m_pRessourceManager->PopErrorMessage(sError);
+			if (sError.size() > 0)
+				m_pConsole->Println(sError);
+		}
+		else
+			m_pConsole->Println("Error : You have to enable Map Editor Mode to be able to save the map");
 	}
 	catch( CRessourceException& e )
 	{
@@ -2101,6 +2105,12 @@ void DrawCollisionModels(IScriptState* pState)
 	if (pEntity) {
 		pEntity->DrawCollisionBoundingBoxes(pDisplay->m_nValue == 0 ? false : true);
 	}
+}
+
+void EnableInstancingMode(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEnable = dynamic_cast<CScriptFuncArgInt*>(pState->GetArg(0));
+	m_pEntityManager->EnableInstancing(pEnable->m_nValue == 0 ? false : true);
 }
 
 void SetTexture(IScriptState* pState)
@@ -2643,9 +2653,14 @@ void SetBkgColor( IScriptState* pState )
 void DisplayCamPos( IScriptState* pState )
 {
 	CVector vPos;
-	m_pCameraManager->GetActiveCamera()->GetWorldPosition( vPos );
+	ICamera* pCamera = m_pCameraManager->GetActiveCamera();
 	ostringstream oss;
-	oss << vPos.m_x << " , " << vPos.m_y << " , " << vPos.m_z;
+	if (pCamera) {
+		pCamera->GetWorldPosition(vPos);
+		oss << vPos.m_x << " , " << vPos.m_y << " , " << vPos.m_z;
+	}
+	else
+		oss << "Error : No current camera defined";
 	m_pConsole->Println( oss.str() );
 }
 
@@ -2687,7 +2702,11 @@ void SetCamPos( IScriptState* pState )
 	CScriptFuncArgFloat* px = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 0 ) );
 	CScriptFuncArgFloat* py = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 1 ) );
 	CScriptFuncArgFloat* pz = static_cast< CScriptFuncArgFloat* >( pState->GetArg( 2 ) );
-	m_pCameraManager->GetActiveCamera()->SetLocalPosition( px->m_fValue, py->m_fValue, pz->m_fValue );
+	ICamera* pCamera = m_pCameraManager->GetActiveCamera();
+	if (pCamera)
+		pCamera->SetLocalPosition(px->m_fValue, py->m_fValue, pz->m_fValue);
+	else
+		m_pConsole->Println("Erreur : Aucune camera active");
 }
 
 void YawCamera(IScriptState* pState)
@@ -3203,6 +3222,10 @@ void CreatePlaneEntity(IScriptState* pState)
 void RegisterAllFunctions( IScriptManager* pScriptManager )
 {
 	vector< TFuncArgType > vType;
+
+	vType.clear();
+	vType.push_back(eInt);
+	m_pScriptManager->RegisterFunction("EnableInstancingMode", EnableInstancingMode, vType);
 
 	vType.clear();
 	vType.push_back(eString);

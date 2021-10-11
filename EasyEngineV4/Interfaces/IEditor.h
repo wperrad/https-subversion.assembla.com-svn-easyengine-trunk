@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EEPlugin.h"
+#include "ILoader.h"
 
 class IEditorManager;
 class IEntity;

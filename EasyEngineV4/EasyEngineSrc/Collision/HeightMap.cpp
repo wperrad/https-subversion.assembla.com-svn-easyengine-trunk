@@ -22,6 +22,11 @@ CHeightMap::CHeightMap(EEInterface& oInterface, string sFileName,  const IBox& b
 	bbox.GetDimension();
 }
 
+CHeightMap::~CHeightMap()
+{
+
+}
+
 void CHeightMap::SetPrecision( int nPrecision )
 {
 	m_nPrecision = nPrecision;

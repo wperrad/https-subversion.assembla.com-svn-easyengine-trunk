@@ -256,6 +256,11 @@ void CMapEditor::Load(string sFileName)
 	m_pScene->Load(si);
 	if(m_bEditionMode)
 		InitCamera();
+	else {
+		ICamera* pCamera = m_oCameraManager.GetCameraFromType(ICameraManager::TCameraType::TFree);
+		m_oCameraManager.SetActiveCamera(pCamera);
+		pCamera->SetWorldPosition(0, 0, 0);
+	}
 	m_sCurrentMapName = sFileName;
 	
 	CWorldEditor* pWorldEditor = dynamic_cast<CWorldEditor*>(m_pEditorManager->GetEditor(IEditor::Type::eWorld));
@@ -351,14 +356,21 @@ string CMapEditor::GetName()
 void CMapEditor::Edit(string id)
 {
 	SetEditionMode(true);
-	Load(id);
+	try {
+		Load(id);
+	}
+	catch (CEException& e) {
+		m_oConsole.Println("Map inexistante, vous pouvez demarrer la creation d'une nouvelle map avec la commande 'SetSceneMap(HeightMapName, DiffuseTextureName, width, height)' ou editer une map existante");
+		InitCamera();
+	}
 }
 
 void CMapEditor::SpawnEntity(string sEntityFileName)
 {
 	if(!m_bEditionMode)
 		SetEditionMode(true);
-	m_pEditingEntity = m_oEntityManager.CreateEntity(sEntityFileName, "");
+	m_eEditorMode = Type::eAdding;
+	m_pEditingEntity = m_oEntityManager.CreateEntity(string("Meshes/") + sEntityFileName, "");
 	InitSpawnedEntity();
 }
 

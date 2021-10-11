@@ -76,12 +76,17 @@ public:
 	void				LoadCharacterInfos();
 	void				SaveCharacterInfos(const map<string, ILoader::CAnimatedEntityInfos>& characterInfos);
 	void				RemoveCharacterFromDB(string sID) override;
+	void				AddRenderQueue(CEntity* pEntity);
+	void				ClearRenderQueue();
 
 	template<class T>
 	void				SerializeNodeInfos(INode* pNode, ostringstream& sLine, int nLevel = 0);
 	void				SerializeMobileEntities(INode* pRoot,  string& sText);
 	string				GetName() override;
 	IBone*				CreateBone() const override;
+	void				EnableInstancing(bool enable) override;
+	bool				IsUsingInstancing();
+	void				GetInstances(map<IMesh*, vector<CEntity*>>& instances);
 
 private:
 	EEInterface&										m_oInterface;
@@ -112,6 +117,8 @@ private:
 	map<string, CMobileEntity*>							m_mCharacters;
 	string												m_sCharactersDatabaseFileName;
 	map<string, ILoader::CAnimatedEntityInfos>			m_mCharacterInfos;
+	map<IMesh*, vector<CEntity*>>						m_mRenderQueue;
+	bool												m_bUseInstancing;
 
 	static void											HandleEditorManagerCreation(CPlugin* plugin, void* pData);
 };

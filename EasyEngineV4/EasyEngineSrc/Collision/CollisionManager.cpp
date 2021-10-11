@@ -482,10 +482,10 @@ int CCollisionManager::LoadHeightMap( string sFileName, IBox* pBox, bool forceRe
 	int nID = 0;
 	map<string, int>::iterator it = m_mMapFileToId.find(sFileName);
 	if (forceReload || (it == m_mMapFileToId.end()) ) {
-		CHeightMap hm(m_oInterface, sFileName, *pBox);
-		hm.SetPrecision(m_nHeightMapPrecision);
+		CHeightMap* pHeightMap = new CHeightMap(m_oInterface, sFileName, *pBox);
+		pHeightMap->SetPrecision(m_nHeightMapPrecision);
 		nID = (int)m_mHeigtMap.size();
-		m_mHeigtMap[nID] = hm;
+		m_mHeigtMap[nID] = pHeightMap;
 		m_mMapFileToId[sFileName] = nID;
 	}
 	else
@@ -507,9 +507,9 @@ void CCollisionManager::LoadHeightMap(string sFileName, vector< vector< unsigned
 float CCollisionManager::GetMapHeight( int nHeightMapID, float xModel, float zModel )
 {
 	float fInterpolate = 0.f;
-	map< int, CHeightMap >::iterator itMap = m_mHeigtMap.find( nHeightMapID );
+	map< int, CHeightMap* >::iterator itMap = m_mHeigtMap.find( nHeightMapID );
 	if (itMap != m_mHeigtMap.end())
-		fInterpolate = itMap->second.GetHeight(xModel, zModel);
+		fInterpolate = itMap->second->GetHeight(xModel, zModel);
 	return fInterpolate;
 }
 
@@ -720,17 +720,17 @@ bool CCollisionManager::IsSegmentRectIntersect( const CVector2D& S1, const CVect
 
 void CCollisionManager::SetGroundBoxHeight(int nMapId, float height)
 {
-	m_mHeigtMap[nMapId].GetModelBBox()->SetY(height);
+	m_mHeigtMap[nMapId]->GetModelBBox()->SetY(height);
 }
 
 void CCollisionManager::SetGroundBoxMinPoint(int nMapId, float min)
 {
-	m_mHeigtMap[nMapId].GetModelBBox()->SetY(min);
+	m_mHeigtMap[nMapId]->GetModelBBox()->SetY(min);
 }
 
 IBox* CCollisionManager::GetGroundBox(int nMapId)
 {
-	return m_mHeigtMap[nMapId].GetModelBBox();
+	return m_mHeigtMap[nMapId]->GetModelBBox();
 }
 
 string CCollisionManager::GetName()
@@ -740,9 +740,9 @@ string CCollisionManager::GetName()
 
 IHeightMap*	CCollisionManager::GetHeightMap(int index)
 {
-	map< int, CHeightMap>::iterator it = m_mHeigtMap.find(index);
+	map< int, CHeightMap*>::iterator it = m_mHeigtMap.find(index);
 	if(it != m_mHeigtMap.end())
-		return &m_mHeigtMap[index];
+		return it->second;
 	return nullptr;
 }
 

@@ -404,6 +404,11 @@ void  CScene::RenderScene()
 	if (IsLoadingComplete() && m_LoadingCompleteCallback)
 		m_LoadingCompleteCallback(m_pLoadingCompleteData);
 
+	if (m_pEntityManager->IsUsingInstancing()) {
+		RenderInstances();
+		m_pEntityManager->ClearRenderQueue();
+	}
+
 	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
 	if (m_pRessource) {
 		if (m_pHeightMaptexture) {
@@ -468,6 +473,18 @@ bool CScene::IsLoadingComplete()
 	return loadingComplete;
 }
 
+void CScene::RenderInstances()
+{
+	map<IMesh*, vector<CEntity*>> entities;
+	m_pEntityManager->GetInstances(entities);
+	for (map<IMesh*, vector<CEntity*>>::iterator it = entities.begin(); it != entities.end(); it++) {
+		vector<CMatrix> matrices;
+		for (int i = 0; i < it->second.size(); i++)
+			matrices.push_back(it->second[i]->GetWorldMatrix());
+		it->first->UpdateInstances(matrices);
+	}
+}
+
 void CScene::DisplayEntities(vector<IEntity*>& entities)
 {
 	ICamera* pActiveCamera = m_oCameraManager.GetActiveCamera();
@@ -528,13 +545,17 @@ void CScene::GetInfos( ILoader::CSceneInfos& si )
 		CCamera* pCamera = dynamic_cast< CCamera* >(m_vChild[i]);
 		if (pCamera)
 			continue;
-		CEntity* pEntity = dynamic_cast< CEntity* >( m_vChild[ i ] );
-		if (pEntity) {
-			ILoader::CObjectInfos* pInfos = nullptr;
-			pEntity->GetEntityInfos(pInfos);
-			if (pInfos)
-				si.m_vObject.push_back(pInfos);
+		ILoader::CObjectInfos* pInfos = nullptr;
+		CLightEntity* pLightEntity = dynamic_cast< CLightEntity* >(m_vChild[i]);
+		if (pLightEntity)
+			pLightEntity->GetEntityInfos(pInfos);
+		else {
+			CEntity* pEntity = dynamic_cast< CEntity* >( m_vChild[ i ] );
+			if (pEntity)
+				pEntity->GetEntityInfos(pInfos);
 		}
+		if (pInfos)
+			si.m_vObject.push_back(pInfos);
 	}
 }
 
@@ -552,6 +573,7 @@ void CScene::LoadSceneObject( const ILoader::CObjectInfos* pSceneObjInfos, CEnti
 			pEntity->BuildFromInfos(*pLightEntityInfos, pParent);
 		} else {
 			const ILoader::CEntityInfos* pEntityInfos = dynamic_cast< const ILoader::CEntityInfos* >( pSceneObjInfos );
+			sRessourceFileName = string("Meshes/Buildings/") + sRessourceFileName;
 			CEntity* pEntity = m_pEntityManager->CreateEntityFromType( sRessourceFileName, pEntityInfos->m_sTypeName, pEntityInfos->m_sObjectName);
 			pEntity->BuildFromInfos(*pSceneObjInfos, pParent);
 			m_vCollideEntities.push_back(pEntity);

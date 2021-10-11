@@ -162,6 +162,12 @@ int CShader::GetID()
 	return m_mShaderName.begin()->second;
 }
 
+void CShader::AttribDivisor(unsigned int id, unsigned int nSize)
+{
+	//glAttribDivisor(id, nSize);
+	throw CMethodNotImplementedException("CShader::AttribDivisor()");
+}
+
 void CShader::DeleteShadersAndProgram()
 {
 	if (m_nPixelShader != 0)

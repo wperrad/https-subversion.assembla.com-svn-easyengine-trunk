@@ -119,8 +119,10 @@ public:
 	
 	
 	void						BindTexture( int nTextureID, int nUnitTextureID, TTextureDimension texDim );
-	void						DrawGeometry( const IBuffer* pBuffer );
-	void						DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style = T_TRIANGLES );
+	void						DrawGeometry( const IBuffer* pBuffer ) override;
+	void						DrawGeometryInstanced(const IBuffer* pBuffer, int instanceCount) override;
+	void						DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style = T_TRIANGLES ) override;
+	void						DrawIndexedGeometryInstanced(const IBuffer* pBuffer, TDrawStyle style = T_TRIANGLES, int instanceCount = 1) override;
 	void						DrawBase( const CMatrix& mBase, float fSize );
 	void						DrawLine(const CVector& p1, const CVector& p2, const CVector& color);
 	void						DrawLineInternal( const CVector& p1, const CVector& p2, const CVector& color  );
@@ -168,7 +170,8 @@ public:
 	void						DeleteBuffer( unsigned int nBufferID );
 	void						GetNonIndexedVertexBuffer( const std::vector< float >& vVertexBuffer, const std::vector< unsigned int >& vIndexBuffer, std::vector< float >& vOutVertexBuffer );
 	void						SetCurrentBuffer( int nBufferID );
-	void						FillBuffer( const std::vector< float >& vData, int nBufferID, int nOffset = 0 );
+	void						FillBuffer(const std::vector< float >& vData, int nBufferID, int nOffset = 0 ) override;
+	void						FillBuffer(const vector< CMatrix >& vMatrix, int nBufferID, int nOffset = 0) override;
 	void						AppendBuffer( const std::vector< float >& vData );
 
 

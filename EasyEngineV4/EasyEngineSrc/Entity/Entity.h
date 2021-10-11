@@ -32,6 +32,7 @@ public:
 	void							SetShader( IShader* pShader );
 	void							CenterToworld();
 	IRessource*						GetRessource();
+	IMesh*							GetMesh();
 	void							SetRessource(string sFileName, bool bDuplicate = false);
 	void							SetDiffuseTexture(string sFileName);
 	float							GetWeight();

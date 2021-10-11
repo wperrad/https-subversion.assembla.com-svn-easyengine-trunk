@@ -383,7 +383,50 @@ public:
 			m_eType = (CLightInfos::TLight)type;
 			return *this;
 		}
-	};	
+	};
+
+	class CWorldInfos : public IRessourceInfos
+	{
+	public:
+		map<string, CVector>			m_mMaps;
+		map<string, CMatrix>			m_mCharacterMatrices;
+		map<string, vector<CMatrix>>	m_mEntityMatrices;
+
+		IPersistantObject& operator << (CBinaryFileStorage& store) override
+		{
+			int mapCount = 0;
+			store >> mapCount;
+			for (int i = 0; i < mapCount; i++) {
+				string mapName;
+				CVector pos;
+				store >> mapName >> pos;
+				m_mMaps[mapName] = pos;
+			}
+
+			int characterCount = 0;
+			store >> characterCount;
+			for (int i = 0; i < characterCount; i++) {
+				string id;
+				CMatrix tm;
+				store >> id >> tm;
+				m_mCharacterMatrices[id] = tm;
+			}
+			int entityCount = 0;
+			store >> entityCount;
+			for (int i = 0; i < entityCount; i++) {
+				string sFileName;
+				int instanceCount = 0;
+				store >> sFileName >> instanceCount;
+				for (int iInstance = 0; iInstance < instanceCount; iInstance++) {
+					CMatrix tm;
+					store >> tm;
+					m_mEntityMatrices[sFileName].push_back(tm);
+				}
+			}
+			return *this;
+		}
+	
+	};
 
 	enum TObjScene
 	{

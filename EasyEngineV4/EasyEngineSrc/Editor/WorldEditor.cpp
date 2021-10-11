@@ -7,7 +7,6 @@
 #include "IConsole.h"
 #include "EditorManager.h"
 
-
 CWorldEditor::CWorldEditor(EEInterface& oInterface, ICameraManager::TCameraType cameraType) :
 	CPlugin(nullptr, ""),
 	ISpawnableEditor(oInterface),

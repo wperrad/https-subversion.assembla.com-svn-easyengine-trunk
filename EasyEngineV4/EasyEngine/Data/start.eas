@@ -2,9 +2,13 @@ OpenConsole(0);
 SetBkgColor(0, 100, 255);
 r=CreateRepere();
 
-
-//	LoadMap("Hopital02");
+//EnableInstancingMode(0);
+//LoadMap("Hopital03");
 LoadWorld("");
+//LoadMap("Empty");
+
+//PatchMapBuildingPath("hopital02", "meshes/buildings");
+
 return;
 
 /*

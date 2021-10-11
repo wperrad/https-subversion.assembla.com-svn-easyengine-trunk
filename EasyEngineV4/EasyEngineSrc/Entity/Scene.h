@@ -124,6 +124,7 @@ private:
 	void								OnChangeSector() override;
 	void								UpdateMapEntities();
 	bool								IsLoadingComplete();
+	void								RenderInstances();
 };
 
 #endif // SCENE_NODE_H

@@ -33,7 +33,8 @@ m_oPathFinder(static_cast<IPathFinder&>(*m_oInterface.GetPlugin("PathFinder"))),
 m_oCameraManager(static_cast<ICameraManager&>(*m_oInterface.GetPlugin("CameraManager"))),
 m_pEditorManager(nullptr),
 m_nLastEntityID( -1 ),
-m_pPlayer(NULL)
+m_pPlayer(NULL),
+m_bUseInstancing(true)
 {
 	string root;
 	m_oFileSystem.GetLastDirectory(root);
@@ -587,6 +588,19 @@ void CEntityManager::RemoveCharacterFromDB(string sID)
 	m_mCharacterInfos.erase(sID);
 }
 
+void CEntityManager::AddRenderQueue(CEntity* pEntity)
+{
+	IMesh* pMesh = pEntity->GetMesh();
+	if(pMesh)
+		m_mRenderQueue[pMesh].push_back(pEntity);
+}
+
+void CEntityManager::ClearRenderQueue()
+{
+	m_mRenderQueue.clear();
+}
+
+
 template<class T>
 void CEntityManager::SerializeNodeInfos(INode* pNode, ostringstream& oss, int nLevel)
 {
@@ -623,6 +637,21 @@ string CEntityManager::GetName()
 IBone* CEntityManager::CreateBone() const
 {
 	return new CBone(m_oGeometryManager);
+}
+
+void CEntityManager::EnableInstancing(bool enable)
+{
+	m_bUseInstancing = enable;
+}
+
+bool CEntityManager::IsUsingInstancing()
+{
+	return m_bUseInstancing;
+}
+
+void CEntityManager::GetInstances(map<IMesh*, vector<CEntity*>>& instances)
+{
+	instances = m_mRenderQueue;
 }
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager(EEInterface& oInterface)

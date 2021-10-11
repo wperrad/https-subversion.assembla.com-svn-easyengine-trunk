@@ -488,6 +488,39 @@ void CRenderer::DrawGeometry( const IBuffer* pBuffer )
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
+void CRenderer::DrawGeometryInstanced(const IBuffer* pBuffer, int instanceCount)
+{
+	CMatrix viewMatrix = m_oCameraMatrixInv;
+	LoadMatrix(viewMatrix);
+
+	const CGeometryBuffer* pGeometryBuffer = static_cast<const CGeometryBuffer*>(pBuffer);
+	if (pGeometryBuffer->GetID() == -1)
+	{
+		CRenderException e("Invalid MeshBuffer");
+		throw e;
+	}
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	int nVertexBufferSize = pGeometryBuffer->GetIndexCount() > 0 ? pGeometryBuffer->GetIndexCount() * 3 * sizeof(float) : pGeometryBuffer->GetVertexCount() * 3 * sizeof(float);
+	int nNormalVertexBufferSize = pGeometryBuffer->GetIndexCount() * 3 * sizeof(float);
+
+	glBindBuffer(GL_ARRAY_BUFFER_ARB, pGeometryBuffer->GetID());
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+	if (nNormalVertexBufferSize > 0)
+		glNormalPointer(GL_FLOAT, 0, BUFFER_OFFSET(nVertexBufferSize));
+	if (pGeometryBuffer->GetUVIndexCount() > 0)
+		glTexCoordPointer(2, GL_FLOAT, 0, BUFFER_OFFSET(nVertexBufferSize + nNormalVertexBufferSize));
+
+	glDrawArraysInstanced(GL_TRIANGLES, 0, pGeometryBuffer->GetIndexCount(), instanceCount);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
+
 void CRenderer::DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style )
 {
 	CMatrix oModelView = m_oCameraMatrixInv * m_oCurrentModelMatrix;
@@ -515,6 +548,34 @@ void CRenderer::DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style )
 	glDrawElements( glDrawStyle, pIndexedBuffer->m_nIndexCount, GL_UNSIGNED_INT, 0 );
   	glDisableClientState (GL_VERTEX_ARRAY);
 	glDisableClientState( GL_NORMAL_ARRAY );
+}
+
+void CRenderer::DrawIndexedGeometryInstanced(const IBuffer* pBuffer, TDrawStyle style, int instanceCount)
+{
+	CMatrix viewMatrix = m_oCameraMatrixInv;
+	LoadMatrix(viewMatrix);
+	const CIndexedGeometryBuffer* pIndexedBuffer = static_cast<const CIndexedGeometryBuffer*>(pBuffer);
+	if (pIndexedBuffer->m_nUVVertexBufferID != 0)
+	{
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glBindBuffer(GL_ARRAY_BUFFER, pIndexedBuffer->m_nUVVertexBufferID);
+		glTexCoordPointer(2, GL_FLOAT, 0, BUFFER_OFFSET(0));
+	}
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glBindBuffer(GL_ARRAY_BUFFER, pIndexedBuffer->m_nVertexBufferID);
+	glVertexPointer(3, GL_FLOAT, 0, BUFFER_OFFSET(0));
+
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glBindBuffer(GL_ARRAY_BUFFER, pIndexedBuffer->m_nNormalBufferID);
+	glNormalPointer(GL_FLOAT, 0, BUFFER_OFFSET(0));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pIndexedBuffer->m_nIndexBufferID);
+
+	GLenum glDrawStyle = m_mDrawStyle[style];
+	glDrawElementsInstanced(glDrawStyle, pIndexedBuffer->m_nIndexCount, GL_UNSIGNED_INT, 0, instanceCount);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
 }
 
 void CRenderer::DrawBase( const CMatrix& mBase, float fSize )
@@ -623,6 +684,16 @@ void CRenderer::FillBuffer( const std::vector< float >& vData, int nBufferID, in
 	if( error != 0 )
 		throw 1;
 	m_nCurrentBufferOffset += static_cast< int >( vData.size() ) * sizeof(float) + nOffset * sizeof(float);
+}
+
+void CRenderer::FillBuffer(const vector< CMatrix >& vMatrix, int nBufferID, int nOffset)
+{
+	int nArraySize = (int)vMatrix.size() * 16;
+	vector< float > vArray;
+	vArray.resize(nArraySize);
+	for (unsigned int i = 0; i < vMatrix.size(); i++)
+		vMatrix[i].Get(&vArray[i * 16]);
+	FillBuffer(vArray, nBufferID, nOffset);
 }
 
 void CRenderer::AppendBuffer( const std::vector< float >& vData )

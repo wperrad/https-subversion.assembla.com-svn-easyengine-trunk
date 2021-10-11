@@ -29,6 +29,55 @@ class INode;
 
 class CMesh : public IMesh
 {
+public:
+	struct Desc : public IRessource::Desc
+	{
+		std::vector< float >&			m_vVertexArray;
+		std::vector< unsigned int >&	m_vIndexArray;
+		std::vector< float >&			m_vUVVertexArray;
+		std::vector< unsigned int >&	m_vUVIndexArray;
+		std::vector< float >			m_vNormalFaceArray;
+		std::vector< float >&			m_vNormalVertexArray;
+		std::vector< float >			m_vVertexWeight;
+		std::vector< float >			m_vWeightedVertexID;
+		std::map< int, CMaterial* >		m_mMaterials;
+		std::vector< unsigned short >	m_vFaceMaterialID;
+		bool							m_bIndexed;
+		IDrawTool*						m_pDrawTool;
+		IBox*							m_pBbox;
+		int								m_nParentBoneID;
+		CVector							m_oOrgMaxPosition;
+		map< string, IBox* >			m_mAnimationKeyBox;
+
+		Desc(  std::vector< float >& vVertexArray, std::vector<  unsigned int  >& vIndexArray,
+				std::vector< float >& vUVVertexArray, std::vector< unsigned int >& vUVIndexArray,
+				std::vector< float >& vNormalVertexArray, IRenderer& oRenderer, IShader* pShader );
+	};
+	CMesh(const Desc& oDesc);
+	virtual								~CMesh();
+	void								Update() override;
+	void								UpdateInstances(vector<CMatrix>& matrices) override;
+	bool								operator==(const IMesh& w);
+	void								DrawBoundingBox(bool bDraw);
+	void								DrawBoundingSphere(bool bDraw);
+	void								SetCurrentAnimationBoundingBox(string AnimationName);
+	void								DrawAnimationBoundingBox(bool bDraw);
+	void								SetShader(IShader* pShader);
+	IBox*								GetBBox();
+	IShader*							GetShader() const { return m_pShader; }
+	int									GetParentBoneID()const;
+	void								GetOrgWorldPosition(CVector& v);
+	void								SetRenderingType(IRenderer::TRenderType t);
+	IBox*								GetAnimationBBox(string sAnimation);
+	CVector&							GetOrgMaxPosition();
+	void								Colorize(float r, float g, float b, float a);
+	ITexture*							GetTexture(int nMaterialIndex);
+	void								SetTexture(ITexture* pTexture);
+	int									GetMaterialCount() override;
+	IMaterial*							GetMaterial(int index) override;
+	void								SetDrawStyle(IRenderer::TDrawStyle style) override;
+
+
 private:
 	int									m_nReponse;
 	IBuffer*							m_pBuffer;
@@ -54,57 +103,12 @@ private:
 	IRenderer::TRenderType				m_eRenderType;
 	map< string, IBox* >				m_mAnimationKeyBox;
 	IRenderer::TDrawStyle				m_eDrawStyle;
-	
-	void				CreateMaterialTexture( const std::map< int, CMaterial* >& );
-	void				DisplaySkeletonInfo( INode* pRoot, bool bRecurse = true );
-	void				CreateNonIndexedMaterialVertexArray( const std::vector< unsigned short >& vMtlFace, const std::vector< unsigned int >& vIndexArray, std::vector< float >& vOut );
+	int									m_nEntityMatricesBufferID;
 
-public:
-	struct Desc : public IRessource::Desc
-	{
-		std::vector< float >&			m_vVertexArray;
-		std::vector< unsigned int >&	m_vIndexArray;
-		std::vector< float >&			m_vUVVertexArray;
-		std::vector< unsigned int >&	m_vUVIndexArray;
-		std::vector< float >			m_vNormalFaceArray;
-		std::vector< float >&			m_vNormalVertexArray;
-		std::vector< float >			m_vVertexWeight;
-		std::vector< float >			m_vWeightedVertexID;
-		std::map< int, CMaterial* >		m_mMaterials;
-		std::vector< unsigned short >	m_vFaceMaterialID;
-		bool							m_bIndexed;
-		IDrawTool*						m_pDrawTool;
-		IBox*							m_pBbox;
-		int								m_nParentBoneID;
-		CVector							m_oOrgMaxPosition;
-		map< string, IBox* >			m_mAnimationKeyBox;
+	void								CreateMaterialTexture(const std::map< int, CMaterial* >&);
+	void								DisplaySkeletonInfo(INode* pRoot, bool bRecurse = true);
+	void								CreateNonIndexedMaterialVertexArray(const std::vector< unsigned short >& vMtlFace, const std::vector< unsigned int >& vIndexArray, std::vector< float >& vOut);
 
-		Desc(  std::vector< float >& vVertexArray, std::vector<  unsigned int  >& vIndexArray,
-				std::vector< float >& vUVVertexArray, std::vector< unsigned int >& vUVIndexArray,
-				std::vector< float >& vNormalVertexArray, IRenderer& oRenderer, IShader* pShader );
-	};
-						CMesh( const Desc& oDesc );
-	virtual				~CMesh();
-	void				Update();
-	bool				operator==( const IMesh& w );
-	void				DrawBoundingBox( bool bDraw );
-	void				DrawBoundingSphere( bool bDraw );
-	void				SetCurrentAnimationBoundingBox( string AnimationName );
-	void				DrawAnimationBoundingBox( bool bDraw );
-	void				SetShader( IShader* pShader );
-	IBox*				GetBBox();
-	IShader*			GetShader() const{ return m_pShader; }
-	int					GetParentBoneID()const;
-	void				GetOrgWorldPosition( CVector& v );
-	void				SetRenderingType( IRenderer::TRenderType t );
-	IBox*				GetAnimationBBox( string sAnimation );
-	CVector&			GetOrgMaxPosition();
-	void				Colorize(float r, float g, float b, float a);
-	ITexture*			GetTexture(int nMaterialIndex);
-	void				SetTexture(ITexture* pTexture);
-	int					GetMaterialCount() override;
-	IMaterial*			GetMaterial(int index) override;
-	void				SetDrawStyle(IRenderer::TDrawStyle style) override;
 };
 
 #endif

@@ -357,11 +357,16 @@ void CEntity::UpdateRessource()
 			}
 		}
 		if (m_pRessource) {
-			if (m_pMesh && m_pCustomTexture)
-				m_pMesh->SetTexture(m_pCustomTexture);
-			m_pRessource->Update();
-			if (m_pMesh && m_pCustomTexture)
-				m_pMesh->SetTexture(m_pBaseTexture);
+			if (!m_pEntityManager->IsUsingInstancing()) {				
+				if (m_pMesh && m_pCustomTexture)
+					m_pMesh->SetTexture(m_pCustomTexture);
+				m_pRessource->Update();
+				if (m_pMesh && m_pCustomTexture)
+					m_pMesh->SetTexture(m_pBaseTexture);
+			}
+			else {
+				m_pEntityManager->AddRenderQueue(this);
+			}
 		}
 		if (m_pMesh)
 			m_pMesh->SetRenderingType(IRenderer::eFill);
@@ -379,7 +384,8 @@ void CEntity::Update()
 	SendBonesToShader();
 
 	m_oWorldMatrix *= m_oScaleMatrix;
-	m_oRenderer.SetModelMatrix( m_oWorldMatrix );	
+	if(!m_pEntityManager->IsUsingInstancing())
+		m_oRenderer.SetModelMatrix( m_oWorldMatrix );	
 	UpdateRessource();
 
 	if (m_bDrawBoundingBox && m_pBoundingGeometry)
@@ -684,6 +690,11 @@ void CEntity::CenterToworld()
 IRessource*	CEntity::GetRessource()
 {
 	return m_pRessource;
+}
+
+IMesh* CEntity::GetMesh()
+{
+	return m_pMesh;
 }
 
 IAnimation* CEntity::GetCurrentAnimation()

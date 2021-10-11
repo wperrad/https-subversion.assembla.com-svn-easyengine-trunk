@@ -13,6 +13,20 @@ CLightEntity::~CLightEntity()
 	m_oRessourceManager.DisableLight( m_pRessource );
 }
 
+void CLightEntity::Update()
+{
+	CNode::Update();
+	m_oRenderer.SetModelMatrix(m_oWorldMatrix);
+	UpdateRessource();
+	DispatchEntityEvent();
+}
+
+void CLightEntity::UpdateRessource()
+{
+	if (m_pRessource)
+		m_pRessource->Update();
+}
+
 void CLightEntity::SetIntensity( float fIntensity )
 {
 	m_oRessourceManager.SetLightIntensity( m_pRessource, fIntensity );

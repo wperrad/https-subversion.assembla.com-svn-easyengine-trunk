@@ -12,6 +12,8 @@ class CLightEntity : public CEntity
 public:
 	CLightEntity(EEInterface& oInterface, IRessource* pLight);
 	~CLightEntity();
+	void				Update() override;
+	void				UpdateRessource() override;
 	void				SetIntensity( float fInstensity );
 	float				GetIntensity();
 	CVector				GetColor();

@@ -20,6 +20,7 @@ class CHeightMap : public IHeightMap
 public:
 	CHeightMap();
 	CHeightMap(EEInterface& oInterface, string sFileName, const IBox& bbox);
+	~CHeightMap();
 	void	Load(string sFileName);
 	void	Save(string sFileName) override;
 	void	GetPixel( int x, int y, CVector& pixel );

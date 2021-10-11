@@ -64,7 +64,7 @@ private:
 	IRenderer&				m_oRenderer;
 	ILoaderManager&			m_oLoaderManager;
 	IFileSystem*			m_pFileSystem;
-	map< int, CHeightMap >	m_mHeigtMap;
+	map< int, CHeightMap* >	m_mHeigtMap;
 	CVector					m_oOriginBackgroundColor;
 	int						m_nHeightMapPrecision;
 	IGeometryManager&		m_oGeometryManager;

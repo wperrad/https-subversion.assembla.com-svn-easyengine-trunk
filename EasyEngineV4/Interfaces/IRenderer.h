@@ -80,16 +80,13 @@ public:
 	virtual void			SetMaterialSpecular( float* fSpecular ) = 0;
 	virtual void			SetMaterialEmissive( float* fEmissive ) = 0;
 	virtual void			SetMaterialShininess( float fShininess ) = 0;
-
 	virtual unsigned int	CreateVertexBuffer( const std::vector< float >& vData ) const = 0;
 	virtual unsigned int	CreateVertexBuffer( const std::vector< int >& vData ) const = 0;
-
 	virtual int				CreateBuffer( int nElementCount ) = 0;
 	virtual void			FillBuffer( const std::vector< float >& vData, int nBufferID, int nOffset = 0 ) = 0;
+	virtual void			FillBuffer(const vector< CMatrix >& vMatrix, int nBufferID, int nOffset = 0) = 0;
 	virtual void			AppendBuffer( const std::vector< float >& vData ) = 0;
-
 	virtual void			GetNonIndexedVertexBuffer( const std::vector< float >& vVertexBuffer, const std::vector< unsigned int >& vIndexBuffer, std::vector< float >& vOutVertexBuffer ) = 0;
-
 	virtual void			BindVertexBuffer( int nBufferID ) = 0;
 	virtual void			DeleteBuffer( unsigned int nBufferID ) = 0;
 	virtual void			DeleteBuffer( IBuffer* pBuffer ) = 0;
@@ -103,7 +100,9 @@ public:
 											const std::vector< float >& vNormalFaceArray, const std::vector< float >& vNormalVertexArray ) = 0;
 
 	virtual void 			DrawGeometry( const IBuffer* pBuffer ) = 0;
+	virtual void			DrawGeometryInstanced(const IBuffer* pBuffer, int instanceCount) = 0;
 	virtual void			DrawIndexedGeometry( const IBuffer* pBuffer, TDrawStyle style = T_TRIANGLES ) = 0;
+	virtual void			DrawIndexedGeometryInstanced(const IBuffer* pBuffer, TDrawStyle style = T_TRIANGLES, int instanceCount = 1) = 0;
 	virtual void			DrawLine( const CVector& p1, const CVector& p2, const CVector& color ) = 0;
 	virtual void			DrawBase( const CMatrix& mBase, float fSize ) = 0;
 	virtual void			DrawBox( const CVector& oMinPoint, const CVector& oDimension ) = 0;
