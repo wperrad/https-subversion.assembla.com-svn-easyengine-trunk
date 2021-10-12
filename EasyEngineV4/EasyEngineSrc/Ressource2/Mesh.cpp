@@ -240,10 +240,8 @@ void CMesh::Update()
 	GetRenderer().SetRenderType( IRenderer::eFill );
 }
 
-void CMesh::UpdateInstances(vector<CMatrix>& matrices)
+void CMesh::UpdateInstances(int instanceCount)
 {
-	IShader* pShader = GetRenderer().GetShader("PerPixelLightingInstanced");
-	SetShader(pShader);
 	m_pShader->Enable(true);
 	GetRenderer().SetRenderType(m_eRenderType);
 	if (m_mMaterials.size() == 1)
@@ -262,7 +260,7 @@ void CMesh::UpdateInstances(vector<CMatrix>& matrices)
 	m_pShader->GetName(shaderName);
 	transform(shaderName.begin(), shaderName.end(), shaderName.begin(), tolower);
 
-	if (shaderName == "skinning")
+	if (shaderName.find("skinning") != -1)
 	{
 		nVertexWeightID = m_pShader->EnableVertexAttribArray("vVertexWeight");
 		GetRenderer().BindVertexBuffer(m_nVertexWeightBufferID);
@@ -285,12 +283,10 @@ void CMesh::UpdateInstances(vector<CMatrix>& matrices)
 	GetRenderer().FillBuffer(matrices, m_nEntityMatricesBufferID, 0);
 	m_pShader->VertexAttributePointerf(nEntityMatrix, matrixSize, 0);
 	m_pShader->AttribDivisor(nEntityMatrix, matrixSize);
-#else
-	m_pShader->SendUniformMatrix4Array("vEntityMatrix", matrices, true);
 #endif // 0
 
 	if (m_bIndexedGeometry) {
-		GetRenderer().DrawIndexedGeometryInstanced(m_pBuffer, m_eDrawStyle, matrices.size());
+		GetRenderer().DrawIndexedGeometryInstanced(m_pBuffer, m_eDrawStyle, instanceCount);
 	}
 	else
 	{
@@ -328,7 +324,7 @@ void CMesh::UpdateInstances(vector<CMatrix>& matrices)
 				}
 			}
 		}
-		GetRenderer().DrawGeometryInstanced(m_pBuffer, matrices.size());
+		GetRenderer().DrawGeometryInstanced(m_pBuffer, instanceCount);
 	}
 
 	if (shaderName == "skinning")

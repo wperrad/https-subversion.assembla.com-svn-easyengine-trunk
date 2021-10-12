@@ -56,7 +56,7 @@ public:
 	CMesh(const Desc& oDesc);
 	virtual								~CMesh();
 	void								Update() override;
-	void								UpdateInstances(vector<CMatrix>& matrices) override;
+	void								UpdateInstances(int instanceCount) override;
 	bool								operator==(const IMesh& w);
 	void								DrawBoundingBox(bool bDraw);
 	void								DrawBoundingSphere(bool bDraw);

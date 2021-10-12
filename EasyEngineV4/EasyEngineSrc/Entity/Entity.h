@@ -79,6 +79,7 @@ public:
 	void							SetCustomSpecular(const CVector& customSpecular) override;
 	void							DrawCollisionBoundingBoxes(bool bDraw) override;
 	static void						GetSkeletonEntities(CBone* pRoot, vector< CEntity* >& vEntity, string sFileFilter);
+	void							GetBonesMatrix(std::vector< CMatrix >& vBoneMatrix);
 	
 
 protected:

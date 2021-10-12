@@ -591,15 +591,31 @@ void CEntityManager::RemoveCharacterFromDB(string sID)
 void CEntityManager::AddRenderQueue(CEntity* pEntity)
 {
 	IMesh* pMesh = pEntity->GetMesh();
-	if(pMesh)
+	if (pMesh) {
 		m_mRenderQueue[pMesh].push_back(pEntity);
+		if (pEntity->GetSkeletonRoot()) {
+			vector<CMatrix> vBonesMatrix;
+			pEntity->GetBonesMatrix(vBonesMatrix);
+			m_mBonesMatrixQueue[pMesh].push_back(vBonesMatrix);
+		}
+	}
+}
+
+void CEntityManager::GetInstancesTM(map<IMesh*, vector<CEntity*>>& instances)
+{
+	instances = m_mRenderQueue;
+}
+
+map<IMesh*, vector<vector<CMatrix>>>& CEntityManager::GetInstancesBonesTM()
+{
+	return m_mBonesMatrixQueue;
 }
 
 void CEntityManager::ClearRenderQueue()
 {
 	m_mRenderQueue.clear();
+	m_mBonesMatrixQueue.clear();
 }
-
 
 template<class T>
 void CEntityManager::SerializeNodeInfos(INode* pNode, ostringstream& oss, int nLevel)
@@ -649,10 +665,6 @@ bool CEntityManager::IsUsingInstancing()
 	return m_bUseInstancing;
 }
 
-void CEntityManager::GetInstances(map<IMesh*, vector<CEntity*>>& instances)
-{
-	instances = m_mRenderQueue;
-}
 
 extern "C" _declspec(dllexport) IEntityManager* CreateEntityManager(EEInterface& oInterface)
 {

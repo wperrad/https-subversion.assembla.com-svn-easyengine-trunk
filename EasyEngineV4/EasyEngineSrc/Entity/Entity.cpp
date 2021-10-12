@@ -339,7 +339,8 @@ void CEntity::SendBonesToShader()
 	{
 		vector< CMatrix > vBoneMatrix;
 		GetBonesMatrix(m_pOrgSkeletonRoot, m_pSkeletonRoot, vBoneMatrix);
-		SetNewBonesMatrixArray(vBoneMatrix);
+		if (!m_pEntityManager->IsUsingInstancing())
+			SetNewBonesMatrixArray(vBoneMatrix);
 	}
 }
 
@@ -364,9 +365,8 @@ void CEntity::UpdateRessource()
 				if (m_pMesh && m_pCustomTexture)
 					m_pMesh->SetTexture(m_pBaseTexture);
 			}
-			else {
+			else
 				m_pEntityManager->AddRenderQueue(this);
-			}
 		}
 		if (m_pMesh)
 			m_pMesh->SetRenderingType(IRenderer::eFill);
@@ -605,6 +605,11 @@ void CEntity::Link( INode* pParent )
 void CEntity::Hide( bool bHide )
 {
 	m_bHidden = bHide;
+}
+
+void CEntity::GetBonesMatrix(std::vector< CMatrix >& vBoneMatrix)
+{
+	GetBonesMatrix(m_pOrgSkeletonRoot, m_pSkeletonRoot, vBoneMatrix);
 }
 
 void CEntity::GetBonesMatrix( INode* pInitRoot, INode* pCurrentRoot, vector< CMatrix >& vMatrix )

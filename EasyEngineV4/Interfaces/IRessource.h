@@ -147,7 +147,7 @@ public:
 	virtual int				GetMaterialCount() = 0;
 	virtual IMaterial*		GetMaterial(int index) = 0;
 	virtual void			SetDrawStyle(IRenderer::TDrawStyle style) = 0;
-	virtual void			UpdateInstances(vector<CMatrix>& matrices) = 0;
+	virtual void			UpdateInstances(int instanceCount) = 0;
 };
 
 class IAnimatableMesh : public IRessource

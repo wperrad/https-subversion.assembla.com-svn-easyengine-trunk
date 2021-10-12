@@ -476,12 +476,40 @@ bool CScene::IsLoadingComplete()
 void CScene::RenderInstances()
 {
 	map<IMesh*, vector<CEntity*>> entities;
-	m_pEntityManager->GetInstances(entities);
+	m_pEntityManager->GetInstancesTM(entities);
+	map<IMesh*, vector<vector<CMatrix>>>& bonesTM = m_pEntityManager->GetInstancesBonesTM();
+
+	map<IMesh*, vector<vector<CMatrix>>>::iterator itBones = bonesTM.begin();
 	for (map<IMesh*, vector<CEntity*>>::iterator it = entities.begin(); it != entities.end(); it++) {
-		vector<CMatrix> matrices;
+		vector<CMatrix> vPosTM;
 		for (int i = 0; i < it->second.size(); i++)
-			matrices.push_back(it->second[i]->GetWorldMatrix());
-		it->first->UpdateInstances(matrices);
+			vPosTM.push_back(it->second[i]->GetWorldMatrix());
+
+		IShader* pShader = nullptr;
+
+		if ((itBones != bonesTM.end()) && (itBones->first == it->first) && (itBones->second.size() > 0))
+			pShader = m_oRenderer.GetShader("SkinningInstanced");
+		else
+			pShader = m_oRenderer.GetShader("PerPixelLightingInstanced");
+
+		it->first->SetShader(pShader);
+		pShader->SendUniformMatrix4Array("vEntityMatrix", vPosTM, true);
+
+		if (itBones != bonesTM.end() && (itBones->first == it->first) && itBones->second.size() > 0) {
+			vector<vector<CMatrix>>& matBonesArray = itBones->second;
+
+#if 0
+			for (unsigned int j = 0; j < matBonesArray.size(); j++) {
+				ostringstream oss;
+				oss << "matBones" << j;
+				pShader->SendUniformMatrix4Array(oss.str(), matBonesArray[j], true);
+			}
+#else
+			pShader->SendUniformMatrix4Array("matBones", matBonesArray[0], true);
+#endif
+			itBones++;
+		}
+		it->first->UpdateInstances(vPosTM.size());
 	}
 }
 

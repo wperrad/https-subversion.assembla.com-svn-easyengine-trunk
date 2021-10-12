@@ -48,7 +48,7 @@ public:
 	void 			SendVector4Array( const std::string& sVariableName, std::vector< int >& vVector );
 	void			SendUniformVec2Array( const std::string& sVariableName, std::vector< float >& vArray );
 	void 			SendUniformMatrix4(const std::string& sVariableName, const CMatrix& oMatrix, bool bTranspose = false);
-	void 			SendUniformMatrix4Array( const std::string& sVariableName, std::vector< CMatrix >& vMatrix, bool bTranspose = false );	
+	void 			SendUniformMatrix4Array( const string& sVariableName, vector< CMatrix >& vMatrix, bool bTranspose = false ) override;
 	unsigned int	EnableVertexAttribArray( const std::string& sAttribName );
 	void			DisableVertexAttribArray( unsigned int nAttribID );
 	void 			VertexAttributePointerf( unsigned int id, int nSize, int nPos );

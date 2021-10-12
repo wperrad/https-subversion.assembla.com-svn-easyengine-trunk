@@ -33,7 +33,7 @@ void main()
 			float fWeightedVertexValue = vVertexWeight[ iBone ];
 			matWeight += fWeightedVertexValue * matBones[ int(fBoneID) ];
 		}
-	}	
+	}
 	
 	vVertexPos = gl_ModelViewMatrix * gl_Vertex;
 	N = normalize(gl_NormalMatrix * gl_Normal);

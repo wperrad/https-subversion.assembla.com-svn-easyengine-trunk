@@ -17,7 +17,6 @@ void main()
 #ifdef MULTIMATERIAL
 	nPSMatID = nMatID;
 #endif // MULTIMATERIAL
-	//vModelVertexPos = gl_ModelViewMatrix * gl_Vertex;
 	vModelVertexPos = gl_ModelViewMatrix * vEntityMatrix[gl_InstanceID] * gl_Vertex;
 	vec4 vViewVertexPos = gl_ProjectionMatrix * vModelVertexPos;
 	N = normalize(gl_NormalMatrix * gl_Normal);
