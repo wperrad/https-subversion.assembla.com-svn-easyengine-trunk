@@ -15,7 +15,10 @@ attribute vec4 vWeightedVertexID;
 attribute float nMatID;
 #endif // MULTIMATERIAL
 
-uniform mat4 matBones[80];
+uniform 
+uniform mat4 matBones0[70];
+uniform mat4 matBones1[70];
+uniform mat4 matBones2[70];
 uniform mat4 vEntityMatrix[20];
 
 void main()
@@ -24,6 +27,13 @@ void main()
 	nPSMatID = nMatID;
 #endif // MULTIMATERIAL
 
+	mat4 matBones[70];
+	if(gl_InstanceID == 0)
+		matBones = matBones0;
+	if(gl_InstanceID == 1)
+		matBones = matBones1;
+	if(gl_InstanceID == 2)
+		matBones = matBones2;
 	mat4 matWeight = mat4(0.);
 
 	for ( int iBone = 0; iBone < 4; iBone++ )

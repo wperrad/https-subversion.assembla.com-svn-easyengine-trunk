@@ -670,6 +670,7 @@ void CEntity::OnAnimationCallback( IAnimation::TEvent e, void* pData )
 void CEntity::SetMesh( IMesh* pMesh )
 {
 	m_pRessource = pMesh;
+	m_pMesh = pMesh;
 }
 
 void CEntity::DrawBoundingBox( bool bDraw )

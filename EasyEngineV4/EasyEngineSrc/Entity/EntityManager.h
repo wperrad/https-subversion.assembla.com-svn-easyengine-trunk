@@ -76,7 +76,7 @@ public:
 	void													LoadCharacterInfos();
 	void													SaveCharacterInfos(const map<string, ILoader::CAnimatedEntityInfos>& characterInfos);
 	void													RemoveCharacterFromDB(string sID) override;
-	void													AddRenderQueue(CEntity* pEntity);
+	void													AddRenderQueue(INode* pEntity);
 	void													ClearRenderQueue();
 
 	template<class T>

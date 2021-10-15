@@ -505,7 +505,9 @@ void CScene::RenderInstances()
 				pShader->SendUniformMatrix4Array(oss.str(), matBonesArray[j], true);
 			}
 #else
-			pShader->SendUniformMatrix4Array("matBones", matBonesArray[0], true);
+			//pShader->SendUniformMatrix4Array("matBones", matBonesArray[1], true);
+			pShader->SendUniformMatrix4Array("matBones0", matBonesArray[0], true);
+			pShader->SendUniformMatrix4Array("matBones1", matBonesArray[1], true);
 #endif
 			itBones++;
 		}

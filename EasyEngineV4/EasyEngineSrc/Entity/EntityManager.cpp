@@ -588,15 +588,22 @@ void CEntityManager::RemoveCharacterFromDB(string sID)
 	m_mCharacterInfos.erase(sID);
 }
 
-void CEntityManager::AddRenderQueue(CEntity* pEntity)
+void CEntityManager::AddRenderQueue(INode* pNode)
 {
-	IMesh* pMesh = pEntity->GetMesh();
+	CEntity* pEntity = dynamic_cast<CEntity*>(pNode);
+	IMesh* pMesh = pEntity ? pEntity->GetMesh() : nullptr;
 	if (pMesh) {
 		m_mRenderQueue[pMesh].push_back(pEntity);
 		if (pEntity->GetSkeletonRoot()) {
 			vector<CMatrix> vBonesMatrix;
 			pEntity->GetBonesMatrix(vBonesMatrix);
 			m_mBonesMatrixQueue[pMesh].push_back(vBonesMatrix);
+		}
+	}
+	else {
+		for (int i = 0; i < pEntity->GetChildCount(); i++) {
+			INode* pChild = pEntity->GetChild(i);
+			AddRenderQueue(pChild);
 		}
 	}
 }
