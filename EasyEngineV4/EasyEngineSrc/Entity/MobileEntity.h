@@ -39,6 +39,7 @@ public:
 	void						Pitch(float fAngle);
 	void						Roll(float fAngle);
 	IAnimation*					GetCurrentAnimation();
+	void						WearSkinnedClothFull(string sClothName);
 	static void					InitStatics();
 
 	static map<string, IEntity::TAnimation>	s_mStringToAnimation;
@@ -75,6 +76,7 @@ protected:
 	static map< TAnimation, float >				s_mOrgAnimationSpeedByType;
 	static vector< CMobileEntity* >				s_vHumans;
 
+	void					InitAnimations();
 	void					SetPredefinedAnimation( string s, bool bLoop );
 	void 					Walk( bool bLoop );
 	void 					Stand( bool bLoop );

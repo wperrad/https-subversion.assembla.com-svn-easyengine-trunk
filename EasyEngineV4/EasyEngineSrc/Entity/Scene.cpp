@@ -506,8 +506,8 @@ void CScene::RenderInstances()
 			}
 #else
 			//pShader->SendUniformMatrix4Array("matBones", matBonesArray[1], true);
-			pShader->SendUniformMatrix4Array("matBones0", matBonesArray[0], true);
-			pShader->SendUniformMatrix4Array("matBones1", matBonesArray[1], true);
+			for(int i = 0; i < matBonesArray.size(); i++)
+				pShader->SendUniformMatrix4Array("matBones0", matBonesArray[i], true);
 #endif
 			itBones++;
 		}
@@ -517,44 +517,46 @@ void CScene::RenderInstances()
 
 void CScene::DisplayEntities(vector<IEntity*>& entities)
 {
-	ICamera* pActiveCamera = m_oCameraManager.GetActiveCamera();
-	CMatrix oCamMatrix;
-	m_pMapCamera->SetLocalPosition(m_pPlayer->GetX(), m_pMapCamera->GetY(), m_pPlayer->GetZ());
-	m_pMapCamera->Update();
-	m_pMapCamera->GetWorldMatrix(oCamMatrix);
-	CMatrix oBackupInvCameraMatrix;
-	m_oRenderer.GetInvCameraMatrix(oBackupInvCameraMatrix);
-	m_oRenderer.SetCameraMatrix(oCamMatrix);
-	m_oCameraManager.SetActiveCamera(m_pMapCamera);
-	m_oRenderer.ClearFrameBuffer();
-	IShader* pBackupShader = NULL;
-	IShader* pFirstPassShader = m_oRenderer.GetShader(m_sMapFirstPassShaderName);
+	if (m_pPlayer) {
+		ICamera* pActiveCamera = m_oCameraManager.GetActiveCamera();
+		CMatrix oCamMatrix;
+		m_pMapCamera->SetLocalPosition(m_pPlayer->GetX(), m_pMapCamera->GetY(), m_pPlayer->GetZ());
+		m_pMapCamera->Update();
+		m_pMapCamera->GetWorldMatrix(oCamMatrix);
+		CMatrix oBackupInvCameraMatrix;
+		m_oRenderer.GetInvCameraMatrix(oBackupInvCameraMatrix);
+		m_oRenderer.SetCameraMatrix(oCamMatrix);
+		m_oCameraManager.SetActiveCamera(m_pMapCamera);
+		m_oRenderer.ClearFrameBuffer();
+		IShader* pBackupShader = NULL;
+		IShader* pFirstPassShader = m_oRenderer.GetShader(m_sMapFirstPassShaderName);
 
-	CMatrix m;
-	m_oRenderer.SetModelMatrix(m);
-	IMesh* pGround = static_cast<IMesh*>(GetRessource());
-	pBackupShader = pGround->GetShader();
-	pGround->SetShader(pFirstPassShader);
-	pGround->Update();
-	pGround->SetShader(pBackupShader);
+		CMatrix m;
+		m_oRenderer.SetModelMatrix(m);
+		IMesh* pGround = static_cast<IMesh*>(GetRessource());
+		pBackupShader = pGround->GetShader();
+		pGround->SetShader(pFirstPassShader);
+		pGround->Update();
+		pGround->SetShader(pBackupShader);
 
-	for (int i = 0; i < entities.size(); i++) {
-		CEntity* pEntity = dynamic_cast<CEntity*>(entities[i]);
-		IRessource* pRessource = pEntity->GetRessource();
-		if (pRessource) {
-			pBackupShader = pRessource->GetShader();
-			pEntity->SetShader(pFirstPassShader);
-			m_oRenderer.SetModelMatrix(pEntity->GetWorldMatrix());
-			pEntity->UpdateRessource();
-			pEntity->SetShader(pBackupShader);
+		for (int i = 0; i < entities.size(); i++) {
+			CEntity* pEntity = dynamic_cast<CEntity*>(entities[i]);
+			IRessource* pRessource = pEntity->GetRessource();
+			if (pRessource) {
+				pBackupShader = pRessource->GetShader();
+				pEntity->SetShader(pFirstPassShader);
+				m_oRenderer.SetModelMatrix(pEntity->GetWorldMatrix());
+				pEntity->UpdateRessource();
+				pEntity->SetShader(pBackupShader);
+			}
 		}
-	}
-	
-	m_pPlayerMapSphere->SetLocalMatrix(m_pPlayer->GetWorldMatrix());
-	m_pPlayerMapSphere->Update();
 
-	m_oCameraManager.SetActiveCamera(pActiveCamera);
-	m_oRenderer.SetInvCameraMatrix(oBackupInvCameraMatrix);
+		m_pPlayerMapSphere->SetLocalMatrix(m_pPlayer->GetWorldMatrix());
+		m_pPlayerMapSphere->Update();
+
+		m_oCameraManager.SetActiveCamera(pActiveCamera);
+		m_oRenderer.SetInvCameraMatrix(oBackupInvCameraMatrix);
+	}
 }
 
 void CScene::GetInfos( ILoader::CSceneInfos& si )
@@ -633,13 +635,23 @@ void CScene::Load( const ILoader::CSceneInfos& si )
 void CScene::Clear()
 {
 	m_oCameraManager.UnlinkCameras();
-	for( int i = 0; i < m_vChild.size(); i++ )
+	for (int i = 0; i < m_vChild.size(); i++)
 	{
-		IEntity* pChild = dynamic_cast< IEntity* >( m_vChild[ i ] );
-		if (!dynamic_cast<CRepere*>(pChild)) {
-			pChild->Unlink();
-			m_pEntityManager->DestroyEntity(pChild);
+		IEntity* pChildEntity = nullptr;
+		INode* pBone = dynamic_cast<IBone*>(m_vChild[i]);
+		if (!pBone)
+			pChildEntity = dynamic_cast< IEntity* >( m_vChild[ i ] );
+
+		if (pChildEntity && !dynamic_cast<CRepere*>(pChildEntity)) {
+			m_vChild[i]->Unlink();
+			m_pEntityManager->DestroyEntity(pChildEntity);
 			i--;
+		}
+		else {
+			if (pBone || (pChildEntity && !dynamic_cast<CRepere*>(pChildEntity))) {
+				m_vChild[i]->Unlink();
+				i--;
+			}
 		}
 	}
 	m_pRessource = NULL;

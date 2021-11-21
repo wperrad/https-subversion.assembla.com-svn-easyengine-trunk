@@ -2,13 +2,20 @@ OpenConsole(0);
 SetBkgColor(0, 100, 255);
 r=CreateRepere();
 
-//EnableInstancingMode(0);
-//LoadMap("Hopital03");
+l=CreateLightw("omni", 1)
+SetEntityPos(l, 0, 700, 0);
+SetCameraType("free");
+
+/*
+EnableInstancingMode(0);
+npc1=CreateNPC("body03", "q");
+SetEntityWeight(npc1, 0);
+SetEntityPos(npc1, 0, 0, 0);
+WearSkinnedClothFull(npc1, "clothes/dresses/robe3");
+Walk(npc1);
+*/
+
 LoadWorld("");
-//LoadMap("Empty");
-
-//PatchMapBuildingPath("hopital02", "meshes/buildings");
-
 return;
 
 /*

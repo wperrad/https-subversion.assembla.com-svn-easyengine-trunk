@@ -111,6 +111,7 @@ int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Inter
 {
 	try
 	{
+		m_pMaxInterface = pInterface;
 		wstring wFileName = pName;
 		int nDotPos = (int)wFileName.find_last_of( L"." );
 		wstring sExtension = wFileName.substr( nDotPos + 1, wFileName.size() - nDotPos - 1 );
@@ -148,22 +149,6 @@ int	CBinaryMeshMaxExporter::DoExport(const TCHAR *pName, ExpInterface *ei, Inter
 		MessageBoxA( NULL, e.what(), "", MB_ICONERROR );
 	}
 	return TRUE;
-}
-
-void CBinaryMeshMaxExporter::GetSkeleton( INode* pRoot, map< string, INode* >& mBone )
-{
-	for ( int iNode = 0; iNode < pRoot->NumberOfChildren(); iNode++ )
-	{
-		INode* pNode = pRoot->GetChildNode( iNode );
-		Object* pObject = pNode->EvalWorldState( 0 ).obj;
-		if ( IsBone( pObject ) )
-		{
-			wstring wname(pNode->GetName());
-			string name(wname.begin(), wname.end());
-			mBone[name] = pNode;
-		}
-		GetSkeleton(pNode, mBone);
-	}
 }
 
 void CBinaryMeshMaxExporter::GetBonesIDByName(INode* pRoot, map< string, int >& mBoneIDByName) const

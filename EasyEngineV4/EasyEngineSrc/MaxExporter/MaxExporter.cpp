@@ -74,7 +74,9 @@ m_nCurrentSmGroup(-1),
 m_nMaterialCount(0),
 m_pLogFile(NULL),
 m_bEnableAnimationList(false),
-m_nSelectedAnimationIndex(0)
+m_nSelectedAnimationIndex(0),
+m_pMaxInterface(nullptr),
+m_bInitialise(false)
 {
 	s_pExporter = this;
 	EEInterface* pInterface = new EEInterface;
@@ -338,20 +340,24 @@ void CMaxExporter::GetGeometry(Interface* pInterface, vector< ILoader::CMeshInfo
 	for (int iNode = 0; iNode < pRoot->NumberOfChildren(); iNode++)
 	{
 		INode* pNode = pRoot->GetChildNode(iNode);
-		wstring wTest = pNode->GetName();
-		Object* pObject = pNode->EvalWorldState(0).obj;
-		if (IsBone(pObject))
-		{
-			GetMeshesIntoHierarchy(pInterface, pNode, vMeshInfos);
-			continue;
-		}
-		if (pObject->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)) == TRUE)
-		{
-			ILoader::CMeshInfos mi;
-			StoreMeshToMeshInfos(pInterface, pNode, mi);
-			if (g_bInterruptExport)
-				break;
-			vMeshInfos.push_back(mi);
+		int hidden = pNode->IsHidden();
+		if (hidden == 0) { // pNode->IsVisible() {
+			wstring wTest = pNode->GetName();
+			Object* pObject = pNode->EvalWorldState(0).obj;
+
+			if (IsBone(pObject))
+			{
+				GetMeshesIntoHierarchy(pInterface, pNode, vMeshInfos);
+				continue;
+			}
+			if (pObject->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)) == TRUE)
+			{
+				ILoader::CMeshInfos mi;
+				StoreMeshToMeshInfos(pInterface, pNode, mi);
+				if (g_bInterruptExport)
+					break;
+				vMeshInfos.push_back(mi);
+			}
 		}
 	}
 }
@@ -438,18 +444,20 @@ void CMaxExporter::GetBonesBoundingBoxes(const Mesh& oMesh, const IWeightTable& 
 void CMaxExporter::GetMeshesIntoHierarchy(Interface* pInterface, INode* pNode, vector< ILoader::CMeshInfos >& vMeshInfos)
 {
 	Object* pObject = pNode->EvalWorldState(0).obj;
-	if (IsBone(pObject))
-	{
-		for (int iBone = 0; iBone < pNode->NumberOfChildren(); iBone++)
-			GetMeshesIntoHierarchy(pInterface, pNode->GetChildNode(iBone), vMeshInfos);
-	}
-	else
-	{
-		if (pObject->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)) == TRUE)
+	if (pObject) {
+		if (IsBone(pObject))
 		{
-			ILoader::CMeshInfos mi;
-			StoreMeshToMeshInfos(pInterface, pNode, mi);
-			vMeshInfos.push_back(mi);
+			for (int iBone = 0; iBone < pNode->NumberOfChildren(); iBone++)
+				GetMeshesIntoHierarchy(pInterface, pNode->GetChildNode(iBone), vMeshInfos);
+		}
+		else
+		{
+			if (pObject->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)) == TRUE)
+			{
+				ILoader::CMeshInfos mi;
+				StoreMeshToMeshInfos(pInterface, pNode, mi);
+				vMeshInfos.push_back(mi);
+			}
 		}
 	}
 }
@@ -460,21 +468,55 @@ void CMaxExporter::WriteLog(string sMessage)
 		fwrite(sMessage.c_str(), sizeof(char), sMessage.size(), m_pLogFile);
 }
 
-void CMaxExporter::GetWeightTable(IWeightTable& oWeightTable, const map< string, int >& mBoneID, string sObjectName)
+void CMaxExporter::GetSkeleton(INode* pRoot, map< string, INode* >& mBone)
+{
+	for (int iNode = 0; iNode < pRoot->NumberOfChildren(); iNode++)
+	{
+		INode* pNode = pRoot->GetChildNode(iNode);
+		Object* pObject = pNode->EvalWorldState(0).obj;
+		if (IsBone(pObject))
+		{
+			wstring wname(pNode->GetName());
+			string name(wname.begin(), wname.end());
+			mBone[name] = pNode;
+		}
+		GetSkeleton(pNode, mBone);
+	}
+}
+
+void CMaxExporter::GetWeightTable(IWeightTable& oWeightTable, const map< string, int >& mBoneID, string sObjectName, IGameNode* pGameNode)
 {
 	WriteLog("\nCBinaryMeshMaxExporter::GetWeightTable() : debut");
-
 	IGameScene* pGameScene = GetIGameInterface();
-	bool bInitialise = pGameScene->InitialiseIGame();
+	if(!m_bInitialise)
+		m_bInitialise = pGameScene->InitialiseIGame();
+	
+	int nodeCount = 0;
+	if (pGameNode) {
+		INode* pRoot = m_pMaxInterface->GetRootNode();
+		vector<ILoader::CMeshInfos> vMeshInfos;
+		//GetMeshesIntoHierarchy(m_pMaxInterface, pRoot, vMeshInfos);
+		//GetGeometry(m_pMaxInterface, vMeshInfos, pRoot);
+	}
+	
+	nodeCount = pGameNode ? pGameNode->GetChildCount() : pGameScene->GetTopLevelNodeCount(); //pGameScene->GetTopLevelNodeCount();
 	pGameScene->SetStaticFrame(0);
-	for (int i = 0; i < pGameScene->GetTopLevelNodeCount(); i++)
+	for (int i = 0; i < nodeCount; i++)
 	{
-		IGameNode* pGameNode = pGameScene->GetTopLevelNode(i);
-		wstring wNodeName = pGameNode->GetName();
-		wstring wObjectName(sObjectName.begin(), sObjectName.end());
-		if (wNodeName != wObjectName)
+		IGameNode* pChildGameNode = nullptr;
+		if (!pGameNode)
+			pChildGameNode = pGameScene->GetTopLevelNode(i);
+		else
+			pChildGameNode = pGameNode->GetNodeChild(i);
+		if (!pChildGameNode)
 			continue;
-		IGameObject* pGameObject = pGameNode->GetIGameObject();
+		wstring wNodeName = pChildGameNode->GetName();
+		wstring wObjectName(sObjectName.begin(), sObjectName.end());
+		if (wNodeName != wObjectName) {
+			GetWeightTable(oWeightTable, mBoneID, sObjectName, pChildGameNode);
+			continue;
+		}
+		IGameObject* pGameObject = pChildGameNode->GetIGameObject();
 		IGameSkin* pGameSkin = pGameObject->GetIGameSkin();
 		if (pGameSkin)
 		{
@@ -505,6 +547,8 @@ void CMaxExporter::GetWeightTable(IWeightTable& oWeightTable, const map< string,
 			break;
 		}
 	}
+
+
 	WriteLog("\nCBinaryMeshMaxExporter::GetWeightTable() : fin");
 }
 

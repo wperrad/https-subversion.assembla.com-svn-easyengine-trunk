@@ -56,6 +56,8 @@ public:
 	void			GetEntityInfos(ILoader::CObjectInfos*& pInfos) {}
 	void			SetCustomSpecular(const CVector& customSpecular) override {}
 	void			DrawCollisionBoundingBoxes(bool bDraw) {}
+	void			PlayCurrentAnimation(bool loop) {}
+	void			PauseCurrentAnimation(bool loop) {}
 };
 
 #endif // SHAPE_H

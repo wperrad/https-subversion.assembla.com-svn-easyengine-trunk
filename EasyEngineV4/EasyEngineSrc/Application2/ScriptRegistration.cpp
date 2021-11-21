@@ -1559,7 +1559,8 @@ void PauseAnimation( IScriptState* pState )
 		if( pEntity )
 		{
 			bool bPause = pIDBool->m_nValue == 1 ? true : false;
-			pEntity->GetCurrentAnimation()->Pause( bPause );
+			//pEntity->GetCurrentAnimation()->Pause( bPause );
+			pEntity->PauseCurrentAnimation(bPause);
 		}
 		else
 			bGoodEntityID = false;
@@ -1713,8 +1714,9 @@ void PlayCurrentAnimation( IScriptState* pState )
 	if( pEntity )
 	{
 		IAnimation* pAnimation = pEntity->GetCurrentAnimation();
-		if( pAnimation )
-			pAnimation->Play(pLoop->m_nValue != 0);
+		if (pAnimation)
+			//pAnimation->Play(pLoop->m_nValue != 0);
+			pEntity->PlayCurrentAnimation(pLoop->m_nValue != 0);
 		else
 			m_pConsole->Println( "Errreur : L'entité sélectionnée est animable mais ne contient pas l'animation demandée." );
 	}
@@ -2104,6 +2106,20 @@ void DrawCollisionModels(IScriptState* pState)
 	
 	if (pEntity) {
 		pEntity->DrawCollisionBoundingBoxes(pDisplay->m_nValue == 0 ? false : true);
+	}
+}
+
+void WearSkinnedClothFull(IScriptState* pState)
+{
+	CScriptFuncArgInt* pEntityID = (CScriptFuncArgInt*)pState->GetArg(0);
+	CScriptFuncArgString* pClothName = (CScriptFuncArgString*)pState->GetArg(1);
+	ICharacter* pCharacter = dynamic_cast<ICharacter*>(m_pEntityManager->GetEntity(pEntityID->m_nValue));
+	if (pCharacter)
+		pCharacter->WearSkinnedClothFull(pClothName->m_sValue);
+	else {
+		ostringstream oss;
+		oss << "Erreur : l'entite " << pEntityID->m_nValue << " n'est pas un character";
+		m_pConsole->Println(oss.str());
 	}
 }
 
@@ -2788,9 +2804,6 @@ void CreateEntity( IScriptState* pState )
 {
 	CScriptFuncArgString* pName = static_cast< CScriptFuncArgString* >( pState->GetArg( 0 ) );
 	string sName = pName->m_sValue;
-	if( sName.find( ".bme" ) == -1 )
-		sName += ".bme";
-	sName = string("Meshes/") + sName;
 	bool bak = m_pRessourceManager->IsCatchingExceptionEnabled();
 	m_pRessourceManager->EnableCatchingException( false );
 	try
@@ -3222,6 +3235,11 @@ void CreatePlaneEntity(IScriptState* pState)
 void RegisterAllFunctions( IScriptManager* pScriptManager )
 {
 	vector< TFuncArgType > vType;
+
+	vType.clear();
+	vType.push_back(eInt);
+	vType.push_back(eString);
+	m_pScriptManager->RegisterFunction("WearSkinnedClothFull", WearSkinnedClothFull, vType);
 
 	vType.clear();
 	vType.push_back(eInt);

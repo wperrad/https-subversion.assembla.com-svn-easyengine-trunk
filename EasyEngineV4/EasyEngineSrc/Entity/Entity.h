@@ -41,7 +41,10 @@ public:
 	void							AddAnimation( std::string sAnimationFile );
 	void							SetCurrentAnimation( std::string sAnimation );
 	IAnimation*						GetCurrentAnimation();
+	void							PlayCurrentAnimation(bool loop);
+	void							PauseCurrentAnimation(bool loop);
 	IBone*							GetSkeletonRoot();
+	void							SetSkeletonRoot(CBone* pBone, CBone* pOrgBone);
 	void							GetEntityInfos(ILoader::CObjectInfos*& pInfos);
 	virtual void					BuildFromInfos(const ILoader::CObjectInfos& infos, CEntity* pParent);
 	bool							HasAnimation( string sAnimationName );
@@ -80,7 +83,6 @@ public:
 	void							DrawCollisionBoundingBoxes(bool bDraw) override;
 	static void						GetSkeletonEntities(CBone* pRoot, vector< CEntity* >& vEntity, string sFileFilter);
 	void							GetBonesMatrix(std::vector< CMatrix >& vBoneMatrix);
-	
 
 protected:
 	IRessource*										m_pRessource;
@@ -123,7 +125,7 @@ protected:
 	bool											m_bIsOnTheGround;
 	CVector											m_vCustomSpecular;
 	bool											m_bUseCustomSpecular;
-	
+	CEntity*										m_pCloth;	
 
 
 	void				SetNewBonesMatrixArray(std::vector< CMatrix >& vMatBones);

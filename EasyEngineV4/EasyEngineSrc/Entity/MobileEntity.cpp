@@ -180,25 +180,9 @@ m_sStandAnimation("stand-normal")
 		m_mAnimationSpeedByType[ (TAnimation)i ] = s_mOrgAnimationSpeedByType[ (TAnimation)i ];
 
 	m_oBody.m_fWeight = 1.f;
-	string sMask = "Animations/*.bke";
-	WIN32_FIND_DATAA oData;
-
-	IFileSystem* pFileSystem = static_cast<IFileSystem*>(m_oInterface.GetPlugin("FileSystem"));
-	HANDLE hFirst = pFileSystem->FindFirstFile_EE( sMask, oData );
 	
-	if( hFirst != INVALID_HANDLE_VALUE )
-	{
-		do
-		{
-			string sFileNameFound = oData.cFileName;
-			string sFileNameLow = oData.cFileName;
-			transform( sFileNameFound.begin(), sFileNameFound.end(), sFileNameLow.begin(), tolower );
-			AddAnimation( sFileNameLow );
-			string sAnimationType = sFileNameLow.substr(0, sFileNameLow.size() - 4 );
-			m_mAnimations[ s_mAnimationStringToType[ sAnimationType ] ] = m_mAnimation[ sFileNameLow ] ;
-		}
-		while( FindNextFileA( hFirst, &oData ) );
-	}
+	InitAnimations();
+
 	s_vHumans.push_back( this );
 	m_pLeftEye = dynamic_cast< IEntity* >( m_pSkeletonRoot->GetChildBoneByName( "OeilG" ) );
 	m_pRightEye = dynamic_cast< IEntity* >( m_pSkeletonRoot->GetChildBoneByName( "OeilD" ) );
@@ -208,6 +192,26 @@ m_sStandAnimation("stand-normal")
 	m_sAttackBoneName = "OrteilsG";
 	IEntityManager* pEntityManager = static_cast<IEntityManager*>(oInterface.GetPlugin("EntityManager"));
 	pEntityManager->AddNewCharacter(this);
+}
+
+void CMobileEntity::InitAnimations()
+{
+	string sMask = "Animations/*.bke";
+	WIN32_FIND_DATAA oData;
+	IFileSystem* pFileSystem = static_cast<IFileSystem*>(m_oInterface.GetPlugin("FileSystem"));
+	HANDLE hFirst = pFileSystem->FindFirstFile_EE(sMask, oData);
+	if (hFirst != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			string sFileNameFound = oData.cFileName;
+			string sFileNameLow = oData.cFileName;
+			transform(sFileNameFound.begin(), sFileNameFound.end(), sFileNameLow.begin(), tolower);
+			AddAnimation(sFileNameLow);
+			string sAnimationType = sFileNameLow.substr(0, sFileNameLow.size() - 4);
+			m_mAnimations[s_mAnimationStringToType[sAnimationType]] = m_mAnimation[sFileNameLow];
+		} while (FindNextFileA(hFirst, &oData));
+	}
 }
 
 void CMobileEntity::InitStatics()
@@ -280,7 +284,8 @@ IGeometry* CMobileEntity::GetBoundingGeometry()
 		}
 		if(sAnimationName == "run")
 			itBox = m_oKeyBoundingBoxes[sAnimationName].find(160);
-		return (IBox*)itBox->second;
+		if(itBox != m_oKeyBoundingBoxes[sAnimationName].end())
+			return (IBox*)itBox->second;
 	}
 	else {
 		return m_pMesh->GetBBox();
@@ -385,6 +390,10 @@ void CMobileEntity::SetPredefinedAnimation( string s, bool bLoop )
 		throw e;
 	}
 	m_pCurrentAnimation->Play( bLoop );
+	if (m_pCloth) {
+		m_pCloth->SetCurrentAnimation(sAnimationNameLow);
+		m_pCloth->PlayCurrentAnimation(bLoop);
+	}
 	m_eCurrentAnimationType = s_mAnimationStringToType[ s ];
 }
 
@@ -658,6 +667,178 @@ IMesh* CMobileEntity::GetMesh()
 IAnimation*	CMobileEntity::GetCurrentAnimation()
 { 
 	return m_pCurrentAnimation; 
+}
+
+#if 0
+void CMobileEntity::WearSkinnedClothFull(string sClothName)
+{
+	IEntity* pCloth = m_pEntityManager->CreateEntity(sClothName);
+	if (pCloth) {
+		INode* pClothDummy = pCloth->GetChildCount() > 0 ? pCloth->GetChild(0) : nullptr;
+		pCloth->Link(m_pScene);
+		if (pClothDummy) {
+			CEntity* pClothEntity = dynamic_cast<CEntity*>(pClothDummy->GetChild(0));
+			//IBone* pBodyDummyJupe = m_pSkeletonRoot->GetChildBoneByName("BodyDummyJupe");
+			IBone* pBodyDummyJupe = m_pSkeletonRoot->GetChildBoneByName("BodyDummyRoot");
+			pClothDummy->Link(pBodyDummyJupe);
+			pBodyDummyJupe->Update();
+			pClothEntity->SetSkeletonRoot(m_pSkeletonRoot, m_pOrgSkeletonRoot);
+			m_pCloth = pClothEntity;
+			m_pCloth->AddAnimation("walk.bke");
+			m_pCloth->AddAnimation("run.bke");
+		}
+	}
+}
+#endif // 0
+
+#if 0
+void CMobileEntity::WearSkinnedClothFull(string sClothName)
+{
+	IEntity* pCloth = m_pEntityManager->CreateEntity(sClothName);
+	if (pCloth) {
+		m_pCloth = dynamic_cast<CEntity*>(pCloth);
+		if (m_pCloth) {
+			m_pCloth->AddAnimation("walk.bke");
+			m_pCloth->AddAnimation("run.bke");
+			m_pCloth->AddAnimation("stand.bke");
+			static bool test = false;
+			if (test) {
+				m_pCloth->Link(m_pScene);
+				m_pCloth->LocalTranslate(0, 25, 0);
+			}
+			else {
+				m_pCloth->Link(this);
+				m_pCloth->LocalTranslate(0, 25, 0);
+			}
+		}
+	}
+}
+#endif // 0
+
+#if 0 // Sans dummy jupe
+void CMobileEntity::WearSkinnedClothFull(string sClothName)
+{
+	IEntity* pCloth = m_pEntityManager->CreateEntity(sClothName);
+	if (pCloth) {
+		m_pCloth = dynamic_cast<CEntity*>(pCloth);
+		if (m_pCloth) {
+			m_pCloth->AddAnimation("walk.bke");
+			m_pCloth->AddAnimation("run.bke");
+			m_pCloth->AddAnimation("stand.bke");
+			IBone* pBassin = m_pSkeletonRoot->GetChildBoneByName("BodyDummyJupe");
+			m_pCloth->Link(pBassin);
+			m_pCloth->LocalTranslate(0, 16, -0.5);
+		}
+	}
+}
+#endif // 0
+
+#if 0
+void CMobileEntity::WearSkinnedClothFull(string sClothName)
+{
+	IEntity* pCloth = m_pEntityManager->CreateEntity(sClothName);
+	if (pCloth) {
+		m_pCloth = dynamic_cast<CEntity*>(pCloth);
+		if (m_pCloth) {
+			IBone* pDummyRoot = m_pCloth->GetSkeletonRoot();
+			m_pCloth->Link(m_pScene);
+			m_pCloth = dynamic_cast<CEntity*>(pDummyRoot->GetChild(0));
+			m_pCloth->AddAnimation("walk.bke");
+			m_pCloth->AddAnimation("run.bke");
+			m_pCloth->AddAnimation("stand.bke");
+			IBone* pBassin = m_pSkeletonRoot->GetChildBoneByName("BodyDummyJupe");
+			pDummyRoot->Link(pBassin);
+			//pDummyRoot->LocalTranslate(0, 16, -0.5);
+		}
+	}
+}
+#endif // 0
+
+#if 0
+void CMobileEntity::WearSkinnedClothFull(string sClothName)
+{
+	IEntity* pCloth = m_pEntityManager->CreateEntity(sClothName);
+	if (pCloth) {
+		m_pCloth = dynamic_cast<CEntity*>(pCloth);
+		if (m_pCloth) {
+			IBone* pDummyRoot = m_pCloth->GetSkeletonRoot();
+			m_pCloth->Link(m_pScene);
+			m_pCloth = dynamic_cast<CEntity*>(pDummyRoot->GetChild(0));
+			m_pCloth->AddAnimation("walk.bke");
+			m_pCloth->AddAnimation("run.bke");
+			m_pCloth->AddAnimation("stand.bke");
+			IBone* pBodyDummyRoot = m_pSkeletonRoot->GetChildBoneByName("BodyDummyRoot");
+			pDummyRoot->Link(pBodyDummyRoot);
+			//m_pCloth->Link(m_pScene);
+			/*
+			m_pCloth->Yaw(180);
+			m_pCloth->Pitch(280);
+			m_pCloth->LocalTranslate(0, 22.5, -20.75);*/
+		}
+	}
+}
+#endif // 0
+
+#if 0
+void CMobileEntity::WearSkinnedClothFull(string sClothName)
+{
+	IEntity* pCloth = m_pEntityManager->CreateEntity(sClothName);
+	if (pCloth) {
+		m_pCloth = dynamic_cast<CEntity*>(pCloth);
+		if (m_pCloth) {
+			//IBone* pDummyRoot = m_pCloth->GetSkeletonRoot();
+			//m_pCloth->Link(m_pScene);
+			//m_pCloth = dynamic_cast<CEntity*>(pDummyRoot->GetChild(0));
+			m_pCloth->AddAnimation("walk.bke");
+			m_pCloth->AddAnimation("run.bke");
+			m_pCloth->AddAnimation("stand.bke");
+			m_pCloth->AddAnimation("stand-normal.bke");
+			m_pCloth->AddAnimation("test3.bke");
+
+			IBone* pBodyDummyRoot = m_pSkeletonRoot->GetChildBoneByName("BodyDummyRoot");
+			m_pCloth->Link(pBodyDummyRoot);
+
+			m_pCloth->LocalTranslate(0, 24, -1);
+		}
+	}
+}
+
+
+void CMobileEntity::WearSkinnedClothFull(string sClothName)
+{
+	IEntity* pCloth = m_pEntityManager->CreateEntity(sClothName);
+	if (pCloth) {
+		m_pCloth = dynamic_cast<CEntity*>(pCloth);
+		if (m_pCloth) {
+			m_pCloth->Link(m_pScene);
+			m_pCloth->AddAnimation("walk.bke");
+			m_pCloth->AddAnimation("run.bke");
+			m_pCloth->AddAnimation("stand.bke");
+			m_pCloth->AddAnimation("stand-normal.bke");
+			m_pCloth->AddAnimation("test3.bke");
+			m_pCloth->LocalTranslate(0, 24, -1);
+		}
+	}
+}
+#endif // 0
+
+void CMobileEntity::WearSkinnedClothFull(string sClothName)
+{
+	IEntity* pCloth = m_pEntityManager->CreateEntity(sClothName);
+	if (pCloth) {
+		m_pCloth = dynamic_cast<CEntity*>(pCloth);
+		if (m_pCloth) {
+			m_pCloth->Link(m_pScene);
+			m_pCloth->AddAnimation("walk.bke");
+			m_pCloth->AddAnimation("run.bke");
+			m_pCloth->AddAnimation("stand.bke");
+			m_pCloth->AddAnimation("stand-normal.bke");
+			m_pCloth->AddAnimation("test3.bke");
+			m_pCloth->LocalTranslate(0, 24, -1);
+
+			m_pCloth->Link(this);
+		}
+	}
 }
 
 IFighterEntity* CMobileEntity::GetFirstEnemy()

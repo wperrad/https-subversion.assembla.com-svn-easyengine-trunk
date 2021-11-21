@@ -98,6 +98,9 @@ CEntity* CEntityManager::CreateEntityFromType(std::string sFileName, string sTyp
 
 IEntity* CEntityManager::CreateEntity(std::string sFileName, bool bDuplicate)
 {
+	if (sFileName.find(".bme") == -1)
+		sFileName += ".bme";
+	sFileName = string("Meshes/") + sFileName;
 	CEntity* pEntity = NULL;
 	pEntity = new CEntity(m_oInterface, sFileName, bDuplicate);
 	string sName;

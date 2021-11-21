@@ -51,7 +51,8 @@ m_bEmptyEntity(false),
 m_pBaseTexture(nullptr),
 m_pCustomTexture(nullptr),
 m_bIsOnTheGround(true),
-m_bUseCustomSpecular(false)
+m_bUseCustomSpecular(false),
+m_pCloth(nullptr)
 {
 	m_pEntityManager = static_cast<CEntityManager*>(oInterface.GetPlugin("EntityManager"));
 }
@@ -85,7 +86,8 @@ m_bEmptyEntity(false),
 m_pBaseTexture(nullptr),
 m_pCustomTexture(nullptr),
 m_bIsOnTheGround(true),
-m_bUseCustomSpecular(false)
+m_bUseCustomSpecular(false),
+m_pCloth(nullptr)
 {
 	if( sFileName.size() > 0 )
 	{
@@ -585,6 +587,7 @@ void CEntity::Link( INode* pParent )
 		}
 		pDummyChildEntity->m_pScene = m_pScene;
 		pDummyChildEntity->m_pSkeletonRoot = m_pSkeletonRoot;
+		pDummyChildEntity->m_pOrgSkeletonRoot = m_pOrgSkeletonRoot;
 		pEntityManager->DestroyEntity(this);
 		pEntityManager->AddEntity(pDummyChildEntity, sEntityName, id);
 		return;
@@ -658,10 +661,14 @@ void CEntity::OnAnimationCallback( IAnimation::TEvent e, void* pData )
 	case IAnimation::ePlay:
 		CEntity* pEntity = reinterpret_cast< CEntity* >( pData );
 		IBone* pRoot = pEntity->m_pSkeletonRoot;
-		
 		CKey oKey;
 		pRoot->GetKeyByTime( pEntity->GetCurrentAnimation()->GetStartAnimationTime(), oKey );
 		oKey.m_oLocalTM.GetInverse( pEntity->m_oFirstAnimationFrameSkeletonMatrixInv );
+
+		
+		/*if (pEntity->m_pCloth)
+			OnAnimationCallback(e, pEntity->m_pCloth);*/
+			
 		break;
 	}
 }
@@ -708,6 +715,20 @@ IAnimation* CEntity::GetCurrentAnimation()
 	return m_pCurrentAnimation;
 }
 
+void CEntity::PlayCurrentAnimation(bool loop)
+{
+	m_pCurrentAnimation->Play(loop);
+	if (m_pCloth && m_pCloth->m_pCurrentAnimation)
+		m_pCloth->m_pCurrentAnimation->Play(loop);
+}
+
+void CEntity::PauseCurrentAnimation(bool loop)
+{
+	m_pCurrentAnimation->Pause(loop);
+	if (m_pCloth && m_pCloth->m_pCurrentAnimation)
+		m_pCloth->m_pCurrentAnimation->Pause(loop);
+}
+
 void CEntity::AddAnimation(string sAnimationFile)
 {
 	if (m_pSkeletonRoot)
@@ -732,6 +753,9 @@ void CEntity::SetCurrentAnimation(std::string sAnimation)
 	m_pCurrentAnimation = m_mAnimation[sAnimation];
 	if (m_bUsePositionKeys)
 		m_pCurrentAnimation->AddCallback(OnAnimationCallback, this);
+
+	if (m_pCloth)
+		m_pCloth->SetCurrentAnimation(sAnimation);
 }
 
 bool CEntity::HasAnimation(string sAnimationName)
@@ -743,6 +767,20 @@ bool CEntity::HasAnimation(string sAnimationName)
 IBone* CEntity::GetSkeletonRoot()
 {
 	return m_pSkeletonRoot;
+}
+
+void CEntity::SetSkeletonRoot(CBone* pBone, CBone* pOrgBone)
+{
+#if 1
+	m_pSkeletonRoot = (CBone*)pBone->DuplicateHierarchy();
+	m_pOrgSkeletonRoot = (CBone*)pOrgBone->DuplicateHierarchy();
+	m_pSkeletonRoot->Link(this);
+
+#else
+	m_pSkeletonRoot = pBone;
+	m_pOrgSkeletonRoot = pOrgBone;
+//	m_pSkeletonRoot->Link(this);
+#endif // 0
 }
 
 void CEntity::GetEntityInfos(ILoader::CObjectInfos*& pInfos)

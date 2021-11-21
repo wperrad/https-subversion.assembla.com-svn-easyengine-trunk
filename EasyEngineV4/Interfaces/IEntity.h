@@ -98,6 +98,8 @@ public:
 	virtual void				AddAnimation( std::string sAnimationFile ) = 0;
 	virtual void				SetCurrentAnimation( std::string sAnimation ) = 0;
 	virtual IAnimation*			GetCurrentAnimation() = 0;
+	virtual void				PlayCurrentAnimation(bool loop) = 0;
+	virtual void				PauseCurrentAnimation(bool loop) = 0;
 	virtual bool				HasAnimation( string sAnimationName ) = 0;
 	virtual void				DetachCurrentAnimation() = 0;
 	virtual IBone*				GetSkeletonRoot() = 0;
@@ -129,6 +131,7 @@ class ICharacter : public virtual IEntity
 public:
 	virtual void				WearShoes(string shoesName)  = 0;
 	virtual void				AddHairs(string sHairsPath) = 0;
+	virtual void				WearSkinnedClothFull(string sClothName) = 0;
 };
 
 class IPlayer : public virtual ICharacter

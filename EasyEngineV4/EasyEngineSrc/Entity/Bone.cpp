@@ -84,8 +84,10 @@ IBone* CBone::DuplicateHierarchy()
 	for ( unsigned int iBone = 0; iBone < GetChildCount(); iBone++ )
 	{
 		CBone* pChild = dynamic_cast< CBone* >( GetChild( iBone ) );
-		IBone* pChildCopy = pChild->DuplicateHierarchy();
-		pChildCopy->Link( pBone );
+		if (pChild) {
+			IBone* pChildCopy = pChild->DuplicateHierarchy();
+			pChildCopy->Link(pBone);
+		}
 	}
 	return pBone;
 }

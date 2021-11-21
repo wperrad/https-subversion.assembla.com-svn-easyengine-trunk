@@ -77,7 +77,7 @@ protected:
 	void				GetGeometry(Interface* pInterface, vector< ILoader::CMeshInfos >& vMeshInfos, INode* pRoot);
 	void				GetMeshesIntoHierarchy(Interface* pInterface, INode* pNode, vector< ILoader::CMeshInfos >& vMeshInfos);
 	void				WriteLog(string sMessage);
-	void				GetWeightTable(IWeightTable& oWeightTable, const std::map< std::string, int >& mBoneID, string sObjectName);
+	void				GetWeightTable(IWeightTable& oWeightTable, const std::map< std::string, int >& mBoneID, string sObjectName, IGameNode* pGameNode = nullptr);
 	void				GetBonesBoundingBoxes(const Mesh& oMesh, const IWeightTable& oWeightTable, const Matrix3& oModelTM, map< int, IBox* >& mBoneBox);
 	void				StoreMaxMaterialToMaterialInfos(Mtl* pMaterial, ILoader::CMaterialInfos& mi);
 	void				GetNormals(Mesh& oMesh, std::vector< float >& vFaceNormal, std::vector< float >& vVertexNormal);
@@ -86,6 +86,7 @@ protected:
 	void				StoreMaxColorToVector(const Color c, vector< float >& v);
 	void				GetMaterialTextureName(Mtl* pMaterial, std::string& sTextureName, int nMapIndex)const;
 	virtual void		StoreMeshToMeshInfos(Interface* pInterface, INode* pMesh, ILoader::CMeshInfos& mi) {}
+	virtual void		GetSkeleton(INode* pRoot, map< string, INode* >& mBone);
 
 	static bool			IsBone(Object* pObject);
 	static bool			IsBone(INode* pNode);
@@ -120,6 +121,8 @@ protected:
 	vector<string>		m_vPathList;
 	string				m_sSelectedAnimation;
 	int					m_nSelectedAnimationIndex;
+	Interface*			m_pMaxInterface;
+	bool				m_bInitialise;
 	static CMaxExporter* s_pExporter;
 };
 

@@ -19,6 +19,7 @@ uniform
 uniform mat4 matBones0[70];
 uniform mat4 matBones1[70];
 uniform mat4 matBones2[70];
+//uniform mat4 matBones3[70];
 uniform mat4 vEntityMatrix[20];
 
 void main()
@@ -34,6 +35,10 @@ void main()
 		matBones = matBones1;
 	if(gl_InstanceID == 2)
 		matBones = matBones2;
+	/*
+	if(gl_InstanceID == 3)
+		matBones = matBones3;*/
+	
 	mat4 matWeight = mat4(0.);
 
 	for ( int iBone = 0; iBone < 4; iBone++ )
