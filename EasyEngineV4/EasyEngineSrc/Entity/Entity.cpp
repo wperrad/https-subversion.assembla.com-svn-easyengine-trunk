@@ -664,11 +664,6 @@ void CEntity::OnAnimationCallback( IAnimation::TEvent e, void* pData )
 		CKey oKey;
 		pRoot->GetKeyByTime( pEntity->GetCurrentAnimation()->GetStartAnimationTime(), oKey );
 		oKey.m_oLocalTM.GetInverse( pEntity->m_oFirstAnimationFrameSkeletonMatrixInv );
-
-		
-		/*if (pEntity->m_pCloth)
-			OnAnimationCallback(e, pEntity->m_pCloth);*/
-			
 		break;
 	}
 }

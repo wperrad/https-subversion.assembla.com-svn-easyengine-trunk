@@ -1714,9 +1714,8 @@ void PlayCurrentAnimation( IScriptState* pState )
 	if( pEntity )
 	{
 		IAnimation* pAnimation = pEntity->GetCurrentAnimation();
-		if (pAnimation)
-			//pAnimation->Play(pLoop->m_nValue != 0);
-			pEntity->PlayCurrentAnimation(pLoop->m_nValue != 0);
+		if( pAnimation )
+			pAnimation->Play(pLoop->m_nValue != 0);
 		else
 			m_pConsole->Println( "Errreur : L'entité sélectionnée est animable mais ne contient pas l'animation demandée." );
 	}

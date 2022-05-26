@@ -497,18 +497,11 @@ void CScene::RenderInstances()
 
 		if (itBones != bonesTM.end() && (itBones->first == it->first) && itBones->second.size() > 0) {
 			vector<vector<CMatrix>>& matBonesArray = itBones->second;
-
-#if 0
-			for (unsigned int j = 0; j < matBonesArray.size(); j++) {
-				ostringstream oss;
-				oss << "matBones" << j;
-				pShader->SendUniformMatrix4Array(oss.str(), matBonesArray[j], true);
+			for (int i = 0; i < matBonesArray.size(); i++) {
+				ostringstream matBonesName;
+				matBonesName << "matBones" << i;
+				pShader->SendUniformMatrix4Array(matBonesName.str(), matBonesArray[i], true);
 			}
-#else
-			//pShader->SendUniformMatrix4Array("matBones", matBonesArray[1], true);
-			for(int i = 0; i < matBonesArray.size(); i++)
-				pShader->SendUniformMatrix4Array("matBones0", matBonesArray[i], true);
-#endif
 			itBones++;
 		}
 		it->first->UpdateInstances(vPosTM.size());
